@@ -27,7 +27,9 @@
 
 六项必修缺陷的修复已写入本仓库，K0/C0已独立复核；后续发行门仍欠。
 最终入口核查又发现初次提取带入旧独立catalog；已按
-[唯一入口清理](CURRENT_ENTRY_HARD_CUT.md)删除适配闭包并保留有效K0反例，待最终验证。
+[唯一入口清理](CURRENT_ENTRY_HARD_CUT.md)删除适配闭包并保留有效K0反例，独立61项及
+wheel入口核对已通过。最后完整性能轮两组均inconclusive，整局未放行；
+测量工具生命周期清理只跑短假对象反例，不改变原返回门，详见返回记录。
 源代码提取和短门绿色不是重构已经完成。
 本仓库的维护摘要见[语义](SEMANTICS.md)、[测试](TESTING.md)、[作者编辑](AUTHORING.md)。
 上游完整审计历史使用`RELEASE_SELECTED_SEMANTIC_CONTRACT_V1.md`与

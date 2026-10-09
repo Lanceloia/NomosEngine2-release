@@ -74,7 +74,7 @@ taskset -c 6 /tmp/nomosengine2-release-dev/bin/python tools/release_runtime_gate
 计时前最后入口核查发现四个早期catalog仍随包分发，已删除旧schema适配闭包；
 具体写集和有效反例迁移见[唯一入口清理](CURRENT_ENTRY_HARD_CUT.md)。
 五个具名模块60 passed（5.09秒），相关Ruff及diff检查通过；
-增补后的21个CI具名模块串行222 passed（33.20秒）。独立复核和最终轮仍待运行。
+增补后的21个CI具名模块串行222 passed（33.20秒）。后续独立复核与实际测量见下节。
 
 ### 亲和性轮结果与一次聚合长度修正
 
@@ -123,3 +123,31 @@ B05七模块加安装/测量两模块串行181 passed（17.22秒），show/diff�
 干净上下文读者独立跑通狼人杀投票/换席及规则编辑演示，正确转述动机、能力、限制及归因；
 发现`view`文档错误和两份开局未说明，已只改文档。默认狼人杀内部字段呈现仍较生硬，
 不称已完成面向普通玩家的引导或整局体验。
+
+## 最后完整聚合轮与测量工具清理
+
+2026-10-10，候选`eb8c2e8`/冻结`83c2d9642`，CPU6亲和性、Python3.14.4、
+PyYAML6.0.3，固定Parcel256个fresh Session。两组各八对完整结束：
+
+| 样本 | candidate/baseline中位 | noise max/min | 预算内样本 | 原门判定 |
+| --- | --- | --- | --- | --- |
+| M1短链 | 1.007130 | 1.381085 | 5/8 | inconclusive |
+| Parcel256 | 0.956492 | 1.316666 | 8/8 | inconclusive |
+
+每对状态、发生来源与控制历史相等，Parcel每侧都有完整256个摘要；正确性相等不等于
+性能通过。两组仍超原噪声门，整局没有执行，不拼接前轮成绩、不反复重测取优。
+工具曾失去进程句柄，最初误判中断；随后按完整持久JSON校正，进程实际继续并结束。
+报告在运行机`/mnt/d/nomosengine2-release-evidence/aggregate-gate.json`，SHA256：
+`a7ea2eed4dd54c2bfdbb5ceed46d91531391865b132c02f59052d09ab096fd3b`。
+这是外部测量证据路径，不是本仓库的安装或运行依赖。此前临时环境/报告已不可访问，
+其历史结果保留，但不声称原始临时文件目前仍在。
+
+Owner反馈大批测量影响电脑响应，当前不再自动启动长压测。轻量审阅发现worker的
+旧report、Parcel的offer/snapshot/scene/receiver及full分支的frame/resident/snapshot
+会跨下一次测量存活。清理仅在计时及语义检查外释放这些引用；没有改变输入、
+GC策略、Run步骤、报告内容或5%/10%阈值，没有修改K0/C0或作者资产。
+
+具名测量模块与新增生命周期模块：14 passed（4.61秒）；Ruff通过。
+新模块用弱引用和中性假对象直接调用实际worker，覆盖下一次collect前report释放、
+Parcel跨局/跨命令视图释放及full跨命令视图释放，不进行世界编译或性能计时。
+这证明测量对象生命周期修正，不证明噪声的实际成因或性能提速。独立复核待回执。

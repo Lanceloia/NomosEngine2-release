@@ -162,7 +162,7 @@ def worker(
                 ):
                     raise RuntimeError("parcel sample did not perform its declared work")
                 digests.append(_snapshot_digest(snapshot, session._runtime._individual_scope))
-                del session
+                del offer, snapshot, scene, receiver, session
             report = {
                 "run_seconds": run_seconds,
                 "start_seconds": start_seconds,
@@ -170,6 +170,7 @@ def worker(
                 "sessions_per_pair": parcel_sessions,
                 "run_cpu_seconds": run_cpu_seconds,
             }
+            del digests
         elif command == "full":
             started = perf_counter()
             session = program.start(assets)
@@ -201,13 +202,14 @@ def worker(
                 "actions": json.loads(json.dumps(journey.actions, default=payload_json)),
                 "history_digest": history_digest(session),
             }
-            del journey, session
+            del frame, resident, snapshot, journey, session
         else:
             raise ValueError("unknown measurement sample")
         if input_fingerprint(bundle_path, resources) != fingerprint:
             raise RuntimeError("author inputs changed during measurement")
         checked_origins()
         emit(report)
+        del report
 
 
 class CoreWorker:
