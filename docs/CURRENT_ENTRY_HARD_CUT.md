@@ -37,4 +37,6 @@ Python3.14.4下以上五个具名模块串行60 passed（5.09秒），相关Ruff
 Gauss初轮独立60 passed并发现两处证据不足：wave实际旧schema为`c0.source.scene_due.v2`，
 不是模块名对应的猜测；错绑负例需分别改sources和law_keys。已修正这两项测试，
 不修改核心、现行编译合同或作者资产，待最终精确复验。
+最终代码/测试提交`e84a00b`由Gauss独立复跑原五模块61 passed（5.08秒），
+两项finding闭合，无剩余material finding；未独立复跑wheel或性能。
 结果与精确快照另见[返回记录](INSTALLATION_AND_PERFORMANCE_STATUS.md)。

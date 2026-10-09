@@ -76,6 +76,40 @@ taskset -c 6 /tmp/nomosengine2-release-dev/bin/python tools/release_runtime_gate
 五个具名模块60 passed（5.09秒），相关Ruff及diff检查通过；
 增补后的21个CI具名模块串行222 passed（33.20秒）。独立复核和最终轮仍待运行。
 
+### 亲和性轮结果与一次聚合长度修正
+
+候选`e84a00b`/冻结`83c2d9642`，两树干净；预设CPU6轮已正常结束，exit2。
+M1四对比值为0.9644、1.0340、0.9896、1.0198，中位1.0047，按原门passed。
+Parcel32局八对为0.9998、1.1585、0.8942、0.9652、1.1195、1.1101、1.0158、0.9708；
+中位1.0078，max/min约1.296，inconclusive。整局未运行。
+计时后独立核两版所有M1短样本time200、49条发生；两条wait及来源/状态摘要一致。
+原始报告`/tmp/ne2-release-affinity-gate.json`，不将旧轮与本轮拼接取优。
+
+最后入口清理经Gauss独立61 passed/no material finding接受。
+从`e435558`干净Git导出重建wheel，仓库外两消费者真实发布：
+狼人杀Compile0.916/Start0.005/Run0.004秒，98个origin；M1 Compile36.929/Start0.171/Run0.057秒，
+99个origin。旧catalog与导出不可导入；改Law演示仍为共同12条前缀后第10步拒绝。
+`e84a00b`仅修测试/记录，对该wheel的核心与作者资产无差分。
+
+实施前锁定最后一次测量工具修正：Parcel从32固定增至256个fresh Session，
+维持同Program、同输入、每局相同工作量断言、原GC与计时边界；仅增加聚合长度，
+不预言噪声必然降低。CPU时间作为诊断，门仍使用wall时间。
+保持5%、max/min1.10及最多四加四对，所有样本保留，不调量至通过。
+为保持工具原来的“同轮短门全过才进整局”出口，不建立跨轮成绩fallback，
+这一新轮仍执行M1原短样本，独立保留前轮passed而不择优；核心/作者资产不变。
+新轮若仍不稳定就停止测量并报告缺口，不继续扩大重复数。
+
+```bash
+taskset -c 6 /tmp/nomosengine2-release-dev/bin/python tools/release_runtime_gate.py \
+  --baseline /mnt/d/nomosengine2-runtime-frozen \
+  --candidate /mnt/d/nomosengine2-release \
+  --bundle src/nomos_examples/everflame/world.bundle.yaml \
+  --resources src/nomos_c0/examples --parcel-sessions-per-pair 256 \
+  --output /tmp/ne2-release-aggregate-gate.json --full
+```
+
+这仍是实施前协议，不是最终性能通过记录。
+
 短门：安装/精确M1声明6 passed；测量判定7 passed。
 候选CI的19个明确模块本地串行209 passed（31.12秒），相关Ruff及diff检查通过。
 根README、权利、docs、C0/T0/Kernel导航的相对链接存在性检查无失效路径；未验证全部锚点。

@@ -54,8 +54,11 @@ smoke 使用已安装资源，检查所有 `nomos_*` origin 位于安装环境�
 复用 Program、每次新建 Session；这是进程内暖态门，不是冷启动门。
 
 Compile、Start、Run 分开报告；不启用 profiler、mock 或运行时验证跳过。
-短 M1 用真实两个等待和 NPC/due 推进；Parcel 用32个独立 Session 聚合
+短 M1 用真实两个等待和 NPC/due 推进；Parcel 用256个独立 Session 聚合
 真实 dispatch→因果→defer→due→confirm，是一个组合样本，不分别归因各层成本。
+重复数由`--parcel-sessions-per-pair`在计时前固定，双方完全相同，不按耗时自适应。
+首轮32局结果保留于返回记录；256局是一项配对样本，不是256项独立配对。
+附带的Parcel进程CPU时间只用于诊断，不替代wall时间或降低性能阈值。
 AB/BA 按顺序执行，四对中位比值≤1.05且至少三对≤1.05才通过。
 配对比值 max/min>1.10 则最多追加四对；追加按全部八对中位及至少六对合格判定，
 仍有噪声记 inconclusive，不能算通过。不看结果后改阈值。

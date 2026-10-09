@@ -1,8 +1,10 @@
 """Performance gates classify evidence, not world success or correctness."""
 
+import argparse
+
 import pytest
 
-from tools.release_runtime_gate import comparable, verdict
+from tools.release_runtime_gate import comparable, positive_count, verdict
 
 
 @pytest.mark.parametrize(
@@ -41,3 +43,21 @@ def test_state_or_provenance_difference_cannot_pass_on_speed():
     ):
         with pytest.raises(RuntimeError, match="semantic difference"):
             comparable("short", before, before | {field: value, "run_seconds": 1})
+
+
+def test_parcel_aggregate_compares_every_fresh_session_and_fixed_workload():
+    before = {"digests": ["same"] * 256, "sessions_per_pair": 256, "run_cpu_seconds": 1}
+    comparable("parcel", before, before | {"run_cpu_seconds": 0.1})
+    with pytest.raises(RuntimeError, match="incomplete aggregate"):
+        comparable("parcel", before, before | {"digests": ["same"] * 255})
+    with pytest.raises(RuntimeError, match="semantic difference"):
+        comparable("parcel", before, before | {"digests": ["same"] * 255 + ["other"]})
+    with pytest.raises(RuntimeError, match="semantic difference"):
+        comparable("parcel", before, before | {"digests": ["same"] * 32, "sessions_per_pair": 32})
+
+
+def test_repetition_parameter_is_fixed_positive_not_adaptive():
+    assert positive_count("256") == 256
+    for value in ("0", "-1", "many"):
+        with pytest.raises((ValueError, argparse.ArgumentTypeError)):
+            positive_count(value)

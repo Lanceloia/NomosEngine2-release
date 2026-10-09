@@ -13,7 +13,7 @@ import sys
 from contextlib import redirect_stderr
 from hashlib import sha256
 from pathlib import Path
-from time import perf_counter
+from time import perf_counter, process_time
 
 import yaml
 
@@ -40,7 +40,16 @@ def input_fingerprint(bundle_path, resources):
     return {str(path.resolve()): sha256(path.read_bytes()).hexdigest() for path in paths}
 
 
-def worker(core: Path, bundle_path: Path, resources: Path, *, parcel_only=False):
+def positive_count(value):
+    count = int(value)
+    if count <= 0:
+        raise argparse.ArgumentTypeError("sample repetition count must be positive")
+    return count
+
+
+def worker(
+    core: Path, bundle_path: Path, resources: Path, *, parcel_only=False, parcel_sessions=256
+):
     # Only benchmark helpers come from this checkout; executable cores are explicit.
     sys.path[:0] = [str(core / "src"), str(core / "engine/kernel/src")]
     sys.path.append(str(Path(__file__).resolve().parents[1]))
@@ -101,6 +110,7 @@ def worker(core: Path, bundle_path: Path, resources: Path, *, parcel_only=False)
             "input_fingerprint": fingerprint,
             "python": sys.version,
             "yaml": yaml.__version__,
+            "parcel_sessions_per_pair": parcel_sessions,
         }
     )
     for line in sys.stdin:
@@ -111,12 +121,13 @@ def worker(core: Path, bundle_path: Path, resources: Path, *, parcel_only=False)
         if command == "short":
             report = measure_program(program, assets)
         elif command == "parcel":
-            run_seconds = start_seconds = 0.0
+            run_seconds = start_seconds = run_cpu_seconds = 0.0
             digests = []
-            for _ in range(32):
+            for _ in range(parcel_sessions):
                 started = perf_counter()
                 session = parcel.start(docs[3].to_data())
                 start_seconds += perf_counter() - started
+                cpu_started = process_time()
                 started = perf_counter()
                 offer = session.form_frame("sender").offers[0]
                 if not isinstance(
@@ -135,6 +146,7 @@ def worker(core: Path, bundle_path: Path, resources: Path, *, parcel_only=False)
                 ):
                     raise RuntimeError("parcel confirmation rejected")
                 run_seconds += perf_counter() - started
+                run_cpu_seconds += process_time() - cpu_started
                 snapshot = session.author_snapshot()
                 scene = dict(snapshot.owners)["scene"]
                 receiver = dict(snapshot.owners)["receiver"]
@@ -155,6 +167,8 @@ def worker(core: Path, bundle_path: Path, resources: Path, *, parcel_only=False)
                 "run_seconds": run_seconds,
                 "start_seconds": start_seconds,
                 "digests": digests,
+                "sessions_per_pair": parcel_sessions,
+                "run_cpu_seconds": run_cpu_seconds,
             }
         elif command == "full":
             started = perf_counter()
@@ -197,7 +211,7 @@ def worker(core: Path, bundle_path: Path, resources: Path, *, parcel_only=False)
 
 
 class CoreWorker:
-    def __init__(self, core, bundle, resources, *, parcel_only=False):
+    def __init__(self, core, bundle, resources, *, parcel_only=False, parcel_sessions=256):
         environment = {
             key: value
             for key, value in os.environ.items()
@@ -214,6 +228,8 @@ class CoreWorker:
                 str(bundle),
                 "--resources",
                 str(resources),
+                "--parcel-sessions-per-pair",
+                str(parcel_sessions),
                 *(["--sample", "parcel"] if parcel_only else []),
             ],
             cwd="/tmp",
@@ -246,7 +262,13 @@ class CoreWorker:
 
 
 def comparable(sample, before, after):
-    keys = ("digests",) if sample == "parcel" else ("state_digest", "occurrences", "time")
+    if sample == "parcel":
+        for row in (before, after):
+            if len(row["digests"]) != row["sessions_per_pair"]:
+                raise RuntimeError("parcel comparison has an incomplete aggregate")
+        keys = ("digests", "sessions_per_pair")
+    else:
+        keys = ("state_digest", "occurrences", "time")
     if sample == "short":
         keys += ("inputs", "assets_digest", "action_value_history", "appraisal_digest")
     if sample == "full":
@@ -265,6 +287,7 @@ def main():
     parser.add_argument("--output", type=Path)
     parser.add_argument("--full", action="store_true")
     parser.add_argument("--sample", choices=("short", "parcel"), action="append")
+    parser.add_argument("--parcel-sessions-per-pair", type=positive_count, default=256)
     args = parser.parse_args()
     if args.worker:
         worker(
@@ -272,6 +295,7 @@ def main():
             args.bundle.resolve(),
             args.resources.resolve(),
             parcel_only=args.sample == ["parcel"] and not args.full,
+            parcel_sessions=args.parcel_sessions_per_pair,
         )
         return
     if not args.baseline or not args.candidate or not args.output:
@@ -283,6 +307,7 @@ def main():
         "input_fingerprint": input_fingerprint(args.bundle, args.resources),
         "noise_extension": "all eight ratios, median <=1.05 and at least six <=1.05",
         "gc": "collect before each aggregate sample; normal automatic GC during Run",
+        "parcel_sessions_per_pair": args.parcel_sessions_per_pair,
     }
     report["cores"] = [
         {
@@ -302,10 +327,15 @@ def main():
                     args.bundle.resolve(),
                     args.resources.resolve(),
                     parcel_only=args.sample == ["parcel"] and not args.full,
+                    parcel_sessions=args.parcel_sessions_per_pair,
                 )
             )
         report["builds"] = [item.ready for item in workers]
-        if any(row["input_fingerprint"] != report["input_fingerprint"] for row in report["builds"]):
+        if any(
+            row["input_fingerprint"] != report["input_fingerprint"]
+            or row["parcel_sessions_per_pair"] != args.parcel_sessions_per_pair
+            for row in report["builds"]
+        ):
             raise RuntimeError("workers did not compile identical author bytes")
         for sample in args.sample or ("short", "parcel"):
             pairs = []
