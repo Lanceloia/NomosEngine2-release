@@ -26,6 +26,8 @@
 | B07 | 中文说明/导航、诚实演示与贡献、CI、陌生读者验证 | 陌生读者已试跑并修文档；CI本地门通过，远端未跑 |
 
 六项必修缺陷的修复已写入本仓库，K0/C0已独立复核；后续发行门仍欠。
+最终入口核查又发现初次提取带入旧独立catalog；已按
+[唯一入口清理](CURRENT_ENTRY_HARD_CUT.md)删除适配闭包并保留有效K0反例，待最终验证。
 源代码提取和短门绿色不是重构已经完成。
 本仓库的维护摘要见[语义](SEMANTICS.md)、[测试](TESTING.md)、[作者编辑](AUTHORING.md)。
 上游完整审计历史使用`RELEASE_SELECTED_SEMANTIC_CONTRACT_V1.md`与

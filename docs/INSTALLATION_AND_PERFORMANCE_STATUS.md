@@ -71,6 +71,11 @@ taskset -c 6 /tmp/nomosengine2-release-dev/bin/python tools/release_runtime_gate
 
 此处是实施前的测量协议，不是通过记录；前两轮inconclusive结果继续保留。
 
+计时前最后入口核查发现四个早期catalog仍随包分发，已删除旧schema适配闭包；
+具体写集和有效反例迁移见[唯一入口清理](CURRENT_ENTRY_HARD_CUT.md)。
+五个具名模块60 passed（5.09秒），相关Ruff及diff检查通过；
+增补后的21个CI具名模块串行222 passed（33.20秒）。独立复核和最终轮仍待运行。
+
 短门：安装/精确M1声明6 passed；测量判定7 passed。
 候选CI的19个明确模块本地串行209 passed（31.12秒），相关Ruff及diff检查通过。
 根README、权利、docs、C0/T0/Kernel导航的相对链接存在性检查无失效路径；未验证全部锚点。

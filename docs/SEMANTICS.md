@@ -3,6 +3,7 @@
 本仓库维护有限声明式语言，不承诺任意 Python 或完整 UFO。
 上游发行审计使用 S01–S32 编号；本页是其维护摘要，不把历史设计作为运行依赖。
 现行 Source 只有 `c0.owner_graph.v6`，没有旧版本回退。
+早期独立catalog及其schema转换已[删除](CURRENT_ENTRY_HARD_CUT.md)，不作为组件备用入口。
 
 ## 层的责任
 

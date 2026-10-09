@@ -23,9 +23,11 @@ jobs:
           python -m pytest -q
           engine/kernel/tests/test_opening_validation_isolation.py
           engine/kernel/tests/test_pre_due_transaction_boundary.py
+          engine/kernel/tests/test_same_wave_policy_v1.py
           engine/kernel/tests/test_occurrence_evaluation_v1.py
           engine/kernel/tests/test_terminal_settlement_v1.py
           tests/nomos_c0/test_program_phases_v1.py
+          tests/nomos_c0/test_current_compile_entry_v1.py
           tests/nomos_c0/test_owner_write_authority_v1.py
           tests/nomos_c0/test_formation_namespace_v1.py
           tests/nomos_c0/test_pure_keyed_update_scope_v1.py
