@@ -51,6 +51,26 @@ M1旧 `carry_from_ritual` 声明漏了 `victim.site`，原来被同型 Person �
 首次Parcel脚本错误把document直接传给Start，改为相同数据后才获得有效样本；
 该失败不记性能结果。完整原始对照JSON由工具`--output`保留。
 
+### 复验前锁定条件
+
+2026-10-10再次测量前约定：只运行一轮相同脚本，父进程及两版worker固定在CPU6，
+不修改核心、作者输入、样本工作量、AB/BA顺序、GC方式、计时范围或判定阈值。
+先等已启动的Web虚拟玩家浏览器操作结束，不同时运行pytest、构建或长应用路线。
+亲和性只用于减少调度迁移，不等于独占CPU，也不保证Windows宿主无负载。
+本轮不挑选最快样本、不混入上轮成绩、不延长到超过原定四加四对。
+若短门通过，在同一轮执行预定的一次成对整局；否则仍记未通过，不反复重跑取最好结果。
+
+```bash
+taskset -c 6 /tmp/nomosengine2-release-dev/bin/python tools/release_runtime_gate.py \
+  --baseline /mnt/d/nomosengine2-runtime-frozen \
+  --candidate /mnt/d/nomosengine2-release \
+  --bundle src/nomos_examples/everflame/world.bundle.yaml \
+  --resources src/nomos_c0/examples \
+  --output /tmp/ne2-release-affinity-gate.json --full
+```
+
+此处是实施前的测量协议，不是通过记录；前两轮inconclusive结果继续保留。
+
 短门：安装/精确M1声明6 passed；测量判定7 passed。
 候选CI的19个明确模块本地串行209 passed（31.12秒），相关Ruff及diff检查通过。
 根README、权利、docs、C0/T0/Kernel导航的相对链接存在性检查无失效路径；未验证全部锚点。
