@@ -91,6 +91,17 @@ def _clone_owner_state(owner: _K0Owner, state: object) -> object:
         return _clone_owner_state_in_operation(owner, state)
 
 
+def _validate_opening_state(owner: _K0Owner, state: object) -> None:
+    """Opening hooks inspect disposable data and cannot rewrite the opening."""
+    validator = getattr(owner, "validate_opening_state", None)
+    if validator is not None:
+        if not callable(validator):
+            raise K0ProfileError("owner opening validator is not callable")
+        detached = _copy_closed_state(state)
+        validator(detached)
+        _copy_closed_state(detached, state)
+
+
 def _clone_owner_state_in_operation(owner: _K0Owner, state: object) -> object:
     detached = _copy_closed_state(state)
     owner.validate_state(detached)

@@ -84,7 +84,6 @@ from nomos_kernel._owner_abi import (
     _K0ClosedParticipants,
     _K0CrossOwnerInvariant,
     _K0OccurrenceContribution,
-    _K0OpeningStateValidator,
     _K0Owner,
     _K0OwnerView,
     _K0SameWaveEffectProofOwner,
@@ -95,8 +94,8 @@ from nomos_kernel._owner_abi import (
 from nomos_kernel._owner_state_runtime import (
     _build_candidate_owner_views,
     _clone_owner_state,
-    _copy_closed_state,
     _K0OwnerStateDirectory,
+    _validate_opening_state,
 )
 from nomos_kernel._rule_products_abi import K0RuleResult, _K0Activation, _validate_rule_result
 from nomos_kernel._settlement_outcome_abi import (
@@ -943,8 +942,7 @@ class _K0InMemorySession:
             for owner, entry in zip(profile.owners, opening_owner_states, strict=True)
         )
         for owner, entry in zip(profile.owners, w0, strict=True):
-            if isinstance(owner, _K0OpeningStateValidator):
-                owner.validate_opening_state(_copy_closed_state(entry.state))
+            _validate_opening_state(owner, entry.state)
         session = cls(profile, w0, invariants, initial_time)
         if initial_time is not None and profile.temporal_policy is not None:
             plans = profile.temporal_policy.periodic_plans
@@ -1164,8 +1162,8 @@ class _K0InMemorySession:
         ):
             raise K0ProfileError("dynamic owner factory returned a foreign owner")
         _validate_closed_host_object(owner, "dynamic owner instance")
-        if formed_by is None and isinstance(owner, _K0OpeningStateValidator):
-            owner.validate_opening_state(initial_state)
+        if formed_by is None:
+            _validate_opening_state(owner, initial_state)
         candidate.stage_owner(owner, initial_state)
         return _K0IndividualBinding(individual, key, formed_by)
 
@@ -1266,8 +1264,8 @@ class _K0InMemorySession:
         ):
             raise K0ProfileError("Actor factory returned a foreign owner")
         _validate_closed_host_object(owner, "Actor instance owner")
-        if formed_by is None and isinstance(owner, _K0OpeningStateValidator):
-            owner.validate_opening_state(state)
+        if formed_by is None:
+            _validate_opening_state(owner, state)
         candidate.stage_owner(owner, state)
         projection = kind.projector.project(candidate.owner_views((key,))[0])
         if type(projection) is not _K0ActionValueProjection:
@@ -1969,26 +1967,43 @@ class _K0InMemorySession:
             raise K0ProfileError("temporal advance has the wrong carrier")
         if request.interval.t0 != self._time or self._pre_due_phase is not None:
             return _K0TemporalRejected()
-        due_group = self._due_group_through(request.interval.t1)
-        if not due_group:
-            return _K0TemporalRejected()
-        boundary = due_group[0].at
-        interval = _K0TemporalInterval(self._time, boundary)
-        phase = _K0PreDuePhase(
-            interval,
-            tuple(item.key for item in due_group),
-            len(self._tape),
-        )
-        values, history = self._advanced_action_values(_action_value_record, boundary)
-        self._time, self._pre_due_phase, self._action_values, self._action_value_history = (
-            boundary,
-            phase,
-            values,
-            history,
-        )
-        if _action_value_record is not None:
-            self._same_time_actions = 0
-        return _K0TemporalPublished(interval, ())
+        self._settling = True
+        admitted = False
+        try:
+            due_group = self._due_group_through(request.interval.t1)
+            if not due_group:
+                return _K0TemporalRejected()
+            boundary = due_group[0].at
+            interval = _K0TemporalInterval(self._time, boundary)
+            phase = _K0PreDuePhase(
+                interval,
+                tuple(item.key for item in due_group),
+                len(self._tape),
+            )
+            admitted = True
+            values, history = self._advanced_action_values(_action_value_record, boundary)
+            receipt = _K0TemporalPublished(interval, ())
+            self._time, self._pre_due_phase, self._action_values, self._action_value_history = (
+                boundary,
+                phase,
+                values,
+                history,
+            )
+            if _action_value_record is not None:
+                self._same_time_actions = 0
+            return receipt
+        except K0SettlementDefect:
+            self._fatal = True
+            raise
+        except Exception as error:
+            if admitted:
+                self._fatal = True
+                raise K0SettlementDefect("K0 engine defect during pre-due settlement") from error
+            if isinstance(error, K0ProfileError):
+                raise
+            raise K0ProfileError("in-memory pre-due preflight failed") from error
+        finally:
+            self._settling = False
 
     def resolve_pre_due(self) -> _K0TemporalPublished | _K0SessionClosed:
         """Close an Actor-first boundary and atomically settle its exact due group."""
