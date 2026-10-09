@@ -106,6 +106,9 @@ def test_conflict_or_failed_merge_rolls_back_the_entire_action(case):
     assert session._fatal is True
 
 
-def test_policy_must_bind_exact_registered_law_and_source_ports():
+@pytest.mark.parametrize("field", ["sources", "law_keys"])
+def test_policy_must_bind_exact_registered_law_and_source_ports(field):
+    policy = _Policy()
+    changed = replace(policy, **{field: tuple(reversed(getattr(policy, field)))})
     with pytest.raises(K0ProfileError, match="exact Event owner ports"):
-        _session(replace(_Policy(), sources=(SECOND_EVENT, EVENT)))
+        _session(changed)

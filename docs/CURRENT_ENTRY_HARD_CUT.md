@@ -34,4 +34,7 @@ Python3.14.4下以上五个具名模块串行60 passed（5.09秒），相关Ruff
 新同波正例最初误把三条发生的fixture预算设成2，先失败再修为3；
 三个拒绝反例另核具体cause，防止错误预算让负例假通过。没有修改K0。
 此为writer自测，待同一精确候选的独立复核；不是只凭静态闭包分析放行。
+Gauss初轮独立60 passed并发现两处证据不足：wave实际旧schema为`c0.source.scene_due.v2`，
+不是模块名对应的猜测；错绑负例需分别改sources和law_keys。已修正这两项测试，
+不修改核心、现行编译合同或作者资产，待最终精确复验。
 结果与精确快照另见[返回记录](INSTALLATION_AND_PERFORMANCE_STATUS.md)。

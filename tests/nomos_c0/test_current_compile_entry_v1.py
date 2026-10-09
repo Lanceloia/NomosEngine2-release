@@ -23,7 +23,7 @@ def test_retired_catalogs_have_no_import_or_export(module):
     [
         "c0.source.scene_action.v1",
         "c0.source.scene_due.v1",
-        "c0.source.scene_due_wave.v2",
+        "c0.source.scene_due.v2",
         "c0.source.scene_due_ordered.v1",
     ],
 )
