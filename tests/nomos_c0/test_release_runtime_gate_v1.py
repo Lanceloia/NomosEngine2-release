@@ -54,7 +54,8 @@ def sample_row(sample, seconds=1):
 def saved_report():
     return {
         "input_fingerprint": {"source": "bytes"},
-        "builds": [{"input_fingerprint": {"source": "bytes"}}] * 2,
+        "parcel_sessions_per_pair": 2,
+        "builds": [{"input_fingerprint": {"source": "bytes"}, "parcel_sessions_per_pair": 2}] * 2,
         "cores": [{"commit": "baseline"}, {"commit": "measured-candidate"}],
         "samples": {
             sample: {
@@ -96,6 +97,25 @@ def test_saved_assessment_rejects_different_author_inputs_and_truncated_pairs():
     evidence = saved_report()
     evidence["samples"]["parcel"]["pairs"].pop()
     with pytest.raises(ValueError, match="exactly eight"):
+        assess_report(evidence)
+
+
+@pytest.mark.parametrize("change", ["pair", "build", "report", "invalid_count"])
+def test_saved_assessment_rejects_workload_that_disagrees_with_declarations(change):
+    evidence = saved_report()
+    if change == "pair":
+        pair = evidence["samples"]["parcel"]["pairs"][0]
+        for variant in ("baseline", "candidate"):
+            pair[variant]["sessions_per_pair"] = 1
+            pair[variant]["digests"] = ["same"]
+    elif change == "build":
+        evidence["builds"] = deepcopy(evidence["builds"])
+        evidence["builds"][0]["parcel_sessions_per_pair"] = 1
+    elif change == "report":
+        evidence["parcel_sessions_per_pair"] = 1
+    else:
+        evidence["parcel_sessions_per_pair"] = 0
+    with pytest.raises(ValueError, match="workload"):
         assess_report(evidence)
 
 

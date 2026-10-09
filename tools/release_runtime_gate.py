@@ -47,11 +47,16 @@ def pair_summary(ratios):
 
 def assess_report(report):
     """Apply the approved policy to saved evidence without changing or rerunning it."""
+    parcel_sessions = report["parcel_sessions_per_pair"]
+    if type(parcel_sessions) is not int or parcel_sessions <= 0:
+        raise ValueError("saved parcel workload must be a positive integer")
     if (
         any(build["input_fingerprint"] != report["input_fingerprint"] for build in report["builds"])
         or len(report["builds"]) != 2
     ):
         raise ValueError("saved workers did not compile identical author bytes")
+    if any(build["parcel_sessions_per_pair"] != parcel_sessions for build in report["builds"]):
+        raise ValueError("saved workers do not declare the fixed parcel workload")
     samples = {}
     for sample in ("short", "parcel"):
         rows = report["samples"][sample]
@@ -60,6 +65,11 @@ def assess_report(report):
         for index, pair in enumerate(pairs):
             if pair["order"] != ([0, 1] if index % 2 == 0 else [1, 0]):
                 raise ValueError("saved pairs do not have the declared AB/BA order")
+            if sample == "parcel" and any(
+                pair[variant]["sessions_per_pair"] != parcel_sessions
+                for variant in ("baseline", "candidate")
+            ):
+                raise ValueError("saved parcel pair differs from the declared fixed workload")
             comparable(sample, pair["baseline"], pair["candidate"])
             durations = [pair[variant]["run_seconds"] for variant in ("baseline", "candidate")]
             if any(not math.isfinite(value) or value <= 0 for value in durations):
@@ -74,6 +84,7 @@ def assess_report(report):
         "regression_limit": REGRESSION_LIMIT,
         "required_pairs": REQUIRED_PAIRS,
         "pair_count": PAIR_COUNT,
+        "parcel_sessions_per_pair": parcel_sessions,
         "samples": samples,
         "measured_cores": report["cores"],
         "full": "not_assessed",
