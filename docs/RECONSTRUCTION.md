@@ -16,8 +16,8 @@
 | 批次 | 目标 | 状态 |
 | --- | --- | --- |
 | B00 | 新仓库独立安装/Compile/Start/submit，记录真实origins | baseline_verified |
-| B01 | K0动态opening隔离、pre_due纯查询重入与原子边界 | in_progress |
-| B02 | 精确owner字段写路径，不能被同类型参与者洗掉 | pending |
+| B01 | K0动态opening隔离、pre_due纯查询重入与原子边界 | reviewed |
+| B02 | 精确owner字段写路径，不能被同类型参与者洗掉 | in_progress |
 | B03 | 纯定义按键更新词法作用域、Action/Event分类解析 | pending |
 | B04 | 输出首错顺序、候选/控制预算故障分类 | pending |
 | B05 | IR执行计划与生成后端统一组织，删除替代旧路径 | pending |

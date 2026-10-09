@@ -1,6 +1,6 @@
 # K0开局与pre-due边界修复
 
-状态：writer短门通过，等待Gauss对精确提交独立复核。
+状态：B01 technically_reviewed；后续整体发行门仍未通过。
 
 ## 合同与实现
 
@@ -35,3 +35,7 @@ python -m pytest -q \
 Gauss在初次exact `2354da24b29d4a83a867daebabded3cd1706f656`独立跑87项（1.57秒），
 发现显式`None`被误认为缺失。现使用独立缺失sentinel，显式None/int均拒绝；
 新增两个短反例。最终接受须以修正后的exact独立复核为准。
+
+最终代码`1ff9e1127e715c3f28014ae808019f2d25f46c0b`：writer六模块89 passed
+（1.60秒）；同一Gauss独立按上述命令复跑89 passed（1.53秒）、show-check通过，
+无剩余finding。此次接受不包含同期C0工作树改动。
