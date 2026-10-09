@@ -6,6 +6,7 @@ import argparse
 import gc
 import io
 import json
+import math
 import os
 import statistics
 import subprocess
@@ -17,18 +18,67 @@ from time import perf_counter, process_time
 
 import yaml
 
+PERFORMANCE_POLICY = "owner-approved-2026-10-10"
+PAIR_COUNT = 8
+REGRESSION_LIMIT = 1.10
+REQUIRED_PAIRS = 6
+
 
 def verdict(ratios):
-    if len(ratios) < 4 or any(value <= 0 for value in ratios):
-        raise ValueError("performance gate needs at least four positive paired ratios")
-    if max(ratios) / min(ratios) > 1.10:
-        return "noisy" if len(ratios) < 8 else "inconclusive"
-    required = len(ratios) - 1 if len(ratios) == 4 else 6
+    if len(ratios) != PAIR_COUNT or any(not math.isfinite(value) or value <= 0 for value in ratios):
+        raise ValueError("performance gate needs exactly eight finite positive paired ratios")
     return (
         "passed"
-        if statistics.median(ratios) <= 1.05 and sum(value <= 1.05 for value in ratios) >= required
+        if statistics.median(ratios) <= REGRESSION_LIMIT
+        and sum(value <= REGRESSION_LIMIT for value in ratios) >= REQUIRED_PAIRS
         else "regressed"
     )
+
+
+def pair_summary(ratios):
+    return {
+        "status": verdict(ratios),
+        "median_ratio": statistics.median(ratios),
+        "within_budget": sum(value <= REGRESSION_LIMIT for value in ratios),
+        "noise_ratio": max(ratios) / min(ratios),
+        "noise_warning": max(ratios) / min(ratios) > 1.10,
+    }
+
+
+def assess_report(report):
+    """Apply the approved policy to saved evidence without changing or rerunning it."""
+    if (
+        any(build["input_fingerprint"] != report["input_fingerprint"] for build in report["builds"])
+        or len(report["builds"]) != 2
+    ):
+        raise ValueError("saved workers did not compile identical author bytes")
+    samples = {}
+    for sample in ("short", "parcel"):
+        rows = report["samples"][sample]
+        pairs = rows["pairs"]
+        ratios = []
+        for index, pair in enumerate(pairs):
+            if pair["order"] != ([0, 1] if index % 2 == 0 else [1, 0]):
+                raise ValueError("saved pairs do not have the declared AB/BA order")
+            comparable(sample, pair["baseline"], pair["candidate"])
+            durations = [pair[variant]["run_seconds"] for variant in ("baseline", "candidate")]
+            if any(not math.isfinite(value) or value <= 0 for value in durations):
+                raise ValueError("saved durations must be finite and positive")
+            ratios.append(durations[1] / durations[0])
+        samples[sample] = pair_summary(ratios) | {
+            "original_status": rows["status"],
+            "ratios": ratios,
+        }
+    return {
+        "policy": PERFORMANCE_POLICY,
+        "regression_limit": REGRESSION_LIMIT,
+        "required_pairs": REQUIRED_PAIRS,
+        "pair_count": PAIR_COUNT,
+        "samples": samples,
+        "measured_cores": report["cores"],
+        "full": "not_assessed",
+        "scope": "saved short evidence only; not current-revision or full-release acceptance",
+    }
 
 
 def input_fingerprint(bundle_path, resources):
@@ -284,13 +334,33 @@ def main():
     parser.add_argument("--baseline", type=Path)
     parser.add_argument("--candidate", type=Path)
     parser.add_argument("--worker", type=Path)
-    parser.add_argument("--bundle", type=Path, required=True)
-    parser.add_argument("--resources", type=Path, required=True)
+    parser.add_argument("--bundle", type=Path)
+    parser.add_argument("--resources", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--full", action="store_true")
+    parser.add_argument("--assess-report", type=Path)
     parser.add_argument("--sample", choices=("short", "parcel"), action="append")
     parser.add_argument("--parcel-sessions-per-pair", type=positive_count, default=256)
     args = parser.parse_args()
+    if args.assess_report:
+        if not args.output or args.full or args.worker or args.baseline or args.candidate:
+            parser.error("saved assessment needs --output and cannot run workers or full routes")
+        if args.output.resolve() == args.assess_report.resolve() or (
+            args.output.exists() and args.output.samefile(args.assess_report)
+        ):
+            parser.error("saved assessment must not overwrite its evidence")
+        evidence = args.assess_report.read_bytes()
+        assessment = assess_report(json.loads(evidence)) | {
+            "evidence_sha256": sha256(evidence).hexdigest(),
+            "evidence_path": str(args.assess_report.resolve()),
+        }
+        args.output.write_text(json.dumps(assessment, indent=2) + "\n")
+        print(json.dumps(assessment))
+        if any(row["status"] != "passed" for row in assessment["samples"].values()):
+            raise SystemExit(2)
+        return
+    if not args.bundle or not args.resources:
+        parser.error("measurement needs --bundle and --resources")
     if args.full and args.sample and set(args.sample) != {"short", "parcel"}:
         parser.error("full gate requires both short and parcel samples")
     if args.worker:
@@ -309,7 +379,11 @@ def main():
         "python": sys.version.split()[0],
         "samples": {},
         "input_fingerprint": input_fingerprint(args.bundle, args.resources),
-        "noise_extension": "all eight ratios, median <=1.05 and at least six <=1.05",
+        "policy": PERFORMANCE_POLICY,
+        "regression_limit": REGRESSION_LIMIT,
+        "pair_count": PAIR_COUNT,
+        "required_pairs": REQUIRED_PAIRS,
+        "noise": "max/min >1.10 is diagnostic only; no adaptive extension",
         "gc": "collect before each aggregate sample; normal automatic GC during Run",
         "parcel_sessions_per_pair": args.parcel_sessions_per_pair,
     }
@@ -343,7 +417,7 @@ def main():
             raise RuntimeError("workers did not compile identical author bytes")
         for sample in args.sample or ("short", "parcel"):
             pairs = []
-            for index in range(8):
+            for index in range(PAIR_COUNT):
                 order = (0, 1) if index % 2 == 0 else (1, 0)
                 rows = {}
                 for variant in order:
@@ -357,15 +431,19 @@ def main():
                         "ratio": rows[1]["run_seconds"] / rows[0]["run_seconds"],
                     }
                 )
-                status = verdict([row["ratio"] for row in pairs]) if index >= 3 else "noisy"
+                status = (
+                    verdict([row["ratio"] for row in pairs])
+                    if index == PAIR_COUNT - 1
+                    else "pending"
+                )
                 print(
                     f"{sample} pair {index + 1}: {pairs[-1]['ratio']:.4f} {status}",
                     file=sys.stderr,
                     flush=True,
                 )
-                if index >= 3 and status != "noisy":
-                    break
-            report["samples"][sample] = {"status": status, "pairs": pairs}
+            report["samples"][sample] = pair_summary([row["ratio"] for row in pairs]) | {
+                "pairs": pairs
+            }
         if args.full and all(row["status"] == "passed" for row in report["samples"].values()):
             before, after = [item.measure("full") for item in workers]
             comparable("full", before, after)
@@ -381,7 +459,7 @@ def main():
     print(json.dumps({key: value["status"] for key, value in report["samples"].items()}))
     if any(row["status"] != "passed" for row in report["samples"].values()):
         raise SystemExit(2)
-    if report.get("full", {}).get("ratio", 1) > 1.05:
+    if report.get("full", {}).get("ratio", 1) > REGRESSION_LIMIT:
         raise SystemExit(3)
 
 

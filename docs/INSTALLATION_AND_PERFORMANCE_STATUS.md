@@ -1,7 +1,7 @@
 # 安装与性能返回记录
 
 状态：两个wheel消费者和Law编辑已运行；B05/B06技术范围独立接受，陌生读者已试跑。
-性能未通过，整局门尚欠。
+性能短门已按Owner新预算接受，整局门尚欠；旧门的inconclusive原样保留。
 本记录不宣称发行已接受。
 
 ## 安装
@@ -38,7 +38,8 @@ M1旧 `carry_from_ritual` 声明漏了 `victim.site`，原来被同型 Person �
 
 ## 性能
 
-预设门见[测试指南](TESTING.md)。同解释器、输入bytes、Program复用、fresh Session、
+以下为旧门历史，新预算及重判见本文最后一节；现行门见[测试指南](TESTING.md)。
+同解释器、输入bytes、Program复用、fresh Session、
 串行AB/BA；计时外核状态/来源/控制历史。未改变阈值。
 
 | 样本 | 配对比值中位数 candidate/baseline | noise max/min | 判定 |
@@ -153,3 +154,24 @@ Parcel跨局/跨命令视图释放及full跨命令视图释放，不进行世界
 Gauss对代码精确`b7b658ab7531a85473b4009bb07464cc81c7c5d6`独立复跑两模块：
 14 passed（4.90秒），Ruff/show检查通过，no finding。
 这证明测量对象生命周期修正，不证明噪声的实际成因或性能提速；整局门仍未通过。
+
+## Owner批准的发行预算与旧证据重判
+
+2026-10-10，Owner明确批准：配对中位数允许10%回退，八对中至少六对≤1.10；
+波动保留诊断但不单独阻止发行、不追加测量。状态、来源及行动/控制摘要要求不变。
+一次必要成对整局也使用10%预算。新工程预算不宣称测量稳定、没有回退或性能提速。
+
+使用实际工具的`--assess-report`只读取最后完整聚合轮，逐对重核比较字段和AB/BA，
+按原始Run时长重算比值，不启worker或真实编译。原报告SHA256仍为
+`a7ea2eed4dd54c2bfdbb5ceed46d91531391865b132c02f59052d09ab096fd3b`，未覆盖或删除。
+
+| 样本 | 配对中位 | 10%预算内 | 新预算结论 | 原门结论 |
+| --- | --- | --- | --- | --- |
+| M1短链 | 1.007130 | 6/8 | passed | inconclusive |
+| Parcel256 | 0.956492 | 8/8 | passed | inconclusive |
+
+重判报告在运行机`/mnt/d/nomosengine2-release-evidence/approved-short-assessment-2026-10-10.json`。
+它明确所测core是`eb8c2e8`与`83c2d9642`，不是新一轮测量。此后的工具/文档修改
+不改变K0/C0核心和作者资产；原报告未跑整局，因此本次不授整局或总发行接受。
+两具名测量模块writer25 passed（4.63秒），包含预算、缺对/非法数值、只读重判、
+原文件保护、固定八对及整局10%出口的中性短反例；Ruff/diff待最终检查。
