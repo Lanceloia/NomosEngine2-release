@@ -4,7 +4,7 @@ import argparse
 
 import pytest
 
-from tools.release_runtime_gate import comparable, positive_count, verdict
+from tools.release_runtime_gate import comparable, main, positive_count, verdict
 
 
 @pytest.mark.parametrize(
@@ -61,3 +61,21 @@ def test_repetition_parameter_is_fixed_positive_not_adaptive():
     for value in ("0", "-1", "many"):
         with pytest.raises((ValueError, argparse.ArgumentTypeError)):
             positive_count(value)
+
+
+@pytest.mark.parametrize("sample", ["short", "parcel"])
+def test_full_gate_rejects_a_missing_short_gate_before_starting_workers(
+    monkeypatch, capsys, sample
+):
+    monkeypatch.setattr(
+        "sys.argv",
+        ["gate", "--bundle", "unused.yaml", "--resources", "unused", "--sample", sample, "--full"],
+    )
+    monkeypatch.setattr(
+        "tools.release_runtime_gate.CoreWorker",
+        lambda *args, **kwargs: pytest.fail("invalid full gate must not start a worker"),
+    )
+    with pytest.raises(SystemExit) as error:
+        main()
+    assert error.value.code == 2
+    assert "full gate requires both short and parcel samples" in capsys.readouterr().err

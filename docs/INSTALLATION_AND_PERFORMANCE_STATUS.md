@@ -110,6 +110,10 @@ taskset -c 6 /tmp/nomosengine2-release-dev/bin/python tools/release_runtime_gate
 
 这仍是实施前协议，不是最终性能通过记录。
 
+测量工具`eabf133`由Gauss独立单模块9 passed（0.79秒）；发现既有CLI可用
+`--sample short --full`遗漏Parcel短门。已在创建worker前拒绝任何缺一种短门的
+`--full`配置，补两个实际CLI反例；不改变预定完整命令、运行时或门槛。
+
 短门：安装/精确M1声明6 passed；测量判定7 passed。
 候选CI的19个明确模块本地串行209 passed（31.12秒），相关Ruff及diff检查通过。
 根README、权利、docs、C0/T0/Kernel导航的相对链接存在性检查无失效路径；未验证全部锚点。

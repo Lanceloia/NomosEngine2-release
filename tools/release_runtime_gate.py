@@ -289,6 +289,8 @@ def main():
     parser.add_argument("--sample", choices=("short", "parcel"), action="append")
     parser.add_argument("--parcel-sessions-per-pair", type=positive_count, default=256)
     args = parser.parse_args()
+    if args.full and args.sample and set(args.sample) != {"short", "parcel"}:
+        parser.error("full gate requires both short and parcel samples")
     if args.worker:
         worker(
             args.worker.resolve(),
