@@ -11,7 +11,15 @@ class C0LawError(ValueError):
 
 
 class C0BindingError(ValueError):
-    """Opening assets cannot instantiate the compiled Program."""
+    """Opening or control input cannot bind to the compiled Program/current state."""
+
+
+class C0ControlBudgetExceeded(C0BindingError):
+    """A finite control call stopped; its published world prefix remains continuable."""
+
+    def __init__(self, transition_limit: int):
+        self.transition_limit = transition_limit
+        super().__init__(f"control transition budget exhausted ({transition_limit}); may continue")
 
 
 def _object(value: object, label: str) -> dict[str, Any]:

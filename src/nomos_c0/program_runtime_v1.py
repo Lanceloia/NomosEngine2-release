@@ -39,7 +39,7 @@ from nomos_kernel._owner_abi import (
 from nomos_kernel._settlement_outcome_abi import K0Published
 
 from .actor_template_v1 import C0BoundActorTemplate
-from .author_contract_v1 import C0BindingError
+from .author_contract_v1 import C0BindingError, C0ControlBudgetExceeded
 from .author_diagnostics_v1 import C0AuthorGuardReport
 from .checked_value_binding_v1 import C0NamedWorldValueIR
 from .composable_action_v1 import (
@@ -456,10 +456,11 @@ class C0OwnerGraphSession:
             if entry is not None:
                 raise C0BindingError("formed Actor offers require complete fault checking")
             binding, template = dynamic
-            try:
-                actor = reads.owner(binding.owner)
-                allowed = []
-                for declaration in template.offers:
+            actor = reads.owner(binding.owner)
+            allowed = []
+            faults = []
+            for declaration in template.offers:
+                try:
                     offer = declaration.project(actor)
                     if offer is None:
                         continue
@@ -475,9 +476,9 @@ class C0OwnerGraphSession:
                         and offer not in allowed
                     ):
                         allowed.append(offer)
-                return tuple(allowed), ()
-            except C0ValueStateError:
-                return (), (C0OfferFault(template.ir.kind, template.ir.kind, "value_state"),)
+                except C0ValueStateError:
+                    faults.append(C0OfferFault(declaration.entry, declaration.label, "value_state"))
+            return tuple(allowed), tuple(faults)
         selected = self.program._seats_by_symbol.get(seat)
         if selected is None:
             raise C0BindingError("seat is not bound to this Session")
@@ -1234,7 +1235,8 @@ class C0OwnerGraphSession:
         if before.finished:
             raise C0BindingError("GameForm has finished")
         if type(form) is _ActionValueForm:
-            for _ in range(1024):
+            transition_limit = 1024
+            for _ in range(transition_limit):
                 opportunity = self._runtime.continue_action_value()
                 # World termination is checked at every transition. A read model
                 # is only projected at an actual return, never as an NPC guard.
@@ -1259,7 +1261,7 @@ class C0OwnerGraphSession:
                     form.end_at is not None and self.time >= form.end_at
                 ) or self._world_outcome() is not None:
                     return self.form_frame(seat)
-            raise C0BindingError("finite appraisal exceeded its transition bound")
+            raise C0ControlBudgetExceeded(transition_limit)
         if self._pending_seats:
             return before
         snapshots = {name: self._seat_projection(name) for name in form.seats}

@@ -1,6 +1,6 @@
 # 发行重建记录
 
-状态：B00已独立安装并执行狼人杀Action；B01开始，尚无发行接受。
+状态：B00独立安装已核；B01独立接受；B02–B04语义修复推进中，尚无发行接受。
 
 ## 来源与边界
 
@@ -17,16 +17,20 @@
 | --- | --- | --- |
 | B00 | 新仓库独立安装/Compile/Start/submit，记录真实origins | baseline_verified |
 | B01 | K0动态opening隔离、pre_due纯查询重入与原子边界 | reviewed |
-| B02 | 精确owner字段写路径，不能被同类型参与者洗掉 | in_progress |
-| B03 | 纯定义按键更新词法作用域、Action/Event分类解析 | pending |
-| B04 | 输出首错顺序、候选/控制预算故障分类 | pending |
+| B02 | 精确owner字段写路径，不能被同类型参与者洗掉 | writer_verified |
+| B03 | 纯定义按键更新词法作用域、Action/Event分类解析 | writer_verified |
+| B04 | 输出首错顺序、候选/控制预算故障分类 | writer_verified |
 | B05 | IR执行计划与生成后端统一组织，删除替代旧路径 | pending |
 | B06 | wheel独立环境、两个作者消费者、预设性能门及一次整局集成 | pending |
 | B07 | 中文说明/导航、诚实演示与贡献、CI、陌生读者验证 | pending |
 
-六项已证明缺陷未闭合时不能通过发行门。源代码提取只是起点，不是重构已经完成。
+六项必修缺陷的修复已写入本仓库；K0已独立复核，C0仍待成组复核与后续发行门。
+源代码提取和短门绿色不是重构已经完成。
 详细规范和区别例保留在研究仓库的`RELEASE_SELECTED_SEMANTIC_CONTRACT_V1.md`与
 `RELEASE_CORRECTNESS_AUDIT_V1.md`；本仓库的现行维护规范将在B05/B07收束。
+
+修复证据：[K0事务](KERNEL_TRANSACTION_REPAIR.md)、
+[精确写权](OWNER_WRITE_AUTHORITY.md)、[C0语义](C0_SEMANTIC_REPAIR.md)。
 
 ## B00证据
 

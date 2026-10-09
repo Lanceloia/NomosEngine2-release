@@ -114,6 +114,15 @@ def _closed(node: object, names: frozenset[str], calls: set[str], depth: int = 0
         _closed(row["collection"], names, calls, depth + 1)
         for key in row["keys"]:
             _closed(key, names | {alias}, calls, depth + 1)
+    elif set(node) == {"update_matching"}:
+        row = node["update_matching"]
+        alias = _name(row["as"])
+        if alias in names:
+            raise C0LawError("pure update alias shadows a parameter")
+        _closed(row["collection"], names, calls, depth + 1)
+        _closed(row["matching"], names, calls, depth + 1)
+        for value in row["set"].values():
+            _closed(value, names | {alias}, calls, depth + 1)
     elif set(node) in (
         {"count_matching"},
         {"none_matching"},

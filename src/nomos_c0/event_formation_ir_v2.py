@@ -35,7 +35,10 @@ class EventFormationRule:
             or not self.result_entry
             or type(self.trigger_entry) is not str
             or not self.trigger_entry
-            or self.result_entry == self.trigger_entry
+            or (
+                self.result_entry == self.trigger_entry
+                and self.trigger_kind is FormationTriggerKind.EVENT
+            )
             or type(self.result_sort) is not EventSortRef
             or type(self.trigger_kind) is not FormationTriggerKind
             or type(self.mechanism) is not FormationMechanism

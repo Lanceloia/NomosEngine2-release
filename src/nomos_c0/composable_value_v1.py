@@ -2828,8 +2828,9 @@ class C0ValueProgram:
         ports = self._admission_ports
         try:
             result = {
-                name: _eval(source["outputs"][name], context, env, ports)
-                for name in self._admission_outputs
+                name: _eval(expression, context, env, ports)
+                for name, expression in source["outputs"].items()
+                if name in self._admission_outputs
             }
             if any(
                 not _value_matches(value, ports.outputs[name]) for name, value in result.items()

@@ -79,9 +79,21 @@ class C0ProgramIR:
             self.event_formations.__post_init__()
         except IRValidationError as error:
             raise C0LawError("Program Event formation declaration is invalid") from error
-        entries = {item.symbol: item for item in self.world.transitions}
+        entries = {(item.formation, item.symbol): item for item in self.world.transitions}
+        rules = {rule.result_entry: rule for rule in self.event_formations.rules}
         for rule in self.event_formations.rules:
-            result, trigger = entries.get(rule.result_entry), entries.get(rule.trigger_entry)
+            result_kind = (
+                "due" if rule.mechanism is FormationMechanism.DUE else "after_occurrence"
+            )
+            trigger_kind = (
+                "submit"
+                if rule.trigger_kind is FormationTriggerKind.ACTION
+                else "due"
+                if rules[rule.trigger_entry].mechanism is FormationMechanism.DUE
+                else "after_occurrence"
+            )
+            result = entries.get((result_kind, rule.result_entry))
+            trigger = entries.get((trigger_kind, rule.trigger_entry))
             if (
                 result is None
                 or trigger is None

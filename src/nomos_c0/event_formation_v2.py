@@ -145,7 +145,20 @@ def bind_event_formations(
     if type(semantic) is not EventFormationProgram:
         raise C0LawError("ontology binding needs a checked Event formation program")
 
-    by_name = {entry.name: entry for entry in entries}
+    by_kind = {}
+    for entry in entries:
+        kind = (
+            "action"
+            if entry.family is K0OccurrenceFamily.ACTION
+            else "causal"
+            if entry.causal_law is not None
+            else "due"
+        )
+        key = kind, entry.name
+        if key in by_kind:
+            raise C0LawError("formation entries alias within one occurrence namespace")
+        by_kind[key] = entry
+    rules = {rule.result_entry: rule for rule in semantic.rules}
     specs = {spec.key: spec for spec in profile.source_specs}
     laws = {law.key: law for law in profile.causal_laws}
     event_types: dict[K0EventTypeKey, set[K0SourceSpecKey]] = {}
@@ -154,7 +167,13 @@ def bind_event_formations(
     ports = []
     selected_laws: dict[K0SourceSpecKey, set[K0CausalLawKey]] = {}
     for rule in semantic.rules:
-        result, trigger = by_name.get(rule.result_entry), by_name.get(rule.trigger_entry)
+        trigger_kind = (
+            "action"
+            if rule.trigger_kind is FormationTriggerKind.ACTION
+            else rules[rule.trigger_entry].mechanism.value
+        )
+        result = by_kind.get((rule.mechanism.value, rule.result_entry))
+        trigger = by_kind.get((trigger_kind, rule.trigger_entry))
         if (
             result is None
             or trigger is None
@@ -170,7 +189,6 @@ def bind_event_formations(
             or result_spec.occurrence_family is not K0OccurrenceFamily.EVENT
             or result_spec.event_type != result.event_type
             or trigger_spec.event_type != trigger.event_type
-            or len(result_spec.contribution_owners) != 1
         ):
             raise C0LawError("ontology rule cannot bind the final K0 source")
         if rule.mechanism is FormationMechanism.CAUSAL:
@@ -207,7 +225,6 @@ def bind_event_formations(
                 rule.result_entry,
                 result.source.value,
                 result.event_type.value,
-                result_spec.contribution_owners[0].value,
                 rule.trigger_entry,
                 trigger.source.value,
                 trigger.event_type.value,

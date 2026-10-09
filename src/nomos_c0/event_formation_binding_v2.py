@@ -21,7 +21,6 @@ class EventFormationPort:
     result_entry: str
     result_source: str
     result_event_type: str
-    result_owner: str
     trigger_entry: str
     trigger_source: str
     trigger_event_type: str

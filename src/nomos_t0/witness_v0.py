@@ -8,7 +8,7 @@ from typing import Literal
 
 from nomos_kernel._settlement_outcome_abi import K0NotAdmitted, K0SettlementDefect
 
-from nomos_c0.author_contract_v1 import C0BindingError
+from nomos_c0.author_contract_v1 import C0BindingError, C0ControlBudgetExceeded
 from nomos_c0.program_runtime_v1 import (
     C0AuthorSnapshot,
     C0ControlCommand,
@@ -449,6 +449,10 @@ def check_witness(
             ):
                 return _report("run", "control_stalled", completed, index, "", session, goal)
             completed += 1
+        except C0ControlBudgetExceeded as error:
+            return _report(
+                "run", "control_budget_exhausted", completed, index, str(error), session, goal
+            )
         except C0BindingError as error:
             return _report("run", "control_rejected", completed, index, str(error), session, goal)
         except K0SettlementDefect as error:

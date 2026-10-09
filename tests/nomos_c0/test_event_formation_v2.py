@@ -205,7 +205,7 @@ def test_due_binding_rejects_wrong_final_profile_scheduler() -> None:
         (lambda row: row["formations"][3].update(trigger="manifest"), "invalid"),
         (lambda row: row["formations"][0].update(trigger_kind="event"), "missing or unknown"),
         (lambda row: row["formations"][0].update(trigger="confirm"), "world formation"),
-        (lambda row: row["formations"][0].update(mechanism="causal"), "world formation"),
+        (lambda row: row["formations"][0].update(mechanism="causal"), "incompatible occurrence"),
         (lambda row: row["formations"][3].update(mechanism="due"), "invalid"),
     ),
 )
