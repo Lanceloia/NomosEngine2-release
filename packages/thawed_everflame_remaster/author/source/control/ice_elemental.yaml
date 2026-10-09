@@ -1,0 +1,100 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+actor_templates:
+  - kind: ice_elemental
+    entries: [elemental_advance, elemental_wait, elemental_observe, elemental_breath]
+    read: [actor.site, actor.known_destination, actor.current_movement_speed, actor.max_movement_speed, actor.cold_state, actor.vital.life, actor.last_move_ref, actor.last_wait_ref, actor.target_sighting, actor.target_sighting.origin, actor.target_sighting.site, actor.last_breath_roll, actor.last_breath_ref, actor.last_observe_origin, actor.last_observe_ref]
+    offers:
+      - entry: elemental_advance
+        label: Trample towards the locally known standing area
+        when: actor.cold_state != 'frozen' and actor.vital.life == 'alive' and actor.current_movement_speed > 0 and actor.site != actor.known_destination
+        payload: {}
+        availability:
+          ref: elemental_route
+          when:
+            all:
+              - {exactly_one: {collection: {ref: scene.paths}, as: road, where: "road.start == actor.site and road.end == actor.known_destination"}}
+              - call:
+                  ref: movement.ordinary_floor_passable
+                  args: {floors: {ref: scene.floors}, stairs: {ref: scene.stair_paths}, unclimbable_stairs: {ref: scene.unclimbable_stairs}, start: {ref: actor.site}, destination: {ref: actor.known_destination}}
+      - {entry: elemental_wait, label: Hold the current position, when: "actor.cold_state != 'frozen' and actor.vital.life == 'alive'", payload: {}}
+      - entry: elemental_observe
+        label: Look for a nearby adventurer
+        when: "actor.cold_state != 'frozen' and actor.vital.life == 'alive'"
+        payload: {}
+        for_each_participants: {subject: {fixed_actor: adventurer, private: true}}
+      - entry: elemental_breath
+        label: Release ice breath towards the observed area
+        when: "actor.vital.life == 'alive' and actor.cold_state != 'frozen' and actor.target_sighting is not None and actor.target_sighting.origin == actor.site"
+        payload: {area: {ref: actor.target_sighting.site}}
+        for_each_participants:
+          subject: {fixed_actor: "adventurer", private: true}
+          victim_captive_bear: {fixed_actor: "captive_bear", private: true}
+          victim_prison_bokold: {fixed_actor: "prison_bokold", private: true}
+          victim_prison_guard: {fixed_actor: "prison_guard", private: true}
+          victim_alpha: {fixed_actor: "alpha", private: true}
+          victim_tower_bear_one: {fixed_actor: "tower_bear_one", private: true}
+          victim_tower_bear_two: {fixed_actor: "tower_bear_two", private: true}
+          victim_icebar_bear_one: {fixed_actor: "icebar_bear_one", private: true}
+          victim_icebar_bear_two: {fixed_actor: "icebar_bear_two", private: true}
+          victim_wall_resident: {fixed_actor: "wall_resident", private: true}
+          victim_ritual_resident: {fixed_actor: "ritual_resident", private: true}
+          victim_prison_resident_one: {fixed_actor: "prison_resident_one", private: true}
+          victim_prison_resident_two: {fixed_actor: "prison_resident_two", private: true}
+          victim_huddled_one: {fixed_actor: "huddled_one", private: true}
+          victim_huddled_two: {fixed_actor: "huddled_two", private: true}
+          victim_bokold_one: {fixed_actor: "bokold_one", private: true}
+          victim_bokold_two: {fixed_actor: "bokold_two", private: true}
+          victim_arctic_fox_one: {fixed_actor: "arctic_fox_one", private: true}
+          victim_emma: {fixed_actor: emma, private: true}
+          victim_arctic_fox_two: {fixed_actor: "arctic_fox_two", private: true}
+          victim_arctic_fox_three: {fixed_actor: "arctic_fox_three", private: true}
+          victim_arctic_fox_four: {fixed_actor: "arctic_fox_four", private: true}
+          victim_hall_bokold_one: {fixed_actor: "hall_bokold_one", private: true}
+          victim_hall_bokold_two: {fixed_actor: "hall_bokold_two", private: true}
+          victim_hall_bokold_three: {fixed_actor: "hall_bokold_three", private: true}
+          victim_hall_bokold_four: {fixed_actor: "hall_bokold_four", private: true}
+          victim_hall_bokold_five: {fixed_actor: "hall_bokold_five", private: true}
+          victim_stable_bokold_one: {fixed_actor: "stable_bokold_one", private: true}
+          victim_stable_bokold_two: {fixed_actor: "stable_bokold_two", private: true}
+          victim_stable_bokold_three: {fixed_actor: "stable_bokold_three", private: true}
+          victim_stable_bokold_four: {fixed_actor: "stable_bokold_four", private: true}
+        availability:
+          ref: elemental_breath_aim
+          when:
+            all:
+              - actor.target_sighting is not None and actor.target_sighting.origin == actor.site and actor.target_sighting.site == payload.area
+              - subject.site == payload.area
+              - {exactly_one: {collection: {ref: scene.breath_zones}, as: zone, where: "zone.origin == actor.site and zone.aim == payload.area"}}
+    tempo: 100
+    eligible: "actor.cold_state != 'frozen' and actor.vital.life == 'alive'"
+    costs:
+      elemental_wait: 10000
+      elemental_observe: 10000
+      elemental_breath: 10000
+      elemental_advance:
+        call:
+          ref: movement.action_cost
+          args:
+            base_cost: 10000
+            maximum_speed: {ref: actor.max_movement_speed}
+            current_speed: {ref: actor.current_movement_speed}
+    first_debt: 10000
+    tie_priority: 6
+    controller:
+      mode: finite_appraisal
+      profile:
+        name: elemental-trample
+        seat: ice_elemental
+        fallback_entry: elemental_wait
+        tie_order: [elemental_breath, elemental_observe, elemental_advance, elemental_wait]
+        rules:
+          - {entry: elemental_breath, mode: score, value: 30}
+          - entry: elemental_observe
+            mode: score
+            value:
+              if:
+                when: "actor.last_observe_origin is None or actor.last_observe_origin != actor.site or (actor.target_sighting is not None and actor.target_sighting.site != actor.site)"
+                then: 20
+                else: 5
+          - {entry: elemental_advance, mode: score, value: 10}
+          - {entry: elemental_wait, mode: default}

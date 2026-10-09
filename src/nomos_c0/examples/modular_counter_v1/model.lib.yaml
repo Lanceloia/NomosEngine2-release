@@ -1,0 +1,77 @@
+schema: c0.nominal_lib.v1
+records:
+- name: Scene
+  fields:
+  - name: marker
+    type:
+      str:
+      - 1
+      - 64
+  - name: open_ref
+    type:
+      optional: occurrence_ref
+  - name: signal
+    type:
+      str:
+      - 1
+      - 64
+  invariant: state.marker != 'forbidden'
+- name: Actor
+  fields:
+  - name: name
+    type:
+      str:
+      - 1
+      - 64
+  - name: count
+    type:
+      int:
+      - 0
+      - 9223372036854775807
+  invariant: null
+- name: Attempt
+  fields:
+  - name: actor
+    type:
+      str:
+      - 1
+      - 64
+  - name: target
+    type:
+      str:
+      - 1
+      - 64
+  invariant: null
+- name: Envelope
+  fields:
+  - name: action
+    type: occurrence_ref
+  invariant: null
+owners:
+- symbol: scene
+  key: c0.graph.scene
+  version: counter-v1
+  state: Scene
+  identity_field: null
+  write: replace_one
+  seat_read:
+  - marker
+  - signal
+- symbol: actor_0
+  key: c0.graph.actor_0
+  version: counter-v1
+  state: Actor
+  identity_field: name
+  write: replace_one
+  seat_read:
+  - name
+  - count
+- symbol: actor_1
+  key: c0.graph.actor_1
+  version: counter-v1
+  state: Actor
+  identity_field: name
+  write: replace_one
+  seat_read:
+  - name
+  - count

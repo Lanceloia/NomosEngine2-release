@@ -1,0 +1,807 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+# Declarations preserve each participants authority and exact evidence.
+lawdefs:
+  - name: action.load_firelock
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - actor_active: actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+            - owned_firelock: item.form == 'firelock' and item.holder == actor.name
+            - held_source: torch.holder == actor.name
+        effects:
+          - loading:
+              transfer: {from: torch.charges, to: item.charges}
+              amount: 1
+              floor: 0
+              capacity: 1
+              mirror:
+                from: [actor.known_everflame_charges]
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+  - name: action.move_magic_custody
+    family: action
+    formals: {dropping: bool}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - actor_active: actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+            - current_custody:
+                if:
+                  when: {arg: dropping}
+                  then: item.holder == actor.name
+                  else: item.holder is None and item.released_ref is not None and item.rest_site == actor.site
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          holder: {if: {when: {arg: dropping}, then: null, else: {ref: actor.name}}}
+          rest_site: {ref: actor.site}
+          taken_ref: {if: {when: {arg: dropping}, then: {ref: item.taken_ref}, else: {ref: occurrence}}}
+          released_ref: {if: {when: {arg: dropping}, then: {ref: occurrence}, else: null}}
+  - name: action.focus_person_cold
+    family: action
+    formals:
+      damage: int
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+        - name: rolled
+          stage: effect
+          let:
+            die_roll:
+              seed:
+                ref: scene.die_seed
+              sides: 20
+        - name: damaged
+          stage: effect
+          let:
+            call:
+              ref: combat.contact_vital
+              args:
+                vital:
+                  ref: victim.vital
+                hit:
+                  le:
+                  - 10
+                  - ref: rolled
+                damage:
+                  arg: damage
+                frozen: victim.cold_state == 'frozen'
+                weak: false
+                basis:
+                  ref: occurrence
+        guard:
+          require:
+          - actor_active: actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - owned_mirror: mirror.holder == actor.name and mirror.form == 'focusing_mirror'
+          - actual_light: torch.holder == actor.name and torch.charges > 0
+          - observed_subject: actor.person_sighting is not None and actor.person_sighting.subject == payload.victim
+              and actor.person_sighting.site == actor.site
+          - current_target: victim.name == payload.victim and victim.name != actor.name and victim.site == actor.site
+              and victim.vital.life != 'dead'
+        outputs:
+          action:
+            ref: occurrence
+          last_action_ref:
+            ref: occurrence
+          casting_feedback:
+            &person_focus_feedback
+            record:
+              type: CastingFeedback
+              fields:
+                focus_roll:
+                  ref: rolled
+                branding:
+                  if:
+                    when: actor.casting_feedback is not None
+                    then:
+                      ref: actor.casting_feedback.branding
+                    else: null
+                fireball_roll:
+                  if:
+                    when: actor.casting_feedback is not None
+                    then:
+                      ref: actor.casting_feedback.fireball_roll
+                    else: null
+          next_seed:
+            die_next_seed:
+              ref: scene.die_seed
+          vital:
+            ref: damaged
+  - name: action.focus_person_bear
+    family: action
+    formals:
+      damage: int
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+        - name: rolled
+          stage: effect
+          let:
+            die_roll:
+              seed:
+                ref: scene.die_seed
+              sides: 20
+        - name: damaged
+          stage: effect
+          let:
+            call:
+              ref: combat.contact_vital
+              args:
+                vital:
+                  ref: victim.vital
+                hit:
+                  le:
+                  - 10
+                  - ref: rolled
+                damage:
+                  arg: damage
+                frozen: false
+                weak: true
+                basis:
+                  ref: occurrence
+        guard:
+          require:
+          - actor_active: actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - owned_mirror: mirror.holder == actor.name and mirror.form == 'focusing_mirror'
+          - actual_light: torch.holder == actor.name and torch.charges > 0
+          - observed_subject: actor.person_sighting is not None and actor.person_sighting.subject == payload.victim
+              and actor.person_sighting.site == actor.site
+          - current_target: victim.name == payload.victim and victim.name != actor.name and victim.site == actor.site
+              and victim.vital.life != 'dead'
+        outputs:
+          action:
+            ref: occurrence
+          last_action_ref:
+            ref: occurrence
+          casting_feedback:
+            *person_focus_feedback
+          next_seed:
+            die_next_seed:
+              ref: scene.die_seed
+          vital:
+            ref: damaged
+          awake: victim.awake and damaged.life == 'alive'
+  - name: action.focus_person_voice
+    family: action
+    formals:
+      damage: int
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+        - name: rolled
+          stage: effect
+          let:
+            die_roll:
+              seed:
+                ref: scene.die_seed
+              sides: 20
+        - name: damaged
+          stage: effect
+          let:
+            call:
+              ref: combat.contact_vital
+              args:
+                vital:
+                  ref: victim.vital
+                hit:
+                  le:
+                  - 10
+                  - ref: rolled
+                damage:
+                  arg: damage
+                frozen: false
+                weak: victim.name == 'captive_bear'
+                basis:
+                  ref: occurrence
+        guard:
+          require:
+          - actor_active: actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - owned_mirror: mirror.holder == actor.name and mirror.form == 'focusing_mirror'
+          - actual_light: torch.holder == actor.name and torch.charges > 0
+          - observed_subject: actor.person_sighting is not None and actor.person_sighting.subject == payload.victim
+              and actor.person_sighting.site == actor.site
+          - current_target: victim.name == payload.victim and victim.name != actor.name and victim.site == actor.site
+              and victim.vital.life != 'dead'
+        outputs:
+          action:
+            ref: occurrence
+          last_action_ref:
+            ref: occurrence
+          casting_feedback:
+            *person_focus_feedback
+          next_seed:
+            die_next_seed:
+              ref: scene.die_seed
+          vital:
+            ref: damaged
+          awake: victim.awake and damaged.life == 'alive'
+  - name: action.focus_elemental
+    family: action
+    formals: {damage: int}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+          - {name: rolled, stage: effect, let: {die_roll: {seed: {ref: scene.die_seed}, sides: 20}}}
+        guard:
+          require:
+            - actor_active: actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+            - owned_mirror: mirror.holder == actor.name and mirror.form == 'focusing_mirror'
+            - actual_light: torch.holder == actor.name and torch.charges > 0
+            - observed_subject: actor.elemental_sighting is not None and actor.elemental_sighting.subject == payload.victim and actor.elemental_sighting.site == actor.site
+            - current_target: victim.site == actor.site and victim.vital.life != 'dead'
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          casting_feedback:
+            record:
+              type: CastingFeedback
+              fields:
+                focus_roll: {ref: rolled}
+                branding:
+                  if:
+                    when: actor.casting_feedback is not None
+                    then: {ref: actor.casting_feedback.branding}
+                    else: null
+                fireball_roll:
+                  if:
+                    when: actor.casting_feedback is not None
+                    then: {ref: actor.casting_feedback.fireball_roll}
+                    else: null
+          next_seed: {die_next_seed: {ref: scene.die_seed}}
+          vital:
+            if:
+              when: {le: [10, {ref: rolled}]}
+              then:
+                call:
+                  ref: vital.damage
+                  args:
+                    vital: {ref: victim.vital}
+                    amount: {arg: damage}
+                    frozen: victim.cold_state == 'frozen'
+                    monitored: false
+                    basis: {ref: occurrence}
+              else: {ref: victim.vital}
+  - name: action.inspect_brands
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard: actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen' and item.form == 'branding_iron' and item.holder == actor.name
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          casting_feedback:
+            record:
+              type: CastingFeedback
+              fields:
+                focus_roll: {if: {when: "actor.casting_feedback is not None", then: {ref: actor.casting_feedback.focus_roll}, else: null}}
+                fireball_roll: {if: {when: "actor.casting_feedback is not None", then: {ref: actor.casting_feedback.fireball_roll}, else: null}}
+                branding:
+                  record:
+                    type: BrandKnowledge
+                    fields: {iron: {ref: payload.item}, marks: {ref: item.brands}, inspection: {ref: occurrence}, location: null}
+  - name: action.brand_person
+    family: action
+    formals: {damage: int}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+          - {name: hit, stage: effect, let: {le: [10, {die_roll: {seed: {ref: scene.die_seed}, sides: 20}}]}}
+        guard:
+          require:
+            - active: actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+            - actual_iron: item.form == 'branding_iron' and item.holder == actor.name
+            - observed_contact: actor.person_sighting is not None and actor.person_sighting.subject == payload.victim and actor.person_sighting.site == actor.site
+            - current_contact: victim.name == payload.victim and victim.name != actor.name and victim.site == actor.site and victim.vital.life != 'dead'
+            - finite_marks:
+                any:
+                  - {lt: [{count_matching: {collection: {ref: item.brands}, as: mark, where: true}}, 32]}
+                  - {exists: {collection: {ref: item.brands}, as: mark, where: mark.person == payload.victim}}
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          next_seed: {die_next_seed: {ref: scene.die_seed}}
+          vital:
+            if:
+              when: {ref: hit}
+              then: {call: {ref: combat.contact_vital, args: {vital: {ref: victim.vital}, hit: true, damage: {arg: damage}, frozen: "victim.cold_state == 'frozen'", weak: false, basis: {ref: occurrence}}}}
+              else: {ref: victim.vital}
+          brands:
+            if:
+              when:
+                all:
+                  - {ref: hit}
+                  - {none_matching: {collection: {ref: item.brands}, as: mark, where: mark.person == payload.victim}}
+              then:
+                append:
+                  - {ref: item.brands}
+                  - {record: {type: BrandMark, fields: {person: {ref: payload.victim}, elemental: null, contact: {ref: occurrence}}}}
+              else: {ref: item.brands}
+  - name: action.brand_elemental
+    family: action
+    formals: {damage: int}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+          - {name: hit, stage: effect, let: {le: [10, {die_roll: {seed: {ref: scene.die_seed}, sides: 20}}]}}
+        guard:
+          require:
+            - active: actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+            - actual_iron: item.form == 'branding_iron' and item.holder == actor.name
+            - observed_contact: actor.elemental_sighting is not None and actor.elemental_sighting.subject == payload.victim and actor.elemental_sighting.site == actor.site
+            - current_contact: victim.site == actor.site and victim.vital.life != 'dead'
+            - finite_marks:
+                any:
+                  - {lt: [{count_matching: {collection: {ref: item.brands}, as: mark, where: true}}, 32]}
+                  - {exists: {collection: {ref: item.brands}, as: mark, where: mark.elemental == payload.victim}}
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          next_seed: {die_next_seed: {ref: scene.die_seed}}
+          vital:
+            if:
+              when: {ref: hit}
+              then: {call: {ref: combat.contact_vital, args: {vital: {ref: victim.vital}, hit: true, damage: {arg: damage}, frozen: "victim.cold_state == 'frozen'", weak: false, basis: {ref: occurrence}}}}
+              else: {ref: victim.vital}
+          brands:
+            if:
+              when:
+                all:
+                  - {ref: hit}
+                  - {none_matching: {collection: {ref: item.brands}, as: mark, where: mark.elemental == payload.victim}}
+              then:
+                append:
+                  - {ref: item.brands}
+                  - {record: {type: BrandMark, fields: {person: null, elemental: {ref: payload.victim}, contact: {ref: occurrence}}}}
+              else: {ref: item.brands}
+  - name: action.locate_branded_elemental
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - active: actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+            - actual_iron: item.form == 'branding_iron' and item.holder == actor.name
+            - inspected_iron: actor.casting_feedback is not None and actor.casting_feedback.branding is not None and actor.casting_feedback.branding.iron == payload.item
+            - own_mark: {exactly_one: {collection: {ref: actor.casting_feedback.branding.marks}, as: mark, where: mark.elemental == payload.victim and mark.person is None and mark.contact == payload.contact}}
+            - actual_mark: {exactly_one: {collection: {ref: item.brands}, as: mark, where: mark.elemental == payload.victim and mark.person is None and mark.contact == payload.contact}}
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          casting_feedback:
+            record:
+              type: CastingFeedback
+              fields:
+                focus_roll: {ref: actor.casting_feedback.focus_roll}
+                fireball_roll: {ref: actor.casting_feedback.fireball_roll}
+                branding:
+                  record:
+                    type: BrandKnowledge
+                    fields:
+                      iron: {ref: payload.item}
+                      marks: {ref: actor.casting_feedback.branding.marks}
+                      inspection: {ref: actor.casting_feedback.branding.inspection}
+                      location:
+                        record:
+                          type: BrandLocation
+                          fields:
+                            mark: {record: {type: BrandMark, fields: {person: null, elemental: {ref: payload.victim}, contact: {ref: payload.contact}}}}
+                            site: {if: {when: "victim.vital.life != 'dead'", then: {ref: victim.site}, else: null}}
+                            observation: {ref: occurrence}
+  - name: action.strike_person
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+        - name: hit
+          stage: effect
+          let:
+            le:
+            - 10
+            - die_roll:
+                seed:
+                  ref: scene.die_seed
+                sides: 20
+        guard: actor.name == payload.actor and victim.name == payload.victim and actor.name != victim.name and actor.vital.life
+          == 'alive' and actor.cold_state != 'frozen' and actor.person_sighting is not None and actor.person_sighting.subject
+          == victim.name and actor.person_sighting.site == actor.site and victim.site == actor.site and victim.vital.life !=
+          'dead'
+        outputs:
+          action:
+            ref: occurrence
+          last_action_ref:
+            ref: occurrence
+          person_sighting: null
+          next_seed:
+            die_next_seed:
+              ref: scene.die_seed
+          vital:
+            if:
+              when:
+                ref: hit
+              then:
+                call:
+                  ref: vital.damage
+                  args:
+                    vital:
+                      ref: victim.vital
+                    amount: 1
+                    frozen:
+                      eq:
+                      - ref: victim.cold_state
+                      - const: frozen
+                    monitored:
+                      eq:
+                      - ref: victim.name
+                      - const: adventurer
+                    basis:
+                      ref: occurrence
+              else:
+                ref: victim.vital
+  - name: event.ritual_interrupted
+    family: direct_actor_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings: []
+        guard: actor.status == 'active' and scene.ritual_cue_stage == 'disrupted'
+        outputs:
+          status:
+            const: interrupted
+  - name: action.fox_sniff
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+        - {name: local_steps, stage: admission, let: {collect_matching: {collection: {ref: scene.scent_steps}, as: candidate, where: candidate.motion.start == actor.site, value: {ref: candidate}}}}
+        - {name: scent_windows, stage: admission, let: {collect_matching: {collection: {ref: scene.palace_event_draws}, as: draw, where: draw.kind == 2, value: {ref: draw.occurrence}}}}
+        - {name: step, stage: admission, let: {if: {when: {exactly_one: {collection: {ref: local_steps}, as: candidate, where: true}}, then: {tuple_at: {collection: {ref: local_steps}, index: 0}}, else: null}}}
+        - {name: window, stage: admission, let: {if: {when: {exactly_one: {collection: {ref: scent_windows}, as: draw, where: true}}, then: {tuple_at: {collection: {ref: scent_windows}, index: 0}}, else: null}}}
+        guard:
+          require:
+          - identity: actor.name == payload.actor
+          - active: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - actual_window_and_local_step: window is not None and step is not None
+          - not_already_smelled: actor.scent_sighting is None or (actor.scent_sighting is not None and actor.scent_sighting.step.deposited != step.deposited)
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          following_destination: {ref: step.motion.end}
+          following_ref: {ref: occurrence}
+          scent_sighting: {record: {type: ScentSighting, fields: {step: {ref: step}, observation: {ref: occurrence}, window: {ref: window}}}}
+  - name: action.request_tame
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all:
+          - actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - fox.name == payload.fox and fox.site == actor.site and fox.vital.life == 'alive' and fox.cold_state != 'frozen'
+            and actor.person_sighting is not None and actor.person_sighting.subject == fox.name and actor.person_sighting.site
+            == actor.site
+          - other_0.site != actor.site
+          - other_1.site != actor.site
+          - other_2.site != actor.site
+          - other_3.site != actor.site
+          - other_4.site != actor.site
+          - other_5.site != actor.site
+          - other_6.site != actor.site
+        outputs:
+          action:
+            ref: occurrence
+          last_action_ref:
+            ref: occurrence
+          pending_tamer:
+            ref: actor.name
+          tame_hearing_ref:
+            ref: occurrence
+  - name: action.accept_tame
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all:
+          - actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - actor.pending_tamer is not None and actor.tame_hearing_ref is not None and actor.tame_willingness == 1
+          - other_0.site != actor.site
+          - other_1.site != actor.site
+          - other_2.site != actor.site
+          - other_3.site != actor.site
+          - other_4.site != actor.site
+          - other_5.site != actor.site
+          - other_6.site != actor.site
+          - tamer.name == payload.tamer and tamer.name == actor.pending_tamer and tamer.site == actor.site
+        outputs:
+          action:
+            ref: occurrence
+          last_action_ref:
+            ref: occurrence
+          master:
+            ref: actor.pending_tamer
+          pending_tamer: null
+          following_destination: null
+          following_ref: null
+  - name: event.player_scent_deposited
+    family: direct_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+          - actual_player_motion: scene.actor_motion is not None and scene.actor_motion.action == trigger.occurrence and scene.actor_motion.name == 'adventurer'
+          - actual_departure: scene.actor_motion.start != scene.actor_motion.end
+          - landed: scene.actor_motion.end != 'endless_abyss'
+        outputs:
+          steps:
+            append:
+            - {collect_matching: {collection: {ref: scene.scent_steps}, as: old, where: old.motion.start != scene.actor_motion.start, value: {ref: old}}}
+            - record:
+                type: ScentStep
+                fields: {motion: {ref: scene.actor_motion}, deposited: {ref: occurrence}}
+  - name: event.fox_motion_seen
+    family: direct_actor_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings: []
+        guard: scene.actor_motion is not None and scene.actor_motion.action == trigger.occurrence and scene.actor_motion.name
+          == actor.master and scene.actor_motion.start == actor.site and scene.actor_motion.end != 'endless_abyss' and actor.vital.life
+          == 'alive' and actor.cold_state != 'frozen'
+        outputs:
+          destination:
+            ref: scene.actor_motion.end
+          basis:
+            ref: occurrence
+  - name: event.fox_cold
+    family: direct_actor_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings: []
+        guard: scene.cold_context is not None and scene.cold_context.pulse == trigger.occurrence
+        outputs:
+          current_movement_speed:
+            if:
+              when:
+                &fox_cold_failed
+                all:
+                - eq:
+                  - ref: actor.cold_state
+                  - const: mobile
+                - actor.vital.life != 'dead'
+                - not:
+                    eq:
+                    - ref: actor.site
+                    - const: palace_exit
+                - eq:
+                  - call:
+                      ref: everflame.covered_count
+                      args:
+                        coverage:
+                          ref: scene.coverage
+                        origin:
+                          ref: scene.cold_context.origin
+                        destination:
+                          ref: actor.site
+                        charges:
+                          ref: scene.cold_context.charges
+                  - const: 0
+                - lt:
+                  - add:
+                    - die_roll:
+                        seed:
+                          ref: actor.cold_seed
+                        sides:
+                          const: 20
+                    - ref: actor.cold_save_bonus
+                  - ref: scene.cold_dc
+              then:
+                if:
+                  when: actor.current_movement_speed <= actor.cold_loss_step
+                  then: 0
+                  else:
+                    sub:
+                    - ref: actor.current_movement_speed
+                    - ref: actor.cold_loss_step
+              else:
+                ref: actor.current_movement_speed
+          cold_state:
+            if:
+              when:
+                all:
+                - *fox_cold_failed
+                - le:
+                  - ref: actor.current_movement_speed
+                  - ref: actor.cold_loss_step
+              then:
+                const: frozen
+              else:
+                ref: actor.cold_state
+          cold_seed:
+            if:
+              when:
+                &fox_cold_exposed
+                all:
+                - eq:
+                  - ref: actor.cold_state
+                  - const: mobile
+                - actor.vital.life != 'dead'
+                - not:
+                    eq:
+                    - ref: actor.site
+                    - const: palace_exit
+                - eq:
+                  - call:
+                      ref: everflame.covered_count
+                      args:
+                        coverage:
+                          ref: scene.coverage
+                        origin:
+                          ref: scene.cold_context.origin
+                        destination:
+                          ref: actor.site
+                        charges:
+                          ref: scene.cold_context.charges
+                  - const: 0
+              then:
+                die_next_seed:
+                  ref: actor.cold_seed
+              else:
+                ref: actor.cold_seed
+          last_cold_roll:
+            if:
+              when:
+                *fox_cold_exposed
+              then:
+                die_roll:
+                  seed:
+                    ref: actor.cold_seed
+                  sides:
+                    const: 20
+              else:
+                ref: actor.last_cold_roll
+          last_cold_ref:
+            if:
+              when:
+                *fox_cold_exposed
+              then:
+                ref: occurrence
+              else:
+                ref: actor.last_cold_ref
+  - name: action.observe_foxes
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+        - name: seen_0
+          stage: effect
+          let:
+            collect_matching:
+              collection:
+                ref: actor.known_residents
+              as: old
+              where: old.name != 'arctic_fox_one' and old.name != 'arctic_fox_two' and old.name != 'arctic_fox_three' and old.name
+                != 'arctic_fox_four'
+              value:
+                ref: old
+        - name: seen_1
+          stage: effect
+          let:
+            if:
+              when: fox_0.site == actor.site
+              then:
+                append:
+                - ref: seen_0
+                - record:
+                    type: KnownResident
+                    fields:
+                      name:
+                        ref: fox_0.name
+                      site:
+                        ref: actor.site
+                      observation:
+                        ref: occurrence
+              else:
+                ref: seen_0
+        - name: seen_2
+          stage: effect
+          let:
+            if:
+              when: fox_1.site == actor.site
+              then:
+                append:
+                - ref: seen_1
+                - record:
+                    type: KnownResident
+                    fields:
+                      name:
+                        ref: fox_1.name
+                      site:
+                        ref: actor.site
+                      observation:
+                        ref: occurrence
+              else:
+                ref: seen_1
+        - name: seen_3
+          stage: effect
+          let:
+            if:
+              when: fox_2.site == actor.site
+              then:
+                append:
+                - ref: seen_2
+                - record:
+                    type: KnownResident
+                    fields:
+                      name:
+                        ref: fox_2.name
+                      site:
+                        ref: actor.site
+                      observation:
+                        ref: occurrence
+              else:
+                ref: seen_2
+        - name: seen_4
+          stage: effect
+          let:
+            if:
+              when: fox_3.site == actor.site
+              then:
+                append:
+                - ref: seen_3
+                - record:
+                    type: KnownResident
+                    fields:
+                      name:
+                        ref: fox_3.name
+                      site:
+                        ref: actor.site
+                      observation:
+                        ref: occurrence
+              else:
+                ref: seen_3
+        guard: actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+        outputs:
+          action:
+            ref: occurrence
+          last_action_ref:
+            ref: occurrence
+          known_residents:
+            ref: seen_4

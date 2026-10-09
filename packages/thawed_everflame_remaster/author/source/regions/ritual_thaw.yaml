@@ -1,0 +1,56 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+lawdefs:
+  - name: action.thaw
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - actor_matches: actor.name == payload.actor
+            - ritual_matches: ritual.id == payload.ritual
+            - resident_matches: ritual.target == victim.name
+            - ritual_not_completed: ritual.status != 'completed'
+            - torch_held: torch.holder == actor.name
+            - colocated: actor.site == victim.site
+            - frozen: victim.cold_state == 'frozen'
+            - living: victim.vital.life != 'dead'
+            - sighting_recorded: actor.sighting_ref is not None
+            - sighting_located: actor.sighting_site is not None
+            - sighting_current: actor.site == actor.sighting_site
+            - resident_known_here:
+                exists:
+                  collection: {ref: actor.known_residents}
+                  as: known
+                  where: known.name == victim.name and known.site == victim.site
+        effects:
+          - spend_charge:
+              debit: torch.charges
+              amount: 1
+              floor: 0
+              mirror: [actor.known_everflame_charges]
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          last_thawed: {ref: victim.name}
+          ritual_status: {const: interrupted}
+          cue_stage: {const: disrupted}
+          ritual_notice: {const: disrupted}
+          ritual_notice_ref: {ref: occurrence}
+          cold_state: {const: mobile}
+          vital: {call: {ref: vital.thaw, args: {vital: {ref: victim.vital}}}}
+          current_movement_speed: {ref: victim.max_movement_speed}
+          last_thaw_ref: {ref: occurrence}
+  - name: event.ritual_cue_observed
+    family: direct_actor_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings: []
+        guard: "actor.site == scene.ritual_cue_site and actor.vital.life == 'alive' and actor.cold_state != 'frozen'"
+        outputs:
+          ritual_notice: {ref: scene.ritual_cue_stage}
+          ritual_notice_ref: {ref: occurrence}

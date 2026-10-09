@@ -1,0 +1,9 @@
+schema: c0.owner_graph.assets.v1
+opening:
+  scene: {title: Participant binding probe}
+  maker: {name: maker, known: [{name: a}, {name: b}], enabled: false}
+  a: {name: a, known: [], enabled: false}
+  b: {name: b, known: [], enabled: false}
+opening_objects:
+  - {kind: tool, state: {label: one, ready: true, visible: true}}
+  - {kind: tool, state: {label: two, ready: true, visible: true}}

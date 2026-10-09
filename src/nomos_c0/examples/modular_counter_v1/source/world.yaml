@@ -1,0 +1,10 @@
+game_form:
+  mode: manual
+owners:
+- scene
+- actor_0
+- actor_1
+events: []
+offer_provider:
+  name: finite_value
+  version: '1'

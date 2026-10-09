@@ -1,0 +1,255 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+# Shared outputs preserve field-level permissions; holder-specific guards remain local.
+lawdefs:
+  - name: action.show_magic_alpha
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+          - actor_matches: actor.name == payload.actor and payload.holder == actor.name
+          - active: actor.awake and actor.vital.life == 'alive'
+          - selected_window: scene.magic_research is not None and scene.magic_research.selected is not None and scene.magic_research.selected.individual == payload.item
+          - actual_custody: item.holder == actor.name
+          - not_already_displayed: scene.magic_display is None or (scene.magic_display is not None and scene.magic_display.window != scene.magic_research.basis)
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          display:
+            record:
+              type: MagicDisplay
+              fields: {item: {ref: payload.item}, holder: {ref: actor.name}, site: {ref: actor.site}, window: {ref: scene.magic_research.basis}, action: {ref: occurrence}, custody_basis: {ref: item.taken_ref}}
+  - name: action.withdraw_magic_alpha
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard: actor.name == payload.actor and actor.awake and actor.vital.life == 'alive' and scene.magic_display is not None and scene.magic_display.holder == actor.name
+        outputs: {action: {ref: occurrence}, last_action_ref: {ref: occurrence}, display: null}
+  - name: action.show_magic
+    # Public noticing reveals only carrier identity; paid observation reads the form.
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+          - actor_matches: actor.name == payload.actor and payload.holder == actor.name
+          - active: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - selected_window: scene.magic_research is not None and scene.magic_research.selected is not None and scene.magic_research.selected.individual == payload.item
+          - actual_custody: item.holder == actor.name
+          - not_already_displayed: scene.magic_display is None or (scene.magic_display is not None and scene.magic_display.window != scene.magic_research.basis)
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          display:
+            record:
+              type: MagicDisplay
+              fields: {item: {ref: payload.item}, holder: {ref: actor.name}, site: {ref: actor.site}, window: {ref: scene.magic_research.basis}, action: {ref: occurrence}, custody_basis: {ref: item.taken_ref}}
+  - name: action.withdraw_magic
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard: actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen' and scene.magic_display is not None and scene.magic_display.holder == actor.name
+        outputs: {action: {ref: occurrence}, last_action_ref: {ref: occurrence}, display: null}
+  - name: action.observe_magic
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+          - actor_matches: actor.name == payload.actor
+          - active: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - actual_display: scene.magic_display is not None and scene.magic_research is not None and scene.magic_display.window == scene.magic_research.basis and scene.magic_display.item == payload.item
+          - current_holder: holder.name == payload.holder and scene.magic_display.holder == holder.name and item.holder == holder.name and holder.site == scene.magic_display.site and holder.site == actor.site and holder.vital.life == 'alive' and holder.cold_state != 'frozen' and item.taken_ref == scene.magic_display.custody_basis
+          - new_observation: actor.resources.study is None or (actor.resources.study is not None and actor.resources.study.window != scene.magic_display.window) or (actor.resources.study is not None and actor.resources.study.study is None and actor.resources.study.display != scene.magic_display.action)
+        outputs: &magic_observed_outputs
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          resources:
+            record:
+              type: ResourceObservations
+              fields:
+                display: {ref: actor.resources.display}
+                display_notice_ref: {ref: actor.resources.display_notice_ref}
+                chest: {ref: actor.resources.chest}
+                balloon: {ref: actor.resources.balloon}
+                power_origin: {ref: actor.resources.power_origin}
+                study: {record: {type: MagicStudySighting, fields: {item: {ref: payload.item}, form: {ref: item.form}, custody_basis: {ref: item.taken_ref}, window: {ref: scene.magic_display.window}, display: {ref: scene.magic_display.action}, observation: {ref: occurrence}, study: null}}}
+  - name: action.study_magic
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+          - actor_matches: actor.name == payload.actor
+          - active: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - actual_display: scene.magic_display is not None and scene.magic_research is not None and scene.magic_display.window == scene.magic_research.basis and scene.magic_display.item == payload.item
+          - current_holder: holder.name == payload.holder and scene.magic_display.holder == holder.name and item.holder == holder.name and holder.site == scene.magic_display.site and holder.site == actor.site and holder.vital.life == 'alive' and holder.cold_state != 'frozen' and item.taken_ref == scene.magic_display.custody_basis
+          - personally_observed: actor.resources.study is not None and actor.resources.study.item == payload.item and actor.resources.study.window == scene.magic_display.window and actor.resources.study.display == scene.magic_display.action and actor.resources.study.study is None
+        outputs: &magic_studied_outputs
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          resources:
+            record:
+              type: ResourceObservations
+              fields:
+                display: {ref: actor.resources.display}
+                display_notice_ref: {ref: actor.resources.display_notice_ref}
+                chest: {ref: actor.resources.chest}
+                balloon: {ref: actor.resources.balloon}
+                power_origin: {ref: actor.resources.power_origin}
+                study: {record: {type: MagicStudySighting, fields: {item: {ref: actor.resources.study.item}, form: {ref: actor.resources.study.form}, custody_basis: {ref: actor.resources.study.custody_basis}, window: {ref: actor.resources.study.window}, display: {ref: actor.resources.study.display}, observation: {ref: actor.resources.study.observation}, study: {ref: occurrence}}}}
+  - name: action.observe_alpha_magic
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+          - actor_matches: actor.name == payload.actor
+          - active: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - actual_display: scene.magic_display is not None and scene.magic_research is not None and scene.magic_display.window == scene.magic_research.basis and scene.magic_display.item == payload.item
+          - current_holder: holder.name == payload.holder and scene.magic_display.holder == holder.name and item.holder == holder.name and holder.site == scene.magic_display.site and holder.site == actor.site and holder.vital.life == 'alive' and holder.awake and item.taken_ref == scene.magic_display.custody_basis
+          - new_observation: actor.resources.study is None or (actor.resources.study is not None and actor.resources.study.window != scene.magic_display.window) or (actor.resources.study is not None and actor.resources.study.study is None and actor.resources.study.display != scene.magic_display.action)
+        outputs: *magic_observed_outputs
+  - name: action.study_alpha_magic
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+          - actor_matches: actor.name == payload.actor
+          - active: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - actual_display: scene.magic_display is not None and scene.magic_research is not None and scene.magic_display.window == scene.magic_research.basis and scene.magic_display.item == payload.item
+          - current_holder: holder.name == payload.holder and scene.magic_display.holder == holder.name and item.holder == holder.name and holder.site == scene.magic_display.site and holder.site == actor.site and holder.vital.life == 'alive' and holder.awake and item.taken_ref == scene.magic_display.custody_basis
+          - personally_observed: actor.resources.study is not None and actor.resources.study.item == payload.item and actor.resources.study.window == scene.magic_display.window and actor.resources.study.display == scene.magic_display.action and actor.resources.study.study is None
+        outputs: *magic_studied_outputs
+  - name: action.observe_my_magic
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+          - actor_matches: actor.name == payload.actor
+          - active: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - actual_display: scene.magic_display is not None and scene.magic_research is not None and scene.magic_display.window == scene.magic_research.basis and scene.magic_display.item == payload.item
+          - current_holder: actor.name == payload.holder and scene.magic_display.holder == actor.name and item.holder == actor.name and actor.site == scene.magic_display.site and actor.vital.life == 'alive' and actor.cold_state != 'frozen' and item.taken_ref == scene.magic_display.custody_basis
+          - new_observation: actor.resources.study is None or (actor.resources.study is not None and actor.resources.study.window != scene.magic_display.window) or (actor.resources.study is not None and actor.resources.study.study is None and actor.resources.study.display != scene.magic_display.action)
+        outputs: *magic_observed_outputs
+  - name: action.study_my_magic
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+          - actor_matches: actor.name == payload.actor
+          - active: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - actual_display: scene.magic_display is not None and scene.magic_research is not None and scene.magic_display.window == scene.magic_research.basis and scene.magic_display.item == payload.item
+          - current_holder: actor.name == payload.holder and scene.magic_display.holder == actor.name and item.holder == actor.name and actor.site == scene.magic_display.site and actor.vital.life == 'alive' and actor.cold_state != 'frozen' and item.taken_ref == scene.magic_display.custody_basis
+          - personally_observed: actor.resources.study is not None and actor.resources.study.item == payload.item and actor.resources.study.window == scene.magic_display.window and actor.resources.study.display == scene.magic_display.action and actor.resources.study.study is None
+        outputs: *magic_studied_outputs
+  - name: action.observe_ground_magic
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+          - actor_matches: actor.name == payload.actor
+          - active: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - selected_window: scene.magic_research is not None and scene.magic_research.selected is not None and scene.magic_research.selected.individual == payload.item
+          - actually_unheld_here: item.holder is None and item.rest_site == actor.site
+          - new_observation: actor.resources.study is None or (actor.resources.study is not None and actor.resources.study.window != scene.magic_research.basis) or (actor.resources.study is not None and actor.resources.study.study is None and (actor.resources.study.display is not None or actor.resources.study.custody_basis != item.released_ref))
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          resources:
+            record:
+              type: ResourceObservations
+              fields:
+                chest: {ref: actor.resources.chest}
+                balloon: {ref: actor.resources.balloon}
+                power_origin: {ref: actor.resources.power_origin}
+                display: {ref: actor.resources.display}
+                display_notice_ref: {ref: actor.resources.display_notice_ref}
+                study: {record: {type: MagicStudySighting, fields: {item: {ref: payload.item}, form: {ref: item.form}, window: {ref: scene.magic_research.basis}, display: null, custody_basis: {ref: item.released_ref}, observation: {ref: occurrence}, study: null}}}
+  - name: action.study_ground_magic
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+          - actor_matches: actor.name == payload.actor
+          - active: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - selected_window: scene.magic_research is not None and scene.magic_research.selected is not None and scene.magic_research.selected.individual == payload.item
+          - actually_unheld_here: item.holder is None and item.rest_site == actor.site
+          - personally_observed: actor.resources.study is not None and actor.resources.study.item == payload.item and actor.resources.study.window == scene.magic_research.basis and actor.resources.study.display is None and actor.resources.study.custody_basis == item.released_ref and actor.resources.study.study is None
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          resources:
+            record:
+              type: ResourceObservations
+              fields:
+                chest: {ref: actor.resources.chest}
+                balloon: {ref: actor.resources.balloon}
+                power_origin: {ref: actor.resources.power_origin}
+                display: {ref: actor.resources.display}
+                display_notice_ref: {ref: actor.resources.display_notice_ref}
+                study: {record: {type: MagicStudySighting, fields: {item: {ref: actor.resources.study.item}, form: {ref: actor.resources.study.form}, window: {ref: actor.resources.study.window}, display: null, custody_basis: {ref: actor.resources.study.custody_basis}, observation: {ref: actor.resources.study.observation}, study: {ref: occurrence}}}}
+  - name: event.magic_display_seen
+    family: direct_actor_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings: []
+        guard: scene.magic_display is not None and scene.magic_display.action == trigger.occurrence and scene.magic_display.site == actor.site and actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+        outputs:
+          known_residents:
+            append:
+            - {collect_matching: {collection: {ref: actor.known_residents}, as: known, where: "known.name != scene.magic_display.holder", value: {ref: known}}}
+            - {record: {type: KnownResident, fields: {name: {ref: scene.magic_display.holder}, site: {ref: actor.site}, observation: {ref: occurrence}}}}
+          resources:
+            record:
+              type: ResourceObservations
+              fields:
+                chest: {ref: actor.resources.chest}
+                balloon: {ref: actor.resources.balloon}
+                power_origin: {ref: actor.resources.power_origin}
+                study: {ref: actor.resources.study}
+                display: {ref: scene.magic_display}
+                display_notice_ref: {ref: occurrence}

@@ -1,0 +1,340 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+# Arrival knowledge is shared; each actor retains its own movement eligibility.
+lawdefs:
+- name: action.mobile_move
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        require:
+        - unboarded_actor:
+            call:
+              ref: transport.unboarded
+              args:
+                seats: {ref: scene.balloon_seats}
+                person: {ref: actor.name}
+        - identity: actor.name == payload.actor
+        - awake: actor.awake and actor.current_movement_speed > 0
+        - floor_open:
+            call:
+              ref: movement.ordinary_floor_passable
+              args:
+                floors: {ref: scene.floors}
+                stairs: {ref: scene.stair_paths}
+                unclimbable_stairs: {ref: scene.unclimbable_stairs}
+                start: {ref: actor.site}
+                destination: {ref: payload.destination}
+        - real_edge:
+            call: {ref: movement.has_unique_path, args: {paths: {ref: scene.paths},
+              start: {ref: actor.site}, end: {ref: payload.destination}, cost: {ref: payload.base_move_cost}}}
+        - known_edge:
+            call: {ref: movement.has_unique_path, args: {paths: {ref: actor.known_paths},
+              start: {ref: actor.site}, end: {ref: payload.destination}, cost: {ref: payload.base_move_cost}}}
+      outputs:
+        action: {ref: occurrence}
+        actor_motion:
+          record:
+            type: ActorMotion
+            fields:
+              name: {ref: actor.name}
+              start: {ref: actor.site}
+              end: {ref: payload.destination}
+              action: {ref: occurrence}
+        site: {ref: payload.destination}
+        known_sites:
+          call:
+            ref: movement.remember_site
+            args:
+              known_sites: {ref: actor.known_sites}
+              destination: {ref: payload.destination}
+        last_action_ref: {ref: occurrence}
+- name: action.mobile_pass_door
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        require:
+        - unboarded_actor:
+            call:
+              ref: transport.unboarded
+              args:
+                seats: {ref: scene.balloon_seats}
+                person: {ref: actor.name}
+        - identity: actor.name == payload.actor
+        - awake: actor.awake and actor.current_movement_speed > 0
+        - usable: not door.frozen and door.opened
+        - here: actor.site == door.front or actor.site == door.back
+        - opposite: (actor.site == door.front and payload.destination == door.back) or (actor.site ==
+            door.back and payload.destination == door.front)
+        - cost: payload.base_move_cost == door.base_move_cost
+        - real_front:
+            {call: {ref: movement.has_declared_site, args: {sites: {ref: scene.sites}, site: {ref: door.front}}}}
+        - real_back:
+            {call: {ref: movement.has_declared_site, args: {sites: {ref: scene.sites}, site: {ref: door.back}}}}
+        - floor_open:
+            call:
+              ref: movement.ordinary_floor_passable
+              args:
+                floors: {ref: scene.floors}
+                stairs: {ref: scene.stair_paths}
+                unclimbable_stairs: {ref: scene.unclimbable_stairs}
+                start: {ref: actor.site}
+                destination: {ref: payload.destination}
+      outputs:
+        action: {ref: occurrence}
+        actor_motion:
+          record:
+            type: ActorMotion
+            fields:
+              name: {ref: actor.name}
+              start: {ref: actor.site}
+              end: {ref: payload.destination}
+              action: {ref: occurrence}
+        site: {ref: payload.destination}
+        known_sites:
+          call:
+            ref: movement.remember_site
+            args:
+              known_sites: {ref: actor.known_sites}
+              destination: {ref: payload.destination}
+        last_action_ref: {ref: occurrence}
+- name: action.queen_move
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        require:
+        - unboarded_actor:
+            call:
+              ref: transport.unboarded
+              args:
+                seats: {ref: scene.balloon_seats}
+                person: {ref: actor.name}
+        - identity: actor.name == payload.actor
+        - active: actor.vital.life == 'alive' and actor.cold_state != 'frozen' and actor.current_movement_speed
+            > 0
+        - floor_open:
+            call:
+              ref: movement.ordinary_floor_passable
+              args:
+                floors: {ref: scene.floors}
+                stairs: {ref: scene.stair_paths}
+                unclimbable_stairs: {ref: scene.unclimbable_stairs}
+                start: {ref: actor.site}
+                destination: {ref: payload.destination}
+        - real_edge:
+            call: {ref: movement.has_unique_path, args: {paths: {ref: scene.paths},
+              start: {ref: actor.site}, end: {ref: payload.destination}, cost: {ref: payload.base_move_cost}}}
+        - known_edge:
+            call: {ref: movement.has_unique_path, args: {paths: {ref: actor.known_paths},
+              start: {ref: actor.site}, end: {ref: payload.destination}, cost: {ref: payload.base_move_cost}}}
+      outputs:
+        action: {ref: occurrence}
+        actor_motion:
+          record:
+            type: ActorMotion
+            fields:
+              name: {ref: actor.name}
+              start: {ref: actor.site}
+              end: {ref: payload.destination}
+              action: {ref: occurrence}
+        site: {ref: payload.destination}
+        known_sites:
+          call:
+            ref: movement.remember_site
+            args:
+              known_sites: {ref: actor.known_sites}
+              destination: {ref: payload.destination}
+        last_action_ref: {ref: occurrence}
+- name: action.move
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        all:
+        - call:
+            ref: transport.unboarded
+            args:
+              seats: {ref: scene.balloon_seats}
+              person: {ref: actor.name}
+        - call:
+            ref: movement.ordinary_floor_passable
+            args:
+              floors: {ref: scene.floors}
+              stairs: {ref: scene.stair_paths}
+              unclimbable_stairs: {ref: scene.unclimbable_stairs}
+              start: {ref: actor.site}
+              destination: {ref: payload.destination}
+        - actor.name == payload.actor
+        - 0 < actor.current_movement_speed
+        - call: {ref: movement.has_path, args: {paths: {ref: scene.paths},
+            start: {ref: actor.site}, end: {ref: payload.destination}, cost: {ref: payload.base_move_cost}}}
+        - call: {ref: movement.has_path, args: {paths: {ref: actor.known_paths},
+            start: {ref: actor.site}, end: {ref: payload.destination}, cost: {ref: payload.base_move_cost}}}
+      outputs:
+        action: {ref: occurrence}
+        site: {ref: payload.destination}
+        known_sites:
+          call:
+            ref: movement.remember_site
+            args:
+              known_sites: {ref: actor.known_sites}
+              destination: {ref: payload.destination}
+        known_residents:
+          if:
+            when:
+              all:
+              - payload.destination == scene.notice_site
+              - none_matching:
+                  collection: actor.known_residents
+                  as: known
+                  where: known.name == scene.notice_subject
+            then:
+              append:
+              - {ref: actor.known_residents}
+              - record:
+                  type: KnownResident
+                  fields:
+                    name: {ref: scene.notice_subject}
+                    site: {ref: scene.notice_site}
+                    observation: {ref: occurrence}
+            else: {ref: actor.known_residents}
+        sighting_ref:
+          if:
+            when: payload.destination == scene.notice_site
+            then: {ref: occurrence}
+            else: {ref: actor.sighting_ref}
+        sighting_site:
+          if:
+            when: payload.destination == scene.notice_site
+            then: {ref: payload.destination}
+            else: {ref: actor.sighting_site}
+        last_action_ref: {ref: occurrence}
+        actor_motion:
+          record:
+            type: ActorMotion
+            fields:
+              name: {ref: actor.name}
+              start: {ref: actor.site}
+              end: {ref: payload.destination}
+              action: {ref: occurrence}
+- name: action.fox_move
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        all:
+        - call:
+            ref: transport.unboarded
+            args:
+              seats: {ref: scene.balloon_seats}
+              person: {ref: actor.name}
+        - call:
+            ref: movement.ordinary_floor_passable
+            args:
+              floors: {ref: scene.floors}
+              stairs: {ref: scene.stair_paths}
+              unclimbable_stairs: {ref: scene.unclimbable_stairs}
+              start: {ref: actor.site}
+              destination: {ref: payload.destination}
+        - actor.name == payload.actor
+        - 0 < actor.current_movement_speed
+        - call: {ref: movement.has_path, args: {paths: {ref: scene.paths},
+            start: {ref: actor.site}, end: {ref: payload.destination}, cost: {ref: payload.base_move_cost}}}
+        - call: {ref: movement.has_path, args: {paths: {ref: actor.known_paths},
+            start: {ref: actor.site}, end: {ref: payload.destination}, cost: {ref: payload.base_move_cost}}}
+      outputs:
+        action: {ref: occurrence}
+        site: {ref: payload.destination}
+        known_sites:
+          call:
+            ref: movement.remember_site
+            args:
+              known_sites: {ref: actor.known_sites}
+              destination: {ref: payload.destination}
+        known_residents:
+          if:
+            when:
+              all:
+              - payload.destination == scene.notice_site
+              - none_matching:
+                  collection: actor.known_residents
+                  as: known
+                  where: known.name == scene.notice_subject
+            then:
+              append:
+              - {ref: actor.known_residents}
+              - record:
+                  type: KnownResident
+                  fields:
+                    name: {ref: scene.notice_subject}
+                    site: {ref: scene.notice_site}
+                    observation: {ref: occurrence}
+            else: {ref: actor.known_residents}
+        sighting_ref:
+          if:
+            when: payload.destination == scene.notice_site
+            then: {ref: occurrence}
+            else: {ref: actor.sighting_ref}
+        sighting_site:
+          if:
+            when: payload.destination == scene.notice_site
+            then: {ref: payload.destination}
+            else: {ref: actor.sighting_site}
+        last_action_ref: {ref: occurrence}
+- name: action.fox_pass_door
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        all:
+        - call:
+            ref: transport.unboarded
+            args:
+              seats: {ref: scene.balloon_seats}
+              person: {ref: actor.name}
+        - call:
+            ref: movement.ordinary_floor_passable
+            args:
+              floors: {ref: scene.floors}
+              stairs: {ref: scene.stair_paths}
+              unclimbable_stairs: {ref: scene.unclimbable_stairs}
+              start: {ref: actor.site}
+              destination: {ref: payload.destination}
+        - all:
+          - actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - actor.site == door.front or actor.site == door.back
+          - call: {ref: movement.has_declared_site, args: {sites: {ref: scene.sites}, site: {ref: door.front}}}
+          - call: {ref: movement.has_declared_site, args: {sites: {ref: scene.sites}, site: {ref: door.back}}}
+        - door.opened and not door.frozen and actor.current_movement_speed > 0
+        - (actor.site == door.front and payload.destination == door.back) or (actor.site == door.back
+          and payload.destination == door.front)
+        - payload.base_move_cost == door.base_move_cost
+      outputs:
+        action: {ref: occurrence}
+        last_action_ref: {ref: occurrence}
+        site: {ref: payload.destination}
+        known_sites:
+          call:
+            ref: movement.remember_site
+            args:
+              known_sites: {ref: actor.known_sites}
+              destination: {ref: payload.destination}

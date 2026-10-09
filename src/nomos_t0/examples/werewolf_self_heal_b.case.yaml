@@ -1,0 +1,24 @@
+# Verification input, not a world Source or an NPC policy.
+schema: t0.case.v0
+max_steps: 10
+schedule: [A, B, C, D, E, F, A, C, D, B]
+controllers:
+  A:
+    - {if_offer: {label: Vote for C}, select: {label: Vote for C}}
+    - {if_offer: {label: Skip inspection}, select: {label: Skip inspection}}
+  B:
+    - {if_view: {b.own_role: witch}, if_offer: {label: Vote for C}, select: {label: Vote for C}}
+    - {if_offer: {label: Save victim}, select: {label: Save victim}}
+  C:
+    - {if_offer: {label: Vote for C}, select: {label: Vote for C}}
+    - {if_offer: {label: Attack B}, select: {label: Attack B}}
+  D:
+    - {if_offer: {label: Vote for A}, select: {label: Vote for A}}
+    - {if_offer: {label: Attack B}, select: {label: Attack B}}
+  E:
+    - {if_offer: {label: Vote for A}, select: {label: Vote for A}}
+  F:
+    - {if_offer: {label: Vote for A}, select: {label: Vote for A}}
+goal:
+  all:
+    - {owner_field_eq: {owner: b, path: [healing_available], value: false}}

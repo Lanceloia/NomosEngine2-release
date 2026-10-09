@@ -1,0 +1,96 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+lawdefs:
+- name: event.cold_pulse
+  family: due_event
+  formals: {}
+  body:
+    law:
+      schema: c0.value.v1
+      bindings:
+      - name: holder_site
+        stage: effect
+        let:
+          call:
+            ref: everflame.holder_site
+            args:
+              holder: {ref: torch.holder}
+              adventurer_site: {ref: adventurer.site}
+              ritual_site: {ref: ritual_resident.site}
+              huddled_one_site: {ref: huddled_one.site}
+              huddled_two_site: {ref: huddled_two.site}
+              wall_resident_site: {ref: wall_resident.site}
+              bokold_one_site: {ref: bokold_one.site}
+              bokold_two_site: {ref: bokold_two.site}
+              prison_resident_one_site: {ref: prison_resident_one.site}
+              prison_resident_two_site: {ref: prison_resident_two.site}
+      guard:
+        require:
+        - cold_subject: due.subject == 'cold'
+      outputs:
+        cold_context:
+          record:
+            type: ColdContext
+            fields:
+              pulse: {ref: occurrence}
+              origin: {ref: holder_site}
+              charges: {ref: torch.charges}
+      output_families:
+      - name: cold_people
+        owners: [adventurer, ritual_resident, huddled_one, huddled_two, wall_resident,
+          prison_resident_one, prison_resident_two, emma]
+        as: person
+        bindings:
+          covered:
+            call:
+              ref: everflame.covered_count
+              args:
+                coverage: {ref: scene.coverage}
+                origin: {ref: holder_site}
+                destination: {ref: person.site}
+                charges: {ref: torch.charges}
+          exposed: >-
+            person.cold_state == 'mobile' and person.vital.life != 'dead'
+            and person.site != 'palace_exit' and covered == 0
+          roll:
+            if:
+              when: exposed
+              then: {die_roll: {seed: {ref: person.cold_seed}, sides: 20}}
+              else: null
+          failed: exposed and roll is not None and roll + person.cold_save_bonus < scene.cold_dc
+          newly_frozen: failed and person.current_movement_speed <= person.cold_loss_step
+          speed_after: >-
+            0 if newly_frozen else person.current_movement_speed - person.cold_loss_step
+            if failed else person.current_movement_speed
+        fields:
+          current_movement_speed: speed_after
+          cold_state: "'frozen' if newly_frozen else person.cold_state"
+          vital:
+            call:
+              ref: rescue.cold_step
+              args:
+                vital: {ref: person.vital}
+                frozen_after: newly_frozen or person.cold_state == 'frozen'
+                monitored: person.name == 'adventurer'
+                basis: {ref: occurrence}
+          cold_seed:
+            if:
+              when: exposed
+              then: {die_next_seed: {ref: person.cold_seed}}
+              else: person.cold_seed
+          last_cold_roll: roll if exposed else person.last_cold_roll
+          last_cold_ref: occurrence if exposed else person.last_cold_ref
+due_events:
+- name: cold_pulse
+  template: cold_pulse
+  form: due
+  source_key: m1.v2.cold.pulse
+  event_type: m1.v2.cold.pulse.event
+  when_false: defect
+  law:
+    ref: event.cold_pulse
+    args: {}
+  actor_domain_effects:
+  - name: elementals
+    law:
+      ref: event.elemental_cold
+      args: {}

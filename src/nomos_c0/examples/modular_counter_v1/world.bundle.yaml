@@ -1,0 +1,9 @@
+schema: c0.source_bundle.v1
+source_schema: c0.owner_graph.v6
+lib: model.lib.yaml
+ports: capabilities.ports.yaml
+assets: opening.assets.yaml
+source_parts:
+- source/world.yaml
+- source/rules.yaml
+- source/abilities.yaml

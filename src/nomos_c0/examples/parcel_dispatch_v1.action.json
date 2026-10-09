@@ -1,0 +1,67 @@
+{
+  "schema": "c0.action.value.v1",
+  "source_key": "c0.example.parcel_dispatch.v1",
+  "event_type": "c0.example.parcel_dispatched.v1",
+  "value": {
+    "schema": "c0.value.v1",
+    "bindings": [
+      {
+        "name": "item",
+        "collection": "scene.parcels",
+        "key": "id",
+        "value": {"ref": "payload.item_id"},
+        "required": true
+      },
+      {
+        "name": "route",
+        "collection": "scene.routes",
+        "key": "recipient",
+        "value": {"ref": "payload.target"},
+        "required": false
+      }
+    ],
+    "guard": {"all": [
+      {"eq": [{"ref": "actor.heard"}, {"const": true}]},
+      {"eq": [{"ref": "item.status"}, {"const": "home"}]},
+      {"not_none": {"ref": "route"}},
+      {"le": [
+        {"add": [{"ref": "scene.tick"}, {"ref": "route.travel"}]},
+        {"ref": "scene.deadline"}
+      ]},
+      {"none_matching": {
+        "collection": {"ref": "actor.receipts"},
+        "as": "prior",
+        "where": {"eq": [
+          {"ref": "prior.item_id"}, {"ref": "payload.item_id"}
+        ]}
+      }}
+    ]},
+    "outputs": {
+      "parcels": {"replace_unique": {
+        "collection": {"ref": "scene.parcels"},
+        "old": {"ref": "item"},
+        "new": {"copy": {
+          "from": {"ref": "item"},
+          "changes": {
+            "status": {"const": "preparing"},
+            "recipient": {"ref": "route.recipient"},
+            "dispatch": {"ref": "occurrence"}
+          }
+        }},
+        "key": "id"
+      }},
+      "receipts": {"append": [
+        {"ref": "actor.receipts"},
+        {"record": {
+          "type": "Receipt",
+          "fields": {
+            "item_id": {"ref": "payload.item_id"},
+            "action": {"ref": "occurrence"}
+          }
+        }}
+      ]},
+      "action": {"ref": "occurrence"},
+      "content": {"ref": "route.content"}
+    }
+  }
+}

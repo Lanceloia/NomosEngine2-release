@@ -1,0 +1,187 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+lawdefs:
+- name: action.balloon_push
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        all:
+        - &empty_balloon_push
+          all:
+          - actor.name == 'adventurer' and actor.vital.life == 'alive' and actor.vital.endurance > 0 and
+            actor.cold_state != 'frozen' and actor.current_movement_speed > 0
+          - actor.site == balloon.site and not balloon.inflated and not balloon.tied
+          - call: {ref: transport.vehicle_unoccupied, args: {seats: {ref: scene.balloon_seats}, vehicle: {ref: payload.balloon}}}
+          - (bear_one.site != actor.site or bear_one.occupancy != 'blocking_balloon' or bear_one.vital.life
+            == 'dead') and (bear_two.site != actor.site or bear_two.occupancy != 'blocking_balloon' or
+            bear_two.vital.life == 'dead')
+          - call: {ref: movement.has_declared_site, args: {sites: {ref: scene.sites}, site: {ref: actor.site}}}
+        - call: {ref: movement.has_declared_site, args: {sites: {ref: scene.sites}, site: {ref: payload.destination}}}
+        - call:
+            ref: transport.unboarded
+            args:
+              seats: {ref: scene.balloon_seats}
+              person: {ref: actor.name}
+        - call:
+            ref: movement.ordinary_floor_passable
+            args:
+              floors: {ref: scene.floors}
+              stairs: {ref: scene.stair_paths}
+              unclimbable_stairs: {ref: scene.unclimbable_stairs}
+              start: {ref: actor.site}
+              destination: {ref: payload.destination}
+        - actor.name == payload.actor
+        - 0 < actor.current_movement_speed
+        - call: {ref: movement.has_path, args: {paths: {ref: scene.paths},
+            start: {ref: actor.site}, end: {ref: payload.destination}, cost: {ref: payload.base_move_cost}}}
+        - call: {ref: movement.has_path, args: {paths: {ref: actor.known_paths},
+            start: {ref: actor.site}, end: {ref: payload.destination}, cost: {ref: payload.base_move_cost}}}
+      outputs:
+        balloon_site: {ref: payload.destination}
+        balloon_action: {ref: occurrence}
+        action: {ref: occurrence}
+        site: {ref: payload.destination}
+        known_sites:
+          call:
+            ref: movement.remember_site
+            args:
+              known_sites: {ref: actor.known_sites}
+              destination: {ref: payload.destination}
+        known_residents:
+          if:
+            when:
+              all:
+              - payload.destination == scene.notice_site
+              - none_matching:
+                  collection: actor.known_residents
+                  as: known
+                  where: known.name == scene.notice_subject
+            then:
+              append:
+              - {ref: actor.known_residents}
+              - record:
+                  type: KnownResident
+                  fields:
+                    name: {ref: scene.notice_subject}
+                    site: {ref: scene.notice_site}
+                    observation: {ref: occurrence}
+            else: {ref: actor.known_residents}
+        sighting_ref:
+          if:
+            when: payload.destination == scene.notice_site
+            then: {ref: occurrence}
+            else: {ref: actor.sighting_ref}
+        sighting_site:
+          if:
+            when: payload.destination == scene.notice_site
+            then: {ref: payload.destination}
+            else: {ref: actor.sighting_site}
+        last_action_ref: {ref: occurrence}
+        actor_motion:
+          record:
+            type: ActorMotion
+            fields:
+              name: {ref: actor.name}
+              start: {ref: actor.site}
+              end: {ref: payload.destination}
+              action: {ref: occurrence}
+- name: action.balloon_push_door
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        all:
+        - *empty_balloon_push
+        - call: {ref: movement.has_declared_site, args: {sites: {ref: scene.sites}, site: {ref: payload.destination}}}
+        - call:
+            ref: transport.unboarded
+            args:
+              seats: {ref: scene.balloon_seats}
+              person: {ref: actor.name}
+        - all:
+          - actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - actor.site == door.front or actor.site == door.back
+          - call: {ref: movement.has_declared_site, args: {sites: {ref: scene.sites}, site: {ref: door.front}}}
+          - call: {ref: movement.has_declared_site, args: {sites: {ref: scene.sites}, site: {ref: door.back}}}
+        - door.opened and not door.frozen and actor.current_movement_speed > 0
+        - (actor.site == door.front and payload.destination == door.back) or (actor.site == door.back
+          and payload.destination == door.front)
+        - payload.base_move_cost == door.base_move_cost
+        - call:
+            ref: movement.ordinary_floor_passable
+            args:
+              floors: {ref: scene.floors}
+              stairs: {ref: scene.stair_paths}
+              unclimbable_stairs: {ref: scene.unclimbable_stairs}
+              start: {ref: actor.site}
+              destination: {ref: payload.destination}
+      outputs:
+        balloon_site: {ref: payload.destination}
+        balloon_action: {ref: occurrence}
+        action: {ref: occurrence}
+        last_action_ref: {ref: occurrence}
+        site: {ref: payload.destination}
+        known_sites:
+          call:
+            ref: movement.remember_site
+            args:
+              known_sites: {ref: actor.known_sites}
+              destination: {ref: payload.destination}
+        actor_motion:
+          record:
+            type: ActorMotion
+            fields:
+              name: {ref: actor.name}
+              start: {ref: actor.site}
+              end: {ref: payload.destination}
+              action: {ref: occurrence}
+- name: action.balloon_push_bridge
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        all:
+        - *empty_balloon_push
+        - call: {ref: movement.has_declared_site, args: {sites: {ref: scene.sites}, site: {ref: payload.destination}}}
+        - call:
+            ref: transport.unboarded
+            args:
+              seats: {ref: scene.balloon_seats}
+              person: {ref: actor.name}
+        - actor.name == payload.actor and actor.cold_state != 'frozen' and actor.vital.life == 'alive'
+          and actor.current_movement_speed > 0
+        - call: {ref: movement.has_unique_path, args: {paths: {ref: scene.bridge_paths},
+            start: {ref: actor.site}, end: {ref: payload.destination}, cost: {ref: payload.base_move_cost}}}
+        - call: {ref: movement.has_unique_path, args: {paths: {ref: actor.known_bridge_paths},
+            start: {ref: actor.site}, end: {ref: payload.destination}, cost: {ref: payload.base_move_cost}}}
+        - call: {ref: movement.endpoints_clear_of_frozen_floor, args: {floors: {ref: scene.floors},
+            start: {ref: actor.site}, end: {ref: payload.destination}}}
+      outputs:
+        balloon_site: {ref: payload.destination}
+        balloon_action: {ref: occurrence}
+        action: {ref: occurrence}
+        last_action_ref: {ref: occurrence}
+        site: {ref: payload.destination}
+        known_sites:
+          call:
+            ref: movement.remember_site
+            args:
+              known_sites: {ref: actor.known_sites}
+              destination: {ref: payload.destination}
+        actor_motion:
+          record:
+            type: ActorMotion
+            fields:
+              name: {ref: actor.name}
+              start: {ref: actor.site}
+              end: {ref: payload.destination}
+              action: {ref: occurrence}

@@ -1,0 +1,397 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+offer_sets:
+- name: resident_care
+  offers:
+  - entry_family: care_person
+    label: Care for the observed incapacitated person
+    when:
+      all:
+      - not_none: {ref: actor.person_sighting}
+      - not:
+          eq:
+          - {ref: actor.person_sighting.subject}
+          - {ref: actor.name}
+      - eq:
+        - {ref: actor.person_sighting.site}
+        - {ref: actor.site}
+      - eq:
+        - {ref: actor.person_sighting.life}
+        - {const: incapacitated}
+      - not:
+          eq:
+          - {ref: actor.person_sighting.cold_state}
+          - {const: frozen}
+    payload:
+      victim: {ref: actor.person_sighting.subject}
+- name: resident_mobility_and_rescue
+  offers:
+  - entry_family: bridge_slow
+    for_each:
+      collection: {ref: actor.known_bridge_paths}
+      as: path
+    label:
+      prefix: 'Slowly cross the narrow bridge toward '
+      value: {ref: path.end}
+    when:
+      eq:
+      - {ref: path.start}
+      - {ref: actor.site}
+    availability:
+      ref: bridge_local_ground
+      when:
+        all:
+        - any:
+          - not:
+              eq:
+              - {ref: actor.rescue_state}
+              - {const: safe}
+          - eq:
+            - {ref: payload.destination}
+            - {const: palace_exit}
+        - none_matching:
+            collection: {ref: scene.floors}
+            as: floor
+            where:
+              all:
+              - {ref: floor.frozen}
+              - exists:
+                  collection: {ref: floor.sites}
+                  as: site
+                  where:
+                    any:
+                    - eq:
+                      - {ref: site}
+                      - {ref: actor.site}
+                    - eq:
+                      - {ref: site}
+                      - {ref: payload.destination}
+    payload:
+      destination: {ref: path.end}
+      base_move_cost: {ref: path.base_move_cost}
+  - entry_family: accept_torch
+    fixed_participants: true
+    label: Accept the offered Everflame
+    when:
+      all:
+      - not_none: {ref: actor.heard_torch_offer}
+      - not_none: {ref: actor.torch_offer_hearing_ref}
+      - eq:
+        - {ref: actor.heard_torch_offer.recipient}
+        - {ref: actor.name}
+      - eq:
+        - {ref: actor.heard_torch_offer.site}
+        - {ref: actor.site}
+      - not:
+          eq:
+          - {ref: actor.accepted_torch_offer_ref}
+          - {ref: actor.heard_torch_offer.utterance}
+    payload: {}
+  - entry_family: observe_person
+    label: Observe the person who offered the torch
+    when:
+      all:
+      - not_none: {ref: actor.heard_torch_offer}
+      - not_none: {ref: actor.torch_accept_ref}
+      - eq:
+        - {ref: actor.site}
+        - {ref: actor.heard_torch_offer.destination}
+      - if:
+          when:
+            not_none: {ref: actor.person_sighting}
+          then:
+            not:
+              eq:
+              - {ref: actor.person_sighting.cold_state}
+              - {const: frozen}
+          else: {const: true}
+    payload:
+      victim:
+        if:
+          when:
+            not_none: {ref: actor.heard_torch_offer}
+          then: {ref: actor.heard_torch_offer.speaker}
+          else: {const: unavailable}
+  - entry_family: thaw_person
+    fixed_participants: true
+    label: Thaw the observed person
+    when:
+      all:
+      - not_none: {ref: actor.person_sighting}
+      - eq:
+        - {ref: actor.person_sighting.subject}
+        - {const: adventurer}
+      - eq:
+        - {ref: actor.person_sighting.site}
+        - {ref: actor.site}
+      - eq:
+        - {ref: actor.person_sighting.cold_state}
+        - {const: frozen}
+      - not:
+          eq:
+          - {ref: actor.person_sighting.life}
+          - {const: dead}
+      - not_none: {ref: actor.known_everflame_charges}
+      - lt:
+        - {const: 0}
+        - {ref: actor.known_everflame_charges}
+    payload: {}
+  - entry_family: cross_ice
+    for_each:
+      collection: {ref: actor.known_crossings}
+      as: crossing
+    label:
+      prefix: 'Cross ice toward '
+      value: {ref: crossing.intended}
+    when:
+      eq:
+      - {ref: crossing.start}
+      - {ref: actor.site}
+    payload:
+      crossing: {ref: crossing.key}
+      base_move_cost: {ref: crossing.base_move_cost}
+  - entry_family: move
+    for_each:
+      collection: {ref: actor.known_paths}
+      as: path
+    label:
+      prefix: 'Move to '
+      value: {ref: path.end}
+    when:
+      all:
+      - eq:
+        - {ref: path.start}
+        - {ref: actor.site}
+      - none_matching:
+          collection: {ref: actor.known_crossings}
+          as: crossing
+          where:
+            all:
+            - eq:
+              - {ref: crossing.start}
+              - {ref: path.start}
+            - eq:
+              - {ref: crossing.intended}
+              - {ref: path.end}
+            - eq:
+              - {ref: crossing.base_move_cost}
+              - {ref: path.base_move_cost}
+    availability:
+      ref: person_local_ground
+      when:
+        call:
+          ref: movement.ordinary_floor_passable
+          args:
+            floors: {ref: scene.floors}
+            stairs: {ref: scene.stair_paths}
+            unclimbable_stairs: {ref: scene.unclimbable_stairs}
+            start: {ref: actor.site}
+            destination: {ref: payload.destination}
+    payload:
+      destination: {ref: path.end}
+      base_move_cost: {ref: path.base_move_cost}
+  - entry_family: wait
+    label: Wait
+    when: {const: true}
+    payload: {}
+  - entry_family: carry_move
+    for_each:
+      collection: {ref: actor.known_paths}
+      as: path
+    label:
+      prefix: 'Carry observed patient toward '
+      value: {ref: path.end}
+    when:
+      all:
+      - all:
+        - not_none: {ref: actor.person_sighting}
+        - eq:
+          - {ref: actor.person_sighting.site}
+          - {ref: actor.site}
+        - not:
+            eq:
+            - {ref: actor.person_sighting.subject}
+            - {ref: actor.name}
+        - any:
+          - eq:
+            - {ref: actor.person_sighting.cold_state}
+            - {const: frozen}
+          - eq:
+            - {ref: actor.person_sighting.life}
+            - {const: incapacitated}
+      - eq:
+        - {ref: path.start}
+        - {ref: actor.site}
+    payload:
+      victim: {ref: actor.person_sighting.subject}
+      ritual: {const: ritual}
+      base_move_cost: {ref: path.base_move_cost}
+      destination: {ref: path.end}
+  - entry_family: carry_bridge_slow
+    for_each:
+      collection: {ref: actor.known_bridge_paths}
+      as: path
+    label:
+      prefix: 'Carry observed patient toward '
+      value: {ref: path.end}
+    when:
+      all:
+      - all:
+        - not_none: {ref: actor.person_sighting}
+        - eq:
+          - {ref: actor.person_sighting.site}
+          - {ref: actor.site}
+        - not:
+            eq:
+            - {ref: actor.person_sighting.subject}
+            - {ref: actor.name}
+        - any:
+          - eq:
+            - {ref: actor.person_sighting.cold_state}
+            - {const: frozen}
+          - eq:
+            - {ref: actor.person_sighting.life}
+            - {const: incapacitated}
+      - eq:
+        - {ref: path.start}
+        - {ref: actor.site}
+    payload:
+      victim: {ref: actor.person_sighting.subject}
+      ritual: {const: ritual}
+      base_move_cost: {ref: path.base_move_cost}
+      destination: {ref: path.end}
+  - entry_family: carry_cross_ice
+    for_each:
+      collection: {ref: actor.known_crossings}
+      as: path
+    label:
+      prefix: 'Carry observed patient toward '
+      value: {ref: path.intended}
+    when:
+      all:
+      - all:
+        - not_none: {ref: actor.person_sighting}
+        - eq:
+          - {ref: actor.person_sighting.site}
+          - {ref: actor.site}
+        - not:
+            eq:
+            - {ref: actor.person_sighting.subject}
+            - {ref: actor.name}
+        - any:
+          - eq:
+            - {ref: actor.person_sighting.cold_state}
+            - {const: frozen}
+          - eq:
+            - {ref: actor.person_sighting.life}
+            - {const: incapacitated}
+      - eq:
+        - {ref: path.start}
+        - {ref: actor.site}
+    payload:
+      victim: {ref: actor.person_sighting.subject}
+      ritual: {const: ritual}
+      base_move_cost: {ref: path.base_move_cost}
+      crossing: {ref: path.key}
+  - entry_family: carry_pass_door
+    for_each_participants:
+      door:
+        kind: passage_door
+        read: [door.front, door.back, door.base_move_cost]
+      victim:
+        collection: {ref: actor.known_residents}
+        as: patient
+      ritual: {fixed_actor: ritual}
+    label:
+    - {const: Carry observed patient through this door}
+    visible_when:
+      all:
+      - all:
+        - not_none: {ref: actor.person_sighting}
+        - eq:
+          - {ref: actor.person_sighting.site}
+          - {ref: actor.site}
+        - not:
+            eq:
+            - {ref: actor.person_sighting.subject}
+            - {ref: actor.name}
+        - any:
+          - eq:
+            - {ref: actor.person_sighting.cold_state}
+            - {const: frozen}
+          - eq:
+            - {ref: actor.person_sighting.life}
+            - {const: incapacitated}
+      - eq:
+        - {ref: patient.name}
+        - {ref: actor.person_sighting.subject}
+    when:
+      any:
+      - eq:
+        - {ref: actor.site}
+        - {ref: door.front}
+      - eq:
+        - {ref: actor.site}
+        - {ref: door.back}
+    payload:
+      victim: {ref: patient.name}
+      ritual: {const: ritual}
+      door: {ref: door_ref}
+      base_move_cost: {ref: door.base_move_cost}
+      destination:
+        if:
+          when:
+            eq:
+            - {ref: actor.site}
+            - {ref: door.front}
+          then: {ref: door.back}
+          else: {ref: door.front}
+  - entry_family: strike_person
+    label: Strike the observed person
+    when:
+      all:
+      - not_none: {ref: actor.person_sighting}
+      - not:
+          eq:
+          - {ref: actor.person_sighting.subject}
+          - {ref: actor.name}
+      - eq:
+        - {ref: actor.person_sighting.site}
+        - {ref: actor.site}
+      - not:
+          eq:
+          - {ref: actor.person_sighting.life}
+          - {const: dead}
+    payload:
+      victim: {ref: actor.person_sighting.subject}
+  - entry_family: bridge_rush
+    for_each:
+      collection: {ref: actor.known_bridge_paths}
+      as: path
+    label:
+      prefix: 'Rush across the bridge toward '
+      value: {ref: path.end}
+    when:
+      eq:
+      - {ref: path.start}
+      - {ref: actor.site}
+    payload:
+      destination: {ref: path.end}
+      base_move_cost: {ref: path.base_move_cost}
+  - entry_family: inspect_patient
+    for_each:
+      collection: {ref: actor.known_residents}
+      as: person
+    label:
+      prefix: 'Inspect the known local patient: '
+      value: {ref: person.name}
+    when:
+      all:
+      - eq:
+        - {ref: person.site}
+        - {ref: actor.site}
+      - not:
+          eq:
+          - {ref: person.name}
+          - {ref: actor.name}
+    payload:
+      victim: {ref: person.name}

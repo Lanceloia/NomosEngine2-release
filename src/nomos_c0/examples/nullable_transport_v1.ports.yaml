@@ -1,0 +1,58 @@
+schema: c0.graph_ports.v1
+scene_owner: scene
+offer_provider: {name: finite_value, version: '1', limit: 8}
+actions:
+  - symbol: move
+    actor: pilot
+    payload: MoveAttempt
+    envelope: Envelope
+    actor_identity_field: name
+    payload_actor_field: actor
+    participants:
+      - {name: container, selector: individual, state: Container, payload_field: container, write: true}
+      - {name: rider, selector: closed_domain, state: Rider, payload_field: rider, write: true, nullable: true}
+    effects: {scene: {}, actor: {site: pilot_site}, container: {site: container_site}, rider: {site: rider_site}}
+    envelope_fields: {action: action}
+    schedule: null
+    value:
+      read: [actor.name, actor.site, container.site, container.passengers, rider, rider.site, payload.rider, payload.destination]
+      fields: {}
+      write_paths: [actor.site, container.site, rider.site]
+      construct: []
+      collections: {}
+  - symbol: board
+    actor: rider
+    payload: BoardAttempt
+    envelope: Envelope
+    actor_identity_field: name
+    payload_actor_field: actor
+    participants:
+      - {name: container, selector: individual, state: Container, payload_field: container, write: true}
+    effects: {scene: {}, actor: {}, container: {passengers: passengers}}
+    envelope_fields: {action: action}
+    schedule: null
+    value:
+      read: [actor.name, actor.site, container.site, container.passengers]
+      fields: {}
+      write_paths: [container.passengers]
+      construct: []
+      collections: {}
+  - symbol: leave
+    actor: rider
+    payload: BoardAttempt
+    envelope: Envelope
+    actor_identity_field: name
+    payload_actor_field: actor
+    participants:
+      - {name: container, selector: individual, state: Container, payload_field: container, write: true}
+    effects: {scene: {}, actor: {}, container: {passengers: passengers}}
+    envelope_fields: {action: action}
+    schedule: null
+    value:
+      read: [actor.name, actor.site, container.site, container.passengers]
+      fields: {}
+      write_paths: [container.passengers]
+      construct: []
+      collections: {}
+events: []
+due_events: []

@@ -1,0 +1,9 @@
+schema: c0.owner_graph.assets.v1
+opening:
+  scene: {title: Parameterized container transfer}
+  operator: {name: operator}
+opening_objects:
+  - {kind: container, state: {label: Bottle, holder: operator, visible: true, units: 2, capacity: 2, changed: null}}
+  - {kind: container, state: {label: Cup A, holder: operator, visible: true, units: 0, capacity: 1, changed: null}}
+  - {kind: container, state: {label: Cup B, holder: operator, visible: true, units: 0, capacity: 1, changed: null}}
+  - {kind: container, state: {label: Hidden vessel, holder: operator, visible: false, units: 0, capacity: 1, changed: null}}

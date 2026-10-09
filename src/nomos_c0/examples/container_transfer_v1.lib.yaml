@@ -1,0 +1,51 @@
+schema: c0.nominal_lib.v1
+records:
+  - name: TransferScene
+    fields: [{name: title, type: {str: [1, 64]}}]
+    invariant: null
+  - name: TransferPerson
+    fields: [{name: name, type: {str: [1, 32]}}]
+    invariant: null
+  - name: Container
+    fields:
+      - {name: label, type: {str: [1, 64]}}
+      - {name: holder, type: {str: [1, 32]}}
+      - {name: visible, type: bool}
+      - {name: units, type: {int: [0, 8]}}
+      - {name: capacity, type: {int: [1, 8]}}
+      - {name: changed, type: {optional: occurrence_ref}}
+    invariant: state.units <= state.capacity
+  - name: TransferAttempt
+    fields:
+      - {name: actor, type: {str: [1, 32]}}
+      - {name: origin, type: individual_ref}
+      - {name: destination, type: individual_ref}
+    invariant: null
+  - name: TransferEnvelope
+    fields: [{name: action, type: occurrence_ref}]
+    invariant: null
+owners:
+  - {symbol: scene, key: c0.transfer.scene, version: '1', state: TransferScene, identity_field: null, write: replace_one, seat_read: [title]}
+  - {symbol: operator, key: c0.transfer.operator, version: '1', state: TransferPerson, identity_field: name, write: replace_one, seat_read: [name]}
+object_kinds:
+  - {symbol: container, sort: EXAMPLE.CONTAINER@1, state: Container, version: '1', max_instances: 8}
+lawdefs:
+  - name: action.transfer
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - distinct: payload.origin != payload.destination
+            - permitted: origin.holder == actor.name and destination.holder == actor.name
+            - accessible: origin.visible and destination.visible
+            - quantity: origin.units > 0 and destination.units < destination.capacity
+        outputs:
+          action: {ref: occurrence}
+          origin_units: {sub: [{ref: origin.units}, {const: 1}]}
+          destination_units: {add: [{ref: destination.units}, {const: 1}]}
+          origin_changed: {ref: occurrence}
+          destination_changed: {ref: occurrence}

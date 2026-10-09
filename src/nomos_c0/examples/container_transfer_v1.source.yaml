@@ -1,0 +1,29 @@
+schema: c0.owner_graph.v6
+owners: [scene, operator]
+object_kinds: [{kind: container, sort: EXAMPLE.CONTAINER@1}]
+offer_provider: {name: finite_value, version: '1'}
+game_form: {mode: manual}
+actions:
+  - name: transfer
+    template: transfer
+    actor: operator
+    source_key: c0.transfer.one-unit
+    event_type: c0.transfer.one-unit.action
+    law: {ref: action.transfer, args: {}}
+    participants: {origin: {kind: container}, destination: {kind: container}}
+events: []
+lawdefs: []
+seats:
+  - name: operator
+    actor: operator
+    entries: [transfer]
+    read: [operator.name]
+    offers:
+      - entry: transfer
+        for_each_participants:
+          origin: {kind: container, read: [origin.label, origin.holder, origin.visible, origin.units]}
+          destination: {kind: container, read: [destination.label, destination.holder, destination.visible, destination.units, destination.capacity]}
+        label: [{const: 'Pour from '}, {ref: origin.label}, {const: ' into '}, {ref: destination.label}]
+        visible_when: origin.visible and destination.visible and origin.holder == actor.name and destination.holder == actor.name
+        when: origin_ref != destination_ref and origin.units > 0 and destination.units < destination.capacity
+        payload: {origin: {ref: origin_ref}, destination: {ref: destination_ref}}

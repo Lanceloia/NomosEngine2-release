@@ -1,0 +1,112 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+opening_constructions:
+  - kind: magic_item
+    using: prepare_magic_item
+    seed: magic_items
+    bindings:
+      - {name: choice, draw: {const: 4}}
+      - name: form
+        value:
+          if:
+            when: {eq: [{ref: choice}, {const: 1}]}
+            then: {const: firelock}
+            else:
+              if:
+                when: {eq: [{ref: choice}, {const: 2}]}
+                then: {const: focusing_mirror}
+                else:
+                  if:
+                    when: {eq: [{ref: choice}, {const: 3}]}
+                    then: {const: branding_iron}
+                    else: {const: skyhook}
+    outputs:
+      form: {ref: form}
+      label:
+        if:
+          when: {eq: [{ref: choice}, {const: 1}]}
+          then: {const: Firelock}
+          else:
+            if:
+              when: {eq: [{ref: choice}, {const: 2}]}
+              then: {const: Focusing mirror}
+              else:
+                if:
+                  when: {eq: [{ref: choice}, {const: 3}]}
+                  then: {const: Branding iron}
+                  else: {const: Skyhook}
+owners:
+- emma
+- alpha
+- tower_bear_one
+- tower_bear_two
+- scene
+- ritual
+- adventurer
+- ritual_resident
+- huddled_one
+- huddled_two
+- wall_resident
+- bokold_one
+- bokold_two
+- icebar_bear_one
+- icebar_bear_two
+- prison_guard
+- prison_resident_one
+- prison_resident_two
+- captive_bear
+- prison_bokold
+- arctic_fox_one
+- arctic_fox_two
+- arctic_fox_three
+- arctic_fox_four
+- hall_bokold_one
+- hall_bokold_two
+- hall_bokold_three
+- hall_bokold_four
+- hall_bokold_five
+- stable_bokold_one
+- stable_bokold_two
+- stable_bokold_three
+- stable_bokold_four
+actor_domains:
+  - {name: tower_bears, actor_state: TowerBear, owners: [alpha, tower_bear_one, tower_bear_two]}
+  - {name: tower_guards, actor_state: TowerBear, owners: [tower_bear_one, tower_bear_two]}
+  - {name: hall_bokolds, actor_state: Person, owners: [hall_bokold_one, hall_bokold_two, hall_bokold_three, hall_bokold_four, hall_bokold_five]}
+  - {name: caregivers, actor_state: Person, owners: [adventurer, ritual_resident, huddled_one, huddled_two, wall_resident, prison_resident_one, prison_resident_two]}
+  - {name: prison_voices, actor_state: PrisonVoice, owners: [captive_bear, prison_bokold]}
+  - {name: bar_bears, actor_state: BarBear, owners: [icebar_bear_one, icebar_bear_two]}
+  - {name: people, actor_state: Person, owners: [adventurer, ritual_resident, huddled_one, huddled_two, wall_resident, bokold_one, bokold_two, prison_resident_one, prison_resident_two]}
+  - {name: residents, actor_state: Person, owners: [ritual_resident, huddled_one, huddled_two, wall_resident, prison_resident_one, prison_resident_two]}
+  - {name: open_route_residents, actor_state: Person, owners: [ritual_resident, huddled_one, huddled_two]}
+  - {name: prison_residents, actor_state: Person, owners: [prison_resident_one, prison_resident_two]}
+  - {name: bokolds, actor_state: Person, owners: [bokold_one, bokold_two]}
+  - {name: bridge_walkers, actor_state: Person, owners: [adventurer, ritual_resident, huddled_one, huddled_two, wall_resident, prison_resident_one, prison_resident_two]}
+  - name: foxes
+    actor_state: Fox
+    owners:
+    - arctic_fox_one
+    - arctic_fox_two
+    - arctic_fox_three
+    - arctic_fox_four
+  - name: stable_bokolds
+    actor_state: Person
+    owners:
+    - stable_bokold_one
+    - stable_bokold_two
+    - stable_bokold_three
+    - stable_bokold_four
+object_kinds:
+  - {kind: reward_box, sort: M1.REWARD_BOX@1}
+  - {kind: balloon_power, sort: M1.BALLOON_POWER@1}
+  - {kind: balloon, sort: M1.BALLOON@1}
+  - {kind: elemental_charge, sort: M1.ELEMENTAL_CHARGE@1}
+  - {kind: charge_packet, sort: M1.CHARGE_PACKET@1}
+  - {kind: cell_bars, sort: M1.CELL_BARS@1}
+  - {kind: passage_door, sort: M1.PASSAGE_DOOR@1}
+  - {kind: drink_container, sort: M1.DRINK_CONTAINER@1}
+  - {kind: treasure_chest, sort: M1.TREASURE_CHEST@1}
+  - {kind: magic_item, sort: M1.MAGIC_ITEM@1}
+  - {kind: everflame, sort: M1.EVERFLAME@2}
+  - {kind: chandelier, sort: M1.CHANDELIER@2}
+  - {kind: reservoir, sort: M1.RESERVOIR@2}
+  - {kind: ice_wall, sort: M1.ICE_WALL@1}

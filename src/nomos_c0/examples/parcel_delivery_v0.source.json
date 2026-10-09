@@ -1,0 +1,214 @@
+{
+  "schema": "c0.owner_graph.v6",
+  "owners": ["scene", "sender", "receiver"],
+  "ontology": {
+    "schema": "c0.event_formation.v2",
+    "event_sorts": [
+      {"symbol": "arrival", "identity": "PARCEL.ARRIVAL@1"},
+      {"symbol": "departure", "identity": "PARCEL.DEPARTURE@1"},
+      {"symbol": "manifest", "identity": "PARCEL.MANIFEST@1"},
+      {"symbol": "notice", "identity": "PARCEL.NOTICE@1"}
+    ],
+    "formations": [
+      {"entry": "arrive", "sort": "arrival", "trigger": "dispatch", "trigger_kind": "action", "mechanism": "due"},
+      {"entry": "depart", "sort": "departure", "trigger": "dispatch", "trigger_kind": "action", "mechanism": "causal"},
+      {"entry": "manifest", "sort": "manifest", "trigger": "depart", "trigger_kind": "event", "mechanism": "causal", "trigger_sort": "departure"},
+      {"entry": "notice", "sort": "notice", "trigger": "depart", "trigger_kind": "event", "mechanism": "causal", "trigger_sort": "departure"}
+    ]
+  },
+  "offer_provider": {"name": "finite_value", "version": "1"},
+  "game_form": {
+    "mode": "event_jump_stop",
+    "seats": ["sender", "receiver"],
+    "end_at": 8,
+    "wake_at": []
+  },
+  "temporal": {
+    "mechanism": "ordered_due_microsteps",
+    "order": ["arrive"],
+    "max_pending": 1,
+    "advance_seats": ["sender", "receiver"]
+  },
+  "actions": [
+    {
+      "name": "dispatch", "template": "dispatch", "actor": "sender",
+      "source_key": "c0.parcel.dispatch", "event_type": "c0.parcel.dispatch.action",
+      "law": {"ref": "action.dispatch", "args": {}},
+      "schedule": {
+        "source": "c0.parcel.arrive.due"
+      }
+    },
+    {
+      "name": "confirm", "template": "confirm", "actor": "receiver",
+      "source_key": "c0.parcel.confirm", "event_type": "c0.parcel.confirm.action",
+      "law": {"ref": "action.confirm", "args": {}}
+    }
+  ],
+  "events": [
+    {
+      "name": "depart", "template": "depart",
+      "trigger_action": "dispatch",
+      "source_key": "c0.parcel.depart", "event_type": "c0.parcel.depart.event",
+      "causal_key": "c0.parcel.depart.causes",
+      "law": {"ref": "event.depart", "args": {}}
+    },
+    {
+      "name": "notice", "template": "notice",
+      "actor": "receiver", "trigger_event": "depart",
+      "source_key": "c0.parcel.notice", "event_type": "c0.parcel.notice.event",
+      "causal_key": "c0.parcel.notice.causes",
+      "law": {"ref": "event.notice", "args": {}}
+    },
+    {
+      "name": "manifest", "template": "manifest",
+      "trigger_event": "depart",
+      "source_key": "c0.parcel.manifest", "event_type": "c0.parcel.manifest.event",
+      "causal_key": "c0.parcel.manifest.causes",
+      "law": {"ref": "event.manifest", "args": {}}
+    }
+  ],
+  "due_events": [
+    {
+      "name": "arrive", "template": "arrive", "form": "due",
+      "source_key": "c0.parcel.arrive.due", "event_type": "c0.parcel.arrive.event",
+      "when_false": "defect", "law": {"ref": "event.arrive", "args": {}}
+    }
+  ],
+  "seats": [
+    {
+      "name": "sender", "actor": "sender", "entries": ["dispatch"],
+      "read": ["scene.parcel.id", "scene.parcel.destination", "scene.parcel.status",
+               "scene.signal", "sender.name", "sender.sent_ref"],
+      "offers": [{
+        "entry": "dispatch", "label": "Dispatch parcel",
+        "when": {"all": [
+          {"eq": [{"ref": "scene.parcel.status"}, {"const": "home"}]},
+          {"is_none": {"ref": "actor.sent_ref"}}
+        ]},
+        "payload": {
+          "item_id": {"ref": "scene.parcel.id"},
+          "destination": {"ref": "scene.parcel.destination"}
+        }
+      }]
+    },
+    {
+      "name": "receiver", "actor": "receiver", "entries": ["confirm"],
+      "read": ["scene.parcel.id", "scene.parcel.destination", "scene.parcel.status", "scene.parcel.arrival_ref",
+               "receiver.name", "receiver.notice", "receiver.receipt"],
+      "offers": [{
+        "entry": "confirm", "label": "Acknowledge delivery",
+        "when": {"all": [
+          {"eq": [{"ref": "scene.parcel.status"}, {"const": "arrived"}]},
+          {"not_none": {"ref": "actor.notice"}},
+          {"is_none": {"ref": "actor.receipt"}}
+        ]},
+        "payload": {
+          "item_id": {"ref": "scene.parcel.id"},
+          "destination": {"ref": "scene.parcel.destination"}
+        }
+      }]
+    }
+  ],
+  "lawdefs": [
+    {
+      "name": "action.dispatch", "family": "action", "formals": {},
+      "body": {"value": {
+        "schema": "c0.value.v1",
+        "bindings": [{
+          "name": "route", "collection": "scene.routes", "as": "candidate",
+          "where": {"eq": [
+            {"ref": "candidate.destination"}, {"ref": "payload.destination"}
+          ]},
+          "required": false
+        }],
+        "guard": {"all": [
+          {"eq": [{"ref": "payload.item_id"}, {"ref": "scene.parcel.id"}]},
+          {"eq": [{"ref": "payload.destination"}, {"ref": "scene.parcel.destination"}]},
+          {"eq": [{"ref": "scene.parcel.status"}, {"const": "home"}]},
+          {"is_none": {"ref": "actor.sent_ref"}},
+          {"not_none": {"ref": "route"}}
+        ]},
+        "outputs": {
+          "sent_ref": {"ref": "occurrence"},
+          "subject": {"ref": "payload.item_id"},
+          "delay": {"ref": "route.travel"},
+          "action": {"ref": "occurrence"}
+        }
+      }}
+    },
+    {
+      "name": "action.confirm", "family": "action", "formals": {},
+      "body": {"value": {
+        "schema": "c0.value.v1", "bindings": [],
+        "guard": {"all": [
+          {"eq": [{"ref": "payload.item_id"}, {"ref": "scene.parcel.id"}]},
+          {"eq": [{"ref": "payload.destination"}, {"ref": "scene.parcel.destination"}]},
+          {"eq": [{"ref": "scene.parcel.status"}, {"const": "arrived"}]},
+          {"not_none": {"ref": "scene.parcel.arrival_ref"}},
+          {"not_none": {"ref": "actor.notice"}},
+          {"is_none": {"ref": "actor.receipt"}}
+        ]},
+        "outputs": {
+          "receipt": {"record": {"type": "Receipt", "fields": {
+            "arrival": {"ref": "scene.parcel.arrival_ref"},
+            "action": {"ref": "occurrence"}
+          }}},
+          "action": {"ref": "occurrence"}
+        }
+      }}
+    },
+    {
+      "name": "event.depart", "family": "direct_event", "formals": {},
+      "body": {"law": {
+        "schema": "c0.value.v1", "bindings": [],
+        "guard": {"eq": [{"ref": "scene.parcel.status"}, {"const": "home"}]},
+        "outputs": {"parcel": {"copy": {
+          "from": {"ref": "scene.parcel"},
+          "changes": {
+            "status": {"const": "transit"},
+            "depart_ref": {"ref": "occurrence"}
+          }
+        }}}
+      }}
+    },
+    {
+      "name": "event.notice", "family": "direct_actor_event", "formals": {},
+      "body": {"law": {
+        "schema": "c0.value.v1", "bindings": [],
+        "guard": {"all": [
+          {"eq": [{"ref": "scene.parcel.status"}, {"const": "transit"}]},
+          {"is_none": {"ref": "actor.notice"}}
+        ]},
+        "outputs": {"notice": {"record": {"type": "Notice", "fields": {
+          "departure": {"ref": "trigger.occurrence"},
+          "notification": {"ref": "occurrence"}
+        }}}}
+      }}
+    },
+    {
+      "name": "event.manifest", "family": "direct_event", "formals": {},
+      "body": {"law": {
+        "schema": "c0.value.v1", "bindings": [],
+        "guard": {"eq": [{"ref": "scene.parcel.status"}, {"const": "transit"}]},
+        "outputs": {"signal": {"const": "manifested"}}
+      }}
+    },
+    {
+      "name": "event.arrive", "family": "due_event", "formals": {},
+      "body": {"law": {
+        "schema": "c0.value.v1", "bindings": [],
+        "guard": {"all": [
+          {"eq": [{"ref": "scene.parcel.id"}, {"ref": "due.subject"}]},
+          {"eq": [{"ref": "scene.parcel.status"}, {"const": "transit"}]}
+        ]},
+        "outputs": {"parcel": {"copy": {
+          "from": {"ref": "scene.parcel"},
+          "changes": {
+            "status": {"const": "arrived"},
+            "arrival_ref": {"ref": "occurrence"}
+          }
+        }}}
+      }}
+    }
+  ]
+}

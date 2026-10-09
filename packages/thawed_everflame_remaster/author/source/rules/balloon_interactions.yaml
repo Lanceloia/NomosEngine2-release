@@ -1,0 +1,260 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+lawdefs:
+- name: action.explain_balloon
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        all:
+        - actor.name == payload.actor and actor.vital.life == 'alive' and actor.vital.endurance > 0 and actor.cold_state != 'frozen'
+        - actor.site == 'tower_top' and actor.site == balloon.site
+        - exists: {collection: {ref: actor.known_residents}, as: known, where: known.name == 'emma' and known.site ==
+              actor.site}
+      outputs:
+        action: {ref: occurrence}
+        last_action_ref: {ref: occurrence}
+        explanation:
+          record:
+            type: BalloonExplanation
+            fields:
+              speaker: {ref: actor.name}
+              recipient: {const: emma}
+              site: {ref: actor.site}
+              balloon: {ref: payload.balloon}
+              destination: {const: tower_base}
+              utterance: {ref: occurrence}
+- name: event.queen_balloon_heard
+  family: direct_actor_event
+  formals: {}
+  body:
+    law:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        all:
+        - actor.attending and actor.vital.life == 'alive' and actor.vital.endurance > 0 and actor.cold_state != 'frozen'
+        - scene.balloon_explanation is not None
+        - scene.balloon_explanation.utterance == trigger.occurrence and scene.balloon_explanation.recipient == actor.name and scene.balloon_explanation.site == actor.site
+      outputs:
+        heard:
+          record:
+            type: HeardBalloonExplanation
+            fields:
+              speech: {ref: scene.balloon_explanation}
+              hearing: {ref: occurrence}
+- name: action.observe_balloon_power
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        require:
+        - active: "actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen'"
+        - local: actor.site == balloon.site
+        - accessible: "balloon.site != 'tower_base' or ((bear_one.site != balloon.site or bear_one.occupancy != 'blocking_balloon' or bear_one.vital.life == 'dead') and (bear_two.site != balloon.site or bear_two.occupancy != 'blocking_balloon' or bear_two.vital.life == 'dead'))"
+      outputs:
+        action: {ref: occurrence}
+        last_action_ref: {ref: occurrence}
+        resources:
+          record:
+            type: ResourceObservations
+            fields:
+              display: {ref: actor.resources.display}
+              display_notice_ref: {ref: actor.resources.display_notice_ref}
+              study: {ref: actor.resources.study}
+              chest: {ref: actor.resources.chest}
+              power_origin: {ref: actor.resources.power_origin}
+              balloon:
+                record:
+                  type: BalloonPowerSighting
+                  fields: {balloon: {ref: payload.balloon}, site: {ref: balloon.site}, charges: {ref: balloon.charges}, basis: {ref: occurrence}}
+- name: action.extract_balloon_power
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        require:
+        - active: "actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen'"
+        - observed: actor.resources.balloon is not None and actor.resources.balloon.balloon == payload.balloon
+        - local: actor.site == balloon.site
+        - accessible: "balloon.site != 'tower_base' or ((bear_one.site != balloon.site or bear_one.occupancy != 'blocking_balloon' or bear_one.vital.life == 'dead') and (bear_two.site != balloon.site or bear_two.occupancy != 'blocking_balloon' or bear_two.vital.life == 'dead'))"
+        - original_power: balloon.charges == 1 and balloon.power_origin is None and actor.resources.power_origin is None
+      outputs:
+        action: {ref: occurrence}
+        last_action_ref: {ref: occurrence}
+        charges: 0
+        change_ref: {ref: occurrence}
+        newborn:
+          record:
+            type: BalloonPower
+            fields: {label: {const: Balloon power}, holder: {ref: actor.name}, charges: 1, origin: {ref: occurrence}, change_ref: {ref: occurrence}}
+        power_origin: {ref: occurrence}
+        resources:
+          record:
+            type: ResourceObservations
+            fields:
+              display: {ref: actor.resources.display}
+              display_notice_ref: {ref: actor.resources.display_notice_ref}
+              study: {ref: actor.resources.study}
+              chest: {ref: actor.resources.chest}
+              power_origin: {ref: occurrence}
+              balloon:
+                record:
+                  type: BalloonPowerSighting
+                  fields: {balloon: {ref: payload.balloon}, site: {ref: balloon.site}, charges: 0, basis: {ref: occurrence}}
+- name: action.transfer_balloon_power
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        require:
+        - active: "actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen'"
+        - observed: actor.resources.balloon is not None and actor.resources.balloon.balloon == payload.balloon
+        - local: actor.site == balloon.site
+        - custody: power.holder == actor.name and actor.resources.power_origin is not None and power.origin == actor.resources.power_origin and power.origin == balloon.power_origin
+        - accessible: "balloon.site != 'tower_base' or ((bear_one.site != balloon.site or bear_one.occupancy != 'blocking_balloon' or bear_one.vital.life == 'dead') and (bear_two.site != balloon.site or bear_two.occupancy != 'blocking_balloon' or bear_two.vital.life == 'dead'))"
+        - direction: "(payload.operation == 'withdraw' and balloon.charges == 1 and power.charges == 0) or (payload.operation == 'reload' and balloon.charges == 0 and power.charges == 1)"
+      outputs:
+        action: {ref: occurrence}
+        last_action_ref: {ref: occurrence}
+        balloon_action: {ref: occurrence}
+        power_action: {ref: occurrence}
+        balloon_charges: {if: {when: "payload.operation == 'reload'", then: 1, else: 0}}
+        power_charges: {if: {when: "payload.operation == 'reload'", then: 0, else: 1}}
+        resources:
+          record:
+            type: ResourceObservations
+            fields:
+              display: {ref: actor.resources.display}
+              display_notice_ref: {ref: actor.resources.display_notice_ref}
+              study: {ref: actor.resources.study}
+              chest: {ref: actor.resources.chest}
+              power_origin: {ref: actor.resources.power_origin}
+              balloon:
+                record:
+                  type: BalloonPowerSighting
+                  fields: {balloon: {ref: payload.balloon}, site: {ref: balloon.site}, charges: {if: {when: "payload.operation == 'reload'", then: 1, else: 0}}, basis: {ref: occurrence}}
+- name: action.load_balloon_power
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        require:
+        - active: "actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen'"
+        - custody: power.holder == actor.name and torch.holder == actor.name
+        - acquired: actor.resources.power_origin is not None and power.origin == actor.resources.power_origin
+      effects:
+        - refill:
+            transfer: {from: power.charges, to: torch.charges}
+            amount: 1
+            floor: 0
+            capacity: 5
+            mirror: {to: [actor.known_everflame_charges]}
+      outputs:
+        action: {ref: occurrence}
+        last_action_ref: {ref: occurrence}
+        power_action: {ref: occurrence}
+- name: action.balloon_flight
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        require:
+        - operator: "actor.name == 'adventurer' and actor.vital.life == 'alive' and actor.vital.endurance > 0 and actor.cold_state != 'frozen' and actor.current_movement_speed > 0"
+        - ready_balloon: "actor.site == balloon.site and balloon.charges == 1 and balloon.inflated and not balloon.tied"
+        - opposite_stop: "(balloon.site == 'tower_base' and payload.destination == 'tower_top') or (balloon.site == 'tower_top' and payload.destination == 'tower_base')"
+        - operator_boarded:
+            call:
+              ref: transport.boarded_on
+              args: {seats: {ref: scene.balloon_seats}, person: {ref: actor.name}, vehicle: {ref: payload.balloon}}
+        - single_vehicle:
+            none_matching: {collection: {ref: scene.balloon_seats}, as: seat, where: "seat.vehicle != payload.balloon"}
+        - exact_passenger:
+            eq:
+            - {not_none: {ref: payload.emma}}
+            - call:
+                ref: transport.boarded_on
+                args: {seats: {ref: scene.balloon_seats}, person: {const: emma}, vehicle: {ref: payload.balloon}}
+        - passenger_present:
+            any:
+            - {is_none: {ref: emma}}
+            - all:
+              - {not_none: {ref: emma}}
+              - "emma.name == payload.emma and emma.site == balloon.site"
+      outputs:
+        hero_site: {ref: payload.destination}
+        balloon_site: {ref: payload.destination}
+        queen_site: {ref: payload.destination}
+        known_sites:
+          call:
+            ref: movement.remember_site
+            args: {known_sites: {ref: actor.known_sites}, destination: {ref: payload.destination}}
+        hero_action: {ref: occurrence}
+        balloon_action: {ref: occurrence}
+        action: {ref: occurrence}
+- name: action.balloon_control
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        all:
+        - "actor.site == balloon.site and actor.vital.life == 'alive' and actor.vital.endurance > 0 and actor.cold_state != 'frozen' and actor.current_movement_speed > 0"
+        - "actor.name == 'adventurer' or actor.name == 'emma'"
+        - any:
+          - "payload.operation == 'leave'"
+          - "actor.site == 'tower_top'"
+          - "(bear_one.site != actor.site or bear_one.occupancy != 'blocking_balloon' or bear_one.vital.life == 'dead') and (bear_two.site != actor.site or bear_two.occupancy != 'blocking_balloon' or bear_two.vital.life == 'dead')"
+        - any:
+          - all:
+            - "payload.operation == 'board' and balloon.inflated"
+            - call:
+                ref: transport.unboarded
+                args: {seats: {ref: scene.balloon_seats}, person: {ref: actor.name}}
+            - lt: [{count_matching: {collection: {ref: scene.balloon_seats}, as: seat, where: true}}, 2]
+          - all:
+            - "payload.operation == 'leave'"
+            - call:
+                ref: transport.boarded_on
+                args: {seats: {ref: scene.balloon_seats}, person: {ref: actor.name}, vehicle: {ref: payload.balloon}}
+          - "payload.operation == 'untie' and actor.name == 'adventurer' and balloon.tied"
+          - all:
+            - "actor.name == 'adventurer' and ((payload.operation == 'deflate' and balloon.inflated) or (payload.operation == 'inflate' and not balloon.inflated))"
+            - call:
+                ref: transport.vehicle_unoccupied
+                args: {seats: {ref: scene.balloon_seats}, vehicle: {ref: payload.balloon}}
+      outputs:
+        seats:
+          if:
+            when: "payload.operation == 'board'"
+            then: {append: [{ref: scene.balloon_seats}, {record: {type: BalloonSeat, fields: {vehicle: {ref: payload.balloon}, passenger: {ref: actor.name}}}}]}
+            else:
+              collect_matching:
+                collection: {ref: scene.balloon_seats}
+                as: seat
+                where: "payload.operation != 'leave' or seat.passenger != actor.name"
+                value: {ref: seat}
+        tied: "balloon.tied and payload.operation != 'untie'"
+        inflated: "payload.operation == 'inflate' or (balloon.inflated and payload.operation != 'deflate')"
+        actor_action: {ref: occurrence}
+        balloon_action: {ref: occurrence}
+        action: {ref: occurrence}

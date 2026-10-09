@@ -1,0 +1,55 @@
+schema: c0.graph_ports.v1
+scene_owner: scene
+offer_provider:
+  name: finite_value
+  version: '1'
+  limit: 16
+actions:
+- symbol: count_0
+  actor: actor_0
+  payload: Attempt
+  envelope: Envelope
+  actor_identity_field: name
+  payload_actor_field: actor
+  effects:
+    scene: {}
+    actor:
+      count: count
+  envelope_fields:
+    action: action
+  schedule: null
+  value:
+    read:
+    - actor.name
+    - actor.count
+    - payload.target
+    fields: {}
+    write_paths:
+    - actor.count
+    construct: []
+    collections: {}
+- symbol: count_1
+  actor: actor_1
+  payload: Attempt
+  envelope: Envelope
+  actor_identity_field: name
+  payload_actor_field: actor
+  effects:
+    scene: {}
+    actor:
+      count: count
+  envelope_fields:
+    action: action
+  schedule: null
+  value:
+    read:
+    - actor.name
+    - actor.count
+    - payload.target
+    fields: {}
+    write_paths:
+    - actor.count
+    construct: []
+    collections: {}
+events: []
+due_events: []

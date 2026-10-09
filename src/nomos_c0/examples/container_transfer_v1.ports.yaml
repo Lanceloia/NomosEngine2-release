@@ -1,0 +1,28 @@
+schema: c0.graph_ports.v1
+scene_owner: scene
+offer_provider: {name: finite_value, version: '1', limit: 16}
+actions:
+  - symbol: transfer
+    actor: operator
+    payload: TransferAttempt
+    envelope: TransferEnvelope
+    actor_identity_field: name
+    payload_actor_field: actor
+    participants:
+      - {name: destination, selector: individual, state: Container, payload_field: destination, write: true}
+      - {name: origin, selector: individual, state: Container, payload_field: origin, write: true}
+    effects:
+      scene: {}
+      actor: {}
+      origin: {units: origin_units, changed: origin_changed}
+      destination: {units: destination_units, changed: destination_changed}
+    envelope_fields: {action: action}
+    schedule: null
+    value:
+      read: [actor.name, payload.origin, payload.destination, origin.label, origin.holder, origin.visible, origin.units, destination.label, destination.holder, destination.visible, destination.units, destination.capacity]
+      fields: {}
+      write_paths: [origin.units, origin.changed, destination.units, destination.changed]
+      construct: []
+      collections: {}
+events: []
+due_events: []

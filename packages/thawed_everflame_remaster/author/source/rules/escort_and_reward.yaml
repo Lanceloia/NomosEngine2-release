@@ -1,0 +1,380 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+# Declarations preserve each participants authority and exact evidence.
+lawdefs:
+  - name: action.queen_verify_survivors
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+        - name: seen_survivors
+          stage: effect
+          let:
+            insert_missing:
+              collection: {ref: actor.reward_account.verified}
+              key: name
+              candidates:
+                collect_participants:
+                  group: reward_survivors
+                  as: survivor
+                  where:
+                    call:
+                      ref: reward.present_survivor
+                      args:
+                        observer_site: {ref: actor.site}
+                        site: {ref: survivor.site}
+                        life: {ref: survivor.vital.life}
+                        rescue: {ref: survivor.rescue_state}
+                        has_rescue:
+                          not_none: {ref: survivor.rescue_ref}
+                  value:
+                    record:
+                      type: VerifiedSurvivor
+                      fields:
+                        name: {ref: survivor.name}
+                        site: {ref: survivor.site}
+                        observation: {ref: occurrence}
+                        payment: null
+        guard:
+          require:
+          - {identity: actor.name == payload.actor}
+          - {awake: actor.vital.life == 'alive' and actor.cold_state != 'frozen'}
+          - actually_safe: actor.site == 'palace_exit' and actor.rescue_state == 'safe'
+              and actor.rescue_ref is not None
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          reward_account:
+            record:
+              type: RewardAccount
+              fields:
+                verified: {ref: seen_survivors}
+  - name: action.queen_pay_reward
+    family: action
+    formals: {amount: int}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+        - name: payable
+          stage: admission
+          let:
+            query:
+              from:
+                collection: {ref: actor.reward_account.verified}
+                as: person
+                key: name
+              join: {participants: reward_survivors, as: survivor, key: name}
+              where:
+                all:
+                - person.payment is None
+                - call:
+                    ref: reward.present_survivor
+                    args:
+                      observer_site: {ref: actor.site}
+                      site: {ref: survivor.site}
+                      life: {ref: survivor.vital.life}
+                      rescue: {ref: survivor.rescue_state}
+                      has_rescue:
+                        not_none: {ref: survivor.rescue_ref}
+        - name: total
+          stage: admission
+          let:
+            mul:
+            - {arg: amount}
+            - count_matching:
+                collection: {ref: payable}
+                as: person
+                where: true
+        guard:
+          require:
+          - {identity: actor.name == payload.actor and recipient.name == payload.recipient}
+          - {awake: actor.vital.life == 'alive' and actor.cold_state != 'frozen'}
+          - safe_queen: actor.site == 'palace_exit' and actor.rescue_state == 'safe'
+              and actor.rescue_ref is not None
+          - actual_recipient: recipient.site == actor.site and recipient.vital.life
+              == 'alive' and recipient.cold_state != 'frozen'
+          - {custody: box.holder == actor.name and box.locked}
+          - actual_unpaid_batch:
+              all:
+              - total > 0 and box.gold >= total
+              - le:
+                - add:
+                  - {ref: recipient.gold}
+                  - {ref: total}
+                - 1000000
+        effects:
+        - pay_verified_rescue:
+            transfer: {from: box.gold, to: recipient.gold}
+            amount: {ref: total}
+            floor: 0
+            capacity: 1000000
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          relocked: true
+          reward_account:
+            record:
+              type: RewardAccount
+              fields:
+                verified:
+                  update_matching:
+                    collection: {ref: actor.reward_account.verified}
+                    matching: {ref: payable}
+                    key: name
+                    as: person
+                    set:
+                      payment:
+                        record:
+                          type: RewardReceipt
+                          fields:
+                            resident: {ref: person.name}
+                            recipient: {ref: recipient.name}
+                            box: {ref: payload.box}
+                            verification: {ref: person.observation}
+                            action: {ref: occurrence}
+                            gold: {arg: amount}
+  - name: event.queen_guide_step
+    family: direct_actor_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - actual_move: scene.actor_motion is not None and scene.actor_motion.action == trigger.occurrence
+            - attending: actor.attending and actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+            - invitation: actor.escort_heard_ref is not None and actor.escort_utterance_ref is not None
+            - recognized: scene.actor_motion.name == actor.escort_speaker
+            - local: scene.actor_motion.start == actor.site and scene.actor_motion.end != 'endless_abyss'
+        outputs:
+          guide_step:
+            record:
+              type: GuideStepObservation
+              fields:
+                motion: {ref: scene.actor_motion}
+                observation: {ref: occurrence}
+                invitation: {ref: actor.escort_utterance_ref}
+                hearing: {ref: actor.escort_heard_ref}
+  - name: action.care_person
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - actor_matches: actor.name == payload.actor and victim.name == payload.victim and actor.name != victim.name
+            - caregiver_awake: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+            - observed: actor.person_sighting is not None
+            - observed_patient: actor.person_sighting.subject == victim.name and actor.person_sighting.site == actor.site and actor.person_sighting.life == 'incapacitated' and actor.person_sighting.cold_state != 'frozen'
+            - actual_patient: victim.site == actor.site and victim.vital.life == 'incapacitated' and victim.vital.endurance == 0 and victim.cold_state != 'frozen'
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          person_sighting: {const: null}
+          vital:
+            record:
+              type: Vital
+              fields: {life: {const: alive}, endurance: 1, max_endurance: {ref: victim.vital.max_endurance}, change_ref: {ref: occurrence}, death_ref: null, rescue_episode: null}
+  - name: action.offer_escort
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all:
+            - {eq: [{ref: actor.name}, {ref: payload.actor}]}
+            - {eq: [{ref: actor.vital.life}, {const: alive}]}
+            - {not: {eq: [{ref: actor.cold_state}, {const: frozen}]}}
+            - {eq: [{ref: payload.destination}, {const: palace_exit}]}
+        outputs:
+          action: {ref: occurrence}
+          offer_site: {ref: actor.site}
+          offer_ref: {ref: occurrence}
+          offer_speaker: {ref: actor.name}
+          offer_destination: {ref: payload.destination}
+          last_action_ref: {ref: occurrence}
+  - name: event.escort_heard
+    family: direct_actor_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings: []
+        guard: &escort_hearing_here
+          all:
+            - {eq: [{ref: scene.escort_offer_ref}, {ref: trigger.occurrence}]}
+            - {not_none: {ref: scene.escort_offer_speaker}}
+            - {not_none: {ref: scene.escort_offer_destination}}
+            - {eq: [{ref: actor.site}, {ref: scene.escort_offer_site}]}
+            - {eq: [{ref: actor.vital.life}, {const: alive}]}
+            - {not: {eq: [{ref: actor.cold_state}, {const: frozen}]}}
+        outputs: &escort_heard_outputs
+          escort_heard_ref: {ref: occurrence}
+          escort_utterance_ref: {ref: trigger.occurrence}
+          escort_speaker: {ref: scene.escort_offer_speaker}
+          escort_destination: {ref: scene.escort_offer_destination}
+  - name: event.queen_escort_heard
+    family: direct_actor_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all:
+          - *escort_hearing_here
+          - {ref: actor.attending}
+        outputs: *escort_heard_outputs
+  - name: event.queen_ground_result
+    family: direct_actor_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all:
+          - scene.actor_motion is not None and scene.actor_motion.action == trigger.occurrence and scene.actor_motion.name == actor.name
+          - any:
+            - &queen_arrived_safe "actor.site == 'palace_exit' and actor.rescue_state == 'not_safe' and actor.vital.life == 'alive' and actor.cold_state != 'frozen'"
+            - &queen_consumable_step "actor.guide_step is not None and actor.guide_step.invitation == actor.escort_utterance_ref and actor.guide_step.hearing == actor.escort_heard_ref and actor.guide_step.motion.start == scene.actor_motion.start and (actor.guide_consumption is None or (actor.guide_consumption is not None and actor.guide_consumption.step != actor.guide_step.observation))"
+        outputs:
+          rescue_state: {if: {when: *queen_arrived_safe, then: {const: safe}, else: {ref: actor.rescue_state}}}
+          rescue_ref: {if: {when: *queen_arrived_safe, then: {ref: occurrence}, else: {ref: actor.rescue_ref}}}
+          guide_consumption:
+            if:
+              when: *queen_consumable_step
+              then:
+                record:
+                  type: GuideConsumption
+                  fields:
+                    step: {ref: actor.guide_step.observation}
+                    action: {ref: trigger.occurrence}
+                    settlement: {ref: occurrence}
+              else: {ref: actor.guide_consumption}
+  - name: event.resident_safe
+    family: direct_actor_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings: []
+        guard: *queen_arrived_safe
+        outputs: {rescue_state: {const: safe}, rescue_ref: {ref: occurrence}}
+  - name: action.carry_from_ritual
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all:
+            - call: {ref: transport.unboarded, args: {seats: {ref: scene.balloon_seats}, person: {ref: actor.name}}}
+            - call: {ref: transport.unboarded, args: {seats: {ref: scene.balloon_seats}, person: {ref: victim.name}}}
+            - {call: {ref: movement.ordinary_floor_passable, args: {floors: {ref: scene.floors}, stairs: {ref: scene.stair_paths}, unclimbable_stairs: {ref: scene.unclimbable_stairs}, start: {ref: actor.site}, destination: {ref: payload.destination}}}}
+            - {eq: [{ref: actor.name}, {ref: payload.actor}]}
+            - {eq: [{ref: ritual.id}, {ref: payload.ritual}]}
+            - {eq: [{ref: victim.name}, {ref: payload.victim}]}
+            - {eq: [{ref: ritual.target}, {ref: victim.name}]}
+            - {eq: [{ref: actor.site}, {ref: ritual.site}]}
+            - {eq: [{ref: victim.site}, {ref: ritual.site}]}
+            - {eq: [{ref: victim.cold_state}, {const: frozen}]}
+            - {not: {eq: [{ref: victim.vital.life}, {const: dead}]}}
+            - {eq: [{ref: ritual.status}, {const: active}]}
+            - {lt: [{const: 0}, {ref: actor.current_movement_speed}]}
+            - {exactly_one: {collection: {ref: actor.known_residents}, as: known, where: known.name == victim.name}}
+            - {exists: {collection: {ref: actor.known_residents}, as: known, where: {all: [{eq: [{ref: known.name}, {ref: victim.name}]}, {eq: [{ref: known.site}, {ref: victim.site}]}]}}}
+            - {exists: {collection: {ref: scene.paths}, as: path, where: {all: [{eq: [{ref: path.start}, {ref: actor.site}]}, {eq: [{ref: path.end}, {ref: payload.destination}]}, {eq: [{ref: path.base_move_cost}, {ref: payload.base_move_cost}]}]}}}
+            - {exists: {collection: {ref: actor.known_paths}, as: known_path, where: {all: [{eq: [{ref: known_path.start}, {ref: actor.site}]}, {eq: [{ref: known_path.end}, {ref: payload.destination}]}, {eq: [{ref: known_path.base_move_cost}, {ref: payload.base_move_cost}]}]}}}
+            - {not: {eq: [{ref: payload.destination}, {ref: ritual.site}]}}
+        outputs:
+          action: {ref: occurrence}
+          carrier_site: {ref: payload.destination}
+          victim_site: {ref: payload.destination}
+          known_residents:
+            collect_matching:
+              collection: {ref: actor.known_residents}
+              as: known
+              where: true
+              value:
+                if:
+                  when: known.name == victim.name
+                  then: {record: {type: KnownResident, fields: {name: {ref: known.name}, site: {ref: payload.destination}, observation: {ref: occurrence}}}}
+                  else: {ref: known}
+          sighting_ref: {ref: occurrence}
+          sighting_site: {ref: payload.destination}
+          notice_site: {ref: payload.destination}
+          cue_stage: {const: disrupted}
+          notice: {const: disrupted}
+          notice_ref: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          ritual_status: {const: interrupted}
+  - name: action.leave_palace
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all:
+            - {eq: [{ref: actor.name}, {ref: payload.actor}]}
+            - {eq: [{ref: actor.site}, {const: palace_exit}]}
+            - {is_none: {ref: scene.departure}}
+            - {eq: [{ref: ritual.id}, {ref: payload.ritual}]}
+            - {eq: [{ref: ritual_resident.name}, {ref: payload.ritual_resident}]}
+            - {eq: [{ref: huddled_one.name}, {ref: payload.huddled_one}]}
+            - {eq: [{ref: huddled_two.name}, {ref: payload.huddled_two}]}
+            - "wall_resident.name == payload.wall_resident"
+            - prison_resident_one.name == payload.prison_resident_one
+            - prison_resident_two.name == payload.prison_resident_two
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          departure:
+            record:
+              type: DepartureSummary
+              fields:
+                action_ref: {ref: occurrence}
+                ritual_status: {ref: ritual.status}
+                ritual_resident_safe: {eq: [{ref: ritual_resident.rescue_state}, {const: safe}]}
+                huddled_one_safe: {eq: [{ref: huddled_one.rescue_state}, {const: safe}]}
+                huddled_two_safe: {eq: [{ref: huddled_two.rescue_state}, {const: safe}]}
+                wall_resident_safe: "wall_resident.rescue_state == 'safe'"
+                prison_resident_one_safe: prison_resident_one.rescue_state == 'safe'
+                prison_resident_two_safe: prison_resident_two.rescue_state == 'safe'
+                everflame_charges: {ref: torch.charges}
+                reservoir_charges: {ref: reservoir.charges}
+  - name: event.departure_recorded
+    family: direct_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings: []
+        guard: {all: [{not_none: {ref: scene.departure}}, {is_none: {ref: scene.departure_event_ref}}]}
+        outputs: {departure_event_ref: {ref: occurrence}}
+  - name: action.wait_near_guide
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - actor_matches: actor.name == payload.actor
+            - awake: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+            - heard_guide: actor.escort_heard_ref is not None and actor.escort_speaker == guide.name
+            - selected_guide: guide.name == payload.guide
+            - same_place: actor.site == guide.site
+            - actual_light: torch.holder == guide.name and torch.charges > 0
+        outputs: {action: {ref: occurrence}, last_action_ref: {ref: occurrence}}

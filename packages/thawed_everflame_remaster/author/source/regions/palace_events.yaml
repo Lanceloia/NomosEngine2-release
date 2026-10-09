@@ -1,0 +1,15 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+due_events:
+- name: palace_event
+  template: palace_event
+  form: due
+  source_key: m1.v2.palace_event
+  event_type: m1.v2.palace_event.event
+  when_false: defect
+  law:
+    ref: event.palace_event
+    args: {}
+  actor_product:
+    kind: ice_elemental
+    cardinality: zero_or_one
+    initial_output: newborn

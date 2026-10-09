@@ -1,0 +1,365 @@
+# One typed port template per capability family; the actor slot is a nominal witness.
+schema: c0.graph_ports.v1
+scene_owner: scene
+offer_provider:
+  name: finite_value
+  version: '1'
+  limit: 16
+actions:
+  - symbol: vote
+    actor: participant
+    payload: VoteAttempt
+    envelope: Envelope
+    actor_identity_field: name
+    payload_actor_field: actor
+    effects:
+      scene:
+        ballots: ballots
+      actor:
+        votes: votes
+    envelope_fields:
+      action: action
+      target: target
+    schedule: null
+    value:
+      read:
+        - scene.phase
+        - scene.round
+        - scene.players
+        - scene.ballots
+        - scene.winner
+        - actor.name
+        - actor.votes
+        - payload.actor
+        - payload.target
+      fields:
+        Player:
+          - id
+          - alive
+        Vote:
+          - round
+          - voter
+          - target
+        OwnVote:
+          - round
+      write_paths: ["scene.ballots", "actor.votes"]
+      construct:
+        - Vote
+        - OwnVote
+      collections:
+        scene.players: id
+        actor.votes: round
+  - symbol: attack
+    actor: participant
+    payload: VoteAttempt
+    envelope: Envelope
+    actor_identity_field: name
+    payload_actor_field: actor
+    effects:
+      scene:
+        wolf_ballots: wolf_ballots
+      actor:
+        attacks: attacks
+    envelope_fields:
+      action: action
+      target: target
+    schedule: null
+    value:
+      read:
+        - scene.phase
+        - scene.winner
+        - scene.players
+        - scene.wolf_ballots
+        - scene.selection_done
+        - actor.name
+        - actor.own_role
+        - payload.actor
+        - payload.target
+        - scene.round
+        - actor.attacks
+      fields:
+        Player:
+          - id
+          - alive
+        Vote:
+          - round
+          - voter
+      write_paths: ["scene.wolf_ballots", "actor.attacks"]
+      construct:
+        - Vote
+        - AttackChoice
+      collections:
+        scene.players: id
+  - symbol: divine
+    actor: participant
+    payload: VoteAttempt
+    envelope: Envelope
+    actor_identity_field: name
+    payload_actor_field: actor
+    effects:
+      scene:
+        seer_done: seer_done
+      actor:
+        observations: observations
+        choices: choices
+    envelope_fields:
+      action: action
+      target: target
+    schedule: null
+    value:
+      read:
+        - scene.phase
+        - scene.round
+        - scene.winner
+        - scene.players
+        - scene.roles
+        - scene.seer_done
+        - actor.name
+        - actor.own_role
+        - actor.observations
+        - payload.actor
+        - payload.target
+        - actor.choices
+      fields:
+        Player:
+          - id
+          - alive
+        Assignment:
+          - id
+          - role
+      write_paths: ["scene.seer_done", "actor.choices", "actor.observations"]
+      construct:
+        - Observation
+        - NightChoice
+      collections:
+        scene.players: id
+        scene.roles: id
+  - symbol: skip_inspection
+    actor: participant
+    payload: PassAttempt
+    envelope: PassEnvelope
+    actor_identity_field: name
+    payload_actor_field: actor
+    effects:
+      scene:
+        seer_done: seer_done
+      actor:
+        choices: choices
+    envelope_fields:
+      action: action
+    schedule: null
+    value:
+      read:
+        - scene.phase
+        - scene.round
+        - scene.winner
+        - scene.players
+        - scene.seer_done
+        - actor.name
+        - actor.own_role
+        - actor.choices
+        - payload.actor
+      fields:
+        Player:
+          - id
+          - alive
+      write_paths: ["scene.seer_done", "actor.choices"]
+      construct:
+        - NightChoice
+      collections:
+        scene.players: id
+  - symbol: witch_intervene
+    actor: participant
+    payload: WitchAttempt
+    envelope: PassEnvelope
+    actor_identity_field: name
+    payload_actor_field: actor
+    effects:
+      scene:
+        witch_done: witch_done
+        witch_saved: witch_saved
+      actor:
+        healing_available: healing_available
+        witch_choices: witch_choices
+    envelope_fields:
+      action: action
+    schedule: null
+    value:
+      read:
+        - scene.phase
+        - scene.round
+        - scene.players
+        - scene.winner
+        - scene.pending_attack
+        - scene.selection_done
+        - scene.witch_done
+        - actor.name
+        - actor.own_role
+        - actor.witch_notice
+        - actor.witch_notice.round
+        - actor.witch_notice.target
+        - actor.witch_notice.selection
+        - actor.witch_notice.notice
+        - actor.healing_available
+        - actor.witch_choices
+        - payload.actor
+        - payload.save
+      fields:
+        Player:
+          - id
+          - alive
+      write_paths:
+        - scene.witch_done
+        - scene.witch_saved
+        - actor.healing_available
+        - actor.witch_choices
+      construct:
+        - WitchChoice
+      collections:
+        scene.players: id
+events:
+  - symbol: resolve_day
+    form: direct_scene
+    actor: null
+    actor_identity_field: null
+    value:
+      read:
+        - scene.phase
+        - scene.round
+        - scene.players
+        - scene.roles
+        - scene.ballots
+        - scene.winner
+        - scene.last_death
+      fields:
+        Player:
+          - id
+          - alive
+        Assignment:
+          - id
+          - role
+        Vote:
+          - round
+          - target
+      write_paths:
+        - scene.last_death
+        - scene.phase
+        - scene.players
+        - scene.winner
+        - scene.players[].alive
+      outputs:
+        players: scene.players
+        phase: "scene.phase"
+        winner: "scene.winner"
+        last_death: scene.last_death
+      construct: []
+      collections:
+        scene.players: id
+        scene.roles: id
+  - symbol: select_target
+    form: direct_scene
+    actor: null
+    actor_identity_field: null
+    value:
+      read:
+        - scene.phase
+        - scene.round
+        - scene.players
+        - scene.roles
+        - scene.wolf_ballots
+        - scene.seer_done
+        - scene.selection_done
+      fields:
+        Player:
+          - id
+          - alive
+        Assignment:
+          - id
+          - role
+        Vote:
+          - round
+          - target
+      write_paths: ["scene.pending_attack", "scene.selection_done"]
+      outputs:
+        pending_attack: scene.pending_attack
+        selection_done: "scene.selection_done"
+      construct: []
+      collections:
+        scene.players: id
+        scene.roles: id
+  - symbol: resolve_night
+    form: direct_scene
+    actor: null
+    actor_identity_field: null
+    value:
+      read:
+        - scene.phase
+        - scene.round
+        - scene.players
+        - scene.roles
+        - scene.pending_attack
+        - scene.seer_done
+        - scene.selection_done
+        - scene.wolf_ballots
+        - scene.witch_done
+        - scene.witch_saved
+      fields:
+        Player:
+          - id
+          - alive
+        Assignment:
+          - id
+          - role
+      write_paths:
+        - scene.last_death
+        - scene.pending_attack
+        - scene.phase
+        - scene.players
+        - scene.round
+        - scene.seer_done
+        - scene.selection_done
+        - scene.winner
+        - scene.witch_done
+        - scene.witch_saved
+        - scene.players[].alive
+      outputs:
+        players: scene.players
+        phase: "scene.phase"
+        round: "scene.round"
+        winner: "scene.winner"
+        last_death: scene.last_death
+        pending_attack: scene.pending_attack
+        seer_done: "scene.seer_done"
+        selection_done: "scene.selection_done"
+        witch_done: "scene.witch_done"
+        witch_saved: "scene.witch_saved"
+      construct: []
+      collections:
+        scene.players: id
+        scene.roles: id
+  - symbol: witch_notice
+    form: direct_actor
+    actor: participant
+    actor_identity_field: name
+    value:
+      read:
+        - scene.phase
+        - scene.round
+        - scene.players
+        - scene.pending_attack
+        - scene.selection_done
+        - actor.name
+        - actor.own_role
+        - trigger.occurrence
+      fields:
+        Player:
+          - id
+          - alive
+      write_paths: ["actor.witch_notice"]
+      outputs:
+        witch_notice: {"target": "actor.witch_notice", "type": "WitchNotice"}
+      construct:
+        - WitchNotice
+      collections:
+        scene.players: id
+due_events: []

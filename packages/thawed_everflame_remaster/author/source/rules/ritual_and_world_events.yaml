@@ -1,0 +1,466 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+# Declarations preserve each participants authority and exact evidence.
+lawdefs:
+  - name: action.hall_draw
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+          - actor_matches: actor.name == payload.actor
+          - active: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - local_wall: actor.site == 'halls_ballroom_door'
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          drawings:
+            append:
+            - {collect_matching: {collection: {ref: scene.hall_drawings}, as: old, where: "old.artist != actor.name", value: {ref: old}}}
+            - {record: {type: HallDrawing, fields: {artist: {ref: actor.name}, site: {ref: actor.site}, stroke: {ref: occurrence}}}}
+  - name: event.elemental_charge_formed
+    family: direct_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings:
+          - {name: dead, collection: elementals.members, as: candidate, where: "candidate.vital.life == 'dead' and candidate.vital.death_ref == trigger.occurrence", required: false}
+        guard: "scene.elemental_charge_formed_ref is None and dead is not None and dead.vital.death_ref is not None"
+        outputs:
+          formed_ref: {ref: occurrence}
+          newborn:
+            record:
+              type: ElementalCharge
+              fields:
+                label: {const: Elemental charge}
+                site: {ref: dead.site}
+                holder: {const: null}
+                units: 1
+                elemental: {ref: dead.ref}
+                death_ref: {ref: dead.vital.death_ref}
+                formed_ref: {ref: occurrence}
+                taken_ref: {const: null}
+                load_ref: {const: null}
+  - name: action.pickup_elemental_charge
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - identity: actor.name == payload.actor
+            - active: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+            - local: packet.site == actor.site
+            - unheld: packet.holder is None and packet.units > 0
+        outputs: {action: {ref: occurrence}, last_action_ref: {ref: occurrence}, holder: {ref: actor.name}, taken_ref: {ref: occurrence}}
+  - name: action.load_elemental_firelock
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - identity: actor.name == payload.actor
+            - active: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+            - custody: packet.holder == actor.name and packet.taken_ref is not None and storage.holder == actor.name
+            - firelock: storage.form == 'firelock'
+        effects:
+          - refill:
+              transfer: {from: packet.units, to: storage.charges}
+              amount: 1
+              floor: 0
+              capacity: 1
+        outputs: {action: {ref: occurrence}, last_action_ref: {ref: occurrence}, load_ref: {ref: occurrence}}
+  - name: action.fireball_elementals
+    family: action
+    formals:
+      damage: int
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+        - {name: rolled, stage: effect, let: {die_roll: {seed: {ref: scene.die_seed}, sides: 20}}}
+        guard: true
+        outputs:
+          vital:
+            call:
+              ref: combat.fireball_vital
+              args:
+                zones:
+                  ref: scene.fireball_zones
+                origin:
+                  ref: initiator.site
+                aim:
+                  ref: payload.area
+                site:
+                  ref: actor.site
+                vital:
+                  ref: actor.vital
+                frozen: actor.cold_state == 'frozen'
+                monitored: false
+                weak: false
+                rolled:
+                  ref: rolled
+                damage:
+                  arg: damage
+                basis:
+                  ref: occurrence
+  - name: action.elemental_wait
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard: "actor.vital.life == 'alive' and actor.cold_state != 'frozen'"
+        outputs: {wait_ref: {ref: occurrence}, action: {ref: occurrence}}
+  - name: action.elemental_observe
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard: "actor.vital.life == 'alive' and actor.cold_state != 'frozen'"
+        outputs:
+          action: {ref: occurrence}
+          observe_ref: {ref: occurrence}
+          observed_origin: {ref: actor.site}
+          sighting:
+            if:
+              when:
+                any:
+                  - actor.site == subject.site
+                  - {exactly_one: {collection: {ref: scene.breath_zones}, as: zone, where: zone.origin == actor.site and zone.aim == subject.site}}
+              then:
+                record:
+                  type: ElementalTargetSighting
+                  fields: {origin: {ref: actor.site}, site: {ref: subject.site}, observation: {ref: occurrence}}
+              else: {const: null}
+  - name: action.elemental_advance
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+          - {name: path, collection: scene.paths, as: road, where: "road.start == actor.site and road.end == actor.known_destination", required: true}
+        guard:
+          all:
+            - "actor.cold_state != 'frozen' and actor.vital.life == 'alive' and actor.current_movement_speed > 0 and actor.site != actor.known_destination"
+            - call:
+                ref: movement.ordinary_floor_passable
+                args: {floors: {ref: scene.floors}, stairs: {ref: scene.stair_paths}, unclimbable_stairs: {ref: scene.unclimbable_stairs}, start: {ref: actor.site}, destination: {ref: actor.known_destination}}
+        outputs: {site: {ref: actor.known_destination}, next_destination: {ref: actor.site}, move_ref: {ref: occurrence}, action: {ref: occurrence}}
+  - name: event.elemental_observed
+    family: direct_actor_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings:
+          - {name: visible, collection: elementals.members, as: candidate, where: "candidate.site == actor.site", required: false}
+        guard: "visible is not None and actor.vital.life == 'alive' and actor.cold_state != 'frozen'"
+        outputs:
+          sighting:
+            record:
+              type: ElementalSighting
+              fields: {subject: {ref: visible.ref}, site: {ref: visible.site}, observation: {ref: occurrence}}
+  - name: action.ritual_advance
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all:
+            - {eq: [{ref: actor.name}, {ref: payload.actor}]}
+            - {eq: [{ref: ritual.id}, {ref: payload.ritual}]}
+            - {eq: [{ref: victim.name}, {ref: payload.victim}]}
+            - {eq: [{ref: ritual.target}, {ref: victim.name}]}
+            - {eq: [{ref: actor.site}, {ref: ritual.site}]}
+            - {eq: [{ref: victim.site}, {ref: ritual.site}]}
+            - {eq: [{ref: victim.cold_state}, {const: frozen}]}
+            - {not: {eq: [{ref: victim.vital.life}, {const: dead}]}}
+            - {eq: [{ref: ritual.status}, {const: active}]}
+            - {lt: [{ref: ritual.progress}, {ref: ritual.required_progress}]}
+            - {exists: {collection: {ref: actor.known_residents}, as: known, where: {all: [{eq: [{ref: known.name}, {ref: victim.name}]}, {eq: [{ref: known.site}, {ref: victim.site}]}]}}}
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          progress: &ritual_progress_after {add: [{ref: ritual.progress}, {const: 1}]}
+          completion_signal: &ritual_finished {eq: [*ritual_progress_after, {ref: ritual.required_progress}]}
+          cue_stage:
+            if:
+              when: *ritual_finished
+              then: {const: erupted}
+              else:
+                if:
+                  when: {eq: [*ritual_progress_after, {sub: [{ref: ritual.required_progress}, {const: 1}]}]}
+                  then: {const: critical}
+                  else: {const: gathering}
+          status:
+            if:
+              when: *ritual_finished
+              then: {const: completed}
+              else: {const: active}
+          contribution_refs: {append: [{ref: ritual.contribution_refs}, {ref: occurrence}]}
+  - name: event.ritual_sacrifice
+    family: direct_actor_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings: []
+        guard: "scene.ritual_completion_signal and actor.site == scene.ritual_cue_site and actor.cold_state == 'frozen' and actor.vital.life != 'dead'"
+        outputs:
+          vital:
+            record:
+              type: Vital
+              fields: {life: {const: dead}, endurance: 0, max_endurance: {ref: actor.vital.max_endurance}, change_ref: {ref: occurrence}, death_ref: {ref: occurrence}, rescue_episode: null}
+  - name: event.ice_elemental_summoned
+    family: direct_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings: []
+        guard: {all: [{ref: scene.ritual_completion_signal}, {not: {ref: scene.elemental_summoned}}]}
+        outputs:
+          elemental_summoned: {const: true}
+          summon_ref: {ref: occurrence}
+          newborn: &new_elemental
+            record:
+              type: IceElemental
+              fields:
+                site: {const: ritual_ring}
+                known_destination: {const: ritual_threshold}
+                max_movement_speed: 5
+                current_movement_speed: 5
+                cold_state: {const: immune}
+                vital: {record: {type: Vital, fields: {life: {const: alive}, endurance: 4, max_endurance: 4, change_ref: null, death_ref: null, rescue_episode: null}}}
+                cold_save_bonus: 0
+                cold_loss_step: 1
+                cold_seed: 19
+                last_cold_roll: {const: null}
+                last_cold_ref: {const: null}
+                last_move_ref: {const: null}
+                last_wait_ref: {const: null}
+                target_sighting: {const: null}
+                last_breath_roll: {const: null}
+                last_breath_ref: {const: null}
+                last_observe_origin: {const: null}
+                last_observe_ref: {const: null}
+  - name: event.palace_event
+    family: due_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings:
+          # Current owner inputs establish physical eligibility, not Actor knowledge.
+          - name: current_floor
+            collection: scene.floors
+            as: candidate
+            where: {exists: {collection: {ref: candidate.sites}, as: site, where: site == adventurer.site}}
+            required: false
+          - {name: remaining, stage: admission, let: {count_matching: {collection: {ref: scene.palace_event_pool}, as: kind, where: true}}}
+          - name: study_eligible
+            stage: effect
+            let:
+              collect_matching:
+                collection: {ref: study_items.members}
+                as: candidate
+                where:
+                  any:
+                    - candidate.holder is None and (candidate.rest_site == hall_bokold_one.site or candidate.rest_site == hall_bokold_two.site or candidate.rest_site == hall_bokold_three.site or candidate.rest_site == hall_bokold_four.site or candidate.rest_site == hall_bokold_five.site)
+                    - candidate.holder == 'emma' and (emma.site == hall_bokold_one.site or emma.site == hall_bokold_two.site or emma.site == hall_bokold_three.site or emma.site == hall_bokold_four.site or emma.site == hall_bokold_five.site)
+                    - candidate.holder == 'alpha' and (alpha.site == hall_bokold_one.site or alpha.site == hall_bokold_two.site or alpha.site == hall_bokold_three.site or alpha.site == hall_bokold_four.site or alpha.site == hall_bokold_five.site)
+                    - candidate.holder == 'tower_bear_one' and (tower_bear_one.site == hall_bokold_one.site or tower_bear_one.site == hall_bokold_two.site or tower_bear_one.site == hall_bokold_three.site or tower_bear_one.site == hall_bokold_four.site or tower_bear_one.site == hall_bokold_five.site)
+                    - candidate.holder == 'tower_bear_two' and (tower_bear_two.site == hall_bokold_one.site or tower_bear_two.site == hall_bokold_two.site or tower_bear_two.site == hall_bokold_three.site or tower_bear_two.site == hall_bokold_four.site or tower_bear_two.site == hall_bokold_five.site)
+                    - candidate.holder == 'adventurer' and (adventurer.site == hall_bokold_one.site or adventurer.site == hall_bokold_two.site or adventurer.site == hall_bokold_three.site or adventurer.site == hall_bokold_four.site or adventurer.site == hall_bokold_five.site)
+                    - candidate.holder == 'ritual_resident' and (ritual_resident.site == hall_bokold_one.site or ritual_resident.site == hall_bokold_two.site or ritual_resident.site == hall_bokold_three.site or ritual_resident.site == hall_bokold_four.site or ritual_resident.site == hall_bokold_five.site)
+                    - candidate.holder == 'huddled_one' and (huddled_one.site == hall_bokold_one.site or huddled_one.site == hall_bokold_two.site or huddled_one.site == hall_bokold_three.site or huddled_one.site == hall_bokold_four.site or huddled_one.site == hall_bokold_five.site)
+                    - candidate.holder == 'huddled_two' and (huddled_two.site == hall_bokold_one.site or huddled_two.site == hall_bokold_two.site or huddled_two.site == hall_bokold_three.site or huddled_two.site == hall_bokold_four.site or huddled_two.site == hall_bokold_five.site)
+                    - candidate.holder == 'wall_resident' and (wall_resident.site == hall_bokold_one.site or wall_resident.site == hall_bokold_two.site or wall_resident.site == hall_bokold_three.site or wall_resident.site == hall_bokold_four.site or wall_resident.site == hall_bokold_five.site)
+                    - candidate.holder == 'bokold_one' and (bokold_one.site == hall_bokold_one.site or bokold_one.site == hall_bokold_two.site or bokold_one.site == hall_bokold_three.site or bokold_one.site == hall_bokold_four.site or bokold_one.site == hall_bokold_five.site)
+                    - candidate.holder == 'bokold_two' and (bokold_two.site == hall_bokold_one.site or bokold_two.site == hall_bokold_two.site or bokold_two.site == hall_bokold_three.site or bokold_two.site == hall_bokold_four.site or bokold_two.site == hall_bokold_five.site)
+                    - candidate.holder == 'icebar_bear_one' and (icebar_bear_one.site == hall_bokold_one.site or icebar_bear_one.site == hall_bokold_two.site or icebar_bear_one.site == hall_bokold_three.site or icebar_bear_one.site == hall_bokold_four.site or icebar_bear_one.site == hall_bokold_five.site)
+                    - candidate.holder == 'icebar_bear_two' and (icebar_bear_two.site == hall_bokold_one.site or icebar_bear_two.site == hall_bokold_two.site or icebar_bear_two.site == hall_bokold_three.site or icebar_bear_two.site == hall_bokold_four.site or icebar_bear_two.site == hall_bokold_five.site)
+                    - candidate.holder == 'prison_guard' and (prison_guard.site == hall_bokold_one.site or prison_guard.site == hall_bokold_two.site or prison_guard.site == hall_bokold_three.site or prison_guard.site == hall_bokold_four.site or prison_guard.site == hall_bokold_five.site)
+                    - candidate.holder == 'prison_resident_one' and (prison_resident_one.site == hall_bokold_one.site or prison_resident_one.site == hall_bokold_two.site or prison_resident_one.site == hall_bokold_three.site or prison_resident_one.site == hall_bokold_four.site or prison_resident_one.site == hall_bokold_five.site)
+                    - candidate.holder == 'prison_resident_two' and (prison_resident_two.site == hall_bokold_one.site or prison_resident_two.site == hall_bokold_two.site or prison_resident_two.site == hall_bokold_three.site or prison_resident_two.site == hall_bokold_four.site or prison_resident_two.site == hall_bokold_five.site)
+                    - candidate.holder == 'captive_bear' and (captive_bear.site == hall_bokold_one.site or captive_bear.site == hall_bokold_two.site or captive_bear.site == hall_bokold_three.site or captive_bear.site == hall_bokold_four.site or captive_bear.site == hall_bokold_five.site)
+                    - candidate.holder == 'prison_bokold' and (prison_bokold.site == hall_bokold_one.site or prison_bokold.site == hall_bokold_two.site or prison_bokold.site == hall_bokold_three.site or prison_bokold.site == hall_bokold_four.site or prison_bokold.site == hall_bokold_five.site)
+                    - candidate.holder == 'arctic_fox_one' and (arctic_fox_one.site == hall_bokold_one.site or arctic_fox_one.site == hall_bokold_two.site or arctic_fox_one.site == hall_bokold_three.site or arctic_fox_one.site == hall_bokold_four.site or arctic_fox_one.site == hall_bokold_five.site)
+                    - candidate.holder == 'arctic_fox_two' and (arctic_fox_two.site == hall_bokold_one.site or arctic_fox_two.site == hall_bokold_two.site or arctic_fox_two.site == hall_bokold_three.site or arctic_fox_two.site == hall_bokold_four.site or arctic_fox_two.site == hall_bokold_five.site)
+                    - candidate.holder == 'arctic_fox_three' and (arctic_fox_three.site == hall_bokold_one.site or arctic_fox_three.site == hall_bokold_two.site or arctic_fox_three.site == hall_bokold_three.site or arctic_fox_three.site == hall_bokold_four.site or arctic_fox_three.site == hall_bokold_five.site)
+                    - candidate.holder == 'arctic_fox_four' and (arctic_fox_four.site == hall_bokold_one.site or arctic_fox_four.site == hall_bokold_two.site or arctic_fox_four.site == hall_bokold_three.site or arctic_fox_four.site == hall_bokold_four.site or arctic_fox_four.site == hall_bokold_five.site)
+                    - candidate.holder == 'hall_bokold_one' and (hall_bokold_one.site == hall_bokold_one.site or hall_bokold_one.site == hall_bokold_two.site or hall_bokold_one.site == hall_bokold_three.site or hall_bokold_one.site == hall_bokold_four.site or hall_bokold_one.site == hall_bokold_five.site)
+                    - candidate.holder == 'hall_bokold_two' and (hall_bokold_two.site == hall_bokold_one.site or hall_bokold_two.site == hall_bokold_two.site or hall_bokold_two.site == hall_bokold_three.site or hall_bokold_two.site == hall_bokold_four.site or hall_bokold_two.site == hall_bokold_five.site)
+                    - candidate.holder == 'hall_bokold_three' and (hall_bokold_three.site == hall_bokold_one.site or hall_bokold_three.site == hall_bokold_two.site or hall_bokold_three.site == hall_bokold_three.site or hall_bokold_three.site == hall_bokold_four.site or hall_bokold_three.site == hall_bokold_five.site)
+                    - candidate.holder == 'hall_bokold_four' and (hall_bokold_four.site == hall_bokold_one.site or hall_bokold_four.site == hall_bokold_two.site or hall_bokold_four.site == hall_bokold_three.site or hall_bokold_four.site == hall_bokold_four.site or hall_bokold_four.site == hall_bokold_five.site)
+                    - candidate.holder == 'hall_bokold_five' and (hall_bokold_five.site == hall_bokold_one.site or hall_bokold_five.site == hall_bokold_two.site or hall_bokold_five.site == hall_bokold_three.site or hall_bokold_five.site == hall_bokold_four.site or hall_bokold_five.site == hall_bokold_five.site)
+                    - candidate.holder == 'stable_bokold_one' and (stable_bokold_one.site == hall_bokold_one.site or stable_bokold_one.site == hall_bokold_two.site or stable_bokold_one.site == hall_bokold_three.site or stable_bokold_one.site == hall_bokold_four.site or stable_bokold_one.site == hall_bokold_five.site)
+                    - candidate.holder == 'stable_bokold_two' and (stable_bokold_two.site == hall_bokold_one.site or stable_bokold_two.site == hall_bokold_two.site or stable_bokold_two.site == hall_bokold_three.site or stable_bokold_two.site == hall_bokold_four.site or stable_bokold_two.site == hall_bokold_five.site)
+                    - candidate.holder == 'stable_bokold_three' and (stable_bokold_three.site == hall_bokold_one.site or stable_bokold_three.site == hall_bokold_two.site or stable_bokold_three.site == hall_bokold_three.site or stable_bokold_three.site == hall_bokold_four.site or stable_bokold_three.site == hall_bokold_five.site)
+                    - candidate.holder == 'stable_bokold_four' and (stable_bokold_four.site == hall_bokold_one.site or stable_bokold_four.site == hall_bokold_two.site or stable_bokold_four.site == hall_bokold_three.site or stable_bokold_four.site == hall_bokold_four.site or stable_bokold_four.site == hall_bokold_five.site)
+                value: {ref: candidate}
+          - {name: study_count, stage: effect, let: {count_matching: {collection: {ref: study_eligible}, as: candidate, where: true}}}
+          - name: rank
+            stage: effect
+            let:
+              if:
+                when: remaining > 1
+                then: {die_roll: {seed: {ref: scene.palace_event_seed}, sides: {ref: remaining}}}
+                else: 1
+          - name: result
+            stage: effect
+            let:
+              if:
+                when: {le: [{ref: rank}, {count_matching: {collection: {ref: scene.palace_event_pool}, as: kind, where: "kind <= 1"}}]}
+                then: 1
+                else:
+                  if:
+                    when: {le: [{ref: rank}, {count_matching: {collection: {ref: scene.palace_event_pool}, as: kind, where: "kind <= 2"}}]}
+                    then: 2
+                    else:
+                      if:
+                        when: {le: [{ref: rank}, {count_matching: {collection: {ref: scene.palace_event_pool}, as: kind, where: "kind <= 3"}}]}
+                        then: 3
+                        else: 4
+        guard: "due.subject == 'palace' and remaining > 0"
+        outputs:
+          pool:
+            collect_matching:
+              collection: {ref: scene.palace_event_pool}
+              as: kind
+              where: kind != result
+              value: {ref: kind}
+          draws:
+            append:
+              - {ref: scene.palace_event_draws}
+              - record:
+                  type: PalaceWindowDraw
+                  fields:
+                    ordinal: {add: [1, {count_matching: {collection: {ref: scene.palace_event_draws}, as: draw, where: true}}]}
+                    time: {ref: time.ordinal}
+                    kind: {ref: result}
+                    rank: {if: {when: remaining > 1, then: {ref: rank}, else: null}}
+                    input_seed: {ref: scene.palace_event_seed}
+                    output_seed: {die_next_seed: {ref: scene.palace_event_seed}}
+                    occurrence: {ref: occurrence}
+          floors:
+            if:
+              when: "current_floor is not None and result == 3 and not current_floor.frozen"
+              then:
+                replace_unique:
+                  collection: {ref: scene.floors}
+                  old: {ref: current_floor}
+                  new: {record: {type: FloorRegion, fields: {key: {ref: current_floor.key}, sites: {ref: current_floor.sites}, frozen: true, change_ref: {ref: occurrence}}}}
+                  key: key
+              else: {ref: scene.floors}
+          roll: {if: {when: remaining > 1, then: {ref: rank}, else: null}}
+          research_window:
+            if:
+              when: result == 4
+              then:
+                let:
+                  name: study_rank
+                  value: {if: {when: study_count > 1, then: {die_roll: {seed: {ref: scene.research_seed}, sides: {ref: study_count}}}, else: 1}}
+                  in:
+                    record:
+                      type: MagicResearchWindow
+                      fields:
+                        basis: {ref: occurrence}
+                        time: {ref: time.ordinal}
+                        status: {if: {when: study_count > 0, then: {const: selected}, else: {const: no_eligible_item}}}
+                        eligible: {ref: study_eligible}
+                        selected: {if: {when: study_count > 0, then: {tuple_at: {collection: {ref: study_eligible}, index: {sub: [{ref: study_rank}, 1]}}}, else: null}}
+                        rank: {if: {when: study_count > 1, then: {ref: study_rank}, else: null}}
+                        input_seed: {ref: scene.research_seed}
+                        output_seed: {if: {when: study_count > 1, then: {die_next_seed: {ref: scene.research_seed}}, else: {ref: scene.research_seed}}}
+              else: {ref: scene.magic_research}
+          research_seed: {if: {when: result == 4 and study_count > 1, then: {die_next_seed: {ref: scene.research_seed}}, else: {ref: scene.research_seed}}}
+          seed: {die_next_seed: {ref: scene.palace_event_seed}}
+          event_ref: {ref: occurrence}
+          elemental_summoned: "scene.elemental_summoned or result == 1"
+          summon_ref:
+            if:
+              when: "result == 1 and not scene.elemental_summoned"
+              then: {ref: occurrence}
+              else: {ref: scene.summon_ref}
+          newborn:
+            if:
+              when: "result == 1 and not scene.elemental_summoned"
+              then: *new_elemental
+              else: {const: null}
+  - name: event.elemental_cold
+    family: due_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings:
+          - name: holder_site
+            stage: effect
+            let:
+              call:
+                ref: everflame.holder_site
+                args:
+                  holder: {ref: torch.holder}
+                  adventurer_site: {ref: adventurer.site}
+                  ritual_site: {ref: ritual_resident.site}
+                  huddled_one_site: {ref: huddled_one.site}
+                  huddled_two_site: {ref: huddled_two.site}
+                  wall_resident_site: {ref: wall_resident.site}
+                  bokold_one_site: {ref: bokold_one.site}
+                  bokold_two_site: {ref: bokold_two.site}
+                  prison_resident_one_site: {ref: prison_resident_one.site}
+                  prison_resident_two_site: {ref: prison_resident_two.site}
+        guard: "due.subject == 'cold'"
+        outputs:
+          speed:
+            if:
+              when: &elemental_failed
+                all:
+                  - actor.cold_state == 'mobile'
+                  - actor.vital.life != 'dead'
+                  - eq:
+                      - call: {ref: everflame.covered_count, args: {coverage: {ref: scene.coverage}, origin: {ref: holder_site}, destination: {ref: actor.site}, charges: {ref: torch.charges}}}
+                      - 0
+                  - lt:
+                      - {add: [{die_roll: {seed: {ref: actor.cold_seed}, sides: 20}}, {ref: actor.cold_save_bonus}]}
+                      - {ref: scene.cold_dc}
+              then:
+                if:
+                  when: "actor.current_movement_speed <= actor.cold_loss_step"
+                  then: 0
+                  else: {sub: [{ref: actor.current_movement_speed}, {ref: actor.cold_loss_step}]}
+              else: {ref: actor.current_movement_speed}
+          cold:
+            if:
+              when: &elemental_freezes {all: [*elemental_failed, "actor.current_movement_speed <= actor.cold_loss_step"]}
+              then: {const: frozen}
+              else: {ref: actor.cold_state}
+          seed:
+            if:
+              when: &elemental_exposed
+                all:
+                  - actor.cold_state == 'mobile'
+                  - actor.vital.life != 'dead'
+                  - eq:
+                      - call: {ref: everflame.covered_count, args: {coverage: {ref: scene.coverage}, origin: {ref: holder_site}, destination: {ref: actor.site}, charges: {ref: torch.charges}}}
+                      - 0
+              then: {die_next_seed: {ref: actor.cold_seed}}
+              else: {ref: actor.cold_seed}
+          roll: {if: {when: *elemental_exposed, then: {die_roll: {seed: {ref: actor.cold_seed}, sides: 20}}, else: {ref: actor.last_cold_roll}}}
+          cold_ref: {if: {when: *elemental_exposed, then: {ref: occurrence}, else: {ref: actor.last_cold_ref}}}

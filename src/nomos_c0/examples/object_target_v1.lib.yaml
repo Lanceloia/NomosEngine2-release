@@ -1,0 +1,83 @@
+schema: c0.nominal_lib.v1
+records:
+  - name: Scene
+    fields:
+      - {name: title, type: {str: [1, 64]}}
+    invariant: null
+  - name: Actor
+    fields:
+      - {name: name, type: {str: [1, 64]}}
+      - {name: can_see_tools, type: bool}
+      - {name: make_ref, type: {optional: occurrence_ref}}
+    invariant: null
+  - name: Tool
+    fields:
+      - {name: label, type: {str: [1, 64]}}
+      - {name: ready, type: bool}
+      - {name: visible, type: bool}
+    invariant: null
+  - name: MakeAttempt
+    fields:
+      - {name: actor, type: {str: [1, 64]}}
+    invariant: null
+  - name: InspectAttempt
+    fields:
+      - {name: actor, type: {str: [1, 64]}}
+      - {name: target, type: individual_ref}
+    invariant: null
+  - name: Envelope
+    fields:
+      - {name: action, type: occurrence_ref}
+    invariant: null
+owners:
+  - symbol: scene
+    key: c0.object-demo.scene
+    version: scene-v1
+    state: Scene
+    identity_field: null
+    write: replace_one
+    seat_read: [title]
+  - symbol: actor
+    key: c0.object-demo.actor
+    version: actor-v1
+    state: Actor
+    identity_field: name
+    write: replace_one
+    seat_read: [name, can_see_tools, make_ref]
+object_kinds:
+  - symbol: tool
+    sort: EXAMPLE.TOOL@1
+    state: Tool
+    version: tool-v1
+    max_instances: 3
+  - symbol: fine_tool
+    sort: EXAMPLE.FINE_TOOL@1
+    specializes: [EXAMPLE.TOOL@1]
+    state: Tool
+    version: fine-tool-v1
+    max_instances: 3
+lawdefs:
+  - name: action.inspect_consume
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all: [{ref: actor.can_see_tools}, {ref: target.visible}, {ref: target.ready}]
+        outputs:
+          action: {ref: occurrence}
+          ready: {const: false}
+  - name: action.inspect_preserve
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all: [{ref: actor.can_see_tools}, {ref: target.visible}, {ref: target.ready}]
+        outputs:
+          action: {ref: occurrence}
+          ready: {const: true}

@@ -1,0 +1,130 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+lawdefs:
+  - name: action.observe_chandelier
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all:
+            - {eq: [{ref: actor.name}, {ref: payload.actor}]}
+            - {eq: [{ref: actor.site}, {ref: chandelier.site}]}
+            - {eq: [{ref: chandelier.site}, {ref: reservoir.site}]}
+            - {is_none: {ref: actor.chandelier_sighting}}
+        outputs:
+          action: {ref: occurrence}
+          sighting:
+            record:
+              type: ChandelierSighting
+              fields:
+                observation: {ref: occurrence}
+                mount_observed:
+                  all:
+                    - {eq: [{ref: reservoir.holder}, {const: chandelier}]}
+                    - {ref: reservoir.mounted}
+                notice:
+                  if:
+                    when:
+                      all:
+                        - {eq: [{ref: actor.site}, {ref: resident_one.site}]}
+                        - {eq: [{ref: resident_one.vital.life}, {const: alive}]}
+                        - {not: {eq: [{ref: resident_one.cold_state}, {const: frozen}]}}
+                        - {eq: [{ref: actor.site}, {ref: resident_two.site}]}
+                        - {eq: [{ref: resident_two.vital.life}, {const: alive}]}
+                        - {not: {eq: [{ref: resident_two.cold_state}, {const: frozen}]}}
+                    then:
+                      if:
+                        when:
+                          all:
+                            - {eq: [{ref: reservoir.holder}, {const: chandelier}]}
+                            - {ref: reservoir.mounted}
+                            - {ref: reservoir.pulse_visible}
+                            - {lt: [{const: 0}, {ref: reservoir.charges}]}
+                        then: {const: 'Two people answer beneath the chandelier. A faint pulse at its center matches the Everflame; it may hold charge.'}
+                        else: {const: 'Two people answer beneath the chandelier. No matching pulse is visible.'}
+                    else:
+                      if:
+                        when:
+                          any:
+                            - all:
+                                - {eq: [{ref: actor.site}, {ref: resident_one.site}]}
+                                - {eq: [{ref: resident_one.vital.life}, {const: alive}]}
+                                - {not: {eq: [{ref: resident_one.cold_state}, {const: frozen}]}}
+                            - all:
+                                - {eq: [{ref: actor.site}, {ref: resident_two.site}]}
+                                - {eq: [{ref: resident_two.vital.life}, {const: alive}]}
+                                - {not: {eq: [{ref: resident_two.cold_state}, {const: frozen}]}}
+                        then:
+                          if:
+                            when:
+                              all:
+                                - {eq: [{ref: reservoir.holder}, {const: chandelier}]}
+                                - {ref: reservoir.mounted}
+                                - {ref: reservoir.pulse_visible}
+                                - {lt: [{const: 0}, {ref: reservoir.charges}]}
+                            then: {const: 'One person answers beneath the chandelier. A faint pulse at its center matches the Everflame.'}
+                            else: {const: 'One person answers beneath the chandelier. No matching pulse is visible.'}
+                        else:
+                          if:
+                            when:
+                              all:
+                                - {eq: [{ref: reservoir.holder}, {const: chandelier}]}
+                                - {ref: reservoir.mounted}
+                                - {ref: reservoir.pulse_visible}
+                                - {lt: [{const: 0}, {ref: reservoir.charges}]}
+                            then: {const: 'No one answers your call. A faint pulse at the chandelier center matches the Everflame.'}
+                            else: {const: 'No one answers your call, and no matching pulse is visible.'}
+          last_action_ref: {ref: occurrence}
+  - name: action.detach_reservoir
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all:
+            - {eq: [{ref: actor.name}, {ref: payload.actor}]}
+            - {eq: [{ref: actor.site}, {ref: chandelier.site}]}
+            - {eq: [{ref: chandelier.site}, {ref: reservoir.site}]}
+            - {not_none: {ref: actor.chandelier_sighting}}
+            - {ref: actor.chandelier_sighting.mount_observed}
+            - {is_none: {ref: actor.reservoir_detach_ref}}
+            - {eq: [{ref: reservoir.holder}, {const: chandelier}]}
+            - {ref: reservoir.mounted}
+        outputs:
+          action: {ref: occurrence}
+          known_charges: {ref: reservoir.charges}
+          detach_ref: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          holder: {ref: actor.name}
+          mounted: {const: false}
+  - name: action.reload_everflame
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all:
+            - {eq: [{ref: actor.name}, {ref: payload.actor}]}
+            - {not_none: {ref: actor.reservoir_detach_ref}}
+            - {eq: [{ref: reservoir.holder}, {ref: actor.name}]}
+            - {not: {ref: reservoir.mounted}}
+            - {eq: [{ref: torch.holder}, {ref: actor.name}]}
+        effects:
+          - refill:
+              transfer: {from: reservoir.charges, to: torch.charges}
+              amount: 1
+              floor: 0
+              capacity: 5
+              mirror:
+                from: [actor.known_reservoir_charges]
+                to: [actor.known_everflame_charges]
+        outputs:
+          action: {ref: occurrence}
+          reload_ref: {ref: occurrence}
+          last_action_ref: {ref: occurrence}

@@ -1,0 +1,101 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+lawdefs:
+  - name: action.permit_charge
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+          - name: permit
+            stage: effect
+            let:
+              record:
+                type: PrisonAnswer
+                fields: {speaker: {ref: actor.name}, recipient: {ref: recipient.name}, site: {ref: actor.site}, question: {ref: actor.heard_question.utterance}, statement: {const: charge_granted}, packet: {ref: payload.packet}, utterance: {ref: occurrence}}
+        guard:
+          require:
+            - identity: actor.name == payload.actor and recipient.name == payload.recipient
+            - awake: actor.awake
+            - real_question: actor.heard_question is not None and actor.question_hearing_ref is not None
+            - request: actor.heard_question.topic == 'charge' and actor.heard_question.speaker == recipient.name and actor.heard_question.recipient == actor.name
+            - unanswered: actor.answer is None or (actor.answer is not None and actor.answer.question != actor.heard_question.utterance)
+            - current_custody: packet.holder == actor.name and packet.charges > 0
+        outputs: {action: {ref: occurrence}, last_action_ref: {ref: occurrence}, answer: {ref: permit}, prison_answer: {ref: permit}, charge_used_ref: null}
+  - name: action.receive_charge
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - identity: actor.name == payload.actor and giver.name == payload.giver
+            - local: actor.site == giver.site and giver.awake
+            - active: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+            - real_permission: giver.answer is not None and giver.answer.statement == 'charge_granted' and giver.answer.packet is not None
+            - addressed: giver.answer.speaker == giver.name and giver.answer.recipient == actor.name and giver.answer.packet == payload.packet
+            - still_current: giver.heard_question is not None and giver.heard_question.utterance == giver.answer.question
+            - unused: giver.charge_used_ref is None
+            - actual_custody: packet.holder == giver.name and packet.charges > 0
+            - actual_hearing: {exactly_one: {collection: {ref: actor.conversations.prison.answers}, as: heard, where: heard.answer.utterance == giver.answer.utterance and heard.answer.packet is not None and heard.answer.packet == payload.packet and heard.answer.statement == 'charge_granted'}}
+            - own_request: {exactly_one: {collection: {ref: actor.conversations.prison.questions}, as: question, where: question.recipient == giver.name and question.topic == 'charge' and question.utterance == giver.answer.question}}
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          used_ref: {ref: occurrence}
+          transfer_ref: {ref: occurrence}
+          holder: {ref: actor.name}
+          conversation:
+            record:
+              type: PersonConversations
+              fields:
+                tower: {ref: actor.conversations.tower}
+                prison:
+                  record:
+                    type: PrisonConversation
+                    fields:
+                      contacts: {ref: actor.conversations.prison.contacts}
+                      questions: {ref: actor.conversations.prison.questions}
+                      answers: {ref: actor.conversations.prison.answers}
+                      charge_load_ref: {ref: actor.conversations.prison.charge_load_ref}
+                      charge_receipt: {record: {type: ChargeReceipt, fields: {packet: {ref: payload.packet}, giver: {ref: giver.name}, request: {ref: giver.answer.question}, permission: {ref: giver.answer.utterance}, transfer: {ref: occurrence}}}}
+  - name: action.load_charge
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - identity: actor.name == payload.actor
+            - active: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+            - acquired: actor.conversations.prison.charge_receipt is not None and actor.conversations.prison.charge_receipt.packet == payload.packet
+            - custody: packet.holder == actor.name and torch.holder == actor.name
+        effects:
+          - refill:
+              transfer: {from: packet.charges, to: torch.charges}
+              amount: 1
+              floor: 0
+              capacity: 5
+              mirror: {to: [actor.known_everflame_charges]}
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          load_ref: {ref: occurrence}
+          conversation:
+            record:
+              type: PersonConversations
+              fields:
+                tower: {ref: actor.conversations.tower}
+                prison:
+                  record:
+                    type: PrisonConversation
+                    fields:
+                      contacts: {ref: actor.conversations.prison.contacts}
+                      questions: {ref: actor.conversations.prison.questions}
+                      answers: {ref: actor.conversations.prison.answers}
+                      charge_receipt: {ref: actor.conversations.prison.charge_receipt}
+                      charge_load_ref: {ref: occurrence}

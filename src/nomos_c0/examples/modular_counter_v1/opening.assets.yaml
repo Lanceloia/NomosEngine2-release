@@ -1,0 +1,12 @@
+schema: c0.owner_graph.assets.v1
+opening:
+  scene:
+    marker: one
+    open_ref: null
+    signal: quiet
+  actor_0:
+    name: person_0
+    count: 0
+  actor_1:
+    name: person_1
+    count: 0

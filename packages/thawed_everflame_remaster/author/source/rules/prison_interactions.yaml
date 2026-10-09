@@ -1,0 +1,439 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+# Prison evidence, paid attempts and actual access remain distinct.
+lawdefs:
+  - name: action.brand_person_prison_voice
+    family: action
+    formals:
+      damage: int
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+        - name: hit
+          stage: effect
+          let:
+            le:
+            - 10
+            - die_roll:
+                seed:
+                  ref: scene.die_seed
+                sides: 20
+        - name: damaged
+          stage: effect
+          let:
+            call:
+              ref: combat.contact_vital
+              args:
+                vital:
+                  ref: victim.vital
+                hit:
+                  ref: hit
+                frozen: false
+                weak: victim.name == 'captive_bear'
+                damage:
+                  arg: damage
+                basis:
+                  ref: occurrence
+        guard:
+          require:
+          - active: actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - actual_iron: item.form == 'branding_iron' and item.holder == actor.name
+          - observed_contact: actor.person_sighting is not None and actor.person_sighting.subject == payload.victim
+              and actor.person_sighting.site == actor.site
+          - current_contact: victim.name == payload.victim and victim.name != actor.name and victim.site == actor.site
+              and victim.vital.life != 'dead'
+          - finite_marks:
+              any:
+              - lt:
+                - count_matching:
+                    collection:
+                      ref: item.brands
+                    as: mark
+                    where: true
+                - 32
+              - {exists: {collection: {ref: item.brands}, as: mark, where: mark.person == payload.victim}}
+        outputs:
+          action:
+            ref: occurrence
+          last_action_ref:
+            ref: occurrence
+          next_seed:
+            die_next_seed:
+              ref: scene.die_seed
+          vital:
+            ref: damaged
+          brands:
+            if:
+              when:
+                all:
+                - ref: hit
+                - {none_matching: {collection: {ref: item.brands}, as: mark, where: mark.person == payload.victim}}
+              then:
+                append:
+                - ref: item.brands
+                - record:
+                    type: BrandMark
+                    fields:
+                      person:
+                        ref: payload.victim
+                      elemental: null
+                      contact:
+                        ref: occurrence
+              else:
+                ref: item.brands
+          awake: victim.awake and damaged.life == 'alive'
+  - name: action.observe_prison_voices
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+          - name: remaining
+            stage: effect
+            let:
+              collect_matching:
+                collection: {ref: actor.conversations.prison.contacts}
+                as: contact
+                where: not (actor.site == captive.site and contact.name == captive.name) and not (actor.site == bokold.site and contact.name == bokold.name)
+                value: {ref: contact}
+          - name: with_captive
+            stage: effect
+            let:
+              if:
+                when: actor.site == captive.site
+                then: {append: [{ref: remaining}, {record: {type: PrisonContact, fields: {name: {ref: captive.name}, site: {ref: captive.site}, observation: {ref: occurrence}}}}]}
+                else: {ref: remaining}
+        guard:
+          require:
+            - identity: actor.name == payload.actor and captive.name == payload.captive and bokold.name == payload.bokold
+            - active: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+            - local: actor.site == 'captive_cell' or actor.site == 'prison_holding' or actor.site == 'prison_deep'
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          conversation:
+            record:
+              type: PersonConversations
+              fields:
+                tower: {ref: actor.conversations.tower}
+                prison:
+                  record:
+                    type: PrisonConversation
+                    fields:
+                      charge_receipt: {ref: actor.conversations.prison.charge_receipt}
+                      charge_load_ref: {ref: actor.conversations.prison.charge_load_ref}
+                      contacts:
+                        if:
+                          when: actor.site == bokold.site
+                          then: {append: [{ref: with_captive}, {record: {type: PrisonContact, fields: {name: {ref: bokold.name}, site: {ref: bokold.site}, observation: {ref: occurrence}}}}]}
+                          else: {ref: with_captive}
+                      questions: {ref: actor.conversations.prison.questions}
+                      answers: {ref: actor.conversations.prison.answers}
+  - name: action.ask_prison
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+          - name: said
+            stage: effect
+            let: {record: {type: PrisonQuestion, fields: {speaker: {ref: actor.name}, recipient: {ref: recipient.name}, site: {ref: actor.site}, topic: {ref: payload.topic}, utterance: {ref: occurrence}}}}
+        guard:
+          require:
+            - identity: actor.name == payload.actor and recipient.name == payload.recipient
+            - active: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+            - local: actor.site == recipient.site
+            - observed: {exactly_one: {collection: {ref: actor.conversations.prison.contacts}, as: contact, where: contact.name == recipient.name and contact.site == actor.site}}
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          question: {ref: said}
+          conversation:
+            record:
+              type: PersonConversations
+              fields:
+                tower: {ref: actor.conversations.tower}
+                prison:
+                  record:
+                    type: PrisonConversation
+                    fields:
+                      charge_receipt: {ref: actor.conversations.prison.charge_receipt}
+                      charge_load_ref: {ref: actor.conversations.prison.charge_load_ref}
+                      contacts: {ref: actor.conversations.prison.contacts}
+                      questions:
+                        append:
+                          - {collect_matching: {collection: {ref: actor.conversations.prison.questions}, as: old, where: old.recipient != recipient.name, value: {ref: old}}}
+                          - {ref: said}
+                      answers: {ref: actor.conversations.prison.answers}
+  - name: event.prison_question_heard
+    family: direct_actor_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings: []
+        guard: scene.prison_question is not None and scene.prison_question.utterance == trigger.occurrence and scene.prison_question.recipient == actor.name and scene.prison_question.site == actor.site and actor.awake and actor.attending
+        outputs: {heard_question: {ref: scene.prison_question}, question_hearing_ref: {ref: occurrence}}
+  - name: action.prison_reply
+    family: action
+    formals: {decline: bool}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+          - name: reply
+            stage: effect
+            let:
+              record:
+                type: PrisonAnswer
+                fields: {speaker: {ref: actor.name}, recipient: {ref: recipient.name}, site: {ref: actor.site}, question: {ref: actor.heard_question.utterance}, packet: null, statement: {if: {when: {arg: decline}, then: {const: declined}, else: {ref: actor.personal_fact}}}, utterance: {ref: occurrence}}
+        guard:
+          require:
+            - identity: actor.name == payload.actor and recipient.name == payload.recipient
+            - awake: actor.awake
+            - heard: actor.heard_question is not None and actor.question_hearing_ref is not None
+            - topic: {any: [{arg: decline}, actor.heard_question.topic == 'yourself']}
+            - addressed: actor.heard_question.recipient == actor.name and actor.heard_question.speaker == recipient.name
+            - unanswered: actor.answer is None or (actor.answer is not None and actor.answer.question != actor.heard_question.utterance)
+        outputs: {action: {ref: occurrence}, last_action_ref: {ref: occurrence}, answer: {ref: reply}, prison_answer: {ref: reply}}
+  - name: action.prison_wait
+    family: action
+    formals: {}
+    body:
+      value: {schema: c0.value.v1, bindings: [], guard: actor.name == payload.actor and actor.awake, outputs: {action: {ref: occurrence}, last_action_ref: {ref: occurrence}}}
+  - name: event.prison_answer_heard
+    family: direct_actor_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all:
+            - scene.prison_answer is not None
+            - scene.prison_answer.utterance == trigger.occurrence and scene.prison_answer.recipient == actor.name and scene.prison_answer.site == actor.site
+            - actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+            - {exactly_one: {collection: {ref: actor.conversations.prison.questions}, as: question, where: question.utterance == scene.prison_answer.question and question.recipient == scene.prison_answer.speaker}}
+        outputs:
+          conversation:
+            record:
+              type: PersonConversations
+              fields:
+                tower: {ref: actor.conversations.tower}
+                prison:
+                  record:
+                    type: PrisonConversation
+                    fields:
+                      charge_receipt: {ref: actor.conversations.prison.charge_receipt}
+                      charge_load_ref: {ref: actor.conversations.prison.charge_load_ref}
+                      contacts: {ref: actor.conversations.prison.contacts}
+                      questions: {ref: actor.conversations.prison.questions}
+                      answers:
+                        append:
+                          - {collect_matching: {collection: {ref: actor.conversations.prison.answers}, as: old, where: old.answer.speaker != scene.prison_answer.speaker, value: {ref: old}}}
+                          - {record: {type: PrisonHeardAnswer, fields: {answer: {ref: scene.prison_answer}, hearing: {ref: occurrence}}}}
+  - name: action.observe_prison_people
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+          - name: after_one
+            stage: effect
+            let:
+              {call: {ref: perception.update_person_in_place, args: {known_people: {ref: actor.known_residents}, observer_site: {ref: actor.site}, subject_name: {ref: resident_one.name}, subject_site: {ref: resident_one.site}, basis: {ref: occurrence}}}}
+        guard:
+          require:
+            - actor_matches: actor.name == payload.actor
+            - awake: actor.cold_state != 'frozen' and actor.vital.life == 'alive'
+            - search_context:
+                any:
+                  - actor.site == 'prison_holding' or actor.site == 'prison_deep'
+                  - {exists: {collection: {ref: actor.known_residents}, as: contact, where: contact.name == resident_one.name or contact.name == resident_two.name}}
+            - real_subjects: resident_one.name == payload.resident_one and resident_two.name == payload.resident_two
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          known_residents:
+            {call: {ref: perception.update_person_in_place, args: {known_people: {ref: after_one}, observer_site: {ref: actor.site}, subject_name: {ref: resident_two.name}, subject_site: {ref: resident_two.site}, basis: {ref: occurrence}}}}
+  - name: action.observe_prison_bars
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - identity: actor.name == payload.actor
+            - awake: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+            - local: actor.site == bars.outside or actor.site == bars.inside
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          access:
+            record:
+              type: PrisonAccess
+              fields:
+                line: {ref: actor.prison_access.line}
+                bars:
+                  record:
+                    type: PrisonBarsSighting
+                    fields: {individual: {ref: payload.bars}, label: {ref: bars.label}, site: {ref: actor.site}, outside: {ref: bars.outside}, inside: {ref: bars.inside}, opened: {ref: bars.opened}, change_ref: {ref: bars.change_ref}, observation: {ref: occurrence}}
+  - name: action.set_prison_bars
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - identity: actor.name == payload.actor
+            - awake: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+            - local: actor.site == bars.outside or actor.site == bars.inside
+            - observed: actor.prison_access.bars is not None and actor.prison_access.bars.individual == payload.bars and actor.prison_access.bars.site == actor.site and actor.prison_access.bars.change_ref == bars.change_ref
+            - changes: payload.opened != bars.opened
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          change_ref: {ref: occurrence}
+          opened: {ref: payload.opened}
+          access:
+            record:
+              type: PrisonAccess
+              fields:
+                line: {ref: actor.prison_access.line}
+                bars:
+                  record:
+                    type: PrisonBarsSighting
+                    fields: {individual: {ref: payload.bars}, label: {ref: bars.label}, site: {ref: actor.site}, outside: {ref: bars.outside}, inside: {ref: bars.inside}, opened: {ref: payload.opened}, change_ref: {ref: occurrence}, observation: {ref: occurrence}}
+  - name: action.pass_prison_bars
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - unboarded_actor: {call: {ref: transport.unboarded, args: {seats: {ref: scene.balloon_seats}, person: {ref: actor.name}}}}
+            - identity: actor.name == payload.actor
+            - mobile: actor.vital.life == 'alive' and actor.cold_state != 'frozen' and actor.current_movement_speed > 0
+            - observed: actor.prison_access.bars is not None and actor.prison_access.bars.individual == payload.bars and actor.prison_access.bars.site == actor.site and actor.prison_access.bars.opened and actor.prison_access.bars.change_ref == bars.change_ref
+            - still_open: bars.opened
+            - opposite_side: (actor.site == bars.outside and payload.destination == bars.inside) or (actor.site == bars.inside and payload.destination == bars.outside)
+            - exact_price: payload.base_move_cost == bars.base_move_cost
+            - floor:
+                call: {ref: movement.ordinary_floor_passable, args: {floors: {ref: scene.floors}, stairs: {ref: scene.stair_paths}, unclimbable_stairs: {ref: scene.unclimbable_stairs}, start: {ref: actor.site}, destination: {ref: payload.destination}}}
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          site: {ref: payload.destination}
+          known_sites:
+            {call: {ref: movement.remember_site, args: {known_sites: {ref: actor.known_sites}, destination: {ref: payload.destination}}}}
+  - name: action.observe_prison_line
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - identity: actor.name == payload.actor and guardian.name == payload.guardian
+            - awake: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+            - at_line: {exactly_one: {collection: {ref: scene.prison_lines}, as: line, where: line.start == actor.site}}
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          access:
+            record:
+              type: PrisonAccess
+              fields:
+                bars: {ref: actor.prison_access.bars}
+                line:
+                  record:
+                    type: PrisonLineSighting
+                    fields:
+                      guardian:
+                        record:
+                          type: GuardSighting
+                          fields: {name: {ref: guardian.name}, site: {ref: actor.site}, present: "guardian.site == 'prison_outer'", observation: {ref: occurrence}}
+                      paths: {collect_matching: {collection: {ref: scene.prison_lines}, as: line, where: line.start == actor.site, value: {ref: line}}}
+  - name: action.pass_prison_line
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+          - {name: line, collection: scene.prison_lines, as: path, where: path.start == actor.site and path.end == payload.destination, required: true}
+        guard:
+          require:
+            - unboarded_actor: {call: {ref: transport.unboarded, args: {seats: {ref: scene.balloon_seats}, person: {ref: actor.name}}}}
+            - identity: actor.name == payload.actor and guardian.name == payload.guardian
+            - mobile: actor.vital.life == 'alive' and actor.cold_state != 'frozen' and actor.current_movement_speed > 0
+            - observed: actor.prison_access.line is not None and actor.prison_access.line.guardian.name == guardian.name and actor.prison_access.line.guardian.site == actor.site
+            - expected_clear: not actor.prison_access.line.guardian.present
+            - still_clear: guardian.site != 'prison_outer'
+            - exact_price: line.base_move_cost == payload.base_move_cost
+            - floor:
+                call: {ref: movement.ordinary_floor_passable, args: {floors: {ref: scene.floors}, stairs: {ref: scene.stair_paths}, unclimbable_stairs: {ref: scene.unclimbable_stairs}, start: {ref: actor.site}, destination: {ref: payload.destination}}}
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          site: {ref: payload.destination}
+          known_sites:
+            {call: {ref: movement.remember_site, args: {known_sites: {ref: actor.known_sites}, destination: {ref: payload.destination}}}}
+  - name: action.try_prison_line
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+          - {name: line, collection: scene.prison_lines, as: path, where: path.start == actor.site and path.end == payload.destination, required: true}
+        guard:
+          require:
+            - unboarded_actor: {call: {ref: transport.unboarded, args: {seats: {ref: scene.balloon_seats}, person: {ref: actor.name}}}}
+            - identity: actor.name == payload.actor and guardian.name == payload.guardian
+            - mobile: actor.vital.life == 'alive' and actor.cold_state != 'frozen' and actor.current_movement_speed > 0
+            - observed: actor.prison_access.line is not None and actor.prison_access.line.guardian.name == guardian.name and actor.prison_access.line.guardian.site == actor.site
+            - expected_clear: not actor.prison_access.line.guardian.present
+            - exact_price: line.base_move_cost == payload.base_move_cost
+            - floor:
+                call: {ref: movement.ordinary_floor_passable, args: {floors: {ref: scene.floors}, stairs: {ref: scene.stair_paths}, unclimbable_stairs: {ref: scene.unclimbable_stairs}, start: {ref: actor.site}, destination: {ref: payload.destination}}}
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          access:
+            record:
+              type: PrisonAccess
+              fields:
+                bars: {ref: actor.prison_access.bars}
+                line:
+                  record:
+                    type: PrisonLineSighting
+                    fields:
+                      guardian:
+                        record:
+                          type: GuardSighting
+                          fields: {name: {ref: guardian.name}, site: {ref: actor.site}, present: "guardian.site == 'prison_outer'", observation: {ref: occurrence}}
+                      paths: {collect_matching: {collection: {ref: scene.prison_lines}, as: observed_path, where: observed_path.start == actor.site, value: {ref: observed_path}}}
+          site:
+            if:
+              when: "guardian.site != 'prison_outer'"
+              then: {ref: payload.destination}
+              else: {ref: actor.site}
+          known_sites:
+            if:
+              when:
+                all:
+                  - "guardian.site != 'prison_outer'"
+                  - {none_matching: {collection: {ref: actor.known_sites}, as: known, where: known.site == payload.destination}}
+              then: {append: [{ref: actor.known_sites}, {record: {type: KnownSite, fields: {site: {ref: payload.destination}}}}]}
+              else: {ref: actor.known_sites}

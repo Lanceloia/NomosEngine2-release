@@ -1,0 +1,137 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+lawdefs:
+  - name: action.thaw_person
+    family: action
+    formals: {cue_subject: str}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+          - actor_matches: actor.name == payload.actor
+          - awake: actor.cold_state != 'frozen' and actor.vital.life == 'alive'
+          - observed: actor.person_sighting is not None
+          - observed_frozen: actor.person_sighting.cold_state == 'frozen' and actor.person_sighting.life != 'dead'
+          - same_subject: actor.person_sighting.subject == victim.name and payload.victim == victim.name
+          - current_location: actor.site == actor.person_sighting.site and victim.site == actor.site
+          - actual_holder: torch.holder == actor.name
+          - actually_frozen: victim.cold_state == 'frozen' and victim.vital.life != 'dead'
+        effects:
+        - spend_charge:
+            debit: torch.charges
+            amount: 1
+            floor: 0
+            mirror:
+            - actor.known_everflame_charges
+        outputs:
+          action:
+            ref: occurrence
+          last_action_ref:
+            ref: occurrence
+          last_thawed:
+            ref: victim.name
+          person_sighting:
+            const: null
+          cold_state:
+            const: mobile
+          vital:
+            call:
+              ref: vital.thaw
+              args:
+                vital:
+                  ref: victim.vital
+          current_movement_speed:
+            ref: victim.max_movement_speed
+          last_thaw_ref:
+            ref: occurrence
+          cue_stage:
+            if:
+              when: {eq: [{ref: victim.name}, {arg: cue_subject}]}
+              then:
+                const: disrupted
+              else:
+                ref: scene.ritual_cue_stage
+  - name: action.thaw_door
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all:
+            - &door_local_guard
+              all:
+                - actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+                - actor.site == door.front or actor.site == door.back
+                - call: {ref: movement.has_declared_site, args: {sites: {ref: scene.sites}, site: {ref: door.front}}}
+                - call: {ref: movement.has_declared_site, args: {sites: {ref: scene.sites}, site: {ref: door.back}}}
+            - door.frozen and torch.holder == actor.name
+        effects:
+          - spend_charge: {debit: torch.charges, amount: 1, floor: 0, mirror: [actor.known_everflame_charges]}
+        outputs: {action: {ref: occurrence}, last_action_ref: {ref: occurrence}, frozen: false, change_ref: {ref: occurrence}}
+  - name: action.thaw_drink
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - identity: actor.name == payload.actor and holder.name == payload.holder
+            - awake: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+            - local: holder.site == actor.site and drink.holder == holder.name
+            - observed: actor.drink_sighting is not None
+            - exact_container: actor.drink_sighting.container == payload.drink
+            - same_holder: actor.drink_sighting.holder == holder.name and actor.drink_sighting.site == actor.site
+            - still_frozen: actor.drink_sighting.frozen and drink.frozen and drink.portions > 0
+            - still_current: actor.drink_sighting.change_ref == drink.change_ref
+            - held_flame: torch.holder == actor.name
+        effects:
+          - spend_charge: {debit: torch.charges, amount: 1, floor: 0, mirror: [actor.known_everflame_charges]}
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          frozen: false
+          change_ref: {ref: occurrence}
+          drink_sighting:
+            record:
+              type: DrinkSighting
+              fields: {container: {ref: payload.drink}, holder: {ref: holder.name}, site: {ref: holder.site}, frozen: false, portions: {ref: drink.portions}, capacity: {ref: drink.capacity}, change_ref: {ref: occurrence}, observation: {ref: occurrence}}
+  - name: action.thaw_floor
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+          - {name: floor, collection: scene.floors, key: key, value: {ref: payload.floor_key}, required: false}
+        guard:
+          require:
+            - identity: actor.name == payload.actor
+            - awake: actor.cold_state != 'frozen' and actor.vital.life == 'alive'
+            - target_exists: floor is not None
+            - observed: actor.floor_sighting is not None
+            - same_target: actor.floor_sighting.key == floor.key
+            - still_here: actor.floor_sighting.site == actor.site
+            - same_state: actor.floor_sighting.change_ref == floor.change_ref
+            - ice_known: actor.floor_sighting.frozen and floor.frozen
+            - floor_here: {exists: {collection: floor.sites, as: site, where: site == actor.site}}
+            - held: torch.holder == actor.name
+        effects:
+          - spend_charge: {debit: torch.charges, amount: 1, floor: 0, mirror: [actor.known_everflame_charges]}
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          floors:
+            replace_unique:
+              collection: {ref: scene.floors}
+              old: {ref: floor}
+              new: {record: {type: FloorRegion, fields: {key: {ref: floor.key}, sites: {ref: floor.sites}, frozen: false, change_ref: {ref: occurrence}}}}
+              key: key
+          floor_sighting:
+            record:
+              type: FloorSighting
+              fields: {key: {ref: floor.key}, site: {ref: actor.site}, frozen: false, change_ref: {ref: occurrence}, observation: {ref: occurrence}}

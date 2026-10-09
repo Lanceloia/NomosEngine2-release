@@ -1,0 +1,148 @@
+schema: c0.nominal_lib.v1
+records:
+  - name: Scene
+    fields: [{name: title, type: {str: [1, 64]}}]
+    invariant: null
+  - name: Pilot
+    fields:
+      - {name: name, type: {str: [1, 32]}}
+      - {name: site, type: {str: [1, 32]}}
+    invariant: null
+  - name: Rider
+    fields:
+      - {name: name, type: {str: [1, 32]}}
+      - {name: site, type: {str: [1, 32]}}
+      - {name: luggage, type: {int: [0, 5]}}
+    invariant: null
+  - name: Container
+    fields:
+      - {name: site, type: {str: [1, 32]}}
+      - {name: passengers, type: {tuple: {item: {str: [1, 32]}, max: 2}}}
+    invariant: null
+  - name: MoveAttempt
+    fields:
+      - {name: actor, type: {str: [1, 32]}}
+      - {name: container, type: individual_ref}
+      - {name: destination, type: {str: [1, 32]}}
+      - {name: rider, type: {optional: {str: [1, 32]}}}
+    invariant: null
+  - name: BoardAttempt
+    fields:
+      - {name: actor, type: {str: [1, 32]}}
+      - {name: container, type: individual_ref}
+    invariant: null
+  - name: Envelope
+    fields: [{name: action, type: occurrence_ref}]
+    invariant: null
+owners:
+  - symbol: scene
+    key: c0.transport.scene
+    version: scene-v1
+    state: Scene
+    identity_field: null
+    write: replace_one
+    seat_read: [title]
+  - symbol: pilot
+    key: c0.transport.pilot
+    version: pilot-v1
+    state: Pilot
+    identity_field: name
+    write: replace_one
+    seat_read: [name, site]
+  - symbol: rider
+    key: c0.transport.rider
+    version: rider-v1
+    state: Rider
+    identity_field: name
+    write: replace_one
+    seat_read: [name, site, luggage]
+object_kinds:
+  - symbol: container
+    sort: EXAMPLE.TRANSPORT_CONTAINER@1
+    state: Container
+    version: container-v1
+    max_instances: 1
+lawdefs:
+  - name: action.move
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all:
+            - "actor.site == container.site"
+            - "payload.destination == 'left' or payload.destination == 'right'"
+            - "payload.destination != container.site"
+            - eq:
+                - {const: 1}
+                - count_matching:
+                    collection: {ref: container.passengers}
+                    as: member
+                    where: "member == actor.name"
+            - eq:
+                - {not_none: {ref: payload.rider}}
+                - eq:
+                    - {const: 1}
+                    - count_matching:
+                        collection: {ref: container.passengers}
+                        as: member
+                        where: "member == 'rider'"
+            - any:
+                - {is_none: {ref: rider}}
+                - all:
+                    - {not_none: {ref: rider}}
+                    - "rider.site == container.site"
+        outputs:
+          pilot_site: {ref: payload.destination}
+          container_site: {ref: payload.destination}
+          rider_site: {ref: payload.destination}
+          action: {ref: occurrence}
+  - name: action.board
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all:
+            - "actor.site == container.site"
+            - none_matching:
+                collection: {ref: container.passengers}
+                as: member
+                where: "member == actor.name"
+            - lt:
+                - count_matching:
+                    collection: {ref: container.passengers}
+                    as: member
+                    where: true
+                - {const: 2}
+        outputs:
+          passengers: {append: [{ref: container.passengers}, {ref: actor.name}]}
+          action: {ref: occurrence}
+  - name: action.leave
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all:
+            - "actor.site == container.site"
+            - eq:
+                - {const: 1}
+                - count_matching:
+                    collection: {ref: container.passengers}
+                    as: member
+                    where: "member == actor.name"
+        outputs:
+          passengers:
+            collect_matching:
+              collection: {ref: container.passengers}
+              as: member
+              where: "member != actor.name"
+              value: {ref: member}
+          action: {ref: occurrence}

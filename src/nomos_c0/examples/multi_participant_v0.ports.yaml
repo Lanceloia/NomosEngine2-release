@@ -1,0 +1,24 @@
+schema: c0.graph_ports.v1
+scene_owner: scene
+offer_provider: {name: finite_value, version: '1', limit: 8}
+actions:
+  - symbol: enable
+    actor: maker
+    payload: EnableAttempt
+    envelope: Envelope
+    actor_identity_field: name
+    payload_actor_field: actor
+    participants:
+      - {name: tool, selector: individual, state: Tool, payload_field: tool, write: true}
+      - {name: victim, selector: closed_domain, state: Person, payload_field: victim, write: true}
+    effects: {scene: {}, actor: {}, tool: {ready: ready}, victim: {enabled: enabled}}
+    envelope_fields: {action: action}
+    schedule: null
+    value:
+      read: [actor.known, tool.label, tool.ready, tool.visible, victim.enabled]
+      fields: {}
+      write_paths: ["tool.ready", "victim.enabled"]
+      construct: []
+      collections: {}
+events: []
+due_events: []

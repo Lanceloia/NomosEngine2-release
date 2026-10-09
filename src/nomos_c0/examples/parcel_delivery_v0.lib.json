@@ -1,0 +1,117 @@
+{
+  "schema": "c0.nominal_lib.v1",
+  "records": [
+    {
+      "name": "Parcel",
+      "fields": [
+        {"name": "id", "type": {"str": [1, 64]}},
+        {"name": "destination", "type": {"str": [1, 64]}},
+        {"name": "status", "type": {"enum": ["home", "transit", "arrived", "held"]}},
+        {"name": "depart_ref", "type": {"optional": "occurrence_ref"}},
+        {"name": "arrival_ref", "type": {"optional": "occurrence_ref"}}
+      ],
+      "invariant": {"any": [
+        {"all": [
+          {"eq": [{"ref": "state.status"}, {"const": "home"}]},
+          {"is_none": {"ref": "state.depart_ref"}},
+          {"is_none": {"ref": "state.arrival_ref"}}
+        ]},
+        {"all": [
+          {"eq": [{"ref": "state.status"}, {"const": "transit"}]},
+          {"not_none": {"ref": "state.depart_ref"}},
+          {"is_none": {"ref": "state.arrival_ref"}}
+        ]},
+        {"all": [
+          {"any": [
+            {"eq": [{"ref": "state.status"}, {"const": "arrived"}]},
+            {"eq": [{"ref": "state.status"}, {"const": "held"}]}
+          ]},
+          {"not_none": {"ref": "state.depart_ref"}},
+          {"not_none": {"ref": "state.arrival_ref"}}
+        ]}
+      ]}
+    },
+    {
+      "name": "Route",
+      "fields": [
+        {"name": "destination", "type": {"str": [1, 64]}},
+        {"name": "travel", "type": {"int": [1, 9223372036854775807]}}
+      ],
+      "invariant": null
+    },
+    {
+      "name": "Scene",
+      "fields": [
+        {"name": "parcel", "type": "Parcel"},
+        {"name": "routes", "type": {"tuple": {"item": "Route", "max": 16}}},
+        {"name": "signal", "type": {"enum": ["none", "manifested", "flagged"]}}
+      ],
+      "invariant": null
+    },
+    {
+      "name": "Sender",
+      "fields": [
+        {"name": "name", "type": {"str": [1, 64]}},
+        {"name": "sent_ref", "type": {"optional": "occurrence_ref"}}
+      ],
+      "invariant": null
+    },
+    {
+      "name": "Notice",
+      "fields": [
+        {"name": "departure", "type": "occurrence_ref"},
+        {"name": "notification", "type": "occurrence_ref"}
+      ],
+      "invariant": null
+    },
+    {
+      "name": "Receipt",
+      "fields": [
+        {"name": "arrival", "type": "occurrence_ref"},
+        {"name": "action", "type": "occurrence_ref"}
+      ],
+      "invariant": null
+    },
+    {
+      "name": "Receiver",
+      "fields": [
+        {"name": "name", "type": {"str": [1, 64]}},
+        {"name": "notice", "type": {"optional": "Notice"}},
+        {"name": "receipt", "type": {"optional": "Receipt"}}
+      ],
+      "invariant": null
+    },
+    {
+      "name": "Attempt",
+      "fields": [
+        {"name": "actor", "type": {"str": [1, 64]}},
+        {"name": "item_id", "type": {"str": [1, 64]}},
+        {"name": "destination", "type": {"str": [1, 64]}}
+      ],
+      "invariant": null
+    },
+    {
+      "name": "Envelope",
+      "fields": [{"name": "action", "type": "occurrence_ref"}],
+      "invariant": null
+    }
+  ],
+  "owners": [
+    {
+      "symbol": "scene", "key": "c0.parcel-demo.scene", "version": "parcel-scene-v1",
+      "state": "Scene", "identity_field": null, "write": "replace_one",
+      "seat_read": ["parcel", "parcel.id", "parcel.destination", "parcel.status",
+                    "parcel.depart_ref", "parcel.arrival_ref", "signal"]
+    },
+    {
+      "symbol": "sender", "key": "c0.parcel-demo.sender", "version": "parcel-sender-v1",
+      "state": "Sender", "identity_field": "name", "write": "replace_one",
+      "seat_read": ["name", "sent_ref"]
+    },
+    {
+      "symbol": "receiver", "key": "c0.parcel-demo.receiver", "version": "parcel-receiver-v1",
+      "state": "Receiver", "identity_field": "name", "write": "replace_one",
+      "seat_read": ["name", "notice", "receipt"]
+    }
+  ]
+}

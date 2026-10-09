@@ -1,0 +1,84 @@
+schema: c0.nominal_lib.v1
+records:
+  - name: Scene
+    fields:
+      - {name: title, type: {str: [1, 64]}}
+    invariant: null
+  - name: Person
+    fields:
+      - {name: name, type: {str: [1, 32]}}
+      - {name: known, type: {tuple: {item: KnownPerson, max: 8}}}
+      - {name: enabled, type: bool}
+    invariant: null
+  - name: KnownPerson
+    fields:
+      - {name: name, type: {str: [1, 32]}}
+    invariant: null
+  - name: Tool
+    fields:
+      - {name: label, type: {str: [1, 32]}}
+      - {name: ready, type: bool}
+      - {name: visible, type: bool}
+    invariant: null
+  - name: EnableAttempt
+    fields:
+      - {name: actor, type: {str: [1, 32]}}
+      - {name: tool, type: individual_ref}
+      - {name: victim, type: {str: [1, 32]}}
+    invariant: null
+  - name: Envelope
+    fields:
+      - {name: action, type: occurrence_ref}
+    invariant: null
+owners:
+  - symbol: scene
+    key: c0.participants.scene
+    version: scene-v1
+    state: Scene
+    identity_field: null
+    write: replace_one
+    seat_read: [title]
+  - symbol: maker
+    key: c0.participants.maker
+    version: person-v1
+    state: Person
+    identity_field: name
+    write: replace_one
+    seat_read: [name, known, enabled]
+  - symbol: a
+    key: c0.participants.a
+    version: person-v1
+    state: Person
+    identity_field: name
+    write: replace_one
+    seat_read: [name, enabled]
+  - symbol: b
+    key: c0.participants.b
+    version: person-v1
+    state: Person
+    identity_field: name
+    write: replace_one
+    seat_read: [name, enabled]
+object_kinds:
+  - symbol: tool
+    sort: EXAMPLE.PARTICIPANT_TOOL@1
+    state: Tool
+    version: tool-v1
+    max_instances: 4
+lawdefs:
+  - name: action.enable
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all:
+            - {ref: tool.ready}
+            - {ref: tool.visible}
+            - {not: {ref: victim.enabled}}
+        outputs:
+          action: {ref: occurrence}
+          ready: {const: false}
+          enabled: {const: true}

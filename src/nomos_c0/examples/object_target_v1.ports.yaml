@@ -1,0 +1,45 @@
+schema: c0.graph_ports.v1
+scene_owner: scene
+offer_provider: {name: finite_value, version: '1', limit: 8}
+actions:
+  - symbol: make
+    actor: actor
+    payload: MakeAttempt
+    envelope: Envelope
+    actor_identity_field: name
+    payload_actor_field: actor
+    effects: {scene: {}, actor: {make_ref: make_ref}}
+    envelope_fields: {action: action}
+    schedule: null
+    value:
+      read: [actor.name, actor.make_ref]
+      fields: {}
+      write_paths: ["actor.make_ref"]
+      outputs: {formed_tool: Tool, make_ref: occurrence_ref}
+      construct: [Tool]
+      collections: {}
+  - symbol: inspect
+    actor: actor
+    payload: InspectAttempt
+    envelope: Envelope
+    actor_identity_field: name
+    payload_actor_field: actor
+    target: {state: Tool, payload_field: target, write: true}
+    effects: {scene: {}, actor: {}, target: {ready: ready}}
+    envelope_fields: {action: action}
+    schedule: null
+    value:
+      read: [actor.can_see_tools, target.label, target.ready, target.visible]
+      fields: {}
+      write_paths: ["target.ready"]
+      construct: []
+      collections: {}
+events: []
+due_events: []
+operations:
+  - id: inspect_v1
+    receiver_sort: EXAMPLE.TOOL@1
+    action_template: inspect
+    implementations:
+      - {id: consuming_inspection, law: action.inspect_consume}
+      - {id: preserving_inspection, law: action.inspect_preserve}

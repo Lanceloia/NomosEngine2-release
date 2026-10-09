@@ -1,0 +1,7 @@
+schema: c0.owner_graph.assets.v1
+opening:
+  scene: {title: Object target experiment}
+  actor: {name: Mira, can_see_tools: true, make_ref: null}
+opening_objects:
+  - {kind: tool, state: {label: old, ready: true, visible: true}}
+  - {kind: tool, state: {label: hidden, ready: true, visible: false}}

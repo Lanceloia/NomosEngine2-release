@@ -1,0 +1,117 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+# Only the sighting constructor is shared; custody and resource writes stay explicit.
+lawdefs:
+  - name: action.observe_chest
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard: "actor.name == payload.actor and actor.site == target.site and actor.vital.life == 'alive' and actor.cold_state != 'frozen'"
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          resources:
+            record:
+              type: ResourceObservations
+              fields:
+                display: {ref: actor.resources.display}
+                display_notice_ref: {ref: actor.resources.display_notice_ref}
+                study: {ref: actor.resources.study}
+                balloon: {ref: actor.resources.balloon}
+                power_origin: {ref: actor.resources.power_origin}
+                chest:
+                  call:
+                    ref: treasure.chest_sighting
+                    args: {basis: {ref: occurrence}, chest: {ref: payload.target}, gold: {if: {else: null, then: {ref: target.gold}, when: {ref: target.opened}}}, opened: {ref: target.opened}, site: {ref: target.site}}
+  - name: action.open_chest
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - active_local: "actor.name == payload.actor and actor.site == target.site and actor.vital.life == 'alive' and actor.cold_state != 'frozen'"
+            - closed: not target.opened
+            - observed: "actor.resources.chest is not None and actor.resources.chest.chest == payload.target"
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          opened: true
+          open_ref: {ref: occurrence}
+          resources:
+            record:
+              type: ResourceObservations
+              fields:
+                display: {ref: actor.resources.display}
+                display_notice_ref: {ref: actor.resources.display_notice_ref}
+                study: {ref: actor.resources.study}
+                balloon: {ref: actor.resources.balloon}
+                power_origin: {ref: actor.resources.power_origin}
+                chest:
+                  call:
+                    ref: treasure.chest_sighting
+                    args: {basis: {ref: occurrence}, chest: {ref: payload.target}, gold: {ref: target.gold}, opened: true, site: {ref: target.site}}
+  - name: action.take_gold
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - active_local: "actor.name == payload.actor and actor.site == target.site and actor.vital.life == 'alive' and actor.cold_state != 'frozen'"
+            - open: target.opened
+            - observed_contents: "actor.resources.chest is not None and actor.resources.chest.chest == payload.target and actor.resources.chest.opened"
+        effects:
+          - collect_gold:
+              transfer: {from: target.gold, to: actor.gold}
+              amount: {call: {ref: treasure.collection_amount, args: {available: {ref: target.gold}}}}
+              floor: 0
+              capacity: 1000000
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          gold_taken_ref: {ref: occurrence}
+          resources:
+            record:
+              type: ResourceObservations
+              fields:
+                display: {ref: actor.resources.display}
+                display_notice_ref: {ref: actor.resources.display_notice_ref}
+                study: {ref: actor.resources.study}
+                balloon: {ref: actor.resources.balloon}
+                power_origin: {ref: actor.resources.power_origin}
+                chest:
+                  call:
+                    ref: treasure.chest_sighting
+                    args: {basis: {ref: occurrence}, chest: {ref: payload.target}, gold: {sub: [{ref: target.gold}, {call: {args: {available: {ref: target.gold}}, ref: treasure.collection_amount}}]}, opened: true, site: {ref: target.site}}
+  - name: action.take_magic_item
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - active_local: "actor.name == payload.actor and actor.site == chest.site and actor.vital.life == 'alive' and actor.cold_state != 'frozen'"
+            - open: chest.opened
+            - observed_contents: "actor.resources.chest is not None and actor.resources.chest.chest == payload.chest and actor.resources.chest.opened"
+            - still_stored: "item.holder is None and item.rest_site == chest.interior"
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          holder: {ref: actor.name}
+          taken_ref: {ref: occurrence}
+          treasure_receipt:
+            record:
+              type: TreasureReceipt
+              fields:
+                item: {ref: payload.item}
+                label: {ref: item.label}
+                acquisition: {ref: occurrence}

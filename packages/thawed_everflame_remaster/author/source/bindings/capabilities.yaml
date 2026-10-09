@@ -1,0 +1,1865 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+# Instances and triggers; port signatures remain in capabilities.ports.yaml.
+actions:
+  - name: queen_verify_survivors_emma
+    template: queen_verify_survivors
+    actor: emma
+    source_key: m1.v2.queen.verify_survivors
+    event_type: m1.v2.queen.verify_survivors.action
+    law: {ref: action.queen_verify_survivors, args: {}}
+    use_participants: [reward_residents]
+  - name: queen_pay_reward_emma
+    template: queen_pay_reward
+    actor: emma
+    source_key: m1.v2.queen.pay_reward
+    event_type: m1.v2.queen.pay_reward.action
+    law: {ref: action.queen_pay_reward, args: {amount: 200}}
+    use_participants: [reward_residents]
+    participants: {recipient: {actors: [adventurer]}, box: {kind: reward_box}}
+  - name: queen_observe_routes_emma
+    template: queen_observe_routes
+    actor: emma
+    source_key: m1.v2.queen_observe_routes.emma
+    event_type: m1.v2.queen_observe_routes.emma.action
+    law:
+      ref: action.queen_observe_routes
+      args: {}
+  - name: queen_move_emma
+    template: queen_move
+    actor: emma
+    source_key: m1.v2.queen_move.emma
+    event_type: m1.v2.queen_move.emma.action
+    law:
+      ref: action.queen_move
+      args: {}
+  - name: queen_cross_ice_emma
+    template: queen_cross_ice
+    actor: emma
+    source_key: m1.v2.queen_cross_ice.emma
+    event_type: m1.v2.queen_cross_ice.emma.action
+    law:
+      ref: action.cross_ice
+      args: {}
+  - name: queen_bridge_slow_emma
+    template: queen_bridge_slow
+    actor: emma
+    source_key: m1.v2.queen_bridge_slow.emma
+    event_type: m1.v2.queen_bridge_slow.emma.action
+    law:
+      ref: action.bridge_slow
+      args: {require_safe_site: false}
+  - name: queen_pass_door_emma
+    template: queen_pass_door
+    actor: emma
+    source_key: m1.v2.queen_pass_door.emma
+    event_type: m1.v2.queen_pass_door.emma.action
+    law:
+      ref: action.pass_door
+      args: {}
+    use_participants: [queen_pass_door_emma_participants]
+  - {name: look_tower_top_adventurer, template: look_tower_top, actor: adventurer, source_key: m1.v2.tower.look-top, event_type: m1.v2.tower.look-top.action, law: {ref: action.look_tower_top, args: {}}, use_participants: [look_tower_top_adventurer_participants]}
+  - {name: explain_balloon_adventurer, template: explain_balloon, actor: adventurer, source_key: m1.v2.balloon.explain, event_type: m1.v2.balloon.explain.action, law: {ref: action.explain_balloon, args: {}}, participants: {balloon: {kind: balloon}}}
+  - {name: observe_balloon_power_adventurer, template: observe_balloon_power, actor: adventurer, source_key: m1.v2.balloon.observe-power, event_type: m1.v2.balloon.observe-power.action, law: {ref: action.observe_balloon_power, args: {}}, use_participants: [balloon_team]}
+  - {name: extract_balloon_power_adventurer, template: extract_balloon_power, actor: adventurer, source_key: m1.v2.balloon.extract-power, event_type: m1.v2.balloon.extract-power.action, law: {ref: action.extract_balloon_power, args: {}}, use_participants: [balloon_team], form: {kind: balloon_power, initial_output: newborn}}
+  - {name: transfer_balloon_power_adventurer, template: transfer_balloon_power, actor: adventurer, source_key: m1.v2.balloon.transfer-power, event_type: m1.v2.balloon.transfer-power.action, law: {ref: action.transfer_balloon_power, args: {}}, use_participants: [balloon_team], participants: {power: {kind: balloon_power}}}
+  - {name: load_balloon_power_adventurer, template: load_balloon_power, actor: adventurer, source_key: m1.v2.balloon.load-power, event_type: m1.v2.balloon.load-power.action, law: {ref: action.load_balloon_power, args: {}}, participants: {power: {kind: balloon_power}, torch: {kind: everflame}}}
+  - {name: balloon_push_adventurer, template: balloon_push, actor: adventurer, source_key: m1.v2.balloon_push.adventurer, event_type: m1.v2.balloon_push.adventurer.action, law: {ref: action.balloon_push, args: {}}, use_participants: [balloon_team]}
+  - {name: balloon_push_ice_adventurer, template: balloon_push_ice, actor: adventurer, source_key: m1.v2.balloon_push_ice.adventurer, event_type: m1.v2.balloon_push_ice.adventurer.action, law: {ref: action.balloon_push_ice, args: {}}, use_participants: [balloon_team]}
+  - {name: balloon_push_bridge_adventurer, template: balloon_push_bridge, actor: adventurer, source_key: m1.v2.balloon_push_bridge.adventurer, event_type: m1.v2.balloon_push_bridge.adventurer.action, law: {ref: action.balloon_push_bridge, args: {}}, use_participants: [balloon_team]}
+  - {name: balloon_push_door_adventurer, template: balloon_push_door, actor: adventurer, source_key: m1.v2.balloon_push_door.adventurer, event_type: m1.v2.balloon_push_door.adventurer.action, law: {ref: action.balloon_push_door, args: {}}, use_participants: [balloon_team, queen_pass_door_emma_participants]}
+  - {name: balloon_flight_adventurer, template: balloon_flight, actor: adventurer, source_key: m1.v2.balloon.flight-adventurer, event_type: m1.v2.balloon.flight-adventurer.action, law: {ref: action.balloon_flight, args: {}}, participants: {balloon: {kind: balloon}, emma: {actors: [emma]}}}
+  - {name: balloon_control_adventurer, template: balloon_control, actor: adventurer, source_key: m1.v2.balloon.control-adventurer, event_type: m1.v2.balloon.control-adventurer.action, law: {ref: action.balloon_control, args: {}}, use_participants: [balloon_team]}
+  - {name: balloon_control_emma, template: balloon_control_queen, actor: emma, source_key: m1.v2.balloon.control-emma, event_type: m1.v2.balloon.control-emma.action, law: {ref: action.balloon_control, args: {}}, use_participants: [balloon_team]}
+  - {name: ask_alpha_adventurer, template: ask_alpha, actor: adventurer, source_key: m1.v2.tower.ask_alpha, event_type: m1.v2.tower.ask_alpha.action, law: {ref: action.ask_alpha, args: {}}, use_participants: [ask_alpha_adventurer_participants]}
+  - {name: propose_alpha, template: propose_alpha, actor: alpha, source_key: m1.v2.tower.propose_alpha, event_type: m1.v2.tower.propose_alpha.action, law: {ref: action.propose_alpha, args: {}}, use_participants: [propose_alpha_participants]}
+  - {name: show_magic_alpha, template: show_magic_alpha, actor: alpha, source_key: m1.v2.alpha.show_magic, event_type: m1.v2.alpha.show_magic.action, law: {ref: action.show_magic_alpha, args: {}}, use_participants: [show_magic_alpha_participants]}
+  - {name: withdraw_magic_alpha, template: withdraw_magic_alpha, actor: alpha, source_key: m1.v2.alpha.withdraw_magic, event_type: m1.v2.alpha.withdraw_magic.action, law: {ref: action.withdraw_magic_alpha, args: {}}}
+  - {name: accept_alpha_adventurer, template: accept_alpha, actor: adventurer, source_key: m1.v2.tower.accept_alpha, event_type: m1.v2.tower.accept_alpha.action, law: {ref: action.accept_alpha, args: {}}, use_participants: [ask_alpha_adventurer_participants]}
+  - {name: report_alpha_adventurer, template: report_alpha, actor: adventurer, source_key: m1.v2.tower.report_alpha, event_type: m1.v2.tower.report_alpha.action, law: {ref: action.report_alpha, args: {}}, use_participants: [ask_alpha_adventurer_participants]}
+  - {name: deliver_alpha, template: resolve_alpha, actor: alpha, source_key: m1.v2.tower.deliver_alpha, event_type: m1.v2.tower.deliver_alpha.action, law: {ref: action.resolve_alpha, args: {deliver: true}}, use_participants: [propose_alpha_participants]}
+  - {name: withdraw_alpha, template: resolve_alpha, actor: alpha, source_key: m1.v2.tower.withdraw_alpha, event_type: m1.v2.tower.withdraw_alpha.action, law: {ref: action.resolve_alpha, args: {deliver: false}}, use_participants: [propose_alpha_participants]}
+  - {name: clear_balloon_alpha, template: clear_balloon, actor: alpha, source_key: m1.v2.tower.clear_balloon, event_type: m1.v2.tower.clear_balloon.action, law: {ref: action.clear_balloon, args: {}}}
+  - {family: step_aside, template: step_aside, domain: tower_guards, source_prefix: m1.v2.tower.step_aside, law: {ref: action.step_aside, args: {}}}
+  - name: focus_person_adventurer
+    template: focus_person
+    actor: adventurer
+    source_key: m1.v2.focus_person
+    event_type: m1.v2.focus_person.action
+    law:
+      ref: action.focus_person_cold
+      args:
+        damage: 1
+    participants:
+      mirror:
+        kind: magic_item
+      torch:
+        kind: everflame
+      victim:
+        actors:
+        - ritual_resident
+        - huddled_one
+        - huddled_two
+        - wall_resident
+        - bokold_one
+        - bokold_two
+        - prison_resident_one
+        - prison_resident_two
+        - hall_bokold_one
+        - hall_bokold_two
+        - hall_bokold_three
+        - hall_bokold_four
+        - hall_bokold_five
+        - stable_bokold_one
+        - stable_bokold_two
+        - stable_bokold_three
+        - stable_bokold_four
+  - name: focus_queen_adventurer
+    template: focus_queen
+    actor: adventurer
+    source_key: m1.v2.focus_queen
+    event_type: m1.v2.focus_queen.action
+    law:
+      ref: action.focus_person_cold
+      args:
+        damage: 1
+    participants:
+      mirror:
+        kind: magic_item
+      torch:
+        kind: everflame
+      victim:
+        actors:
+        - emma
+  - name: focus_fox_adventurer
+    template: focus_fox
+    actor: adventurer
+    source_key: m1.v2.focus_fox
+    event_type: m1.v2.focus_fox.action
+    law:
+      ref: action.focus_person_cold
+      args:
+        damage: 1
+    participants:
+      mirror:
+        kind: magic_item
+      torch:
+        kind: everflame
+      victim:
+        actors:
+        - arctic_fox_one
+        - arctic_fox_two
+        - arctic_fox_three
+        - arctic_fox_four
+  - name: focus_tower_bear_adventurer
+    template: focus_tower_bear
+    actor: adventurer
+    source_key: m1.v2.focus_tower_bear
+    event_type: m1.v2.focus_tower_bear.action
+    law:
+      ref: action.focus_person_bear
+      args:
+        damage: 1
+    participants:
+      mirror:
+        kind: magic_item
+      torch:
+        kind: everflame
+      victim:
+        actors:
+        - alpha
+        - tower_bear_one
+        - tower_bear_two
+  - name: focus_bar_bear_adventurer
+    template: focus_bar_bear
+    actor: adventurer
+    source_key: m1.v2.focus_bar_bear
+    event_type: m1.v2.focus_bar_bear.action
+    law:
+      ref: action.focus_person_bear
+      args:
+        damage: 1
+    participants:
+      mirror:
+        kind: magic_item
+      torch:
+        kind: everflame
+      victim:
+        actors:
+        - icebar_bear_one
+        - icebar_bear_two
+  - name: focus_prison_guard_adventurer
+    template: focus_prison_guard
+    actor: adventurer
+    source_key: m1.v2.focus_prison_guard
+    event_type: m1.v2.focus_prison_guard.action
+    law:
+      ref: action.focus_person_bear
+      args:
+        damage: 1
+    participants:
+      mirror:
+        kind: magic_item
+      torch:
+        kind: everflame
+      victim:
+        actors:
+        - prison_guard
+  - name: focus_prison_voice_adventurer
+    template: focus_prison_voice
+    actor: adventurer
+    source_key: m1.v2.focus_prison_voice
+    event_type: m1.v2.focus_prison_voice.action
+    law:
+      ref: action.focus_person_voice
+      args:
+        damage: 1
+    participants:
+      mirror:
+        kind: magic_item
+      torch:
+        kind: everflame
+      victim:
+        actors:
+        - captive_bear
+        - prison_bokold
+  - name: thaw_queen_adventurer
+    template: thaw_queen
+    actor: adventurer
+    source_key: m1.v2.thaw_queen
+    event_type: m1.v2.thaw_queen.action
+    law: {ref: action.thaw_person, args: {cue_subject: ritual_resident}}
+    participants:
+      torch: {kind: everflame}
+      victim: {actors: [emma]}
+  - name: observe_resident_queen_adventurer
+    template: observe_resident_queen
+    actor: adventurer
+    source_key: m1.v2.observe_resident_queen
+    event_type: m1.v2.observe_resident_queen.action
+    law:
+      ref: action.observe_resident
+      args: {}
+    use_participants: [look_tower_top_adventurer_participants]
+  - name: brand_person_queen_adventurer
+    template: brand_person_queen
+    actor: adventurer
+    source_key: m1.v2.brand_person_queen
+    event_type: m1.v2.brand_person_queen.action
+    law:
+      ref: action.brand_person_queen
+      args:
+        damage: 1
+    use_participants: [brand_person_queen_adventurer_participants]
+  - name: locate_branded_person_queen_adventurer
+    template: locate_branded_person_queen
+    actor: adventurer
+    source_key: m1.v2.locate_branded_person_queen
+    event_type: m1.v2.locate_branded_person_queen.action
+    law:
+      ref: action.locate_branded_person
+      args: {}
+    use_participants: [brand_person_queen_adventurer_participants]
+  - name: observe_queen_adventurer
+    template: observe_queen
+    actor: adventurer
+    source_key: m1.v2.queen.observe
+    event_type: m1.v2.queen.observe.action
+    law:
+      ref: action.observe_queen
+      args: {}
+    participants:
+      queen:
+        actors:
+        - emma
+  - name: queen_wait_emma
+    template: queen_wait
+    actor: emma
+    source_key: m1.v2.queen.wait-emma
+    event_type: m1.v2.queen.wait-emma.action
+    law:
+      ref: action.queen_wait
+      args: {}
+  - name: observe_resident_tower_bear_adventurer
+    template: observe_resident_tower_bear
+    actor: adventurer
+    source_key: m1.v2.observe_resident_tower_bear
+    event_type: m1.v2.observe_resident_tower_bear.action
+    law:
+      ref: action.observe_resident_tower_bear
+      args: {}
+    participants:
+      victim:
+        actors:
+        - alpha
+        - tower_bear_one
+        - tower_bear_two
+  - name: brand_person_tower_bear_adventurer
+    template: brand_person_tower_bear
+    actor: adventurer
+    source_key: m1.v2.brand_person_tower_bear
+    event_type: m1.v2.brand_person_tower_bear.action
+    law:
+      ref: action.brand_person_tower_bear
+      args:
+        damage: 1
+    use_participants: [brand_person_tower_bear_adventurer_participants]
+  - name: locate_branded_person_tower_bear_adventurer
+    template: locate_branded_person_tower_bear
+    actor: adventurer
+    source_key: m1.v2.locate_branded_person_tower_bear
+    event_type: m1.v2.locate_branded_person_tower_bear.action
+    law:
+      ref: action.locate_branded_person
+      args: {}
+    use_participants: [brand_person_tower_bear_adventurer_participants]
+  - name: observe_resident_bar_bear_adventurer
+    template: observe_resident_bar_bear
+    actor: adventurer
+    source_key: m1.v2.observe_resident_bar_bear
+    event_type: m1.v2.observe_resident_bar_bear.action
+    law:
+      ref: action.observe_resident_tower_bear
+      args: {}
+    participants:
+      victim:
+        actors:
+        - icebar_bear_one
+        - icebar_bear_two
+  - name: brand_person_bar_bear_adventurer
+    template: brand_person_bar_bear
+    actor: adventurer
+    source_key: m1.v2.brand_person_bar_bear
+    event_type: m1.v2.brand_person_bar_bear.action
+    law:
+      ref: action.brand_person_tower_bear
+      args:
+        damage: 1
+    use_participants: [brand_person_bar_bear_adventurer_participants]
+  - name: locate_branded_person_bar_bear_adventurer
+    template: locate_branded_person_bar_bear
+    actor: adventurer
+    source_key: m1.v2.locate_branded_person_bar_bear
+    event_type: m1.v2.locate_branded_person_bar_bear.action
+    law:
+      ref: action.locate_branded_person
+      args: {}
+    use_participants: [brand_person_bar_bear_adventurer_participants]
+  - name: observe_resident_prison_guard_adventurer
+    template: observe_resident_prison_guard
+    actor: adventurer
+    source_key: m1.v2.observe_resident_prison_guard
+    event_type: m1.v2.observe_resident_prison_guard.action
+    law:
+      ref: action.observe_resident_tower_bear
+      args: {}
+    participants:
+      victim:
+        actors:
+        - prison_guard
+  - name: brand_person_prison_guard_adventurer
+    template: brand_person_prison_guard
+    actor: adventurer
+    source_key: m1.v2.brand_person_prison_guard
+    event_type: m1.v2.brand_person_prison_guard.action
+    law:
+      ref: action.brand_person_tower_bear
+      args:
+        damage: 1
+    use_participants: [brand_person_prison_guard_adventurer_participants]
+  - name: locate_branded_person_prison_guard_adventurer
+    template: locate_branded_person_prison_guard
+    actor: adventurer
+    source_key: m1.v2.locate_branded_person_prison_guard
+    event_type: m1.v2.locate_branded_person_prison_guard.action
+    law:
+      ref: action.locate_branded_person
+      args: {}
+    use_participants: [brand_person_prison_guard_adventurer_participants]
+  - name: observe_resident_prison_voice_adventurer
+    template: observe_resident_prison_voice
+    actor: adventurer
+    source_key: m1.v2.observe_resident_prison_voice
+    event_type: m1.v2.observe_resident_prison_voice.action
+    law:
+      ref: action.observe_resident_tower_bear
+      args: {}
+    participants:
+      victim:
+        actors:
+        - captive_bear
+        - prison_bokold
+  - name: brand_person_prison_voice_adventurer
+    template: brand_person_prison_voice
+    actor: adventurer
+    source_key: m1.v2.brand_person_prison_voice
+    event_type: m1.v2.brand_person_prison_voice.action
+    law:
+      ref: action.brand_person_prison_voice
+      args:
+        damage: 1
+    use_participants: [brand_person_prison_voice_adventurer_participants]
+  - name: locate_branded_person_prison_voice_adventurer
+    template: locate_branded_person_prison_voice
+    actor: adventurer
+    source_key: m1.v2.locate_branded_person_prison_voice
+    event_type: m1.v2.locate_branded_person_prison_voice.action
+    law:
+      ref: action.locate_branded_person
+      args: {}
+    use_participants: [brand_person_prison_voice_adventurer_participants]
+  - name: observe_resident_fox_adventurer
+    template: observe_resident_fox
+    actor: adventurer
+    source_key: m1.v2.observe_resident_fox
+    event_type: m1.v2.observe_resident_fox.action
+    law:
+      ref: action.observe_resident_fox
+      args: {}
+    use_participants: [observe_resident_fox_adventurer_participants]
+  - name: brand_person_fox_adventurer
+    template: brand_person_fox
+    actor: adventurer
+    source_key: m1.v2.brand_person_fox
+    event_type: m1.v2.brand_person_fox.action
+    law:
+      ref: action.brand_person_queen
+      args:
+        damage: 1
+    use_participants: [brand_person_fox_adventurer_participants]
+  - name: locate_branded_person_fox_adventurer
+    template: locate_branded_person_fox
+    actor: adventurer
+    source_key: m1.v2.locate_branded_person_fox
+    event_type: m1.v2.locate_branded_person_fox.action
+    law:
+      ref: action.locate_branded_person
+      args: {}
+    use_participants: [brand_person_fox_adventurer_participants]
+  - {family: tower_watch, template: tower_watch, domain: tower_bears, source_prefix: m1.v2.tower.watch, law: {ref: action.tower_watch, args: {}}}
+  - name: observe_tower_adventurer
+    template: observe_tower
+    actor: adventurer
+    source_key: m1.v2.tower.observe
+    event_type: m1.v2.tower.observe.action
+    law: {ref: action.observe_tower, args: {}}
+    participants: {alpha: {actors: [alpha]}, bear_one: {actors: [tower_bear_one]}, bear_two: {actors: [tower_bear_two]}}
+  - {family: show_magic, template: show_magic, domain: hall_bokolds, source_prefix: m1.v2.hall.show_magic, law: {ref: action.show_magic, args: {}}, use_participants: [show_magic_alpha_participants]}
+  - {family: withdraw_magic, template: withdraw_magic, domain: hall_bokolds, source_prefix: m1.v2.hall.withdraw_magic, law: {ref: action.withdraw_magic, args: {}}}
+  - {family: observe_magic, template: observe_magic, domain: hall_bokolds, source_prefix: m1.v2.hall.observe_magic, law: {ref: action.observe_magic, args: {}}, use_participants: [observe_magic_participants]}
+  - {family: study_magic, template: study_magic, domain: hall_bokolds, source_prefix: m1.v2.hall.study_magic, law: {ref: action.study_magic, args: {}}, use_participants: [observe_magic_participants]}
+  - {family: observe_alpha_magic, template: observe_alpha_magic, domain: hall_bokolds, source_prefix: m1.v2.hall.observe_alpha_magic, law: {ref: action.observe_alpha_magic, args: {}}, use_participants: [observe_alpha_magic_participants]}
+  - {family: study_alpha_magic, template: study_alpha_magic, domain: hall_bokolds, source_prefix: m1.v2.hall.study_alpha_magic, law: {ref: action.study_alpha_magic, args: {}}, use_participants: [observe_alpha_magic_participants]}
+  - {family: observe_my_magic, template: observe_my_magic, domain: hall_bokolds, source_prefix: m1.v2.hall.observe_my_magic, law: {ref: action.observe_my_magic, args: {}}, use_participants: [show_magic_alpha_participants]}
+  - {family: study_my_magic, template: study_my_magic, domain: hall_bokolds, source_prefix: m1.v2.hall.study_my_magic, law: {ref: action.study_my_magic, args: {}}, use_participants: [show_magic_alpha_participants]}
+  - {family: observe_ground_magic, template: observe_ground_magic, domain: hall_bokolds, source_prefix: m1.v2.hall.observe_ground_magic, law: {ref: action.observe_ground_magic, args: {}}, use_participants: [show_magic_alpha_participants]}
+  - {family: study_ground_magic, template: study_ground_magic, domain: hall_bokolds, source_prefix: m1.v2.hall.study_ground_magic, law: {ref: action.study_ground_magic, args: {}}, use_participants: [show_magic_alpha_participants]}
+  - {family: hall_draw, template: hall_draw, domain: hall_bokolds, source_prefix: m1.v2.hall.draw, law: {ref: action.hall_draw, args: {}}}
+  - {family: hall_wait, template: hall_wait, domain: hall_bokolds, source_prefix: m1.v2.hall.wait, law: {ref: action.queen_wait, args: {}}}
+  - name: observe_hall_adventurer
+    template: observe_hall
+    actor: adventurer
+    source_key: m1.v2.hall.observe
+    event_type: m1.v2.hall.observe.action
+    law: {ref: action.observe_hall, args: {}}
+    participants:
+      hall_one: {actors: [hall_bokold_one]}
+      hall_two: {actors: [hall_bokold_two]}
+      hall_three: {actors: [hall_bokold_three]}
+      hall_four: {actors: [hall_bokold_four]}
+      hall_five: {actors: [hall_bokold_five]}
+  - name: pickup_elemental_charge_adventurer
+    template: pickup_elemental_charge
+    actor: adventurer
+    source_key: m1.v2.elemental_charge.pickup
+    event_type: m1.v2.elemental_charge.pickup.action
+    law: {ref: action.pickup_elemental_charge, args: {}}
+    participants: {packet: {kind: elemental_charge}}
+  - name: load_elemental_torch_adventurer
+    template: load_elemental_torch
+    actor: adventurer
+    source_key: m1.v2.elemental_charge.load_torch
+    event_type: m1.v2.elemental_charge.load_torch.action
+    law: {ref: action.load_elemental_torch, args: {}}
+    participants: {packet: {kind: elemental_charge}, storage: {kind: everflame}}
+  - name: load_elemental_firelock_adventurer
+    template: load_elemental_firelock
+    actor: adventurer
+    source_key: m1.v2.elemental_charge.load_firelock
+    event_type: m1.v2.elemental_charge.load_firelock.action
+    law: {ref: action.load_elemental_firelock, args: {}}
+    participants: {packet: {kind: elemental_charge}, storage: {kind: magic_item}}
+  - name: elemental_breath
+    template: elemental_breath
+    actor:
+      self: ice_elemental
+    source_key: m1.v2.elemental.breath
+    event_type: m1.v2.elemental.breath.action
+    law:
+      ref: action.elemental_breath
+      args:
+        damage: 1
+    participants:
+      subject:
+        actors:
+        - adventurer
+      victim_captive_bear:
+        actors:
+        - captive_bear
+      victim_prison_bokold:
+        actors:
+        - prison_bokold
+      victim_prison_guard:
+        actors:
+        - prison_guard
+      victim_alpha:
+        actors:
+        - alpha
+      victim_tower_bear_one:
+        actors:
+        - tower_bear_one
+      victim_tower_bear_two:
+        actors:
+        - tower_bear_two
+      victim_icebar_bear_one:
+        actors:
+        - icebar_bear_one
+      victim_icebar_bear_two:
+        actors:
+        - icebar_bear_two
+      victim_wall_resident:
+        actors:
+        - wall_resident
+      victim_ritual_resident:
+        actors:
+        - ritual_resident
+      victim_prison_resident_one:
+        actors:
+        - prison_resident_one
+      victim_prison_resident_two:
+        actors:
+        - prison_resident_two
+      victim_huddled_one:
+        actors:
+        - huddled_one
+      victim_huddled_two:
+        actors:
+        - huddled_two
+      victim_bokold_one:
+        actors:
+        - bokold_one
+      victim_bokold_two:
+        actors:
+        - bokold_two
+      victim_arctic_fox_one:
+        actors:
+        - arctic_fox_one
+      victim_arctic_fox_two:
+        actors:
+        - arctic_fox_two
+      victim_arctic_fox_three:
+        actors:
+        - arctic_fox_three
+      victim_arctic_fox_four:
+        actors:
+        - arctic_fox_four
+      victim_hall_bokold_one:
+        actors:
+        - hall_bokold_one
+      victim_hall_bokold_two:
+        actors:
+        - hall_bokold_two
+      victim_hall_bokold_three:
+        actors:
+        - hall_bokold_three
+      victim_hall_bokold_four:
+        actors:
+        - hall_bokold_four
+      victim_hall_bokold_five:
+        actors:
+        - hall_bokold_five
+      victim_stable_bokold_one:
+        actors:
+        - stable_bokold_one
+      victim_stable_bokold_two:
+        actors:
+        - stable_bokold_two
+      victim_stable_bokold_three:
+        actors:
+        - stable_bokold_three
+      victim_stable_bokold_four:
+        actors:
+        - stable_bokold_four
+      victim_emma:
+        actors:
+        - emma
+  - name: fireball_adventurer
+    template: fireball
+    actor: adventurer
+    source_key: m1.v2.fireball
+    event_type: m1.v2.fireball.action
+    law:
+      ref: action.fireball
+      args:
+        damage: 2
+    participants:
+      item:
+        kind: magic_item
+      victim_captive_bear:
+        actors:
+        - captive_bear
+      victim_prison_bokold:
+        actors:
+        - prison_bokold
+      victim_prison_guard:
+        actors:
+        - prison_guard
+      victim_alpha:
+        actors:
+        - alpha
+      victim_tower_bear_one:
+        actors:
+        - tower_bear_one
+      victim_tower_bear_two:
+        actors:
+        - tower_bear_two
+      victim_icebar_bear_one:
+        actors:
+        - icebar_bear_one
+      victim_icebar_bear_two:
+        actors:
+        - icebar_bear_two
+      victim_wall_resident:
+        actors:
+        - wall_resident
+      victim_ritual_resident:
+        actors:
+        - ritual_resident
+      victim_prison_resident_one:
+        actors:
+        - prison_resident_one
+      victim_prison_resident_two:
+        actors:
+        - prison_resident_two
+      victim_huddled_one:
+        actors:
+        - huddled_one
+      victim_huddled_two:
+        actors:
+        - huddled_two
+      victim_bokold_one:
+        actors:
+        - bokold_one
+      victim_bokold_two:
+        actors:
+        - bokold_two
+      victim_arctic_fox_one:
+        actors:
+        - arctic_fox_one
+      victim_arctic_fox_two:
+        actors:
+        - arctic_fox_two
+      victim_arctic_fox_three:
+        actors:
+        - arctic_fox_three
+      victim_arctic_fox_four:
+        actors:
+        - arctic_fox_four
+      victim_hall_bokold_one:
+        actors:
+        - hall_bokold_one
+      victim_hall_bokold_two:
+        actors:
+        - hall_bokold_two
+      victim_hall_bokold_three:
+        actors:
+        - hall_bokold_three
+      victim_hall_bokold_four:
+        actors:
+        - hall_bokold_four
+      victim_hall_bokold_five:
+        actors:
+        - hall_bokold_five
+      victim_stable_bokold_one:
+        actors:
+        - stable_bokold_one
+      victim_stable_bokold_two:
+        actors:
+        - stable_bokold_two
+      victim_stable_bokold_three:
+        actors:
+        - stable_bokold_three
+      victim_stable_bokold_four:
+        actors:
+        - stable_bokold_four
+      victim_emma:
+        actors:
+        - emma
+    actor_domain_effects:
+    - name: elementals
+      law:
+        ref: action.fireball_elementals
+        args:
+          damage: 2
+  - family: care_person
+    template: care_person
+    domain: caregivers
+    source_prefix: m1.v2.care_person
+    law:
+      ref: action.care_person
+      args: {}
+    use_participants: [care_person_participants]
+  - {family: permit_charge, template: permit_charge, domain: prison_voices, source_prefix: m1.v2.permit_charge, law: {ref: action.permit_charge, args: {}}, participants: {recipient: {actors: [adventurer]}, packet: {kind: charge_packet}}}
+  - {name: receive_charge_adventurer, template: receive_charge, actor: adventurer, source_key: m1.v2.receive_charge, event_type: m1.v2.receive_charge.action, law: {ref: action.receive_charge, args: {}}, participants: {giver: {actors: [captive_bear, prison_bokold]}, packet: {kind: charge_packet}}}
+  - {name: load_charge_adventurer, template: load_charge, actor: adventurer, source_key: m1.v2.load_charge, event_type: m1.v2.load_charge.action, law: {ref: action.load_charge, args: {}}, participants: {packet: {kind: charge_packet}, torch: {kind: everflame}}}
+  - {name: observe_prison_voices_adventurer, template: observe_prison_voices, actor: adventurer, source_key: m1.v2.observe_prison_voices, event_type: m1.v2.observe_prison_voices.action, law: {ref: action.observe_prison_voices, args: {}}, participants: {captive: {actors: [captive_bear]}, bokold: {actors: [prison_bokold]}}}
+  - {name: ask_prison_adventurer, template: ask_prison, actor: adventurer, source_key: m1.v2.ask_prison, event_type: m1.v2.ask_prison.action, law: {ref: action.ask_prison, args: {}}, participants: {recipient: {actors: [captive_bear, prison_bokold]}}}
+  - {family: prison_wait, template: prison_wait, domain: prison_voices, source_prefix: m1.v2.prison_wait, law: {ref: action.prison_wait, args: {}}}
+  - {family: prison_answer, template: prison_reply, domain: prison_voices, source_prefix: m1.v2.prison_answer, law: {ref: action.prison_reply, args: {decline: false}}, use_participants: [prison_answer_participants]}
+  - {family: prison_decline, template: prison_reply, domain: prison_voices, source_prefix: m1.v2.prison_decline, law: {ref: action.prison_reply, args: {decline: true}}, use_participants: [prison_answer_participants]}
+  - {family: observe_prison_line, template: observe_prison_line, domain: prison_residents, source_prefix: m1.v2.observe_prison_line.resident, law: {ref: action.observe_prison_line, args: {}}, use_participants: [prison_guardian]}
+  - {family: pass_prison_line, template: pass_prison_line, domain: prison_residents, source_prefix: m1.v2.pass_prison_line.resident, law: {ref: action.pass_prison_line, args: {}}, use_participants: [prison_guardian]}
+  - {family: try_prison_line, template: try_prison_line, domain: prison_residents, source_prefix: m1.v2.try_prison_line.resident, law: {ref: action.try_prison_line, args: {}}, use_participants: [prison_guardian]}
+  - {family: pass_door, template: pass_door, domain: prison_residents, source_prefix: m1.v2.pass_door.resident, law: {ref: action.pass_door, args: {}}, use_participants: [queen_pass_door_emma_participants]}
+  - {name: observe_prison_people_adventurer, template: observe_prison_people, actor: adventurer, source_key: m1.v2.observe_prison_people, event_type: m1.v2.observe_prison_people.action, law: {ref: action.observe_prison_people, args: {}}, participants: {resident_one: {actors: [prison_resident_one]}, resident_two: {actors: [prison_resident_two]}}}
+  - {name: observe_prison_bars_adventurer, template: observe_prison_bars, actor: adventurer, source_key: m1.v2.observe_prison_bars.adventurer, event_type: m1.v2.observe_prison_bars.adventurer.action, law: {ref: action.observe_prison_bars, args: {}}, use_participants: [observe_prison_bars_adventurer_participants]}
+  - {name: set_prison_bars_adventurer, template: set_prison_bars, actor: adventurer, source_key: m1.v2.set_prison_bars.adventurer, event_type: m1.v2.set_prison_bars.adventurer.action, law: {ref: action.set_prison_bars, args: {}}, use_participants: [observe_prison_bars_adventurer_participants]}
+  - {name: pass_prison_bars_adventurer, template: pass_prison_bars, actor: adventurer, source_key: m1.v2.pass_prison_bars.adventurer, event_type: m1.v2.pass_prison_bars.adventurer.action, law: {ref: action.pass_prison_bars, args: {}}, use_participants: [observe_prison_bars_adventurer_participants]}
+  - {name: observe_prison_line_adventurer, template: observe_prison_line, actor: adventurer, source_key: m1.v2.observe_prison_line, event_type: m1.v2.observe_prison_line.action, law: {ref: action.observe_prison_line, args: {}}, use_participants: [prison_guardian]}
+  - {name: pass_prison_line_adventurer, template: pass_prison_line, actor: adventurer, source_key: m1.v2.pass_prison_line, event_type: m1.v2.pass_prison_line.action, law: {ref: action.pass_prison_line, args: {}}, use_participants: [prison_guardian]}
+  - {family: offer_share, template: offer_share, domain: bar_bears, source_prefix: m1.v2.offer_share, law: {ref: action.offer_share, args: {}}, use_participants: [prison_guardian, offer_share_participants]}
+  - {family: withdraw_share, template: withdraw_share, domain: bar_bears, source_prefix: m1.v2.withdraw_share, law: {ref: action.withdraw_share, args: {}}}
+  - {family: finish_share, template: finish_share, domain: bar_bears, source_prefix: m1.v2.finish_share, law: {ref: action.finish_share, args: {}}}
+  - {name: guard_receive_share, template: guard_receive_share, actor: prison_guard, source_key: m1.v2.guard_receive_share, event_type: m1.v2.guard_receive_share.action, law: {ref: action.guard_receive_share, args: {}}, participants: {giver: {actors: [icebar_bear_one, icebar_bear_two]}, drink: {kind: drink_container}}}
+  - {name: guard_decline_share, template: guard_decline_share, actor: prison_guard, source_key: m1.v2.guard_decline_share, event_type: m1.v2.guard_decline_share.action, law: {ref: action.guard_decline_share, args: {}}}
+  - {name: guard_inspect_held_drink, template: guard_inspect_held_drink, actor: prison_guard, source_key: m1.v2.guard_inspect_held_drink, event_type: m1.v2.guard_inspect_held_drink.action, law: {ref: action.bar_inspect_drink, args: {}}, use_participants: [offer_share_participants]}
+  - {name: guard_drink, template: guard_drink, actor: prison_guard, source_key: m1.v2.guard_drink, event_type: m1.v2.guard_drink.action, law: {ref: action.bar_drink, args: {}}, use_participants: [offer_share_participants]}
+  - {name: guard_observe_routes, template: guard_observe_routes, actor: prison_guard, source_key: m1.v2.guard_observe_routes, event_type: m1.v2.guard_observe_routes.action, law: {ref: action.observe_local_routes, args: {}}}
+  - {name: guard_move, template: guard_move, actor: prison_guard, source_key: m1.v2.guard_move, event_type: m1.v2.guard_move.action, law: {ref: action.mobile_move, args: {}}}
+  - {name: guard_cross_ice, template: guard_cross_ice, actor: prison_guard, source_key: m1.v2.guard_cross_ice, event_type: m1.v2.guard_cross_ice.action, law: {ref: action.mobile_cross, args: {}}}
+  - {name: guard_pass_door, template: guard_pass_door, actor: prison_guard, source_key: m1.v2.guard_pass_door, event_type: m1.v2.guard_pass_door.action, law: {ref: action.mobile_pass_door, args: {}}, use_participants: [queen_pass_door_emma_participants]}
+  - {name: guard_arrive_bar, template: guard_arrive_bar, actor: prison_guard, source_key: m1.v2.guard_arrive_bar, event_type: m1.v2.guard_arrive_bar.action, law: {ref: action.guard_arrive_bar, args: {}}}
+  - {name: guard_return_post, template: guard_return_post, actor: prison_guard, source_key: m1.v2.guard_return_post, event_type: m1.v2.guard_return_post.action, law: {ref: action.guard_return_post, args: {}}}
+  - {name: guard_finish_visit, template: guard_finish_visit, actor: prison_guard, source_key: m1.v2.guard_finish_visit, event_type: m1.v2.guard_finish_visit.action, law: {ref: action.guard_finish_visit, args: {}}}
+  - {family: bear_look_guard, template: bear_look_guard, domain: bar_bears, source_prefix: m1.v2.bear_look_guard, law: {ref: action.bear_look_guard, args: {}}, use_participants: [prison_guardian]}
+  - {family: bear_invite_guard, template: bear_invite_guard, domain: bar_bears, source_prefix: m1.v2.bear_invite_guard, law: {ref: action.bear_invite_guard, args: {}}, use_participants: [prison_guardian, offer_share_participants]}
+  - {name: guard_observe_visitor, template: guard_observe_visitor, actor: prison_guard, source_key: m1.v2.guard_observe_visitor, event_type: m1.v2.guard_observe_visitor.action, law: {ref: action.guard_observe_visitor, args: {}}, participants: {messenger: {actors: [icebar_bear_one, icebar_bear_two]}}}
+  - {name: guard_inspect_drink, template: guard_inspect_drink, actor: prison_guard, source_key: m1.v2.guard_inspect_drink, event_type: m1.v2.guard_inspect_drink.action, law: {ref: action.guard_inspect_drink, args: {}}, use_participants: [guard_inspect_drink_participants]}
+  - {name: guard_accept_invitation, template: guard_accept_invitation, actor: prison_guard, source_key: m1.v2.guard_accept_invitation, event_type: m1.v2.guard_accept_invitation.action, law: {ref: action.guard_accept_invitation, args: {}}, use_participants: [guard_inspect_drink_participants]}
+  - {name: guard_decline_invitation, template: guard_decline_invitation, actor: prison_guard, source_key: m1.v2.guard_decline_invitation, event_type: m1.v2.guard_decline_invitation.action, law: {ref: action.guard_decline_invitation, args: {}}}
+  - {name: guard_wait, template: guard_wait, actor: prison_guard, source_key: m1.v2.guard_wait, event_type: m1.v2.guard_wait.action, law: {ref: action.bar_wait, args: {}}}
+  - {name: invite_guest_adventurer, template: invite_guest, actor: adventurer, source_key: m1.v2.invite_guest, event_type: m1.v2.invite_guest.action, law: {ref: action.invite_guest, args: {}}, use_participants: [guard_inspect_drink_participants]}
+  - {family: guest_accept, template: guest_accept, domain: bar_bears, source_prefix: m1.v2.guest.accept, law: {ref: action.guest_accept, args: {}}, use_participants: [offer_share_participants]}
+  - {family: guest_refuse, template: guest_refuse, domain: bar_bears, source_prefix: m1.v2.guest.refuse, law: {ref: action.guest_refuse, args: {}}}
+  - {family: guest_return, template: guest_return, domain: bar_bears, source_prefix: m1.v2.guest.return, law: {ref: action.guest_return, args: {}}}
+  - {family: guest_finish, template: guest_finish, domain: bar_bears, source_prefix: m1.v2.guest.finish, law: {ref: action.guest_finish, args: {}}}
+  - {family: bear_observe_routes, template: bear_observe_routes, domain: bar_bears, source_prefix: m1.v2.bear_observe_routes, law: {ref: action.observe_local_routes, args: {}}}
+  - {family: bear_move, template: bear_move, domain: bar_bears, source_prefix: m1.v2.bear_move, law: {ref: action.mobile_move, args: {}}}
+  - {family: bear_cross_ice, template: bear_cross_ice, domain: bar_bears, source_prefix: m1.v2.bear_cross_ice, law: {ref: action.mobile_cross, args: {}}}
+  - {family: bear_pass_door, template: bear_pass_door, domain: bar_bears, source_prefix: m1.v2.bear_pass_door, law: {ref: action.mobile_pass_door, args: {}}, use_participants: [queen_pass_door_emma_participants]}
+  - {name: thaw_door_adventurer, template: thaw_door, actor: adventurer, source_key: m1.v2.thaw_door, event_type: m1.v2.thaw_door.action, law: {ref: action.thaw_door, args: {}}, participants: {door: {kind: passage_door}, torch: {kind: everflame}}}
+  - {name: open_door_adventurer, template: set_door, actor: adventurer, source_key: m1.v2.open_door, event_type: m1.v2.open_door.action, law: {ref: action.set_door, args: {opened: true}}, use_participants: [queen_pass_door_emma_participants]}
+  - {name: close_door_adventurer, template: set_door, actor: adventurer, source_key: m1.v2.close_door, event_type: m1.v2.close_door.action, law: {ref: action.set_door, args: {opened: false}}, use_participants: [queen_pass_door_emma_participants]}
+  - {name: pass_door_adventurer, template: pass_door, actor: adventurer, source_key: m1.v2.pass_door, event_type: m1.v2.pass_door.action, law: {ref: action.pass_door, args: {}}, use_participants: [queen_pass_door_emma_participants]}
+  - {family: bar_inspect_drink, template: bar_inspect_drink, domain: bar_bears, source_prefix: m1.v2.bar.inspect_drink, law: {ref: action.bar_inspect_drink, args: {}}, use_participants: [offer_share_participants]}
+  - {family: bar_drink, template: bar_drink, domain: bar_bears, source_prefix: m1.v2.bar.drink, law: {ref: action.bar_drink, args: {}}, use_participants: [offer_share_participants]}
+  - {name: request_pour_adventurer, template: request_pour, actor: adventurer, source_key: m1.v2.request_pour, event_type: m1.v2.request_pour.action, law: {ref: action.request_pour, args: {}}, use_participants: [request_pour_adventurer_participants]}
+  - {family: bar_accept, template: bar_reply, domain: bar_bears, source_prefix: m1.v2.bar.accept, law: {ref: action.bar_reply, args: {accept: true}}}
+  - {family: bar_refuse, template: bar_reply, domain: bar_bears, source_prefix: m1.v2.bar.refuse, law: {ref: action.bar_reply, args: {accept: false}}}
+  - {name: pour_drink_adventurer, template: pour_drink, actor: adventurer, source_key: m1.v2.pour_drink, event_type: m1.v2.pour_drink.action, law: {ref: action.pour_drink, args: {}}, use_participants: [request_pour_adventurer_participants]}
+  - {name: observe_bar_adventurer, template: observe_bar, actor: adventurer, source_key: m1.v2.observe_bar, event_type: m1.v2.observe_bar.action, law: {ref: action.observe_bar, args: {}}, participants: {bear_one: {actors: [icebar_bear_one]}, bear_two: {actors: [icebar_bear_two]}}}
+  - {name: observe_drink_adventurer, template: observe_drink, actor: adventurer, source_key: m1.v2.observe_drink, event_type: m1.v2.observe_drink.action, law: {ref: action.observe_drink, args: {}}, participants: {drink: {kind: drink_container}, holder: {actors: [icebar_bear_one, icebar_bear_two]}}}
+  - {name: thaw_drink_adventurer, template: thaw_drink, actor: adventurer, source_key: m1.v2.thaw_drink, event_type: m1.v2.thaw_drink.action, law: {ref: action.thaw_drink, args: {}}, participants: {drink: {kind: drink_container}, holder: {actors: [icebar_bear_one, icebar_bear_two]}, torch: {kind: everflame}}}
+  - {family: bar_wait, template: bar_wait, domain: bar_bears, source_prefix: m1.v2.bar.wait, law: {ref: action.bar_wait, args: {}}}
+  - {name: observe_routes_adventurer, template: observe_routes, actor: adventurer, source_key: m1.v2.observe_routes.adventurer, event_type: m1.v2.observe_routes.adventurer.action, law: {ref: action.observe_routes, args: {}}}
+  - {name: observe_chest_adventurer, template: observe_chest, actor: adventurer, source_key: m1.v2.observe_chest, event_type: m1.v2.observe_chest.action, law: {ref: action.observe_chest, args: {}}, target: {kind: treasure_chest}}
+  - {name: open_chest_adventurer, template: open_chest, actor: adventurer, source_key: m1.v2.open_chest, event_type: m1.v2.open_chest.action, law: {ref: action.open_chest, args: {}}, target: {kind: treasure_chest}}
+  - {name: take_gold_adventurer, template: take_gold, actor: adventurer, source_key: m1.v2.take_gold, event_type: m1.v2.take_gold.action, law: {ref: action.take_gold, args: {}}, target: {kind: treasure_chest}}
+  - {name: observe_climbs_adventurer, template: observe_climbs, actor: adventurer, source_key: m1.v2.observe_climbs, event_type: m1.v2.observe_climbs.action, law: {ref: action.observe_climbs, args: {}}}
+  - {name: climb_skyhook_adventurer, template: climb_skyhook, actor: adventurer, source_key: m1.v2.climb_skyhook, event_type: m1.v2.climb_skyhook.action, law: {ref: action.climb_skyhook, args: {}}, use_participants: [show_magic_alpha_participants]}
+  - name: take_magic_item_adventurer
+    template: take_magic_item
+    actor: adventurer
+    source_key: m1.v2.take_magic_item
+    event_type: m1.v2.take_magic_item.action
+    law: {ref: action.take_magic_item, args: {}}
+    participants: {item: {kind: magic_item}, chest: {kind: treasure_chest}}
+  - {name: observe_floor_adventurer, template: observe_floor, actor: adventurer, source_key: m1.v2.observe_floor, event_type: m1.v2.observe_floor.action, law: {ref: action.observe_floor, args: {}}}
+  - name: thaw_floor_adventurer
+    template: thaw_floor
+    actor: adventurer
+    source_key: m1.v2.thaw_floor
+    event_type: m1.v2.thaw_floor.action
+    law: {ref: action.thaw_floor, args: {}}
+    participants: {torch: {kind: everflame}}
+  - name: elemental_wait
+    template: elemental_wait
+    actor: {self: ice_elemental}
+    source_key: m1.v2.elemental.wait
+    event_type: m1.v2.elemental.wait.action
+    law: {ref: action.elemental_wait, args: {}}
+  - name: elemental_observe
+    template: elemental_observe
+    actor: {self: ice_elemental}
+    source_key: m1.v2.elemental.observe
+    event_type: m1.v2.elemental.observe.action
+    law: {ref: action.elemental_observe, args: {}}
+    participants: {subject: {actors: [adventurer]}}
+  - name: elemental_advance
+    template: elemental_advance
+    actor: {self: ice_elemental}
+    source_key: m1.v2.elemental.advance
+    event_type: m1.v2.elemental.advance.action
+    law: {ref: action.elemental_advance, args: {}}
+  - name: focus_elemental_adventurer
+    template: focus_elemental
+    actor: adventurer
+    source_key: m1.v2.focus_elemental
+    event_type: m1.v2.focus_elemental.action
+    law: {ref: action.focus_elemental, args: {damage: 1}}
+    participants: {mirror: {kind: magic_item}, torch: {kind: everflame}, victim: {kind: ice_elemental}}
+  - name: load_firelock_adventurer
+    template: load_firelock
+    actor: adventurer
+    source_key: m1.v2.load_firelock
+    event_type: m1.v2.load_firelock.action
+    law: {ref: action.load_firelock, args: {}}
+    participants: {item: {kind: magic_item}, torch: {kind: everflame}}
+  - {name: inspect_brands_adventurer, template: inspect_brands, actor: adventurer, source_key: m1.v2.inspect_brands, event_type: m1.v2.inspect_brands.action, law: {ref: action.inspect_brands, args: {}}, use_participants: [show_magic_alpha_participants]}
+  # One point of contact fire damage is this adaptation, not an original stat.
+  - {name: brand_person_adventurer, template: brand_person, actor: adventurer, source_key: m1.v2.brand_person, event_type: m1.v2.brand_person.action, law: {ref: action.brand_person, args: {damage: 1}}, use_participants: [brand_person_adventurer_participants]}
+  - {name: brand_elemental_adventurer, template: brand_elemental, actor: adventurer, source_key: m1.v2.brand_elemental, event_type: m1.v2.brand_elemental.action, law: {ref: action.brand_elemental, args: {damage: 1}}, participants: {item: {kind: magic_item}, victim: {kind: ice_elemental}}}
+  - {name: locate_branded_person_adventurer, template: locate_branded_person, actor: adventurer, source_key: m1.v2.locate_branded_person, event_type: m1.v2.locate_branded_person.action, law: {ref: action.locate_branded_person, args: {}}, use_participants: [brand_person_adventurer_participants]}
+  - {name: locate_branded_elemental_adventurer, template: locate_branded_elemental, actor: adventurer, source_key: m1.v2.locate_branded_elemental, event_type: m1.v2.locate_branded_elemental.action, law: {ref: action.locate_branded_elemental, args: {}}, participants: {item: {kind: magic_item}, victim: {kind: ice_elemental}}}
+  - {name: show_magic_adventurer, template: show_magic, actor: adventurer, source_key: m1.v2.adventurer.show_magic, event_type: m1.v2.adventurer.show_magic.action, law: {ref: action.show_magic, args: {}}, use_participants: [show_magic_alpha_participants]}
+  - {name: withdraw_magic_adventurer, template: withdraw_magic, actor: adventurer, source_key: m1.v2.adventurer.withdraw_magic, event_type: m1.v2.adventurer.withdraw_magic.action, law: {ref: action.withdraw_magic, args: {}}}
+  - name: drop_magic_adventurer
+    template: move_magic_custody
+    actor: adventurer
+    source_key: m1.v2.drop_magic
+    event_type: m1.v2.drop_magic.action
+    law: {ref: action.move_magic_custody, args: {dropping: true}}
+    use_participants: [show_magic_alpha_participants]
+  - name: pickup_magic_adventurer
+    template: move_magic_custody
+    actor: adventurer
+    source_key: m1.v2.pickup_magic
+    event_type: m1.v2.pickup_magic.action
+    law: {ref: action.move_magic_custody, args: {dropping: false}}
+    use_participants: [show_magic_alpha_participants]
+  - name: observe_elemental_adventurer
+    template: wait
+    actor: adventurer
+    source_key: m1.v2.observe_elemental
+    event_type: m1.v2.observe_elemental.action
+    law: {ref: action.wait, args: {}}
+  - name: offer_torch_adventurer
+    template: offer_torch
+    actor: adventurer
+    source_key: m1.v2.offer_torch
+    event_type: m1.v2.offer_torch.action
+    law: {ref: action.offer_torch, args: {}}
+    participants: {recipient: {actors: [ritual_resident, huddled_one, huddled_two, wall_resident, prison_resident_one, prison_resident_two]}, torch: {kind: everflame}}
+  - family: accept_torch
+    template: accept_torch
+    domain: residents
+    source_prefix: m1.v2.accept_torch
+    law: {ref: action.accept_torch, args: {}}
+    participants: {giver: {actors: [adventurer]}, torch: {kind: everflame}}
+  - family: observe_person
+    template: observe_person
+    domain: residents
+    source_prefix: m1.v2.observe_person
+    law: {ref: action.observe_person, args: {}}
+    participants: {victim: {actors: [adventurer]}}
+  - family: thaw_person
+    template: thaw_person
+    domain: residents
+    source_prefix: m1.v2.thaw_person
+    law: {ref: action.thaw_person, args: {cue_subject: ritual_resident}}
+    participants: {victim: {actors: [adventurer]}, torch: {kind: everflame}}
+  - name: observe_wall_adventurer
+    template: observe_wall
+    actor: adventurer
+    source_key: m1.v2.observe_wall
+    event_type: m1.v2.observe_wall.action
+    law: {ref: action.observe_wall, args: {}}
+    target: {kind: ice_wall}
+  - name: open_wall_adventurer
+    template: open_wall
+    actor: adventurer
+    source_key: m1.v2.open_wall
+    event_type: m1.v2.open_wall.action
+    law: {ref: action.open_wall, args: {}}
+    participants:
+      wall: {kind: ice_wall}
+      torch: {kind: everflame}
+      victim: {actors: [ritual_resident, huddled_one, huddled_two, wall_resident, prison_resident_one, prison_resident_two]}
+  - {name: open_plain_wall_adventurer, template: open_plain_wall, actor: adventurer, source_key: m1.v2.open_plain_wall, event_type: m1.v2.open_plain_wall.action, law: {ref: action.open_plain_wall, args: {}}, participants: {wall: {kind: ice_wall}, torch: {kind: everflame}}}
+  - {name: move_wall_adventurer, template: move_wall, actor: adventurer, source_key: m1.v2.move_wall.adventurer, event_type: m1.v2.move_wall.adventurer.action, law: {ref: action.move_wall, args: {}}, target: {kind: ice_wall}}
+  - {name: observe_wall_wall_resident, template: observe_wall, actor: wall_resident, source_key: m1.v2.observe_wall.wall_resident, event_type: m1.v2.observe_wall.wall_resident.action, law: {ref: action.observe_wall, args: {}}, target: {kind: ice_wall}}
+  - {name: move_wall_wall_resident, template: move_wall, actor: wall_resident, source_key: m1.v2.move_wall.wall_resident, event_type: m1.v2.move_wall.wall_resident.action, law: {ref: action.move_wall, args: {}}, target: {kind: ice_wall}}
+  - name: observe_resident_adventurer
+    template: observe_resident
+    actor: adventurer
+    source_key: m1.v2.observe_resident
+    event_type: m1.v2.observe_resident.action
+    law:
+      ref: action.observe_resident
+      args: {}
+    use_participants: [care_person_participants]
+  - {name: thaw_person_adventurer, template: thaw_person, actor: adventurer, source_key: m1.v2.thaw_person.adventurer, event_type: m1.v2.thaw_person.adventurer.action, law: {ref: action.thaw_person, args: {cue_subject: ritual_resident}}, participants: {victim: {actors: [ritual_resident, huddled_one, huddled_two, wall_resident, prison_resident_one, prison_resident_two]}, torch: {kind: everflame}}}
+  - family: ritual_advance
+    template: ritual_advance
+    domain: bokolds
+    source_prefix: m1.v2.ritual.advance
+    law: {ref: action.ritual_advance, args: {}}
+    use_participants: [ritual_advance_participants]
+  - name: observe_chandelier_adventurer
+    template: observe_chandelier
+    actor: adventurer
+    source_key: m1.v2.observe_chandelier.adventurer
+    event_type: m1.v2.observe_chandelier.adventurer.action
+    law: {ref: action.observe_chandelier, args: {}}
+    participants:
+      chandelier: {kind: chandelier}
+      reservoir: {kind: reservoir}
+      resident_one: {actors: [huddled_one]}
+      resident_two: {actors: [huddled_two]}
+  - name: detach_reservoir_adventurer
+    template: detach_reservoir
+    actor: adventurer
+    source_key: m1.v2.detach_reservoir.adventurer
+    event_type: m1.v2.detach_reservoir.adventurer.action
+    law: {ref: action.detach_reservoir, args: {}}
+    participants:
+      chandelier: {kind: chandelier}
+      reservoir: {kind: reservoir}
+  - name: reload_everflame_adventurer
+    template: reload_everflame
+    actor: adventurer
+    source_key: m1.v2.reload_everflame.adventurer
+    event_type: m1.v2.reload_everflame.adventurer.action
+    law: {ref: action.reload_everflame, args: {}}
+    participants:
+      reservoir: {kind: reservoir}
+      torch: {kind: everflame}
+  - name: thaw_ritual_resident
+    template: thaw
+    actor: adventurer
+    source_key: m1.v2.thaw.ritual_resident
+    event_type: m1.v2.thaw.ritual_resident.action
+    law: {ref: action.thaw, args: {}}
+    participants:
+      ritual: {actors: [ritual]}
+      torch: {kind: everflame}
+      victim: {actors: [ritual_resident]}
+  - {name: cross_ice_adventurer, template: cross_ice, actor: adventurer, source_key: m1.v2.cross_ice.adventurer, event_type: m1.v2.cross_ice.adventurer.action, law: {ref: action.cross_ice, args: {}}}
+  - {name: move_adventurer, template: move, actor: adventurer, source_key: m1.v2.move.adventurer, event_type: m1.v2.move.adventurer.action, law: {ref: action.move, args: {}}}
+  - {family: bridge_slow, template: bridge_slow, domain: bridge_walkers, source_prefix: m1.v2.bridge.slow, law: {ref: action.bridge_slow, args: {require_safe_site: true}}}
+  - {name: offer_escort_adventurer, template: offer_escort, actor: adventurer, source_key: m1.v2.offer_escort.adventurer, event_type: m1.v2.offer_escort.adventurer.action, law: {ref: action.offer_escort, args: {}}}
+  - name: carry_from_ritual_adventurer
+    template: carry_from_ritual
+    actor: adventurer
+    source_key: m1.v2.carry_from_ritual.adventurer
+    event_type: m1.v2.carry_from_ritual.adventurer.action
+    law: {ref: action.carry_from_ritual, args: {}}
+    use_participants: [ritual_advance_participants]
+  - name: leave_palace_adventurer
+    template: leave_palace
+    actor: adventurer
+    source_key: m1.v2.leave_palace.adventurer
+    event_type: m1.v2.leave_palace.adventurer.action
+    law: {ref: action.leave_palace, args: {}}
+    participants:
+      prison_resident_one: {actors: [prison_resident_one]}
+      prison_resident_two: {actors: [prison_resident_two]}
+      ritual: {actors: [ritual]}
+      ritual_resident: {actors: [ritual_resident]}
+      huddled_one: {actors: [huddled_one]}
+      huddled_two: {actors: [huddled_two]}
+      wall_resident: {actors: [wall_resident]}
+      torch: {kind: everflame}
+      reservoir: {kind: reservoir}
+  - family: observe_light
+    template: observe_bokold_light
+    domain: bokolds
+    source_prefix: m1.v2.observe_light
+    law: {ref: action.observe_bokold_light, args: {}}
+    participants:
+      bearer: {actors: [adventurer]}
+      torch: {kind: everflame}
+  - {name: approach_light_bokold_one, template: approach_bokold_light, actor: bokold_one, source_key: m1.v2.approach_light.bokold_one, event_type: m1.v2.approach_light.bokold_one.action, law: {ref: action.approach_bokold_light, args: {}}}
+  - {name: retreat_bokold_one, template: move, actor: bokold_one, source_key: m1.v2.retreat.bokold_one, event_type: m1.v2.retreat.bokold_one.action, law: {ref: action.move, args: {}}}
+  - {name: approach_light_bokold_two, template: approach_bokold_light, actor: bokold_two, source_key: m1.v2.approach_light.bokold_two, event_type: m1.v2.approach_light.bokold_two.action, law: {ref: action.approach_bokold_light, args: {}}}
+  - {name: retreat_bokold_two, template: move, actor: bokold_two, source_key: m1.v2.retreat.bokold_two, event_type: m1.v2.retreat.bokold_two.action, law: {ref: action.move, args: {}}}
+  - {family: cross_ice, template: cross_ice, domain: residents, source_prefix: m1.v2.cross_ice, law: {ref: action.cross_ice, args: {}}}
+  - {family: move, template: move, domain: residents, source_prefix: m1.v2.move, law: {ref: action.move, args: {}}}
+  - family: wait_near_guide
+    template: wait_near_guide
+    domain: prison_residents
+    source_prefix: m1.v2.wait_near_guide
+    law: {ref: action.wait_near_guide, args: {}}
+    participants: {guide: {actors: [adventurer]}, torch: {kind: everflame}}
+  - {family: wait, template: wait, domain: people, source_prefix: m1.v2.wait, law: {ref: action.wait, args: {}}}
+  - family: carry_move
+    template: carry_move
+    domain: caregivers
+    source_prefix: m1.v2.carry_move
+    law:
+      ref: action.carry_move
+      args: {}
+    use_participants: [carry_move_participants]
+  - family: carry_cross_ice
+    template: carry_cross_ice
+    domain: caregivers
+    source_prefix: m1.v2.carry_cross_ice
+    law:
+      ref: action.carry_cross_ice
+      args: {}
+    use_participants: [carry_move_participants]
+  - family: carry_bridge_slow
+    template: carry_bridge_slow
+    domain: caregivers
+    source_prefix: m1.v2.carry_bridge_slow
+    law:
+      ref: action.carry_bridge_slow
+      args: {}
+    use_participants: [carry_move_participants]
+  - family: carry_pass_door
+    template: carry_pass_door
+    domain: caregivers
+    source_prefix: m1.v2.carry_pass_door
+    law:
+      ref: action.carry_pass_door
+      args: {}
+    participants:
+      victim:
+        actors:
+        - adventurer
+        - ritual_resident
+        - huddled_one
+        - huddled_two
+        - wall_resident
+        - bokold_one
+        - bokold_two
+        - prison_resident_one
+        - prison_resident_two
+        - hall_bokold_one
+        - hall_bokold_two
+        - hall_bokold_three
+        - hall_bokold_four
+        - hall_bokold_five
+        - stable_bokold_one
+        - stable_bokold_two
+        - stable_bokold_three
+        - stable_bokold_four
+      ritual:
+        actors:
+        - ritual
+      door:
+        kind: passage_door
+  - family: strike_person
+    template: strike_person
+    domain: caregivers
+    source_prefix: m1.v2.strike_person
+    law:
+      ref: action.strike_person
+      args: {}
+    use_participants: [care_person_participants]
+  - family: bridge_rush
+    template: bridge_rush
+    domain: bridge_walkers
+    source_prefix: m1.v2.bridge.rush
+    law:
+      ref: action.bridge_rush
+      args: {}
+  - {family: fox_sniff, template: fox_sniff, domain: foxes, source_prefix: m1.v2.fox.sniff, law: {ref: action.fox_sniff, args: {}}}
+  - family: fox_observe_routes
+    template: fox_observe_routes
+    domain: foxes
+    source_prefix: m1.v2.fox.observe_routes
+    law:
+      ref: action.observe_routes
+      args: {}
+  - family: fox_move
+    template: fox_move
+    domain: foxes
+    source_prefix: m1.v2.fox.move
+    law:
+      ref: action.fox_move
+      args: {}
+  - family: fox_cross_ice
+    template: fox_cross_ice
+    domain: foxes
+    source_prefix: m1.v2.fox.cross_ice
+    law:
+      ref: action.fox_cross_ice
+      args: {}
+  - family: fox_bridge_slow
+    template: fox_bridge_slow
+    domain: foxes
+    source_prefix: m1.v2.fox.bridge_slow
+    law:
+      ref: action.fox_bridge_slow
+      args: {}
+  - family: fox_bridge_rush
+    template: fox_bridge_rush
+    domain: foxes
+    source_prefix: m1.v2.fox.bridge_rush
+    law:
+      ref: action.fox_bridge_rush
+      args: {}
+  - family: fox_pass_door
+    template: fox_pass_door
+    domain: foxes
+    source_prefix: m1.v2.fox.pass_door
+    law:
+      ref: action.fox_pass_door
+      args: {}
+    use_participants: [queen_pass_door_emma_participants]
+  - family: fox_wait
+    template: fox_wait
+    domain: foxes
+    source_prefix: m1.v2.fox.wait
+    law:
+      ref: action.wait
+      args: {}
+  - family: stable_observe_routes
+    template: observe_routes
+    domain: stable_bokolds
+    source_prefix: m1.v2.stable.observe_routes
+    law:
+      ref: action.observe_routes
+      args: {}
+  - family: stable_move
+    template: move
+    domain: stable_bokolds
+    source_prefix: m1.v2.stable.move
+    law:
+      ref: action.move
+      args: {}
+  - family: stable_cross_ice
+    template: cross_ice
+    domain: stable_bokolds
+    source_prefix: m1.v2.stable.cross_ice
+    law:
+      ref: action.cross_ice
+      args: {}
+  - family: stable_pass_door
+    template: pass_door
+    domain: stable_bokolds
+    source_prefix: m1.v2.stable.pass_door
+    law:
+      ref: action.pass_door
+      args: {}
+    use_participants: [queen_pass_door_emma_participants]
+  - family: stable_wait
+    template: wait
+    domain: stable_bokolds
+    source_prefix: m1.v2.stable.wait
+    law:
+      ref: action.wait
+      args: {}
+  - name: observe_fox_adventurer
+    template: observe_fox
+    actor: adventurer
+    source_key: m1.v2.observe_fox
+    event_type: m1.v2.observe_fox.action
+    law:
+      ref: action.observe_resident
+      args: {}
+    use_participants: [observe_resident_fox_adventurer_participants]
+  - name: request_tame_arctic_fox_one
+    template: request_tame
+    actor: adventurer
+    source_key: m1.v2.request_tame.arctic_fox_one
+    event_type: m1.v2.request_tame.arctic_fox_one.action
+    law:
+      ref: action.request_tame
+      args: {}
+    participants:
+      fox:
+        actors:
+        - arctic_fox_one
+      other_0:
+        actors:
+        - arctic_fox_two
+      other_1:
+        actors:
+        - arctic_fox_three
+      other_2:
+        actors:
+        - arctic_fox_four
+      other_3:
+        actors:
+        - hall_bokold_one
+        - hall_bokold_two
+        - hall_bokold_three
+        - hall_bokold_four
+        - hall_bokold_five
+        - stable_bokold_one
+      other_4:
+        actors:
+        - stable_bokold_two
+      other_5:
+        actors:
+        - stable_bokold_three
+      other_6:
+        actors:
+        - stable_bokold_four
+  - name: accept_tame_arctic_fox_one
+    template: accept_tame
+    actor: arctic_fox_one
+    source_key: m1.v2.accept_tame.arctic_fox_one
+    event_type: m1.v2.accept_tame.arctic_fox_one.action
+    law:
+      ref: action.accept_tame
+      args: {}
+    participants:
+      other_0:
+        actors:
+        - arctic_fox_two
+      other_1:
+        actors:
+        - arctic_fox_three
+      other_2:
+        actors:
+        - arctic_fox_four
+      other_3:
+        actors:
+        - hall_bokold_one
+        - hall_bokold_two
+        - hall_bokold_three
+        - hall_bokold_four
+        - hall_bokold_five
+        - stable_bokold_one
+      other_4:
+        actors:
+        - stable_bokold_two
+      other_5:
+        actors:
+        - stable_bokold_three
+      other_6:
+        actors:
+        - stable_bokold_four
+      tamer:
+        actors:
+        - adventurer
+  - name: request_tame_arctic_fox_two
+    template: request_tame
+    actor: adventurer
+    source_key: m1.v2.request_tame.arctic_fox_two
+    event_type: m1.v2.request_tame.arctic_fox_two.action
+    law:
+      ref: action.request_tame
+      args: {}
+    participants:
+      fox:
+        actors:
+        - arctic_fox_two
+      other_0:
+        actors:
+        - arctic_fox_one
+      other_1:
+        actors:
+        - arctic_fox_three
+      other_2:
+        actors:
+        - arctic_fox_four
+      other_3:
+        actors:
+        - hall_bokold_one
+        - hall_bokold_two
+        - hall_bokold_three
+        - hall_bokold_four
+        - hall_bokold_five
+        - stable_bokold_one
+      other_4:
+        actors:
+        - stable_bokold_two
+      other_5:
+        actors:
+        - stable_bokold_three
+      other_6:
+        actors:
+        - stable_bokold_four
+  - name: accept_tame_arctic_fox_two
+    template: accept_tame
+    actor: arctic_fox_two
+    source_key: m1.v2.accept_tame.arctic_fox_two
+    event_type: m1.v2.accept_tame.arctic_fox_two.action
+    law:
+      ref: action.accept_tame
+      args: {}
+    participants:
+      other_0:
+        actors:
+        - arctic_fox_one
+      other_1:
+        actors:
+        - arctic_fox_three
+      other_2:
+        actors:
+        - arctic_fox_four
+      other_3:
+        actors:
+        - hall_bokold_one
+        - hall_bokold_two
+        - hall_bokold_three
+        - hall_bokold_four
+        - hall_bokold_five
+        - stable_bokold_one
+      other_4:
+        actors:
+        - stable_bokold_two
+      other_5:
+        actors:
+        - stable_bokold_three
+      other_6:
+        actors:
+        - stable_bokold_four
+      tamer:
+        actors:
+        - adventurer
+  - name: request_tame_arctic_fox_three
+    template: request_tame
+    actor: adventurer
+    source_key: m1.v2.request_tame.arctic_fox_three
+    event_type: m1.v2.request_tame.arctic_fox_three.action
+    law:
+      ref: action.request_tame
+      args: {}
+    participants:
+      fox:
+        actors:
+        - arctic_fox_three
+      other_0:
+        actors:
+        - arctic_fox_one
+      other_1:
+        actors:
+        - arctic_fox_two
+      other_2:
+        actors:
+        - arctic_fox_four
+      other_3:
+        actors:
+        - hall_bokold_one
+        - hall_bokold_two
+        - hall_bokold_three
+        - hall_bokold_four
+        - hall_bokold_five
+        - stable_bokold_one
+      other_4:
+        actors:
+        - stable_bokold_two
+      other_5:
+        actors:
+        - stable_bokold_three
+      other_6:
+        actors:
+        - stable_bokold_four
+  - name: accept_tame_arctic_fox_three
+    template: accept_tame
+    actor: arctic_fox_three
+    source_key: m1.v2.accept_tame.arctic_fox_three
+    event_type: m1.v2.accept_tame.arctic_fox_three.action
+    law:
+      ref: action.accept_tame
+      args: {}
+    participants:
+      other_0:
+        actors:
+        - arctic_fox_one
+      other_1:
+        actors:
+        - arctic_fox_two
+      other_2:
+        actors:
+        - arctic_fox_four
+      other_3:
+        actors:
+        - hall_bokold_one
+        - hall_bokold_two
+        - hall_bokold_three
+        - hall_bokold_four
+        - hall_bokold_five
+        - stable_bokold_one
+      other_4:
+        actors:
+        - stable_bokold_two
+      other_5:
+        actors:
+        - stable_bokold_three
+      other_6:
+        actors:
+        - stable_bokold_four
+      tamer:
+        actors:
+        - adventurer
+  - name: request_tame_arctic_fox_four
+    template: request_tame
+    actor: adventurer
+    source_key: m1.v2.request_tame.arctic_fox_four
+    event_type: m1.v2.request_tame.arctic_fox_four.action
+    law:
+      ref: action.request_tame
+      args: {}
+    participants:
+      fox:
+        actors:
+        - arctic_fox_four
+      other_0:
+        actors:
+        - arctic_fox_one
+      other_1:
+        actors:
+        - arctic_fox_two
+      other_2:
+        actors:
+        - arctic_fox_three
+      other_3:
+        actors:
+        - hall_bokold_one
+        - hall_bokold_two
+        - hall_bokold_three
+        - hall_bokold_four
+        - hall_bokold_five
+        - stable_bokold_one
+      other_4:
+        actors:
+        - stable_bokold_two
+      other_5:
+        actors:
+        - stable_bokold_three
+      other_6:
+        actors:
+        - stable_bokold_four
+  - name: accept_tame_arctic_fox_four
+    template: accept_tame
+    actor: arctic_fox_four
+    source_key: m1.v2.accept_tame.arctic_fox_four
+    event_type: m1.v2.accept_tame.arctic_fox_four.action
+    law:
+      ref: action.accept_tame
+      args: {}
+    participants:
+      other_0:
+        actors:
+        - arctic_fox_one
+      other_1:
+        actors:
+        - arctic_fox_two
+      other_2:
+        actors:
+        - arctic_fox_three
+      other_3:
+        actors:
+        - hall_bokold_one
+        - hall_bokold_two
+        - hall_bokold_three
+        - hall_bokold_four
+        - hall_bokold_five
+        - stable_bokold_one
+      other_4:
+        actors:
+        - stable_bokold_two
+      other_5:
+        actors:
+        - stable_bokold_three
+      other_6:
+        actors:
+        - stable_bokold_four
+      tamer:
+        actors:
+        - adventurer
+  - name: observe_foxes_adventurer
+    template: observe_foxes
+    actor: adventurer
+    source_key: m1.v2.observe_foxes
+    event_type: m1.v2.observe_foxes.action
+    law:
+      ref: action.observe_foxes
+      args: {}
+    participants:
+      fox_0:
+        actors:
+        - arctic_fox_one
+      fox_1:
+        actors:
+        - arctic_fox_two
+      fox_2:
+        actors:
+        - arctic_fox_three
+      fox_3:
+        actors:
+        - arctic_fox_four
+  - name: thaw_fox_adventurer
+    template: thaw_fox
+    actor: adventurer
+    source_key: m1.v2.thaw_fox
+    event_type: m1.v2.thaw_fox.action
+    law:
+      ref: action.thaw_person
+      args: {cue_subject: ritual_resident}
+    participants:
+      torch:
+        kind: everflame
+      victim:
+        actors:
+        - arctic_fox_one
+        - arctic_fox_two
+        - arctic_fox_three
+        - arctic_fox_four
+  - family: inspect_patient
+    template: observe_resident
+    domain: caregivers
+    source_prefix: m1.v2.inspect_patient
+    law:
+      ref: action.observe_resident
+      args: {}
+    use_participants: [care_person_participants]
+events:
+  - {family: magic_display_seen, template: magic_display_seen, actor_domain: hall_bokolds, for_actions: [show_magic_alpha, show_magic_adventurer, show_magic_hall_bokold_one, show_magic_hall_bokold_two, show_magic_hall_bokold_three, show_magic_hall_bokold_four, show_magic_hall_bokold_five], source_prefix: m1.v2.magic.display_seen, share_result: true, law: {ref: event.magic_display_seen, args: {}}}
+  - family: queen_guide_step
+    template: queen_guide_step
+    actor: emma
+    for_actions: [move_adventurer, cross_ice_adventurer, pass_door_adventurer, bridge_slow_adventurer, bridge_rush_adventurer, balloon_push_adventurer, balloon_push_door_adventurer, balloon_push_ice_adventurer, balloon_push_bridge_adventurer]
+    source_prefix: m1.v2.queen.guide_step
+    share_result: true
+    law: {ref: event.queen_guide_step, args: {}}
+  - name: queen_escort_heard
+    template: queen_escort_heard
+    actor: emma
+    trigger_action: offer_escort_adventurer
+    source_key: m1.v2.queen.escort_heard
+    event_type: m1.v2.queen.escort_heard.event
+    causal_key: m1.v2.queen.escort_heard.law
+    law:
+      ref: event.queen_escort_heard
+      args: {}
+  - family: queen_ground_result
+    template: queen_ground_result
+    actor: emma
+    for_actions:
+    - queen_move_emma
+    - queen_cross_ice_emma
+    - queen_bridge_slow_emma
+    - queen_pass_door_emma
+    source_prefix: m1.v2.queen.ground_result
+    share_result: true
+    law:
+      ref: event.queen_ground_result
+      args: {}
+  - {name: queen_balloon_heard, template: queen_balloon_heard, actor: emma, trigger_action: explain_balloon_adventurer, source_key: m1.v2.balloon.queen_heard, event_type: m1.v2.balloon.queen_heard.event, causal_key: m1.v2.balloon.queen_heard.on_explain, law: {ref: event.queen_balloon_heard, args: {}}}
+  - {family: guard_clearance_heard, template: guard_clearance_heard, actor_domain: tower_guards, for_actions: [clear_balloon_alpha], source_prefix: m1.v2.tower.guard_clearance_heard, share_result: true, law: {ref: event.guard_clearance_heard, args: {}}}
+  - {name: alpha_request_heard, template: alpha_request_heard, actor: alpha, trigger_action: ask_alpha_adventurer, source_key: m1.v2.tower.alpha_request_heard, event_type: m1.v2.tower.alpha_request_heard.event, causal_key: m1.v2.tower.alpha_request_heard.on_ask, law: {ref: event.alpha_request_heard, args: {}}}
+  - {name: alpha_offer_heard, template: alpha_offer_heard, actor: adventurer, trigger_action: propose_alpha, source_key: m1.v2.tower.alpha_offer_heard, event_type: m1.v2.tower.alpha_offer_heard.event, causal_key: m1.v2.tower.alpha_offer_heard.on_propose, law: {ref: event.alpha_offer_heard, args: {}}}
+  - {name: alpha_acceptance_heard, template: alpha_acceptance_heard, actor: alpha, trigger_action: accept_alpha_adventurer, source_key: m1.v2.tower.alpha_acceptance_heard, event_type: m1.v2.tower.alpha_acceptance_heard.event, causal_key: m1.v2.tower.alpha_acceptance_heard.on_accept, law: {ref: event.alpha_acceptance_heard, args: {}}}
+  - {name: alpha_exit_report_heard, template: alpha_exit_report_heard, actor: alpha, trigger_action: report_alpha_adventurer, source_key: m1.v2.tower.alpha_exit_report_heard, event_type: m1.v2.tower.alpha_exit_report_heard.event, causal_key: m1.v2.tower.alpha_exit_report_heard.on_report, law: {ref: event.alpha_exit_report_heard, args: {}}}
+  - name: elemental_charge_after_brand
+    template: elemental_charge_formed
+    trigger_action: brand_elemental_adventurer
+    source_key: m1.v2.elemental_charge.formed.brand
+    event_type: m1.v2.elemental_charge.formed.brand.event
+    causal_key: m1.v2.elemental_charge.formed.brand.law
+    object_product: {kind: elemental_charge, initial_output: newborn}
+    law: {ref: event.elemental_charge_formed, args: {}}
+  - name: elemental_charge_after_mirror
+    template: elemental_charge_formed
+    trigger_action: focus_elemental_adventurer
+    source_key: m1.v2.elemental_charge.formed.mirror
+    event_type: m1.v2.elemental_charge.formed.mirror.event
+    causal_key: m1.v2.elemental_charge.formed.mirror.law
+    object_product: {kind: elemental_charge, initial_output: newborn}
+    law: {ref: event.elemental_charge_formed, args: {}}
+  - name: elemental_charge_after_fireball
+    template: elemental_charge_formed
+    trigger_action: fireball_adventurer
+    source_key: m1.v2.elemental_charge.formed.fireball
+    event_type: m1.v2.elemental_charge.formed.fireball.event
+    causal_key: m1.v2.elemental_charge.formed.fireball.law
+    object_product: {kind: elemental_charge, initial_output: newborn}
+    law: {ref: event.elemental_charge_formed, args: {}}
+  - {family: prison_question_heard, template: prison_question_heard, actor_domain: prison_voices, for_actions: [ask_prison_adventurer], source_prefix: m1.v2.prison_question_heard, share_result: true, law: {ref: event.prison_question_heard, args: {}}}
+  - {family: prison_answer_heard, template: prison_answer_heard, actor: adventurer, for_action_families: [prison_answer, prison_decline, permit_charge], source_prefix: m1.v2.prison_answer_heard, share_result: true, law: {ref: event.prison_answer_heard, args: {}}}
+  - {family: guard_motion_seen, template: guard_motion_seen, actor_domain: bar_bears, for_actions: [guard_move, guard_cross_ice, guard_pass_door], source_prefix: m1.v2.guard_motion_seen, share_result: true, law: {ref: event.guard_motion_seen, args: {}}}
+  - {family: share_heard, template: share_heard, actor: prison_guard, for_action_families: [offer_share], source_prefix: m1.v2.share_heard, share_result: true, law: {ref: event.share_heard, args: {}}}
+  - {family: share_withdrawal_heard, template: share_withdrawal_heard, actor: prison_guard, for_action_families: [withdraw_share], source_prefix: m1.v2.share_withdrawal_heard, share_result: true, law: {ref: event.share_withdrawal_heard, args: {}}}
+  - {family: bear_motion_seen, template: bear_motion_seen, actor: prison_guard, for_action_families: [bear_move, bear_cross_ice, bear_pass_door], source_prefix: m1.v2.bear_motion_seen, share_result: true, law: {ref: event.bear_motion_seen, args: {}}}
+  - {family: prison_invitation_heard, template: prison_invitation_heard, actor: prison_guard, for_action_families: [bear_invite_guard], source_prefix: m1.v2.prison_invitation_heard, share_result: true, law: {ref: event.prison_invitation_heard, args: {}}}
+  - {family: guard_reply_heard, template: guard_reply_heard, actor_domain: bar_bears, for_actions: [guard_accept_invitation, guard_decline_invitation], source_prefix: m1.v2.guard_reply_heard, share_result: true, law: {ref: event.guard_reply_heard, args: {}}}
+  - family: guest_request_heard
+    template: guest_request_heard
+    actor_domain: bar_bears
+    for_actions: [invite_guest_adventurer]
+    source_prefix: m1.v2.guest_request_heard
+    share_result: true
+    law: {ref: event.guest_request_heard, args: {}}
+  - family: bar_drink_seen
+    template: bar_drink_seen
+    actor: adventurer
+    for_action_families: [bar_drink]
+    source_prefix: m1.v2.bar.drink_seen
+    share_result: true
+    law: {ref: event.bar_drink_seen, args: {}}
+  - family: drink_request_heard
+    template: drink_request_heard
+    actor_domain: bar_bears
+    for_actions: [request_pour_adventurer]
+    source_prefix: m1.v2.drink_request_heard
+    share_result: true
+    law: {ref: event.drink_request_heard, args: {}}
+  - family: drink_reply_heard
+    template: drink_reply_heard
+    actor: adventurer
+    for_action_families: [bar_accept, bar_refuse]
+    source_prefix: m1.v2.drink_reply_heard
+    share_result: true
+    law: {ref: event.drink_reply_heard, args: {}}
+  - family: torch_offer_heard
+    template: torch_offer_heard
+    actor_domain: residents
+    for_actions:
+    - offer_torch_adventurer
+    source_prefix: m1.v2.torch_offer_heard
+    share_result: true
+    law:
+      ref: event.torch_offer_heard
+      args: {}
+  - family: escort_heard
+    template: escort_heard
+    actor_domain: residents
+    for_actions: [offer_escort_adventurer]
+    source_prefix: m1.v2.escort_heard
+    share_result: true
+    law: {ref: event.escort_heard, args: {}}
+  - name: departure_recorded
+    template: departure_recorded
+    trigger_action: leave_palace_adventurer
+    source_key: m1.v2.departure_recorded
+    event_type: m1.v2.departure_recorded.event
+    causal_key: m1.v2.departure_recorded.on_leave
+    law: {ref: event.departure_recorded, args: {}}
+  - family: resident_safe
+    template: resident_safe
+    actor: {from_trigger: actor}
+    for_action_family: move
+    source_prefix: m1.v2.resident_safe
+    law: {ref: event.resident_safe, args: {}}
+  - family: bridge_resident_safe
+    template: resident_safe
+    actor: {from_trigger: actor}
+    for_actions: [bridge_slow_ritual_resident, bridge_slow_huddled_one, bridge_slow_huddled_two, bridge_slow_wall_resident, bridge_slow_prison_resident_one, bridge_slow_prison_resident_two]
+    source_prefix: m1.v2.resident_safe.bridge
+    law: {ref: event.resident_safe, args: {}}
+  - family: ritual_cue_observed
+    template: ritual_cue_observed
+    actor: adventurer
+    for_actions: [ritual_advance_bokold_one, ritual_advance_bokold_two, move_adventurer, cross_ice_adventurer, balloon_push_adventurer, balloon_push_door_adventurer, balloon_push_ice_adventurer]
+    source_prefix: m1.v2.ritual_cue_observed
+    share_result: true
+    law: {ref: event.ritual_cue_observed, args: {}}
+  - family: ritual_progress_seen
+    template: ritual_cue_observed
+    actor_domain: bokolds
+    for_action_family: ritual_advance
+    source_prefix: m1.v2.ritual_progress_seen
+    share_result: true
+    law: {ref: event.ritual_cue_observed, args: {}}
+  - name: ritual_cue_bokold_one_on_thaw
+    template: ritual_cue_observed
+    actor: bokold_one
+    trigger_action: thaw_ritual_resident
+    source_key: m1.v2.ritual_cue_observed.bokold_one
+    event_type: m1.v2.ritual_cue_observed.bokold_one.event
+    causal_key: m1.v2.ritual_cue_observed.bokold_one.on_thaw
+    shared_result: m1.v2.ritual_cue_observed.bokold_one
+    law: {ref: event.ritual_cue_observed, args: {}}
+  - name: ritual_cue_bokold_two_on_thaw
+    template: ritual_cue_observed
+    actor: bokold_two
+    trigger_action: thaw_ritual_resident
+    source_key: m1.v2.ritual_cue_observed.bokold_two
+    event_type: m1.v2.ritual_cue_observed.bokold_two.event
+    causal_key: m1.v2.ritual_cue_observed.bokold_two.on_thaw
+    shared_result: m1.v2.ritual_cue_observed.bokold_two
+    law: {ref: event.ritual_cue_observed, args: {}}
+  - name: ritual_cue_bokold_one_on_carry
+    template: ritual_cue_observed
+    actor: bokold_one
+    trigger_action: carry_from_ritual_adventurer
+    source_key: m1.v2.ritual_cue_observed.bokold_one
+    event_type: m1.v2.ritual_cue_observed.bokold_one.event
+    causal_key: m1.v2.ritual_cue_observed.bokold_one.on_carry
+    shared_result: m1.v2.ritual_cue_observed.bokold_one
+    law: {ref: event.ritual_cue_observed, args: {}}
+  - name: ritual_cue_bokold_two_on_carry
+    template: ritual_cue_observed
+    actor: bokold_two
+    trigger_action: carry_from_ritual_adventurer
+    source_key: m1.v2.ritual_cue_observed.bokold_two
+    event_type: m1.v2.ritual_cue_observed.bokold_two.event
+    causal_key: m1.v2.ritual_cue_observed.bokold_two.on_carry
+    shared_result: m1.v2.ritual_cue_observed.bokold_two
+    law: {ref: event.ritual_cue_observed, args: {}}
+  - name: ritual_cue_bokold_one_on_retreat
+    template: ritual_cue_observed
+    actor: bokold_one
+    trigger_action: retreat_bokold_one
+    source_key: m1.v2.ritual_cue_observed.bokold_one
+    event_type: m1.v2.ritual_cue_observed.bokold_one.event
+    causal_key: m1.v2.ritual_cue_observed.bokold_one.on_retreat
+    shared_result: m1.v2.ritual_cue_observed.bokold_one
+    law: {ref: event.ritual_cue_observed, args: {}}
+  - name: ritual_cue_bokold_two_on_retreat
+    template: ritual_cue_observed
+    actor: bokold_two
+    trigger_action: retreat_bokold_two
+    source_key: m1.v2.ritual_cue_observed.bokold_two
+    event_type: m1.v2.ritual_cue_observed.bokold_two.event
+    causal_key: m1.v2.ritual_cue_observed.bokold_two.on_retreat
+    shared_result: m1.v2.ritual_cue_observed.bokold_two
+    law: {ref: event.ritual_cue_observed, args: {}}
+  - name: ritual_cue_bokold_one_on_approach
+    template: ritual_cue_observed
+    actor: bokold_one
+    trigger_action: approach_light_bokold_one
+    source_key: m1.v2.ritual_cue_observed.bokold_one
+    event_type: m1.v2.ritual_cue_observed.bokold_one.event
+    causal_key: m1.v2.ritual_cue_observed.bokold_one.on_approach
+    shared_result: m1.v2.ritual_cue_observed.bokold_one
+    law: {ref: event.ritual_cue_observed, args: {}}
+  - name: ritual_cue_bokold_two_on_approach
+    template: ritual_cue_observed
+    actor: bokold_two
+    trigger_action: approach_light_bokold_two
+    source_key: m1.v2.ritual_cue_observed.bokold_two
+    event_type: m1.v2.ritual_cue_observed.bokold_two.event
+    causal_key: m1.v2.ritual_cue_observed.bokold_two.on_approach
+    shared_result: m1.v2.ritual_cue_observed.bokold_two
+    law: {ref: event.ritual_cue_observed, args: {}}
+  - family: ritual_sacrifice
+    template: ritual_sacrifice
+    actor: ritual_resident
+    for_action_family: ritual_advance
+    source_prefix: m1.v2.ritual_sacrifice
+    share_result: true
+    law: {ref: event.ritual_sacrifice, args: {}}
+  - family: ice_elemental_summoned
+    template: ice_elemental_summoned
+    for_action_family: ritual_advance
+    source_prefix: m1.v2.ice_elemental_summoned
+    share_result: true
+    law: {ref: event.ice_elemental_summoned, args: {}}
+    actor_product: {kind: ice_elemental, cardinality: one, initial_output: newborn}
+  - family: elemental_observed_after_birth
+    template: elemental_observed
+    actor: adventurer
+    for_event_family: ice_elemental_summoned
+    source_prefix: m1.v2.elemental.observed.birth
+    law: {ref: event.elemental_observed, args: {}}
+  - name: elemental_observed_after_palace
+    template: elemental_observed
+    actor: adventurer
+    trigger_event: palace_event
+    source_key: m1.v2.elemental.observed.palace
+    event_type: m1.v2.elemental.observed.palace.event
+    causal_key: m1.v2.elemental.observed.palace.law
+    law: {ref: event.elemental_observed, args: {}}
+  - family: elemental_observed_after_action
+    template: elemental_observed
+    actor: adventurer
+    for_actions: [elemental_advance, observe_elemental_adventurer]
+    source_prefix: m1.v2.elemental.observed.action
+    law: {ref: event.elemental_observed, args: {}}
+  - family: ritual_interrupted
+    template: ritual_interrupted
+    actor: ritual
+    for_action_families:
+    - thaw_person
+    - carry_move
+    - carry_cross_ice
+    - carry_bridge_slow
+    - carry_pass_door
+    source_prefix: m1.v2.ritual_interrupted
+    share_result: true
+    law:
+      ref: event.ritual_interrupted
+      args: {}
+  - family: player_scent_deposited
+    template: player_scent_deposited
+    for_actions: [move_adventurer, balloon_push_adventurer, balloon_push_bridge_adventurer, balloon_push_ice_adventurer, balloon_push_door_adventurer, cross_ice_adventurer, pass_door_adventurer, bridge_slow_adventurer, bridge_rush_adventurer]
+    source_prefix: m1.v2.player_scent
+    share_result: true
+    law: {ref: event.player_scent_deposited, args: {}}
+  - family: fox_motion_seen
+    template: fox_motion_seen
+    actor_domain: foxes
+    for_actions:
+    - move_adventurer
+    - balloon_push_adventurer
+    - balloon_push_bridge_adventurer
+    - balloon_push_ice_adventurer
+    - balloon_push_door_adventurer
+    - cross_ice_adventurer
+    - pass_door_adventurer
+    - bridge_slow_adventurer
+    - bridge_rush_adventurer
+    - stable_move_stable_bokold_one
+    - stable_cross_ice_stable_bokold_one
+    - stable_pass_door_stable_bokold_one
+    - stable_move_stable_bokold_two
+    - stable_cross_ice_stable_bokold_two
+    - stable_pass_door_stable_bokold_two
+    - stable_move_stable_bokold_three
+    - stable_cross_ice_stable_bokold_three
+    - stable_pass_door_stable_bokold_three
+    - stable_move_stable_bokold_four
+    - stable_cross_ice_stable_bokold_four
+    - stable_pass_door_stable_bokold_four
+    source_prefix: m1.v2.fox_motion_seen
+    share_result: true
+    law:
+      ref: event.fox_motion_seen
+      args: {}
+  - template: fox_cold
+    law:
+      ref: event.fox_cold
+      args: {}
+    name: fox_cold_arctic_fox_one
+    actor: arctic_fox_one
+    trigger_event: cold_pulse
+    source_key: m1.v2.fox_cold.arctic_fox_one
+    event_type: m1.v2.fox_cold.arctic_fox_one.event
+    causal_key: m1.v2.fox_cold.arctic_fox_one.on_pulse
+  - template: fox_cold
+    law:
+      ref: event.fox_cold
+      args: {}
+    name: fox_cold_arctic_fox_two
+    actor: arctic_fox_two
+    trigger_event: cold_pulse
+    source_key: m1.v2.fox_cold.arctic_fox_two
+    event_type: m1.v2.fox_cold.arctic_fox_two.event
+    causal_key: m1.v2.fox_cold.arctic_fox_two.on_pulse
+  - template: fox_cold
+    law:
+      ref: event.fox_cold
+      args: {}
+    name: fox_cold_arctic_fox_three
+    actor: arctic_fox_three
+    trigger_event: cold_pulse
+    source_key: m1.v2.fox_cold.arctic_fox_three
+    event_type: m1.v2.fox_cold.arctic_fox_three.event
+    causal_key: m1.v2.fox_cold.arctic_fox_three.on_pulse
+  - template: fox_cold
+    law:
+      ref: event.fox_cold
+      args: {}
+    name: fox_cold_arctic_fox_four
+    actor: arctic_fox_four
+    trigger_event: cold_pulse
+    source_key: m1.v2.fox_cold.arctic_fox_four
+    event_type: m1.v2.fox_cold.arctic_fox_four.event
+    causal_key: m1.v2.fox_cold.arctic_fox_four.on_pulse

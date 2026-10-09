@@ -1,0 +1,746 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+offer_provider: {name: finite_value, version: '1'}
+opening_guard:
+  all:
+    - none_matching: {collection: {ref: scene.scent_steps}, as: step, where: true}
+    - {eq: [4, {count_matching: {collection: {ref: scene.palace_event_pool}, as: kind, where: true}}]}
+    - unique_by: {collection: {ref: scene.palace_event_pool}, as: kind, keys: [kind]}
+    - none_matching: {collection: {ref: scene.palace_event_draws}, as: draw, where: true}
+    - none_matching: {collection: {ref: scene.balloon_seats}, as: seat, where: true}
+    - all:
+        - unique_by: {collection: {ref: scene.climb_paths}, as: path, keys: [path.start, path.end]}
+        - none_matching:
+            collection: {ref: scene.climb_paths}
+            as: path
+            where:
+              any:
+                - {not: {exactly_one: {collection: {ref: scene.sites}, as: site, where: "site == path.start"}}}
+                - {not: {exactly_one: {collection: {ref: scene.sites}, as: site, where: "site == path.end"}}}
+    - all:
+        - unique_by: {collection: {ref: scene.breath_zones}, as: zone, keys: [zone.origin, zone.aim]}
+        - none_matching:
+            collection: {ref: scene.breath_zones}
+            as: zone
+            where:
+              any:
+                - "zone.origin == zone.aim"
+                - {not: {exactly_one: {collection: {ref: scene.sites}, as: site, where: "site == zone.origin"}}}
+                - {not: {exactly_one: {collection: {ref: scene.sites}, as: site, where: "site == zone.aim"}}}
+                - {none_matching: {collection: {ref: zone.affected_sites}, as: site, where: true}}
+                - none_matching: {collection: {ref: zone.affected_sites}, as: site, where: "site == zone.aim"}
+                - exists:
+                    collection: {ref: zone.affected_sites}
+                    as: affected
+                    where: {not: {exactly_one: {collection: {ref: scene.sites}, as: site, where: "site == affected"}}}
+    - scene.tower_request is None and scene.tower_offer is None and scene.tower_acceptance is None
+    - scene.tower_exit_report is None and alpha.heard_exit_report is None and alpha.exit_report_hearing_ref is None and alpha.trade_decision is None
+    - alpha.heard_tower_acceptance is None and alpha.acceptance_hearing_ref is None
+    - scene.tower_clearance is None and alpha.clearance is None and alpha.occupancy == 'none'
+    - tower_bear_one.occupancy == 'blocking_balloon' and tower_bear_two.occupancy == 'blocking_balloon'
+    - tower_bear_one.heard_clearance is None and tower_bear_two.heard_clearance is None
+    - alpha.heard_tower_request is None and alpha.tower_hearing_ref is None and alpha.tower_proposal is None
+    - adventurer.conversations.tower is None
+    - {is_none: {ref: scene.prison_question}}
+    - {is_none: {ref: scene.prison_answer}}
+    - {is_none: {ref: captive_bear.heard_question}}
+    - {is_none: {ref: captive_bear.question_hearing_ref}}
+    - {is_none: {ref: captive_bear.answer}}
+    - {is_none: {ref: captive_bear.last_action_ref}}
+    - {is_none: {ref: captive_bear.charge_used_ref}}
+    - {is_none: {ref: prison_bokold.heard_question}}
+    - {is_none: {ref: prison_bokold.question_hearing_ref}}
+    - {is_none: {ref: prison_bokold.answer}}
+    - {is_none: {ref: prison_bokold.last_action_ref}}
+    - {is_none: {ref: prison_bokold.charge_used_ref}}
+    - {is_none: {ref: adventurer.conversations.prison.charge_receipt}}
+    - {is_none: {ref: adventurer.conversations.prison.charge_load_ref}}
+    - {none_matching: {collection: {ref: adventurer.conversations.prison.contacts}, as: contact, where: true}}
+    - {none_matching: {collection: {ref: adventurer.conversations.prison.questions}, as: question, where: true}}
+    - {none_matching: {collection: {ref: adventurer.conversations.prison.answers}, as: answer, where: true}}
+    - none_matching:
+        collection: {ref: scene.paths}
+        as: road
+        where: road.start == 'captive_cell' or road.end == 'captive_cell'
+    - none_matching:
+        collection: {ref: scene.crossings}
+        as: crossing
+        where: crossing.start == 'captive_cell' or crossing.intended == 'captive_cell' or crossing.collision == 'captive_cell'
+    - all:
+        - unique_by: {collection: {ref: scene.prison_lines}, as: line, keys: [line.start, line.end]}
+        - none_matching:
+            collection: {ref: scene.prison_lines}
+            as: line
+            where:
+              any:
+                - not: {exactly_one: {collection: {ref: scene.sites}, as: site, where: site == line.start}}
+                - not: {exactly_one: {collection: {ref: scene.sites}, as: site, where: site == line.end}}
+                - not: {none_matching: {collection: {ref: scene.paths}, as: road, where: road.start == line.start and road.end == line.end}}
+                - not: {none_matching: {collection: {ref: scene.crossings}, as: crossing, where: crossing.start == line.start and (crossing.intended == line.end or crossing.collision == line.end)}}
+    - all:
+        - unique_by: {collection: {ref: scene.floors}, as: floor, keys: [floor.key]}
+        - none_matching:
+            collection: {ref: scene.floors}
+            as: floor
+            where:
+              any:
+                - {none_matching: {collection: {ref: floor.sites}, as: site, where: true}}
+                - not:
+                    none_matching:
+                      collection: {ref: floor.sites}
+                      as: site
+                      where:
+                        any:
+                          - {not: {exactly_one: {collection: {ref: floor.sites}, as: same_site, where: "same_site == site"}}}
+                          - {not: {exactly_one: {collection: {ref: scene.sites}, as: declared, where: "declared == site"}}}
+                          - {not: {exactly_one: {collection: {ref: scene.floors}, as: other, where: {exists: {collection: {ref: other.sites}, as: duplicate, where: "duplicate == site"}}}}}
+    - {is_none: {ref: prison_resident_one.escort_heard_ref}}
+    - {is_none: {ref: prison_resident_one.escort_utterance_ref}}
+    - {is_none: {ref: prison_resident_one.escort_speaker}}
+    - {is_none: {ref: prison_resident_one.escort_destination}}
+    - {is_none: {ref: prison_resident_one.prison_access.line}}
+    - {is_none: {ref: prison_resident_two.escort_heard_ref}}
+    - {is_none: {ref: prison_resident_two.escort_utterance_ref}}
+    - {is_none: {ref: prison_resident_two.escort_speaker}}
+    - {is_none: {ref: prison_resident_two.escort_destination}}
+    - {is_none: {ref: prison_resident_two.prison_access.line}}
+    - {is_none: {ref: scene.torch_offer}}
+    - {eq: [{ref: ritual.status}, {const: active}]}
+    - {eq: [{ref: ritual.progress}, {const: 0}]}
+    - {not: {ref: scene.ritual_completion_signal}}
+    - {not: {ref: scene.elemental_summoned}}
+    - {is_none: {ref: scene.summon_ref}}
+    - {is_none: {ref: scene.departure}}
+    - {is_none: {ref: scene.departure_event_ref}}
+    - {is_none: {ref: scene.escort_offer_site}}
+    - {is_none: {ref: scene.escort_offer_ref}}
+    - {is_none: {ref: scene.escort_offer_speaker}}
+    - {is_none: {ref: scene.escort_offer_destination}}
+    - {is_none: {ref: ritual_resident.escort_heard_ref}}
+    - {is_none: {ref: ritual_resident.escort_utterance_ref}}
+    - {is_none: {ref: ritual_resident.escort_speaker}}
+    - {is_none: {ref: ritual_resident.escort_destination}}
+    - {is_none: {ref: huddled_one.escort_heard_ref}}
+    - {is_none: {ref: huddled_one.escort_utterance_ref}}
+    - {is_none: {ref: huddled_one.escort_speaker}}
+    - {is_none: {ref: huddled_one.escort_destination}}
+    - {is_none: {ref: huddled_two.escort_heard_ref}}
+    - {is_none: {ref: huddled_two.escort_utterance_ref}}
+    - {is_none: {ref: huddled_two.escort_speaker}}
+    - {is_none: {ref: huddled_two.escort_destination}}
+    - {is_none: {ref: wall_resident.escort_heard_ref}}
+    - {is_none: {ref: wall_resident.escort_utterance_ref}}
+    - {is_none: {ref: wall_resident.escort_speaker}}
+    - {is_none: {ref: wall_resident.escort_destination}}
+    - {eq: [{ref: scene.ritual_cue_site}, {ref: ritual.site}]}
+    - {eq: [{ref: scene.ritual_cue_stage}, {const: preparing}]}
+    - {is_none: {ref: adventurer.ritual_notice}}
+    - {is_none: {ref: adventurer.ritual_notice_ref}}
+    - {is_none: {ref: bokold_one.light_observation}}
+    - {is_none: {ref: bokold_one.light_observation_ref}}
+    - {is_none: {ref: bokold_one.light_sighting_site}}
+    - {is_none: {ref: bokold_two.light_observation}}
+    - {is_none: {ref: bokold_two.light_observation_ref}}
+    - {is_none: {ref: bokold_two.light_sighting_site}}
+    - {eq: [{ref: ritual.target}, {ref: ritual_resident.name}]}
+    - {eq: [{ref: ritual.site}, {ref: ritual_resident.site}]}
+    - {eq: [{ref: scene.notice_site}, {ref: ritual_resident.site}]}
+    - {eq: [{ref: scene.notice_subject}, {ref: ritual_resident.name}]}
+    - {exists: {collection: {ref: adventurer.known_sites}, as: known, where: {eq: [{ref: known.site}, {ref: adventurer.site}]}}}
+    - none_matching:
+        collection: {ref: adventurer.known_sites}
+        as: known_site
+        where:
+          not:
+            exactly_one: {collection: {ref: scene.sites}, as: site, where: {eq: [{ref: site}, {ref: known_site.site}]}}
+    - {exactly_one: {collection: {ref: scene.sites}, as: site, where: {eq: [{ref: site}, {ref: scene.notice_site}]}}}
+    - {exists: {collection: {ref: scene.coverage}, as: area, where: {const: true}}}
+    - all:
+        - unique_by: {collection: {ref: scene.coverage}, as: area, keys: [area.origin]}
+        - none_matching:
+            collection: {ref: scene.coverage}
+            as: area
+            where:
+              any:
+                - not:
+                    exactly_one: {collection: {ref: scene.sites}, as: site, where: {eq: [{ref: site}, {ref: area.origin}]}}
+                - not:
+                    none_matching:
+                      collection: {ref: area.far_sites}
+                      as: covered_site
+                      where:
+                        not:
+                          exactly_one: {collection: {ref: scene.sites}, as: site, where: {eq: [{ref: site}, {ref: covered_site}]}}
+    - all:
+        - unique_by: {collection: {ref: scene.paths}, as: path, keys: [path.start, path.end]}
+        - none_matching:
+            collection: {ref: scene.paths}
+            as: path
+            where:
+              any:
+                - not: {exactly_one: {collection: {ref: scene.sites}, as: site, where: {eq: [{ref: site}, {ref: path.start}]}}}
+                - not: {exactly_one: {collection: {ref: scene.sites}, as: site, where: {eq: [{ref: site}, {ref: path.end}]}}}
+                - not: {exactly_one: {collection: {ref: scene.coverage}, as: area, where: {eq: [{ref: area.origin}, {ref: path.start}]}}}
+                - not: {exactly_one: {collection: {ref: scene.coverage}, as: area, where: {eq: [{ref: area.origin}, {ref: path.end}]}}}
+    - none_matching:
+        collection: {ref: scene.paths}
+        as: ordinary
+        where: ordinary.start == 'palace_exit' or ordinary.end == 'palace_exit' or ordinary.start == 'bridge_midspan' or ordinary.end == 'bridge_midspan'
+    - none_matching:
+        collection: {ref: scene.stair_paths}
+        as: stair
+        where:
+          not:
+            exactly_one: {collection: {ref: scene.paths}, as: path, where: path.start == stair.start and path.end == stair.end and path.base_move_cost == stair.base_move_cost}
+    - all:
+        - unique_by: {collection: {ref: scene.unclimbable_stairs}, as: blocked, keys: [blocked.start, blocked.end]}
+        - none_matching:
+            collection: {ref: scene.unclimbable_stairs}
+            as: blocked
+            where:
+              any:
+                - {not: {exactly_one: {collection: {ref: scene.stair_paths}, as: stair, where: stair.start == blocked.start and stair.end == blocked.end and stair.base_move_cost == blocked.base_move_cost}}}
+    - all:
+        - unique_by: {collection: {ref: scene.bridge_paths}, as: bridge, keys: [bridge.start, bridge.end]}
+        - none_matching:
+            collection: {ref: scene.bridge_paths}
+            as: bridge
+            where:
+              any:
+                - {not: {exactly_one: {collection: {ref: scene.sites}, as: site, where: site == bridge.start}}}
+                - {not: {exactly_one: {collection: {ref: scene.sites}, as: site, where: site == bridge.end}}}
+                - {not: {exactly_one: {collection: {ref: scene.coverage}, as: area, where: area.origin == bridge.end}}}
+    - all:
+        - unique_by: {collection: {ref: scene.crossings}, as: crossing, keys: [crossing.key]}
+        - none_matching:
+            collection: {ref: scene.crossings}
+            as: crossing
+            where:
+              any:
+                - crossing.floor_key == 'bridge'
+                - crossing.start == 'bridge_midspan' or crossing.start == 'palace_exit'
+                - crossing.intended == 'bridge_midspan' or crossing.intended == 'palace_exit'
+                - crossing.collision == 'bridge_midspan' or crossing.collision == 'palace_exit'
+                - not:
+                    exactly_one:
+                      collection: {ref: scene.floors}
+                      as: floor
+                      where:
+                        all:
+                          - "floor.key == crossing.floor_key"
+                          - {exactly_one: {collection: {ref: floor.sites}, as: site, where: "site == crossing.start"}}
+                          - {exactly_one: {collection: {ref: floor.sites}, as: intended_site, where: "intended_site == crossing.intended"}}
+                          - {exactly_one: {collection: {ref: floor.sites}, as: collision_site, where: "collision_site == crossing.collision"}}
+                - not: {exactly_one: {collection: {ref: scene.coverage}, as: area, where: {eq: [{ref: area.origin}, {ref: crossing.start}]}}}
+                - not: {exactly_one: {collection: {ref: scene.coverage}, as: area, where: {eq: [{ref: area.origin}, {ref: crossing.intended}]}}}
+                - not: {exactly_one: {collection: {ref: scene.coverage}, as: area, where: {eq: [{ref: area.origin}, {ref: crossing.collision}]}}}
+                - all:
+                    - {not_none: {ref: crossing.success_followup}}
+                    - not:
+                        exactly_one:
+                          collection: {ref: scene.crossings}
+                          as: next_crossing
+                          where:
+                            all:
+                              - {eq: [{ref: next_crossing.key}, {ref: crossing.success_followup}]}
+                              - {eq: [{ref: next_crossing.start}, {ref: crossing.intended}]}
+                - all:
+                    - {not_none: {ref: crossing.failure_followup}}
+                    - not:
+                        exactly_one:
+                          collection: {ref: scene.crossings}
+                          as: next_crossing
+                          where:
+                            all:
+                              - {eq: [{ref: next_crossing.key}, {ref: crossing.failure_followup}]}
+                              - {eq: [{ref: next_crossing.start}, {ref: crossing.collision}]}
+game_form:
+  mode: action_value_event_jump
+  end_at: null
+  max_same_time_actions: 64
+  world_stops:
+  - outcome: departed_palace
+    owners:
+    - scene
+    when:
+      not_none:
+        ref: scene.departure_event_ref
+  - outcome: adventurer_dead
+    owners:
+    - adventurer
+    when: adventurer.vital.life == 'dead'
+  - outcome: rescue_window_expired
+    owners:
+    - adventurer
+    when: adventurer.vital.rescue_episode is not None and adventurer.vital.rescue_episode.elapsed_cold == 5 and (adventurer.cold_state
+      == 'frozen' or adventurer.vital.endurance == 0)
+  seats:
+  - seat: alpha
+    tempo: 100
+    eligible: actor.awake and actor.vital.life == 'alive'
+    costs: {}
+    cost_groups:
+    - entries: [tower_watch_alpha, propose_alpha, clear_balloon_alpha, deliver_alpha, withdraw_alpha, show_magic_alpha,
+          withdraw_magic_alpha]
+      value: 10000
+  - seat: tower_bear_one
+    tempo: 100
+    eligible: actor.awake and actor.vital.life == 'alive'
+    costs: {}
+    cost_groups:
+    - entries: [tower_watch_tower_bear_one, step_aside_tower_bear_one]
+      value: 10000
+  - seat: tower_bear_two
+    tempo: 100
+    eligible: actor.awake and actor.vital.life == 'alive'
+    costs: {}
+    cost_groups:
+    - entries: [tower_watch_tower_bear_two, step_aside_tower_bear_two]
+      value: 10000
+  - seat: hall_bokold_one
+    tempo: 100
+    eligible: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+    costs: {}
+    cost_groups:
+    - entries: [hall_draw_hall_bokold_one, hall_wait_hall_bokold_one, show_magic_hall_bokold_one, withdraw_magic_hall_bokold_one,
+          observe_magic_hall_bokold_one, study_magic_hall_bokold_one, observe_my_magic_hall_bokold_one, study_my_magic_hall_bokold_one,
+          observe_ground_magic_hall_bokold_one, study_ground_magic_hall_bokold_one, observe_alpha_magic_hall_bokold_one,
+          study_alpha_magic_hall_bokold_one]
+      value: 10000
+  - seat: hall_bokold_two
+    tempo: 100
+    eligible: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+    costs: {}
+    cost_groups:
+    - entries: [hall_draw_hall_bokold_two, hall_wait_hall_bokold_two, show_magic_hall_bokold_two, withdraw_magic_hall_bokold_two,
+          observe_magic_hall_bokold_two, study_magic_hall_bokold_two, observe_my_magic_hall_bokold_two, study_my_magic_hall_bokold_two,
+          observe_ground_magic_hall_bokold_two, study_ground_magic_hall_bokold_two, observe_alpha_magic_hall_bokold_two,
+          study_alpha_magic_hall_bokold_two]
+      value: 10000
+  - seat: hall_bokold_three
+    tempo: 100
+    eligible: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+    costs: {}
+    cost_groups:
+    - entries: [hall_draw_hall_bokold_three, hall_wait_hall_bokold_three, show_magic_hall_bokold_three, withdraw_magic_hall_bokold_three,
+          observe_magic_hall_bokold_three, study_magic_hall_bokold_three, observe_my_magic_hall_bokold_three,
+          study_my_magic_hall_bokold_three, observe_ground_magic_hall_bokold_three, study_ground_magic_hall_bokold_three,
+          observe_alpha_magic_hall_bokold_three, study_alpha_magic_hall_bokold_three]
+      value: 10000
+  - seat: hall_bokold_four
+    tempo: 100
+    eligible: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+    costs: {}
+    cost_groups:
+    - entries: [hall_draw_hall_bokold_four, hall_wait_hall_bokold_four, show_magic_hall_bokold_four, withdraw_magic_hall_bokold_four,
+          observe_magic_hall_bokold_four, study_magic_hall_bokold_four, observe_my_magic_hall_bokold_four,
+          study_my_magic_hall_bokold_four, observe_ground_magic_hall_bokold_four, study_ground_magic_hall_bokold_four,
+          observe_alpha_magic_hall_bokold_four, study_alpha_magic_hall_bokold_four]
+      value: 10000
+  - seat: hall_bokold_five
+    tempo: 100
+    eligible: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+    costs: {}
+    cost_groups:
+    - entries: [hall_draw_hall_bokold_five, hall_wait_hall_bokold_five, show_magic_hall_bokold_five, withdraw_magic_hall_bokold_five,
+          observe_magic_hall_bokold_five, study_magic_hall_bokold_five, observe_my_magic_hall_bokold_five,
+          study_my_magic_hall_bokold_five, observe_ground_magic_hall_bokold_five, study_ground_magic_hall_bokold_five,
+          observe_alpha_magic_hall_bokold_five, study_alpha_magic_hall_bokold_five]
+      value: 10000
+  - seat: adventurer
+    tempo:
+      const: 100
+    eligible:
+      all:
+      - not:
+          eq:
+          - ref: actor.cold_state
+          - const: frozen
+      - eq:
+        - ref: actor.vital.life
+        - const: alive
+    costs: {climb_skyhook_adventurer: {if: {when: actor.current_movement_speed > 0, then: {ceil_div: [{mul: [
+                      {mul: [10000, {ref: payload.distance_ft}]}, {ref: actor.max_movement_speed}]}, {mul: [
+                      10, {ref: actor.current_movement_speed}]}]}, else: 10000}}}
+    cost_groups:
+    - entries: [ask_alpha_adventurer, balloon_control_adventurer, explain_balloon_adventurer, look_tower_top_adventurer,
+          balloon_flight_adventurer, observe_balloon_power_adventurer, extract_balloon_power_adventurer,
+          transfer_balloon_power_adventurer, load_balloon_power_adventurer, accept_alpha_adventurer, report_alpha_adventurer,
+          fireball_adventurer, observe_hall_adventurer, observe_tower_adventurer, pickup_elemental_charge_adventurer,
+          load_elemental_torch_adventurer, load_elemental_firelock_adventurer, focus_elemental_adventurer,
+          focus_person_adventurer, focus_queen_adventurer, focus_fox_adventurer, focus_tower_bear_adventurer,
+          focus_bar_bear_adventurer, focus_prison_guard_adventurer, focus_prison_voice_adventurer, brand_person_adventurer,
+          observe_resident_tower_bear_adventurer, brand_person_tower_bear_adventurer, locate_branded_person_tower_bear_adventurer,
+          observe_resident_bar_bear_adventurer, brand_person_bar_bear_adventurer, locate_branded_person_bar_bear_adventurer,
+          observe_resident_prison_guard_adventurer, brand_person_prison_guard_adventurer, locate_branded_person_prison_guard_adventurer,
+          observe_resident_prison_voice_adventurer, brand_person_prison_voice_adventurer, locate_branded_person_prison_voice_adventurer,
+          observe_resident_fox_adventurer, brand_person_fox_adventurer, locate_branded_person_fox_adventurer,
+          brand_elemental_adventurer, inspect_brands_adventurer, locate_branded_person_adventurer, locate_branded_elemental_adventurer,
+          load_firelock_adventurer, drop_magic_adventurer, pickup_magic_adventurer, show_magic_adventurer,
+          withdraw_magic_adventurer, receive_charge_adventurer, load_charge_adventurer, observe_prison_voices_adventurer,
+          ask_prison_adventurer, observe_prison_people_adventurer, observe_prison_bars_adventurer, set_prison_bars_adventurer,
+          observe_prison_line_adventurer, thaw_door_adventurer, open_door_adventurer, close_door_adventurer,
+          observe_bar_adventurer, observe_drink_adventurer, thaw_drink_adventurer, request_pour_adventurer,
+          invite_guest_adventurer, pour_drink_adventurer, observe_routes_adventurer, observe_chest_adventurer,
+          open_chest_adventurer, take_gold_adventurer, take_magic_item_adventurer, observe_climbs_adventurer,
+          observe_floor_adventurer, thaw_floor_adventurer, observe_elemental_adventurer, open_plain_wall_adventurer,
+          observe_resident_adventurer, thaw_person_adventurer, care_person_adventurer, strike_person_adventurer,
+          observe_fox_adventurer, request_tame_arctic_fox_one, request_tame_arctic_fox_two, request_tame_arctic_fox_three,
+          request_tame_arctic_fox_four, observe_foxes_adventurer, thaw_fox_adventurer, inspect_patient_adventurer,
+          observe_resident_queen_adventurer, thaw_queen_adventurer, brand_person_queen_adventurer, locate_branded_person_queen_adventurer,
+          observe_queen_adventurer]
+      value: 10000
+    - entries: [balloon_push_adventurer, balloon_push_ice_adventurer, balloon_push_bridge_adventurer, balloon_push_door_adventurer,
+          pass_prison_bars_adventurer, pass_prison_line_adventurer, move_wall_adventurer, pass_door_adventurer,
+          cross_ice_adventurer, move_adventurer, bridge_slow_adventurer, bridge_rush_adventurer]
+      value: {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                  ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}
+    - entries: [offer_torch_adventurer, observe_wall_adventurer, open_wall_adventurer, thaw_ritual_resident, observe_chandelier_adventurer,
+          detach_reservoir_adventurer, reload_everflame_adventurer, leave_palace_adventurer, offer_escort_adventurer,
+          wait_adventurer]
+      value: {const: 10000}
+    - entries: [carry_from_ritual_adventurer, carry_move_adventurer, carry_cross_ice_adventurer, carry_bridge_slow_adventurer,
+          carry_pass_door_adventurer]
+      value: {mul: [2, {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                      ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}]}
+  - seat: captive_bear
+    tempo: 100
+    eligible: actor.vital.life == 'alive' and actor.awake and actor.heard_question is not None and (actor.answer
+      is None or (actor.answer is not None and actor.answer.question != actor.heard_question.utterance))
+    costs: {}
+    cost_groups:
+    - entries: [permit_charge_captive_bear, prison_wait_captive_bear, prison_answer_captive_bear, prison_decline_captive_bear]
+      value: 10000
+  - seat: prison_bokold
+    tempo: 100
+    eligible: actor.vital.life == 'alive' and actor.awake and actor.heard_question is not None and (actor.answer
+      is None or (actor.answer is not None and actor.answer.question != actor.heard_question.utterance))
+    costs: {}
+    cost_groups:
+    - entries: [permit_charge_prison_bokold, prison_wait_prison_bokold, prison_answer_prison_bokold, prison_decline_prison_bokold]
+      value: 10000
+  - seat: icebar_bear_one
+    tempo: 100
+    eligible: actor.vital.life == 'alive' and actor.awake
+    costs: {}
+    cost_groups:
+    - entries: [offer_share_icebar_bear_one, withdraw_share_icebar_bear_one, finish_share_icebar_bear_one, bear_look_guard_icebar_bear_one,
+          bear_invite_guard_icebar_bear_one, guest_accept_icebar_bear_one, guest_refuse_icebar_bear_one,
+          guest_return_icebar_bear_one, guest_finish_icebar_bear_one, bar_wait_icebar_bear_one, bar_accept_icebar_bear_one,
+          bar_refuse_icebar_bear_one, bar_inspect_drink_icebar_bear_one, bar_drink_icebar_bear_one, bear_observe_routes_icebar_bear_one]
+      value: 10000
+    - entries: [bear_move_icebar_bear_one, bear_cross_ice_icebar_bear_one, bear_pass_door_icebar_bear_one]
+      value: {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                  ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}
+  - seat: icebar_bear_two
+    tempo: 100
+    eligible: actor.vital.life == 'alive' and actor.awake
+    costs: {}
+    cost_groups:
+    - entries: [offer_share_icebar_bear_two, withdraw_share_icebar_bear_two, finish_share_icebar_bear_two, bear_look_guard_icebar_bear_two,
+          bear_invite_guard_icebar_bear_two, guest_accept_icebar_bear_two, guest_refuse_icebar_bear_two,
+          guest_return_icebar_bear_two, guest_finish_icebar_bear_two, bar_wait_icebar_bear_two, bar_accept_icebar_bear_two,
+          bar_refuse_icebar_bear_two, bar_inspect_drink_icebar_bear_two, bar_drink_icebar_bear_two, bear_observe_routes_icebar_bear_two]
+      value: 10000
+    - entries: [bear_move_icebar_bear_two, bear_cross_ice_icebar_bear_two, bear_pass_door_icebar_bear_two]
+      value: {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                  ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}
+  - seat: prison_guard
+    tempo: 100
+    eligible: actor.vital.life == 'alive' and actor.awake
+    costs: {}
+    cost_groups:
+    - entries: [guard_receive_share, guard_decline_share, guard_inspect_held_drink, guard_drink, guard_wait, guard_observe_visitor,
+          guard_inspect_drink, guard_accept_invitation, guard_decline_invitation, guard_observe_routes, guard_arrive_bar,
+          guard_return_post, guard_finish_visit]
+      value: 10000
+    - entries: [guard_move, guard_cross_ice, guard_pass_door]
+      value: {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                  ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}
+  - seat: ritual_resident
+    tempo:
+      const: 100
+    eligible:
+      all:
+      - not:
+          eq:
+          - ref: actor.cold_state
+          - const: frozen
+      - eq:
+        - ref: actor.vital.life
+        - const: alive
+    costs: {}
+    cost_groups:
+    - entries: [accept_torch_ritual_resident, observe_person_ritual_resident, thaw_person_ritual_resident, wait_ritual_resident]
+      value: {const: 10000}
+    - entries: [care_person_ritual_resident, strike_person_ritual_resident, inspect_patient_ritual_resident]
+      value: 10000
+    - entries: [cross_ice_ritual_resident, move_ritual_resident, bridge_slow_ritual_resident, bridge_rush_ritual_resident]
+      value: {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                  ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}
+    - entries: [carry_move_ritual_resident, carry_cross_ice_ritual_resident, carry_bridge_slow_ritual_resident,
+          carry_pass_door_ritual_resident]
+      value: {mul: [2, {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                      ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}]}
+  - seat: huddled_one
+    tempo:
+      const: 100
+    eligible:
+      all:
+      - not:
+          eq:
+          - ref: actor.cold_state
+          - const: frozen
+      - eq:
+        - ref: actor.vital.life
+        - const: alive
+    costs: {}
+    cost_groups:
+    - entries: [accept_torch_huddled_one, observe_person_huddled_one, thaw_person_huddled_one, wait_huddled_one]
+      value: {const: 10000}
+    - entries: [care_person_huddled_one, strike_person_huddled_one, inspect_patient_huddled_one]
+      value: 10000
+    - entries: [cross_ice_huddled_one, move_huddled_one, bridge_slow_huddled_one, bridge_rush_huddled_one]
+      value: {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                  ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}
+    - entries: [carry_move_huddled_one, carry_cross_ice_huddled_one, carry_bridge_slow_huddled_one, carry_pass_door_huddled_one]
+      value: {mul: [2, {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                      ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}]}
+  - seat: prison_resident_one
+    tempo:
+      const: 100
+    eligible:
+      all:
+      - not:
+          eq:
+          - ref: actor.cold_state
+          - const: frozen
+      - eq:
+        - ref: actor.vital.life
+        - const: alive
+    costs: {try_prison_line_prison_resident_one: {add: [10000, {call: {ref: movement.action_cost, args: {base_cost: {
+                      ref: payload.base_move_cost}, maximum_speed: {ref: actor.max_movement_speed}, current_speed: {
+                      ref: actor.current_movement_speed}}}}]}}
+    cost_groups:
+    - entries: [wait_near_guide_prison_resident_one, observe_prison_line_prison_resident_one, care_person_prison_resident_one,
+          strike_person_prison_resident_one, inspect_patient_prison_resident_one]
+      value: 10000
+    - entries: [pass_prison_line_prison_resident_one, pass_door_prison_resident_one, cross_ice_prison_resident_one,
+          move_prison_resident_one, bridge_slow_prison_resident_one, bridge_rush_prison_resident_one]
+      value: {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                  ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}
+    - entries: [accept_torch_prison_resident_one, observe_person_prison_resident_one, thaw_person_prison_resident_one,
+          wait_prison_resident_one]
+      value: {const: 10000}
+    - entries: [carry_move_prison_resident_one, carry_cross_ice_prison_resident_one, carry_bridge_slow_prison_resident_one,
+          carry_pass_door_prison_resident_one]
+      value: {mul: [2, {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                      ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}]}
+  - seat: prison_resident_two
+    tempo:
+      const: 100
+    eligible:
+      all:
+      - not:
+          eq:
+          - ref: actor.cold_state
+          - const: frozen
+      - eq:
+        - ref: actor.vital.life
+        - const: alive
+    costs: {try_prison_line_prison_resident_two: {add: [10000, {call: {ref: movement.action_cost, args: {base_cost: {
+                      ref: payload.base_move_cost}, maximum_speed: {ref: actor.max_movement_speed}, current_speed: {
+                      ref: actor.current_movement_speed}}}}]}}
+    cost_groups:
+    - entries: [wait_near_guide_prison_resident_two, observe_prison_line_prison_resident_two, care_person_prison_resident_two,
+          strike_person_prison_resident_two, inspect_patient_prison_resident_two]
+      value: 10000
+    - entries: [pass_prison_line_prison_resident_two, pass_door_prison_resident_two, cross_ice_prison_resident_two,
+          move_prison_resident_two, bridge_slow_prison_resident_two, bridge_rush_prison_resident_two]
+      value: {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                  ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}
+    - entries: [accept_torch_prison_resident_two, observe_person_prison_resident_two, thaw_person_prison_resident_two,
+          wait_prison_resident_two]
+      value: {const: 10000}
+    - entries: [carry_move_prison_resident_two, carry_cross_ice_prison_resident_two, carry_bridge_slow_prison_resident_two,
+          carry_pass_door_prison_resident_two]
+      value: {mul: [2, {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                      ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}]}
+  - seat: wall_resident
+    tempo: 100
+    eligible: actor.cold_state != 'frozen' and actor.vital.life == 'alive'
+    costs: {}
+    cost_groups:
+    - entries: [accept_torch_wall_resident, observe_person_wall_resident, thaw_person_wall_resident, care_person_wall_resident,
+          observe_wall_wall_resident, wait_wall_resident, strike_person_wall_resident, inspect_patient_wall_resident]
+      value: 10000
+    - entries: [cross_ice_wall_resident, move_wall_resident, bridge_slow_wall_resident, move_wall_wall_resident,
+          bridge_rush_wall_resident]
+      value: {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                  ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}
+    - entries: [carry_move_wall_resident, carry_cross_ice_wall_resident, carry_bridge_slow_wall_resident, carry_pass_door_wall_resident]
+      value: {mul: [2, {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                      ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}]}
+  - seat: huddled_two
+    tempo:
+      const: 100
+    eligible:
+      all:
+      - not:
+          eq:
+          - ref: actor.cold_state
+          - const: frozen
+      - eq:
+        - ref: actor.vital.life
+        - const: alive
+    costs: {}
+    cost_groups:
+    - entries: [accept_torch_huddled_two, observe_person_huddled_two, thaw_person_huddled_two, wait_huddled_two]
+      value: {const: 10000}
+    - entries: [care_person_huddled_two, strike_person_huddled_two, inspect_patient_huddled_two]
+      value: 10000
+    - entries: [cross_ice_huddled_two, move_huddled_two, bridge_slow_huddled_two, bridge_rush_huddled_two]
+      value: {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                  ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}
+    - entries: [carry_move_huddled_two, carry_cross_ice_huddled_two, carry_bridge_slow_huddled_two, carry_pass_door_huddled_two]
+      value: {mul: [2, {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                      ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}]}
+  - seat: bokold_one
+    tempo:
+      const: 100
+    eligible:
+      all:
+      - not:
+          eq:
+          - ref: actor.cold_state
+          - const: frozen
+      - eq:
+        - ref: actor.vital.life
+        - const: alive
+    costs: {}
+    cost_groups:
+    - entries: [ritual_advance_bokold_one, observe_light_bokold_one, wait_bokold_one]
+      value: {const: 10000}
+    - entries: [approach_light_bokold_one, retreat_bokold_one]
+      value: {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                  ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}
+  - seat: bokold_two
+    tempo:
+      const: 100
+    eligible:
+      all:
+      - not:
+          eq:
+          - ref: actor.cold_state
+          - const: frozen
+      - eq:
+        - ref: actor.vital.life
+        - const: alive
+    costs: {}
+    cost_groups:
+    - entries: [ritual_advance_bokold_two, observe_light_bokold_two, wait_bokold_two]
+      value: {const: 10000}
+    - entries: [approach_light_bokold_two, retreat_bokold_two]
+      value: {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                  ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}
+  - seat: arctic_fox_one
+    tempo: 100
+    eligible: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+    costs: {}
+    cost_groups:
+    - entries: [fox_observe_routes_arctic_fox_one, fox_sniff_arctic_fox_one, fox_wait_arctic_fox_one, accept_tame_arctic_fox_one]
+      value: 10000
+    - entries: [fox_move_arctic_fox_one, fox_cross_ice_arctic_fox_one, fox_pass_door_arctic_fox_one, fox_bridge_slow_arctic_fox_one,
+          fox_bridge_rush_arctic_fox_one]
+      value: {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                  ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}
+  - seat: arctic_fox_two
+    tempo: 100
+    eligible: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+    costs: {}
+    cost_groups:
+    - entries: [fox_observe_routes_arctic_fox_two, fox_sniff_arctic_fox_two, fox_wait_arctic_fox_two, accept_tame_arctic_fox_two]
+      value: 10000
+    - entries: [fox_move_arctic_fox_two, fox_cross_ice_arctic_fox_two, fox_pass_door_arctic_fox_two, fox_bridge_slow_arctic_fox_two,
+          fox_bridge_rush_arctic_fox_two]
+      value: {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                  ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}
+  - seat: arctic_fox_three
+    tempo: 100
+    eligible: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+    costs: {}
+    cost_groups:
+    - entries: [fox_observe_routes_arctic_fox_three, fox_sniff_arctic_fox_three, fox_wait_arctic_fox_three, accept_tame_arctic_fox_three]
+      value: 10000
+    - entries: [fox_move_arctic_fox_three, fox_cross_ice_arctic_fox_three, fox_pass_door_arctic_fox_three, fox_bridge_slow_arctic_fox_three,
+          fox_bridge_rush_arctic_fox_three]
+      value: {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                  ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}
+  - seat: arctic_fox_four
+    tempo: 100
+    eligible: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+    costs: {}
+    cost_groups:
+    - entries: [fox_observe_routes_arctic_fox_four, fox_sniff_arctic_fox_four, fox_wait_arctic_fox_four, accept_tame_arctic_fox_four]
+      value: 10000
+    - entries: [fox_move_arctic_fox_four, fox_cross_ice_arctic_fox_four, fox_pass_door_arctic_fox_four, fox_bridge_slow_arctic_fox_four,
+          fox_bridge_rush_arctic_fox_four]
+      value: {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                  ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}
+  - seat: stable_bokold_one
+    tempo: 100
+    eligible: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+    costs: {}
+    cost_groups:
+    - entries: [stable_observe_routes_stable_bokold_one, stable_wait_stable_bokold_one]
+      value: 10000
+    - entries: [stable_move_stable_bokold_one, stable_cross_ice_stable_bokold_one, stable_pass_door_stable_bokold_one]
+      value: {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                  ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}
+  - seat: stable_bokold_two
+    tempo: 100
+    eligible: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+    costs: {}
+    cost_groups:
+    - entries: [stable_observe_routes_stable_bokold_two, stable_wait_stable_bokold_two]
+      value: 10000
+    - entries: [stable_move_stable_bokold_two, stable_cross_ice_stable_bokold_two, stable_pass_door_stable_bokold_two]
+      value: {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                  ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}
+  - seat: stable_bokold_three
+    tempo: 100
+    eligible: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+    costs: {}
+    cost_groups:
+    - entries: [stable_observe_routes_stable_bokold_three, stable_wait_stable_bokold_three]
+      value: 10000
+    - entries: [stable_move_stable_bokold_three, stable_cross_ice_stable_bokold_three, stable_pass_door_stable_bokold_three]
+      value: {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                  ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}
+  - seat: stable_bokold_four
+    tempo: 100
+    eligible: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+    costs: {}
+    cost_groups:
+    - entries: [stable_observe_routes_stable_bokold_four, stable_wait_stable_bokold_four]
+      value: 10000
+    - entries: [stable_move_stable_bokold_four, stable_cross_ice_stable_bokold_four, stable_pass_door_stable_bokold_four]
+      value: {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                  ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}
+  - seat: emma
+    tempo: 100
+    eligible: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+    costs: {}
+    cost_groups:
+    - entries: [queen_verify_survivors_emma, queen_pay_reward_emma, queen_wait_emma, queen_observe_routes_emma,
+          balloon_control_emma]
+      value: 10000
+    - entries: [queen_move_emma, queen_cross_ice_emma, queen_bridge_slow_emma, queen_pass_door_emma]
+      value: {call: {ref: movement.action_cost, args: {base_cost: {ref: payload.base_move_cost}, maximum_speed: {
+                  ref: actor.max_movement_speed}, current_speed: {ref: actor.current_movement_speed}}}}
+temporal:
+  mechanism: action_value_event_jump
+  order: [cold_pulse, palace_event]
+  max_pending: 2
+  periodic:
+    - {name: cold_pulse, due: cold_pulse, interval: 100, max_occurrences: null, subject: cold}
+    - {name: palace_event, due: palace_event, interval: 600, max_occurrences: 4, subject: palace}

@@ -1,0 +1,52 @@
+actions:
+- name: count_0
+  template: count_0
+  actor: actor_0
+  source_key: c0.graph.count_0
+  event_type: c0.graph.count_0.done
+  law:
+    ref: count
+    args:
+      step: 1
+- name: count_1
+  template: count_1
+  actor: actor_1
+  source_key: c0.graph.count_1
+  event_type: c0.graph.count_1.done
+  law:
+    ref: count
+    args:
+      step: 2
+seats:
+- name: seat_0
+  actor: actor_0
+  entries:
+  - count_0
+  read:
+  - scene.marker
+  - actor_0.name
+  - actor_0.count
+  offers:
+  - entry: count_0
+    label: Count
+    when:
+      const: true
+    payload:
+      target:
+        ref: actor.name
+- name: seat_1
+  actor: actor_1
+  entries:
+  - count_1
+  read:
+  - scene.marker
+  - actor_1.name
+  - actor_1.count
+  offers:
+  - entry: count_1
+    label: Count
+    when:
+      const: true
+    payload:
+      target:
+        ref: actor.name

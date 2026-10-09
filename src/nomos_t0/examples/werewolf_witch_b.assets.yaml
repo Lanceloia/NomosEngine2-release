@@ -1,0 +1,35 @@
+# Same six-seat Source; B is the Witch for the author-side self-heal witness.
+schema: c0.owner_graph.assets.v1
+opening:
+  scene:
+    phase: day
+    round: 1
+    players:
+      - {id: A, alive: true}
+      - {id: B, alive: true}
+      - {id: C, alive: true}
+      - {id: D, alive: true}
+      - {id: E, alive: true}
+      - {id: F, alive: true}
+    roles:
+      - {id: A, role: seer}
+      - {id: B, role: witch}
+      - {id: C, role: wolf}
+      - {id: D, role: wolf}
+      - {id: E, role: villager}
+      - {id: F, role: villager}
+    ballots: []
+    wolf_ballots: []
+    winner: none
+    pending_attack: null
+    selection_done: false
+    witch_done: false
+    witch_saved: false
+    seer_done: false
+    last_death: null
+  a: {name: A, own_role: seer, votes: [], observations: [], choices: [], attacks: [], witch_notice: null, witch_choices: [], healing_available: false}
+  b: {name: B, own_role: witch, votes: [], observations: [], choices: [], attacks: [], witch_notice: null, witch_choices: [], healing_available: true}
+  c: {name: C, own_role: wolf, votes: [], observations: [], choices: [], attacks: [], witch_notice: null, witch_choices: [], healing_available: false}
+  d: {name: D, own_role: wolf, votes: [], observations: [], choices: [], attacks: [], witch_notice: null, witch_choices: [], healing_available: false}
+  e: {name: E, own_role: villager, votes: [], observations: [], choices: [], attacks: [], witch_notice: null, witch_choices: [], healing_available: false}
+  f: {name: F, own_role: villager, votes: [], observations: [], choices: [], attacks: [], witch_notice: null, witch_choices: [], healing_available: false}

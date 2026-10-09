@@ -1,0 +1,231 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+participant_bindings:
+- name: reward_residents
+  participants:
+    ritual: {actors: [ritual_resident]}
+    first: {actors: [huddled_one]}
+    second: {actors: [huddled_two]}
+    wall: {actors: [wall_resident]}
+    prison_one: {actors: [prison_resident_one]}
+    prison_two: {actors: [prison_resident_two]}
+- name: balloon_team
+  participants:
+    balloon: {kind: balloon}
+    bear_one: {actors: [tower_bear_one]}
+    bear_two: {actors: [tower_bear_two]}
+- name: prison_guardian
+  participants:
+    guardian: {actors: [prison_guard]}
+- name: queen_pass_door_emma_participants
+  participants:
+    door:
+      kind: passage_door
+- name: look_tower_top_adventurer_participants
+  participants:
+    victim:
+      actors:
+      - emma
+- name: ask_alpha_adventurer_participants
+  participants:
+    recipient:
+      actors:
+      - alpha
+- name: propose_alpha_participants
+  participants:
+    item:
+      kind: magic_item
+    recipient:
+      actors:
+      - adventurer
+- name: show_magic_alpha_participants
+  participants:
+    item:
+      kind: magic_item
+- name: brand_person_queen_adventurer_participants
+  participants:
+    item:
+      kind: magic_item
+    victim:
+      actors:
+      - emma
+- name: brand_person_tower_bear_adventurer_participants
+  participants:
+    item:
+      kind: magic_item
+    victim:
+      actors:
+      - alpha
+      - tower_bear_one
+      - tower_bear_two
+- name: brand_person_bar_bear_adventurer_participants
+  participants:
+    item:
+      kind: magic_item
+    victim:
+      actors:
+      - icebar_bear_one
+      - icebar_bear_two
+- name: brand_person_prison_guard_adventurer_participants
+  participants:
+    item:
+      kind: magic_item
+    victim:
+      actors:
+      - prison_guard
+- name: brand_person_prison_voice_adventurer_participants
+  participants:
+    item:
+      kind: magic_item
+    victim:
+      actors:
+      - captive_bear
+      - prison_bokold
+- name: observe_resident_fox_adventurer_participants
+  participants:
+    victim:
+      actors:
+      - arctic_fox_one
+      - arctic_fox_two
+      - arctic_fox_three
+      - arctic_fox_four
+- name: brand_person_fox_adventurer_participants
+  participants:
+    item:
+      kind: magic_item
+    victim:
+      actors:
+      - arctic_fox_one
+      - arctic_fox_two
+      - arctic_fox_three
+      - arctic_fox_four
+- name: observe_magic_participants
+  participants:
+    holder:
+      actors:
+      - adventurer
+      - hall_bokold_one
+      - hall_bokold_two
+      - hall_bokold_three
+      - hall_bokold_four
+      - hall_bokold_five
+    item:
+      kind: magic_item
+- name: observe_alpha_magic_participants
+  participants:
+    holder:
+      actors:
+      - alpha
+    item:
+      kind: magic_item
+- name: care_person_participants
+  participants:
+    victim:
+      actors:
+      - adventurer
+      - ritual_resident
+      - huddled_one
+      - huddled_two
+      - wall_resident
+      - bokold_one
+      - bokold_two
+      - prison_resident_one
+      - prison_resident_two
+      - hall_bokold_one
+      - hall_bokold_two
+      - hall_bokold_three
+      - hall_bokold_four
+      - hall_bokold_five
+      - stable_bokold_one
+      - stable_bokold_two
+      - stable_bokold_three
+      - stable_bokold_four
+- name: prison_answer_participants
+  participants:
+    recipient:
+      actors:
+      - adventurer
+- name: observe_prison_bars_adventurer_participants
+  participants:
+    bars:
+      kind: cell_bars
+- name: offer_share_participants
+  participants:
+    drink:
+      kind: drink_container
+- name: guard_inspect_drink_participants
+  participants:
+    drink:
+      kind: drink_container
+    messenger:
+      actors:
+      - icebar_bear_one
+      - icebar_bear_two
+- name: request_pour_adventurer_participants
+  participants:
+    bear_one:
+      actors:
+      - icebar_bear_one
+    bear_two:
+      actors:
+      - icebar_bear_two
+    destination:
+      kind: drink_container
+    origin:
+      kind: drink_container
+- name: brand_person_adventurer_participants
+  participants:
+    item:
+      kind: magic_item
+    victim:
+      actors:
+      - adventurer
+      - ritual_resident
+      - huddled_one
+      - huddled_two
+      - wall_resident
+      - bokold_one
+      - bokold_two
+      - prison_resident_one
+      - prison_resident_two
+      - hall_bokold_one
+      - hall_bokold_two
+      - hall_bokold_three
+      - hall_bokold_four
+      - hall_bokold_five
+      - stable_bokold_one
+      - stable_bokold_two
+      - stable_bokold_three
+      - stable_bokold_four
+- name: ritual_advance_participants
+  participants:
+    ritual:
+      actors:
+      - ritual
+    victim:
+      actors:
+      - ritual_resident
+- name: carry_move_participants
+  participants:
+    ritual:
+      actors:
+      - ritual
+    victim:
+      actors:
+      - adventurer
+      - ritual_resident
+      - huddled_one
+      - huddled_two
+      - wall_resident
+      - bokold_one
+      - bokold_two
+      - prison_resident_one
+      - prison_resident_two
+      - hall_bokold_one
+      - hall_bokold_two
+      - hall_bokold_three
+      - hall_bokold_four
+      - hall_bokold_five
+      - stable_bokold_one
+      - stable_bokold_two
+      - stable_bokold_three
+      - stable_bokold_four

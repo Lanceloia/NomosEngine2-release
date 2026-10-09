@@ -1,0 +1,40 @@
+{
+  "schema": "c0.source.scene_due.v2",
+  "lib": {"id": "c0.test.scene_due", "revision": "v2"},
+  "events": [
+    {
+      "export": "start",
+      "lawdef": {"ref": "token_due"},
+      "arguments": {
+        "carrier_id": "token-A",
+        "from_status": "ready",
+        "due_field": "start_due",
+        "to_status": "moving",
+        "receipt_field": "started"
+      },
+      "when": {"const": true}
+    },
+    {
+      "export": "end",
+      "lawdef": {"ref": "token_due"},
+      "arguments": {
+        "carrier_id": "token-B",
+        "from_status": "ready",
+        "due_field": "end_due",
+        "to_status": "reached",
+        "receipt_field": "ended"
+      },
+      "when": {"const": true}
+    }
+  ],
+  "settlement": {
+    "instant": "same_trigger_wave",
+    "events": ["start", "end"],
+    "lawdef": {"ref": "reject_unproven_same_wave.v1"},
+    "arguments": {
+      "owner": "c0.scene_due.test.scene",
+      "collection": "tokens",
+      "member_id": "token_id"
+    }
+  }
+}

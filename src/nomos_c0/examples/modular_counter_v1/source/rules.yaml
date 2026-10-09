@@ -1,0 +1,17 @@
+lawdefs:
+- name: count
+  family: action
+  formals:
+    step: int
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard: payload.target == actor.name
+      outputs:
+        count:
+          add:
+          - ref: actor.count
+          - arg: step
+        action:
+          ref: occurrence

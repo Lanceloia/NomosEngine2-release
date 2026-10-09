@@ -1,0 +1,390 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+# Local observations are finite evidence, not hidden truth or shared knowledge.
+lawdefs:
+  - name: action.look_tower_top
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard: actor.name == payload.actor and actor.site == 'tower_top' and actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          known_residents:
+            call:
+              ref: perception.observe_named_person
+              args:
+                known: {ref: actor.known_residents}
+                observer_site: {ref: actor.site}
+                subject_name: {ref: victim.name}
+                subject_site: {ref: victim.site}
+                basis: {ref: occurrence}
+  - name: action.observe_queen
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard: actor.name == payload.actor and actor.site == payload.site and actor.vital.life == 'alive' and actor.cold_state
+          != 'frozen' and actor.site == 'tower_top'
+        outputs:
+          action:
+            ref: occurrence
+          last_action_ref:
+            ref: occurrence
+          known_residents:
+            call:
+              ref: perception.observe_named_person
+              args:
+                known:
+                  ref: actor.known_residents
+                observer_site:
+                  ref: actor.site
+                subject_name:
+                  ref: queen.name
+                subject_site:
+                  ref: queen.site
+                basis:
+                  ref: occurrence
+  - name: action.observe_resident_fox
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+          - actor_identity: actor.name == payload.actor
+          - awake: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - actual_subject: victim.name == payload.victim and actor.site == victim.site
+          - known_subject:
+              {exactly_one: {collection: {ref: actor.known_residents}, as: known, where: known.name == victim.name and known.site == actor.site}}
+        outputs:
+          action:
+            ref: occurrence
+          last_action_ref:
+            ref: occurrence
+          person_sighting:
+            record:
+              type: PersonSighting
+              fields:
+                subject:
+                  ref: victim.name
+                site:
+                  ref: victim.site
+                cold_state:
+                  ref: victim.cold_state
+                life:
+                  ref: victim.vital.life
+                observation:
+                  ref: occurrence
+          known_residents:
+            call:
+              ref: perception.refresh_named_person
+              args:
+                known: {ref: actor.known_residents}
+                observer_site: {ref: actor.site}
+                subject_name: {ref: victim.name}
+                subject_site: {ref: victim.site}
+                basis: {ref: occurrence}
+  - name: action.tower_watch
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard: actor.name == payload.actor and actor.site == 'tower_base' and actor.awake and actor.vital.life == 'alive'
+        outputs: {action: {ref: occurrence}, last_action_ref: {ref: occurrence}}
+  - name: action.observe_tower
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+        - {name: after_alpha, stage: effect, let: {call: {ref: perception.observe_named_person, args: {known: {ref: actor.known_residents}, observer_site: {ref: actor.site}, subject_name: {ref: alpha.name}, subject_site: {ref: alpha.site}, basis: {ref: occurrence}}}}}
+        - {name: after_one, stage: effect, let: {call: {ref: perception.observe_named_person, args: {known: {ref: after_alpha}, observer_site: {ref: actor.site}, subject_name: {ref: bear_one.name}, subject_site: {ref: bear_one.site}, basis: {ref: occurrence}}}}}
+        guard: actor.name == payload.actor and actor.site == payload.site and actor.vital.life == 'alive' and actor.cold_state != 'frozen' and actor.site == 'tower_base'
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          known_residents: {call: {ref: perception.observe_named_person, args: {known: {ref: after_one}, observer_site: {ref: actor.site}, subject_name: {ref: bear_two.name}, subject_site: {ref: bear_two.site}, basis: {ref: occurrence}}}}
+  - name: action.observe_hall
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+        - {name: after_one, stage: effect, let: {call: {ref: perception.observe_named_person, args: {known: {ref: actor.known_residents}, observer_site: {ref: actor.site}, subject_name: {ref: hall_one.name}, subject_site: {ref: hall_one.site}, basis: {ref: occurrence}}}}}
+        - {name: after_two, stage: effect, let: {call: {ref: perception.observe_named_person, args: {known: {ref: after_one}, observer_site: {ref: actor.site}, subject_name: {ref: hall_two.name}, subject_site: {ref: hall_two.site}, basis: {ref: occurrence}}}}}
+        - {name: after_three, stage: effect, let: {call: {ref: perception.observe_named_person, args: {known: {ref: after_two}, observer_site: {ref: actor.site}, subject_name: {ref: hall_three.name}, subject_site: {ref: hall_three.site}, basis: {ref: occurrence}}}}}
+        - {name: after_four, stage: effect, let: {call: {ref: perception.observe_named_person, args: {known: {ref: after_three}, observer_site: {ref: actor.site}, subject_name: {ref: hall_four.name}, subject_site: {ref: hall_four.site}, basis: {ref: occurrence}}}}}
+        guard: actor.name == payload.actor and actor.site == payload.site and actor.vital.life == 'alive' and actor.cold_state != 'frozen' and actor.site == 'halls_ballroom_door'
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          known_residents: {call: {ref: perception.observe_named_person, args: {known: {ref: after_four}, observer_site: {ref: actor.site}, subject_name: {ref: hall_five.name}, subject_site: {ref: hall_five.site}, basis: {ref: occurrence}}}}
+  - name: action.queen_observe_routes
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard: actor.name == payload.actor and actor.cold_state != 'frozen' and actor.vital.life == 'alive'
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          known_bridge_paths: {collect_matching: {collection: {ref: scene.bridge_paths}, as: path, where: {any: [path.start == actor.site, {exists: {collection: {ref: actor.known_bridge_paths}, as: known, where: known.start == path.start and known.end == path.end and known.base_move_cost == path.base_move_cost}}]}, value: {ref: path}}}
+          known_paths: {collect_matching: {collection: {ref: scene.paths}, as: path, where: {any: [path.start == actor.site, {exists: {collection: {ref: actor.known_paths}, as: known, where: known.start == path.start and known.end == path.end and known.base_move_cost == path.base_move_cost}}]}, value: {ref: path}}}
+          known_crossings: {collect_matching: {collection: {ref: scene.crossings}, as: crossing, where: {any: [crossing.start == actor.site, {exists: {collection: {ref: actor.known_crossings}, as: known, where: known.key == crossing.key}}]}, value: {record: {type: KnownCrossing, fields: {key: {ref: crossing.key}, start: {ref: crossing.start}, intended: {ref: crossing.intended}, base_move_cost: {ref: crossing.base_move_cost}}}}}}
+          route_observation:
+            record:
+              type: RouteObservation
+              fields:
+                site: {ref: actor.site}
+                action: {ref: occurrence}
+  - name: action.observe_floor
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+          - name: floor
+            collection: scene.floors
+            as: candidate
+            where: {exists: {collection: {ref: candidate.sites}, as: site, where: site == actor.site}}
+            required: false
+        guard: "actor.name == payload.actor and actor.cold_state != 'frozen' and actor.vital.life == 'alive' and floor is not None"
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          floor_sighting:
+            record:
+              type: FloorSighting
+              fields: {key: {ref: floor.key}, site: {ref: actor.site}, frozen: {ref: floor.frozen}, change_ref: {ref: floor.change_ref}, observation: {ref: occurrence}}
+  - name: action.observe_person
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+          - actor_matches: actor.name == payload.actor
+          - awake: actor.cold_state != 'frozen' and actor.vital.life == 'alive'
+          - identity_heard: actor.heard_torch_offer is not None and actor.torch_offer_hearing_ref is not None
+          - known_subject: actor.heard_torch_offer.speaker == victim.name and payload.victim == victim.name
+        outputs:
+          action:
+            ref: occurrence
+          last_action_ref:
+            ref: occurrence
+          person_sighting:
+            if:
+              when:
+                eq:
+                - ref: actor.site
+                - ref: victim.site
+              then:
+                record:
+                  type: PersonSighting
+                  fields:
+                    subject:
+                      ref: victim.name
+                    site:
+                      ref: victim.site
+                    cold_state:
+                      ref: victim.cold_state
+                    life:
+                      ref: victim.vital.life
+                    observation:
+                      ref: occurrence
+              else:
+                const: null
+          known_residents:
+            call:
+              ref: perception.refresh_named_person
+              args:
+                known: {ref: actor.known_residents}
+                observer_site: {ref: actor.site}
+                subject_name: {ref: victim.name}
+                subject_site: {ref: victim.site}
+                basis: {ref: occurrence}
+  - name: action.observe_local_routes
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard: actor.name == payload.actor and actor.awake
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          last_route_observed_site: {ref: actor.site}
+          last_route_observation_ref: {ref: occurrence}
+          known_bridge_paths: {collect_matching: {collection: {ref: scene.bridge_paths}, as: path, where: {any: [path.start == actor.site, {exists: {collection: {ref: actor.known_bridge_paths}, as: known, where: known.start == path.start and known.end == path.end and known.base_move_cost == path.base_move_cost}}]}, value: {ref: path}}}
+          known_paths: {collect_matching: {collection: {ref: scene.paths}, as: path, where: {any: [path.start == actor.site, {exists: {collection: {ref: actor.known_paths}, as: known, where: known.start == path.start and known.end == path.end and known.base_move_cost == path.base_move_cost}}]}, value: {ref: path}}}
+          known_crossings: {collect_matching: {collection: {ref: scene.crossings}, as: crossing, where: {any: [crossing.start == actor.site, {exists: {collection: {ref: actor.known_crossings}, as: known, where: known.key == crossing.key}}]}, value: {record: {type: KnownCrossing, fields: {key: {ref: crossing.key}, start: {ref: crossing.start}, intended: {ref: crossing.intended}, base_move_cost: {ref: crossing.base_move_cost}}}}}}
+  - name: view.known_site_protection
+    family: seat_view
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard: {const: true}
+        outputs:
+          status:
+            if:
+              when: {eq: [{ref: torch.holder}, {ref: actor.name}]}
+              then:
+                if:
+                  when:
+                    lt:
+                      - {const: 0}
+                      - call:
+                          ref: everflame.covered_count
+                          args:
+                            coverage: {ref: scene.coverage}
+                            origin: {ref: actor.site}
+                            destination: {ref: candidate.site}
+                            charges: {ref: torch.charges}
+                  then: {const: protected}
+                  else: {const: exposed}
+              else: {const: unknown}
+          after_spend_one:
+            if:
+              when:
+                all:
+                  - {eq: [{ref: torch.holder}, {ref: actor.name}]}
+                  - {not_none: {ref: actor.known_everflame_charges}}
+                  - {exists: {collection: {ref: actor.known_coverage}, as: known_area, where: {eq: [{ref: known_area.origin}, {ref: actor.site}]}}}
+              then:
+                if:
+                  when: {lt: [{const: 0}, {ref: actor.known_everflame_charges}]}
+                  then:
+                    if:
+                      when:
+                        lt:
+                          - {const: 0}
+                          - call:
+                              ref: everflame.covered_count
+                              args:
+                                coverage: {ref: actor.known_coverage}
+                                origin: {ref: actor.site}
+                                destination: {ref: candidate.site}
+                                charges: {sub: [{ref: actor.known_everflame_charges}, {const: 1}]}
+                      then: {const: protected}
+                      else: {const: exposed}
+                  else: {const: unavailable}
+              else: {const: unknown}
+  - name: view.move_self_protection
+    family: seat_view
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard: {const: true}
+        outputs:
+          self_after_move:
+            if:
+              when:
+                all:
+                  - {eq: [{ref: torch.holder}, {ref: actor.name}]}
+                  - {not_none: {ref: actor.known_everflame_charges}}
+              then:
+                call:
+                  ref: everflame.known_self_protection
+                  args: {coverage: {ref: actor.known_coverage}, charges: {ref: actor.known_everflame_charges}, destination: {ref: candidate.end}}
+              else: {const: unknown}
+  - name: view.cross_success_protection
+    family: seat_view
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard: {const: true}
+        outputs:
+          self_if_success:
+            if:
+              when:
+                all:
+                  - {eq: [{ref: torch.holder}, {ref: actor.name}]}
+                  - {not_none: {ref: actor.known_everflame_charges}}
+              then:
+                call:
+                  ref: everflame.known_self_protection
+                  args: {coverage: {ref: actor.known_coverage}, charges: {ref: actor.known_everflame_charges}, destination: {ref: candidate.intended}}
+              else: {const: unknown}
+  - name: action.observe_bokold_light
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all:
+            - {eq: [{ref: actor.name}, {ref: payload.actor}]}
+            - {eq: [{ref: bearer.name}, {ref: payload.bearer}]}
+            - {eq: [{ref: actor.site}, {const: ritual_ring}]}
+        outputs:
+          action: {ref: occurrence}
+          observation:
+            if:
+              when: &bokold_sees_light
+                all:
+                  - {eq: [{ref: bearer.name}, {const: adventurer}]}
+                  - {eq: [{ref: bearer.site}, {const: ritual_threshold}]}
+                  - {eq: [{ref: torch.holder}, {ref: bearer.name}]}
+                  - {lt: [{const: 0}, {ref: torch.charges}]}
+              then: {const: seen}
+              else: {const: not_seen}
+          observation_ref: {ref: occurrence}
+          sighting_site:
+            if:
+              when: *bokold_sees_light
+              then: {ref: bearer.site}
+              else: {const: null}
+          last_action_ref: {ref: occurrence}
+  - name: action.approach_bokold_light
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all:
+            - call: {ref: transport.unboarded, args: {seats: {ref: scene.balloon_seats}, person: {ref: actor.name}}}
+            - {call: {ref: movement.ordinary_floor_passable, args: {floors: {ref: scene.floors}, stairs: {ref: scene.stair_paths}, unclimbable_stairs: {ref: scene.unclimbable_stairs}, start: {ref: actor.site}, destination: {ref: payload.destination}}}}
+            - {eq: [{ref: actor.name}, {ref: payload.actor}]}
+            - {eq: [{ref: actor.site}, {const: ritual_ring}]}
+            - {eq: [{ref: actor.light_observation}, {const: seen}]}
+            - {not_none: {ref: actor.light_observation_ref}}
+            - {eq: [{ref: actor.light_sighting_site}, {ref: payload.destination}]}
+            - {eq: [{ref: payload.destination}, {const: ritual_threshold}]}
+            - {lt: [{const: 0}, {ref: actor.current_movement_speed}]}
+            - {exists: {collection: {ref: scene.paths}, as: path, where: {all: [{eq: [{ref: path.start}, {ref: actor.site}]}, {eq: [{ref: path.end}, {ref: payload.destination}]}, {eq: [{ref: path.base_move_cost}, {ref: payload.base_move_cost}]}]}}}
+            - {exists: {collection: {ref: actor.known_paths}, as: known, where: {all: [{eq: [{ref: known.start}, {ref: actor.site}]}, {eq: [{ref: known.end}, {ref: payload.destination}]}, {eq: [{ref: known.base_move_cost}, {ref: payload.base_move_cost}]}]}}}
+        outputs:
+          action: {ref: occurrence}
+          site: {ref: payload.destination}
+          known_sites:
+            if:
+              when: {none_matching: {collection: {ref: actor.known_sites}, as: known, where: {eq: [{ref: known.site}, {ref: payload.destination}]}}}
+              then: {append: [{ref: actor.known_sites}, {record: {type: KnownSite, fields: {site: {ref: payload.destination}}}}]}
+              else: {ref: actor.known_sites}
+          last_action_ref: {ref: occurrence}

@@ -1,0 +1,7 @@
+schema: c0.owner_graph.assets.v1
+opening:
+  scene: {title: Authored nullable transport}
+  pilot: {name: pilot, site: left}
+  rider: {name: rider, site: left, luggage: 2}
+opening_objects:
+  - {kind: container, state: {site: left, passengers: [pilot]}}

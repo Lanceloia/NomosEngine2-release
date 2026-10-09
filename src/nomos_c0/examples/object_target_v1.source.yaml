@@ -1,0 +1,64 @@
+schema: c0.owner_graph.v6
+owners: [scene, actor]
+object_kinds:
+  - {kind: tool, sort: EXAMPLE.TOOL@1}
+  - {kind: fine_tool, sort: EXAMPLE.FINE_TOOL@1}
+operation_bindings:
+  - {receiver_sort: EXAMPLE.TOOL@1, operation: inspect_v1, using: consuming_inspection}
+offer_provider: {name: finite_value, version: '1'}
+game_form: {mode: manual}
+actions:
+  - name: make
+    template: make
+    actor: actor
+    source_key: c0.object-demo.make
+    event_type: c0.object-demo.make.action
+    law: {ref: action.make, args: {}}
+    form: {kind: fine_tool, initial_output: formed_tool}
+  - name: inspect
+    template: inspect
+    actor: actor
+    source_key: c0.object-demo.inspect
+    event_type: c0.object-demo.inspect.action
+    operation: inspect_v1
+    target: {kind: tool}
+events: []
+seats:
+  - name: actor
+    actor: actor
+    entries: [make, inspect]
+    read: [actor.name, actor.can_see_tools, actor.make_ref]
+    offers:
+      - entry: make
+        label: Make a tool
+        when: {is_none: {ref: actor.make_ref}}
+        payload: {}
+      - entry: inspect
+        operation: inspect_v1
+        for_each_object:
+          kind: tool
+          read: [target.label, target.ready, target.visible]
+        label: {prefix: 'Inspect ', value: {ref: target.label}}
+        visible_when:
+          all: [{ref: actor.can_see_tools}, {ref: target.visible}]
+        when: {ref: target.ready}
+        payload: {target: {ref: individual}}
+lawdefs:
+  - name: action.make
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard: {is_none: {ref: actor.make_ref}}
+        outputs:
+          action: {ref: occurrence}
+          make_ref: {ref: occurrence}
+          formed_tool:
+            record:
+              type: Tool
+              fields:
+                label: {const: new}
+                ready: {const: true}
+                visible: {const: true}

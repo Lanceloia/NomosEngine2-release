@@ -1,0 +1,103 @@
+schema: c0.nominal_lib.v1
+records:
+  - name: RegionCrossing
+    fields:
+      - {name: key, type: {str: [1, 48]}}
+      - {name: start, type: {str: [1, 48]}}
+      - {name: intended, type: {str: [1, 48]}}
+      - {name: collision, type: {str: [1, 48]}}
+      - {name: difficulty, type: {int: [2, 40]}}
+      - {name: die_sides, type: {int: [2, 1000]}}
+    invariant: null
+  - name: KnownCrossing
+    fields:
+      - {name: key, type: {str: [1, 48]}}
+      - {name: start, type: {str: [1, 48]}}
+      - {name: intended, type: {str: [1, 48]}}
+    invariant: null
+  - name: Scene
+    fields:
+      - {name: regions, type: {tuple: {item: {str: [1, 48]}, max: 8}}}
+      - {name: crossings, type: {tuple: {item: RegionCrossing, max: 8}}}
+      - {name: die_seed, type: {int: [0, 9223372036854775807]}}
+    invariant: null
+  - name: Traveler
+    fields:
+      - {name: name, type: {str: [1, 48]}}
+      - {name: region, type: {str: [1, 48]}}
+      - {name: balance_bonus, type: {int: [0, 20]}}
+      - {name: balance_penalty, type: {int: [0, 20]}}
+      - {name: known_crossings, type: {tuple: {item: KnownCrossing, max: 8}}}
+      - {name: last_roll, type: {optional: {int: [1, 1000]}}}
+      - {name: last_total, type: {optional: {int: [1, 1020]}}}
+      - {name: last_passed, type: {optional: bool}}
+      - {name: last_crossing_ref, type: {optional: occurrence_ref}}
+    invariant: null
+  - name: CrossAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: crossing, type: {str: [1, 48]}}
+    invariant: null
+  - name: CrossEnvelope
+    fields:
+      - {name: action, type: occurrence_ref}
+      - {name: roll, type: {int: [1, 1000]}}
+      - {name: passed, type: bool}
+    invariant: null
+owners:
+  - symbol: scene
+    key: c0.region_dice.scene
+    version: scene-v1
+    state: Scene
+    identity_field: null
+    write: replace_one
+    seat_read: []
+  - symbol: traveler
+    key: c0.region_dice.traveler
+    version: traveler-v1
+    state: Traveler
+    identity_field: name
+    write: replace_one
+    seat_read: [name, region, balance_bonus, balance_penalty, known_crossings, last_roll, last_total, last_passed, last_crossing_ref]
+object_kinds: []
+lawdefs:
+  - name: action.cross_region
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+          - name: crossing
+            collection: scene.crossings
+            key: key
+            value: {ref: payload.crossing}
+            required: false
+        guard:
+          all:
+            - {not_none: {ref: crossing}}
+            - {eq: [{ref: actor.region}, {ref: crossing.start}]}
+            - lt:
+                - {const: 0}
+                - count_matching:
+                    collection: {ref: actor.known_crossings}
+                    as: known
+                    where:
+                      all:
+                        - {eq: [{ref: known.key}, {ref: crossing.key}]}
+                        - {eq: [{ref: known.start}, {ref: crossing.start}]}
+                        - {eq: [{ref: known.intended}, {ref: crossing.intended}]}
+        outputs:
+          action: {ref: occurrence}
+          roll: &draw {die_roll: {seed: {ref: scene.die_seed}, sides: {ref: crossing.die_sides}}}
+          envelope_roll: *draw
+          next_seed: {die_next_seed: {ref: scene.die_seed}}
+          total: &total {add: [*draw, {ref: actor.balance_bonus}]}
+          passed: &passed {le: [{add: [{ref: crossing.difficulty}, {ref: actor.balance_penalty}]}, *total]}
+          envelope_passed: *passed
+          region:
+            if:
+              when: *passed
+              then: {ref: crossing.intended}
+              else: {ref: crossing.collision}
+          last_crossing_ref: {ref: occurrence}

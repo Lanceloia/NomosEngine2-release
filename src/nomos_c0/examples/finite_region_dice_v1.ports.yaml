@@ -1,0 +1,40 @@
+schema: c0.graph_ports.v1
+scene_owner: scene
+offer_provider: {name: finite_value, version: '1', limit: 8}
+actions:
+  - symbol: cross
+    actor: traveler
+    payload: CrossAttempt
+    envelope: CrossEnvelope
+    actor_identity_field: name
+    payload_actor_field: actor
+    effects:
+      scene: {die_seed: next_seed}
+      actor: {region: region, last_roll: roll, last_total: total, last_passed: passed, last_crossing_ref: last_crossing_ref}
+    envelope_fields: {action: action, roll: envelope_roll, passed: envelope_passed}
+    schedule: null
+    value:
+      read:
+        - scene.regions
+        - scene.crossings
+        - scene.die_seed
+        - actor.region
+        - actor.known_crossings
+        - actor.balance_bonus
+        - actor.balance_penalty
+        - payload.crossing
+      fields:
+        RegionCrossing: [key, start, intended, collision, difficulty, die_sides]
+        KnownCrossing: [key, start, intended]
+      write_paths:
+        - scene.die_seed
+        - actor.last_crossing_ref
+        - actor.last_passed
+        - actor.last_roll
+        - actor.last_total
+        - actor.region
+      outputs: {last_crossing_ref: occurrence_ref, passed: bool, roll: int, total: int}
+      construct: []
+      collections: {scene.crossings: key}
+events: []
+due_events: []

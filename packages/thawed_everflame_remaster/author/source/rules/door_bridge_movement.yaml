@@ -1,0 +1,135 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+# Door and bridge eligibility remain distinct; rushing records the actual landing.
+lawdefs:
+- name: action.pass_door
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        all:
+        - call: {ref: transport.unboarded, args: {seats: {ref: scene.balloon_seats}, person: {ref: actor.name}}}
+        - all:
+          - actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - actor.site == door.front or actor.site == door.back
+          - call: {ref: movement.has_declared_site, args: {sites: {ref: scene.sites}, site: {ref: door.front}}}
+          - call: {ref: movement.has_declared_site, args: {sites: {ref: scene.sites}, site: {ref: door.back}}}
+        - door.opened and not door.frozen and actor.current_movement_speed > 0
+        - (actor.site == door.front and payload.destination == door.back) or (actor.site == door.back and payload.destination
+          == door.front)
+        - payload.base_move_cost == door.base_move_cost
+        - call: {ref: movement.ordinary_floor_passable, args: {floors: {ref: scene.floors}, stairs: {ref: scene.stair_paths},
+              unclimbable_stairs: {ref: scene.unclimbable_stairs}, start: {ref: actor.site}, destination: {ref: payload.destination}}}
+      outputs:
+        action: {ref: occurrence}
+        last_action_ref: {ref: occurrence}
+        site: {ref: payload.destination}
+        known_sites:
+          call: {ref: movement.remember_site, args: {known_sites: {ref: actor.known_sites}, destination: {ref: payload.destination}}}
+        actor_motion:
+          record:
+            type: ActorMotion
+            fields: {name: {ref: actor.name}, start: {ref: actor.site}, end: {ref: payload.destination}, action: {
+                ref: occurrence}}
+- name: action.bridge_slow
+  family: action
+  formals:
+    require_safe_site: bool
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        all:
+        - if:
+            when: {arg: require_safe_site}
+            then: actor.rescue_state != 'safe' or payload.destination == 'palace_exit'
+            else: true
+        - call: {ref: transport.unboarded, args: {seats: {ref: scene.balloon_seats}, person: {ref: actor.name}}}
+        - actor.name == payload.actor and actor.cold_state != 'frozen' and actor.vital.life == 'alive' and actor.current_movement_speed
+          > 0
+        - call: {ref: movement.has_unique_path, args: {paths: {ref: scene.bridge_paths},
+            start: {ref: actor.site}, end: {ref: payload.destination}, cost: {ref: payload.base_move_cost}}}
+        - call: {ref: movement.has_unique_path, args: {paths: {ref: actor.known_bridge_paths},
+            start: {ref: actor.site}, end: {ref: payload.destination}, cost: {ref: payload.base_move_cost}}}
+        - call: {ref: movement.endpoints_clear_of_frozen_floor, args: {floors: {ref: scene.floors},
+            start: {ref: actor.site}, end: {ref: payload.destination}}}
+      outputs:
+        action: {ref: occurrence}
+        last_action_ref: {ref: occurrence}
+        site: {ref: payload.destination}
+        known_sites:
+          call: {ref: movement.remember_site, args: {known_sites: {ref: actor.known_sites}, destination: {ref: payload.destination}}}
+        actor_motion:
+          record:
+            type: ActorMotion
+            fields: {name: {ref: actor.name}, start: {ref: actor.site}, end: {ref: payload.destination}, action: {
+                ref: occurrence}}
+- name: action.bridge_rush
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings:
+      - name: roll
+        stage: effect
+        let:
+          die_roll:
+            seed: {ref: scene.die_seed}
+            sides: 20
+      - name: safe
+        stage: effect
+        let:
+          le:
+          - 12
+          - add:
+            - {ref: roll}
+            - {ref: actor.balance_bonus}
+      - name: destination
+        stage: effect
+        let:
+          if:
+            when: {ref: safe}
+            then: {ref: payload.destination}
+            else: {const: endless_abyss}
+      guard:
+        all:
+        - call: {ref: transport.unboarded, args: {seats: {ref: scene.balloon_seats}, person: {ref: actor.name}}}
+        - actor.name == payload.actor and actor.cold_state != 'frozen' and actor.vital.life == 'alive' and actor.current_movement_speed
+          > 0
+        - call: {ref: movement.has_unique_path, args: {paths: {ref: scene.bridge_paths},
+            start: {ref: actor.site}, end: {ref: payload.destination}, cost: {ref: payload.base_move_cost}}}
+        - call: {ref: movement.has_unique_path, args: {paths: {ref: actor.known_bridge_paths},
+            start: {ref: actor.site}, end: {ref: payload.destination}, cost: {ref: payload.base_move_cost}}}
+        - call: {ref: movement.endpoints_clear_of_frozen_floor, args: {floors: {ref: scene.floors},
+            start: {ref: actor.site}, end: {ref: payload.destination}}}
+      outputs:
+        action: {ref: occurrence}
+        last_action_ref: {ref: occurrence}
+        site: {ref: destination}
+        known_sites:
+          call: {ref: movement.remember_site, args: {known_sites: {ref: actor.known_sites}, destination: {ref: destination}}}
+        next_seed: {die_next_seed: {ref: scene.die_seed}}
+        last_cross_roll: {ref: roll}
+        last_cross_ref: {ref: occurrence}
+        vital:
+          if:
+            when: {ref: safe}
+            then: {ref: actor.vital}
+            else:
+              record:
+                type: Vital
+                fields:
+                  life: {const: dead}
+                  endurance: 0
+                  max_endurance: {ref: actor.vital.max_endurance}
+                  change_ref: {ref: occurrence}
+                  death_ref: {ref: occurrence}
+                  rescue_episode: null
+        actor_motion:
+          record:
+            type: ActorMotion
+            fields: {name: {ref: actor.name}, start: {ref: actor.site}, end: {ref: destination}, action: {ref: occurrence}}

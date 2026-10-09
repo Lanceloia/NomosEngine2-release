@@ -1,0 +1,324 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+# Declarations preserve each participants authority and exact evidence.
+lawdefs:
+  - name: action.bear_look_guard
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard: actor.name == payload.actor and actor.awake and guardian.name == payload.guardian and (actor.site == 'prison_outer' or actor.site == 'icebar_entry')
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          guard_sighting:
+            record:
+              type: GuardSighting
+              fields: {name: {ref: guardian.name}, site: {ref: actor.site}, present: {eq: [{ref: actor.site}, {ref: guardian.site}]}, observation: {ref: occurrence}}
+  - name: action.bear_invite_guard
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - identity: actor.name == payload.actor and actor.awake and guardian.name == payload.guardian
+            - task: actor.guest_task is not None and actor.guest_task.invitation.messenger == actor.name and actor.guest_task.container == payload.drink
+            - once: actor.last_guard_request != actor.guest_task.invitation.utterance
+            - seen: actor.guard_sighting is not None and actor.guard_sighting.name == guardian.name and actor.guard_sighting.site == actor.site and actor.guard_sighting.present
+            - local: actor.site == guardian.site and drink.holder == actor.name
+            - inspected: actor.drink_sighting is not None and actor.drink_sighting.container == payload.drink and actor.drink_sighting.holder == actor.name and actor.drink_sighting.site == actor.site
+            - current: actor.drink_sighting.change_ref == drink.change_ref
+            - available: not actor.drink_sighting.frozen and actor.drink_sighting.portions > 0 and not drink.frozen and drink.portions > 0
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          last_guard_request: {ref: actor.guest_task.invitation.utterance}
+          last_guard_invitation_ref: {ref: occurrence}
+          prison_invitation:
+            record:
+              type: PrisonInvitation
+              fields: {speaker: {ref: actor.name}, recipient: {ref: guardian.name}, site: {ref: actor.site}, drink: {ref: payload.drink}, destination: {const: icebar_entry}, origin_request: {ref: actor.guest_task.invitation.utterance}, utterance: {ref: occurrence}}
+  - name: event.bear_motion_seen
+    family: direct_actor_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - actual_move: scene.actor_motion is not None and scene.actor_motion.action == trigger.occurrence
+            - attending: actor.awake and actor.attending
+            - local: scene.actor_motion.start == actor.site or scene.actor_motion.end == actor.site
+            - known_visitor: {exactly_one: {collection: {ref: actor.visitor_sightings}, as: seen, where: seen.name == scene.actor_motion.name and seen.site == actor.site}}
+        outputs:
+          visitor_sightings:
+            append:
+              - {collect_matching: {collection: {ref: actor.visitor_sightings}, as: old, where: old.name != scene.actor_motion.name, value: {ref: old}}}
+              - record:
+                  type: GuardSighting
+                  fields: {name: {ref: scene.actor_motion.name}, site: {ref: actor.site}, present: {eq: [{ref: scene.actor_motion.end}, {ref: actor.site}]}, observation: {ref: occurrence}}
+  - name: event.prison_invitation_heard
+    family: direct_actor_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings: []
+        guard: scene.prison_invitation is not None and scene.prison_invitation.utterance == trigger.occurrence and scene.prison_invitation.recipient == actor.name and scene.prison_invitation.site == actor.site and actor.awake and actor.attending
+        outputs: {heard_invitation: {ref: scene.prison_invitation}, invitation_hearing_ref: {ref: occurrence}}
+  - name: event.guard_motion_seen
+    family: direct_actor_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - actual_move: scene.actor_motion is not None and scene.actor_motion.action == trigger.occurrence
+            - attending: actor.awake and actor.attending
+            - local: scene.actor_motion.start == actor.site or scene.actor_motion.end == actor.site
+            - recognized: actor.guard_sighting is not None and actor.guard_sighting.name == scene.actor_motion.name
+        outputs:
+          guard_sighting:
+            record:
+              type: GuardSighting
+              fields: {name: {ref: scene.actor_motion.name}, site: {ref: actor.site}, present: {eq: [{ref: scene.actor_motion.end}, {ref: actor.site}]}, observation: {ref: occurrence}}
+  - name: action.guard_observe_visitor
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard: actor.name == payload.actor and actor.awake and actor.attending and messenger.name == payload.messenger
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          visitor_sightings:
+            append:
+              - {collect_matching: {collection: {ref: actor.visitor_sightings}, as: old, where: old.name != messenger.name, value: {ref: old}}}
+              - record:
+                  type: GuardSighting
+                  fields: {name: {ref: messenger.name}, site: {ref: actor.site}, present: {eq: [{ref: messenger.site}, {ref: actor.site}]}, observation: {ref: occurrence}}
+  - name: action.guard_inspect_drink
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard: &guard_drink_basis
+          require:
+            - identity: actor.name == payload.actor and actor.awake and messenger.name == payload.messenger
+            - heard: actor.heard_invitation is not None and actor.invitation_hearing_ref is not None
+            - addressed: actor.heard_invitation.speaker == messenger.name and actor.heard_invitation.drink == payload.drink
+            - seen: {exactly_one: {collection: {ref: actor.visitor_sightings}, as: seen, where: seen.name == messenger.name and seen.site == actor.site and seen.present}}
+            - local: actor.site == messenger.site and actor.site == actor.heard_invitation.site and drink.holder == messenger.name
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          drink_sighting:
+            record:
+              type: DrinkSighting
+              fields: {container: {ref: payload.drink}, holder: {ref: messenger.name}, site: {ref: actor.site}, frozen: {ref: drink.frozen}, portions: {ref: drink.portions}, capacity: {ref: drink.capacity}, change_ref: {ref: drink.change_ref}, observation: {ref: occurrence}}
+  - name: action.guard_accept_invitation
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all:
+            - *guard_drink_basis
+            - actor.visit_task is None
+            - &guard_unanswered
+              actor.visit_decision is None or (actor.visit_decision is not None and actor.visit_decision.request != actor.heard_invitation.utterance)
+            - actor.drink_sighting is not None and actor.drink_sighting.container == payload.drink and actor.drink_sighting.holder == messenger.name and actor.drink_sighting.site == actor.site and actor.drink_sighting.change_ref == drink.change_ref
+            - not actor.drink_sighting.frozen and actor.drink_sighting.portions > 0 and not drink.frozen and drink.portions > 0
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          visit_decision: {call: {ref: conversation.decision, args: {request: {ref: actor.heard_invitation.utterance}, accepted: true, action: {ref: occurrence}}}}
+          visit_destination: {ref: actor.heard_invitation.destination}
+          visit_task: {record: {type: PrisonVisitTask, fields: {invitation: {ref: actor.heard_invitation}, acceptance: {ref: occurrence}, drinks_before: {ref: actor.portions_drunk}}}}
+          visit_phase: {const: outbound}
+          prison_reply:
+            record:
+              type: PrisonReply
+              fields: {speaker: {ref: actor.name}, recipient: {ref: actor.heard_invitation.speaker}, site: {ref: actor.site}, for_request: {ref: actor.heard_invitation.utterance}, accepted: true, utterance: {ref: occurrence}}
+  - name: action.guard_decline_invitation
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all:
+            - actor.name == payload.actor and actor.awake and actor.heard_invitation is not None and actor.invitation_hearing_ref is not None
+            - *guard_unanswered
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          visit_decision: {call: {ref: conversation.decision, args: {request: {ref: actor.heard_invitation.utterance}, accepted: false, action: {ref: occurrence}}}}
+          prison_reply:
+            record:
+              type: PrisonReply
+              fields: {speaker: {ref: actor.name}, recipient: {ref: actor.heard_invitation.speaker}, site: {ref: actor.site}, for_request: {ref: actor.heard_invitation.utterance}, accepted: false, utterance: {ref: occurrence}}
+  - name: event.guard_reply_heard
+    family: direct_actor_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings: []
+        guard: scene.prison_reply is not None and scene.prison_reply.utterance == trigger.occurrence and scene.prison_reply.recipient == actor.name and scene.prison_reply.for_request == actor.last_guard_invitation_ref and scene.prison_reply.site == actor.site and actor.awake and actor.attending
+        outputs: {guard_reply: {ref: scene.prison_reply}, guard_reply_hearing_ref: {ref: occurrence}}
+  - name: action.guard_arrive_bar
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard: actor.name == payload.actor and actor.awake and actor.visit_task is not None and actor.visit_phase == 'outbound' and actor.site == 'icebar_entry'
+        outputs: {action: {ref: occurrence}, last_action_ref: {ref: occurrence}, visit_phase: {const: sharing}, visit_destination: null}
+  - name: action.guard_return_post
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard: actor.name == payload.actor and actor.awake and actor.visit_task is not None and (actor.visit_phase == 'outbound' or actor.visit_phase == 'sharing')
+        outputs: {action: {ref: occurrence}, last_action_ref: {ref: occurrence}, visit_phase: {const: returning}, visit_destination: {const: prison_outer}}
+  - name: action.guard_finish_visit
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard: actor.name == payload.actor and actor.awake and actor.visit_task is not None and actor.visit_phase == 'returning' and actor.site == 'prison_outer'
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          visit_phase: {const: on_duty}
+          visit_destination: null
+          finished_visit_request: {ref: actor.visit_task.invitation.utterance}
+          finished_visit_ref: {ref: occurrence}
+          visit_task: null
+  - name: action.guest_return
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - own_task: actor.name == payload.actor and actor.awake and actor.guest_task is not None and actor.guest_task.invitation.messenger == actor.name
+            - matched_request: actor.last_guard_request == actor.guest_task.invitation.utterance and actor.last_guard_invitation_ref is not None
+            - heard_reply: actor.guard_reply is not None and actor.guard_reply_hearing_ref is not None and actor.guard_reply.for_request == actor.last_guard_invitation_ref
+            - not_started: not actor.guest_returning
+        outputs: {action: {ref: occurrence}, last_action_ref: {ref: occurrence}, last_guest_return_ref: {ref: occurrence}, guest_returning: true, guest_destination: {const: icebar_entry}}
+  - name: action.guest_finish
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard: actor.name == payload.actor and actor.awake and actor.guest_task is not None and actor.guest_returning and actor.last_guest_return_ref is not None and actor.site == 'icebar_entry'
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          finished_guest_request: {ref: actor.guest_task.invitation.utterance}
+          finished_guest_ref: {ref: occurrence}
+          guest_task: null
+          guest_returning: false
+  - name: action.invite_guest
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - identity: actor.name == payload.actor and messenger.name == payload.messenger
+            - awake: actor.vital.life == 'alive' and actor.cold_state != 'frozen' and messenger.awake
+            - local: actor.site == messenger.site and drink.holder == messenger.name
+            - known_bear: {exactly_one: {collection: {ref: actor.known_bar_bears}, as: bear, where: bear.name == messenger.name and bear.site == actor.site}}
+            - observed: actor.drink_sighting is not None and actor.drink_sighting.container == payload.drink and actor.drink_sighting.holder == messenger.name and actor.drink_sighting.site == actor.site
+            - current: actor.drink_sighting.change_ref == drink.change_ref
+            - available: not actor.drink_sighting.frozen and actor.drink_sighting.portions > 0 and not drink.frozen and drink.portions > 0
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          guest_request:
+            record:
+              type: GuestRequest
+              fields: {speaker: {ref: actor.name}, site: {ref: actor.site}, messenger: {ref: payload.messenger}, drink: {ref: payload.drink}, utterance: {ref: occurrence}}
+  - name: event.guest_request_heard
+    family: direct_actor_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings: []
+        guard: scene.guest_request is not None and scene.guest_request.utterance == trigger.occurrence and actor.site == scene.guest_request.site and actor.awake and actor.attending
+        outputs: {heard_guest: {ref: scene.guest_request}, guest_hearing_ref: {ref: occurrence}}
+  - name: action.guest_accept
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - identity: actor.name == payload.actor and actor.awake
+            - heard: actor.heard_guest is not None and actor.guest_hearing_ref is not None
+            - unoccupied: actor.guest_task is None
+            - here: actor.site == actor.heard_guest.site
+            - unanswered: actor.guest_decision is None or (actor.guest_decision is not None and actor.guest_decision.request != actor.heard_guest.utterance)
+            - held: drink.holder == actor.name
+            - observed: actor.drink_sighting is not None and actor.drink_sighting.container == payload.drink and actor.drink_sighting.holder == actor.name and actor.drink_sighting.site == actor.site
+            - current: actor.drink_sighting.change_ref == drink.change_ref
+            - available: not actor.drink_sighting.frozen and actor.drink_sighting.portions > 0 and not drink.frozen and drink.portions > 0
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          guest_decision: {call: {ref: conversation.decision, args: {request: {ref: actor.heard_guest.utterance}, accepted: true, action: {ref: occurrence}}}}
+          guest_task: {record: {type: GuestTask, fields: {invitation: {ref: actor.heard_guest}, container: {ref: payload.drink}, acceptance: {ref: occurrence}}}}
+          guest_returning: false
+          guest_destination:
+            if:
+              when: actor.name == actor.heard_guest.messenger
+              then: {const: prison_outer}
+              else: {ref: actor.heard_guest.site}
+  - name: action.guest_refuse
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          all:
+            - actor.name == payload.actor and actor.awake and actor.heard_guest is not None and actor.guest_hearing_ref is not None
+            - actor.guest_decision is None or (actor.guest_decision is not None and actor.guest_decision.request != actor.heard_guest.utterance) or actor.guest_task is not None
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          guest_decision: {call: {ref: conversation.decision, args: {request: {ref: actor.heard_guest.utterance}, accepted: false, action: {ref: occurrence}}}}
+          guest_task: null
+          guest_returning: false

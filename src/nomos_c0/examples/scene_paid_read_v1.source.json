@@ -1,0 +1,307 @@
+{
+  "schema": "c0.owner_graph.v6",
+  "game_form": {"mode": "manual"},
+  "offer_provider": {
+    "name": "finite_value",
+    "version": "1"
+  },
+  "owners": [
+    "scene",
+    "actor_a",
+    "actor_b"
+  ],
+  "actions": [
+    {
+      "name": "open",
+      "template": "open",
+      "actor": "actor_a",
+      "source_key": "c0.paid.open",
+      "event_type": "c0.paid.open.done",
+      "law": {
+        "ref": "action.open",
+        "args": {}
+      }
+    },
+    {
+      "name": "read",
+      "template": "read",
+      "actor": "actor_b",
+      "source_key": "c0.paid.read",
+      "event_type": "c0.paid.read.done",
+      "law": {
+        "ref": "action.read",
+        "args": {}
+      }
+    }
+  ],
+  "events": [
+    {
+      "name": "unseal",
+      "template": "unseal",
+      "trigger_action": "open",
+      "source_key": "c0.paid.unseal",
+      "event_type": "c0.paid.unsealed",
+      "causal_key": "c0.paid.unseal.causes",
+      "law": {
+        "ref": "event.unseal",
+        "args": {}
+      }
+    }
+  ],
+  "seats": [
+    {
+      "name": "seat_a",
+      "actor": "actor_a",
+      "entries": [
+        "open"
+      ],
+      "read": [
+        "scene.target",
+        "scene.mode",
+        "actor_a.name",
+        "actor_a.opens"
+      ],
+      "offers": [
+        {
+          "entry": "open",
+          "label": "Open folio",
+          "when": {
+            "eq": [
+              {
+                "ref": "scene.mode"
+              },
+              {
+                "const": "sealed"
+              }
+            ]
+          },
+          "payload": {
+            "target": {
+              "ref": "scene.target"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "seat_b",
+      "actor": "actor_b",
+      "entries": [
+        "read"
+      ],
+      "read": [
+        "scene.target",
+        "scene.mode",
+        "scene.open_ref",
+        "actor_b.name",
+        "actor_b.budget",
+        "actor_b.acquired",
+        "actor_b.acquired.content",
+        "actor_b.acquired.open_ref",
+        "actor_b.acquired.read_ref"
+      ],
+      "offers": [
+        {
+          "entry": "read",
+          "label": "Read folio",
+          "when": {
+            "all": [
+              {
+                "eq": [
+                  {
+                    "ref": "scene.mode"
+                  },
+                  {
+                    "const": "accessible"
+                  }
+                ]
+              },
+              {
+                "is_none": {
+                  "ref": "actor.acquired"
+                }
+              }
+            ]
+          },
+          "payload": {
+            "target": {
+              "ref": "scene.target"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "lawdefs": [
+    {
+      "name": "action.open",
+      "family": "action",
+      "formals": {},
+      "body": {
+        "value": {
+          "schema": "c0.value.v1",
+          "bindings": [],
+          "guard": {
+            "all": [
+              {
+                "eq": [
+                  {
+                    "ref": "payload.target"
+                  },
+                  {
+                    "ref": "scene.target"
+                  }
+                ]
+              },
+              {
+                "eq": [
+                  {
+                    "ref": "scene.mode"
+                  },
+                  {
+                    "const": "sealed"
+                  }
+                ]
+              }
+            ]
+          },
+          "outputs": {
+            "opens": {
+              "add": [
+                {
+                  "ref": "actor.opens"
+                },
+                {
+                  "const": 1
+                }
+              ]
+            },
+            "action": {
+              "ref": "occurrence"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "action.read",
+      "family": "action",
+      "formals": {},
+      "body": {
+        "value": {
+          "schema": "c0.value.v1",
+          "bindings": [
+            {
+              "name": "cost",
+              "const": 1
+            }
+          ],
+          "guard": {
+            "all": [
+              {
+                "eq": [
+                  {
+                    "ref": "payload.target"
+                  },
+                  {
+                    "ref": "scene.target"
+                  }
+                ]
+              },
+              {
+                "eq": [
+                  {
+                    "ref": "scene.mode"
+                  },
+                  {
+                    "const": "accessible"
+                  }
+                ]
+              },
+              {
+                "not_none": {
+                  "ref": "scene.open_ref"
+                }
+              },
+              {
+                "is_none": {
+                  "ref": "actor.acquired"
+                }
+              },
+              {
+                "le": [
+                  {
+                    "ref": "cost"
+                  },
+                  {
+                    "ref": "actor.budget"
+                  }
+                ]
+              }
+            ]
+          },
+          "outputs": {
+            "budget": {
+              "sub": [
+                {
+                  "ref": "actor.budget"
+                },
+                {
+                  "ref": "cost"
+                }
+              ]
+            },
+            "acquired": {
+              "record": {
+                "type": "Acquired",
+                "fields": {
+                  "content": {
+                    "ref": "scene.content"
+                  },
+                  "open_ref": {
+                    "ref": "scene.open_ref"
+                  },
+                  "read_ref": {
+                    "ref": "occurrence"
+                  }
+                }
+              }
+            },
+            "action": {
+              "ref": "occurrence"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "event.unseal",
+      "family": "direct_event",
+      "formals": {},
+      "body": {
+        "law": {
+          "schema": "c0.value.v1",
+          "bindings": [],
+          "guard": {
+            "eq": [
+              {
+                "ref": "scene.mode"
+              },
+              {
+                "const": "sealed"
+              }
+            ]
+          },
+          "outputs": {
+            "mode": {
+              "const": "accessible"
+            },
+            "open_ref": {
+              "ref": "occurrence"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

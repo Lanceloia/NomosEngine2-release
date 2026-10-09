@@ -1,0 +1,85 @@
+schema: c0.owner_graph.v6
+owners: [scene, traveler]
+object_kinds: []
+offer_provider: {name: finite_value, version: '1'}
+game_form: {mode: manual}
+opening_guard:
+  all:
+    - none_matching:
+        collection: {ref: scene.regions}
+        as: candidate
+        where:
+          lt:
+            - {const: 1}
+            - count_matching:
+                collection: {ref: scene.regions}
+                as: other
+                where: {eq: [{ref: candidate}, {ref: other}]}
+    - none_matching:
+        collection: {ref: scene.crossings}
+        as: candidate
+        where:
+          lt:
+            - {const: 1}
+            - count_matching:
+                collection: {ref: scene.crossings}
+                as: other
+                where: {eq: [{ref: candidate.key}, {ref: other.key}]}
+    - lt:
+        - {const: 0}
+        - count_matching:
+            collection: {ref: scene.regions}
+            as: region
+            where: {eq: [{ref: region}, {ref: traveler.region}]}
+    - none_matching:
+        collection: {ref: scene.crossings}
+        as: route
+        where:
+          any:
+            - eq:
+                - count_matching:
+                    collection: {ref: scene.regions}
+                    as: region
+                    where: {eq: [{ref: region}, {ref: route.start}]}
+                - {const: 0}
+            - eq:
+                - count_matching:
+                    collection: {ref: scene.regions}
+                    as: region
+                    where: {eq: [{ref: region}, {ref: route.intended}]}
+                - {const: 0}
+            - eq:
+                - count_matching:
+                    collection: {ref: scene.regions}
+                    as: region
+                    where: {eq: [{ref: region}, {ref: route.collision}]}
+                - {const: 0}
+actions:
+  - name: cross
+    template: cross
+    actor: traveler
+    source_key: c0.region_dice.cross
+    event_type: c0.region_dice.cross.action
+    law: {ref: action.cross_region, args: {}}
+events: []
+lawdefs: []
+seats:
+  - name: traveler
+    actor: traveler
+    entries: [cross]
+    read:
+      - traveler.name
+      - traveler.region
+      - traveler.balance_bonus
+      - traveler.balance_penalty
+      - traveler.known_crossings
+      - traveler.last_roll
+      - traveler.last_total
+      - traveler.last_passed
+      - traveler.last_crossing_ref
+    offers:
+      - entry: cross
+        for_each: {collection: {ref: actor.known_crossings}, as: known}
+        label: {prefix: 'Cross to ', value: {ref: known.intended}}
+        when: {eq: [{ref: known.start}, {ref: actor.region}]}
+        payload: {crossing: {ref: known.key}}

@@ -1,0 +1,197 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+lawdefs:
+- name: action.mobile_cross
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings:
+      - name: crossing
+        collection: scene.crossings
+        key: key
+        value: {ref: payload.crossing}
+        required: false
+      - name: floor
+        collection: scene.floors
+        key: key
+        value:
+          if:
+            when:
+              not_none: {ref: crossing}
+            then: {ref: crossing.floor_key}
+            else: {const: null}
+        required: false
+      - name: success_followup
+        collection: scene.crossings
+        key: key
+        value:
+          if:
+            when:
+              not_none: {ref: crossing}
+            then: {ref: crossing.success_followup}
+            else: {const: null}
+        required: false
+      - name: failure_followup
+        collection: scene.crossings
+        key: key
+        value:
+          if:
+            when:
+              not_none: {ref: crossing}
+            then: {ref: crossing.failure_followup}
+            else: {const: null}
+        required: false
+      - name: movement
+        stage: effect
+        let:
+          call:
+            ref: movement.resolve
+            args:
+              frozen: {ref: floor.frozen}
+              seed: {ref: scene.die_seed}
+              route: {ref: crossing}
+              balance_bonus: {ref: actor.balance_bonus}
+      guard:
+        all:
+        - call:
+            ref: transport.unboarded
+            args:
+              seats: {ref: scene.balloon_seats}
+              person: {ref: actor.name}
+        - {ref: actor.awake}
+        - all:
+          - actor.name == payload.actor
+          - 0 < actor.current_movement_speed
+          - not_none: {ref: crossing}
+          - not_none: {ref: floor}
+          - actor.site == crossing.start
+          - payload.base_move_cost == crossing.base_move_cost
+          - call: {ref: movement.knows_crossing, args: {known: {ref: actor.known_crossings},
+              key: {ref: crossing.key}, start: {ref: crossing.start},
+              intended: {ref: crossing.intended}, cost: {ref: crossing.base_move_cost}}}
+      effects:
+      - visible_motion:
+          assign:
+            scene.actor_motion:
+              record:
+                type: ActorMotion
+                fields:
+                  name: {ref: actor.name}
+                  start: {ref: actor.site}
+                  end: {ref: movement.site}
+                  action: {ref: occurrence}
+      outputs:
+        action: {ref: occurrence}
+        roll: {ref: movement.roll}
+        next_seed: {ref: movement.next_seed}
+        site: {ref: movement.site}
+        known_sites:
+          call:
+            ref: movement.remember_site
+            args:
+              known_sites: {ref: actor.known_sites}
+              destination: {ref: movement.site}
+        known_crossings:
+          call:
+            ref: movement.remember_crossing
+            args:
+              known: {ref: actor.known_crossings}
+              followup:
+                if:
+                  when: {ref: movement.succeeded}
+                  then: {ref: success_followup}
+                  else: {ref: failure_followup}
+        last_action_ref: {ref: occurrence}
+        last_cross_ref: {ref: occurrence}
+- name: action.fox_cross_ice
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings:
+      - name: crossing
+        collection: scene.crossings
+        key: key
+        value: {ref: payload.crossing}
+        required: false
+      - name: floor
+        collection: scene.floors
+        key: key
+        value:
+          if:
+            when:
+              not_none: {ref: crossing}
+            then: {ref: crossing.floor_key}
+            else: {const: null}
+        required: false
+      - name: success_followup
+        collection: scene.crossings
+        key: key
+        value:
+          if:
+            when:
+              not_none: {ref: crossing}
+            then: {ref: crossing.success_followup}
+            else: {const: null}
+        required: false
+      - name: failure_followup
+        collection: scene.crossings
+        key: key
+        value:
+          if:
+            when:
+              not_none: {ref: crossing}
+            then: {ref: crossing.failure_followup}
+            else: {const: null}
+        required: false
+      - name: movement
+        stage: effect
+        let:
+          call:
+            ref: movement.resolve
+            args:
+              frozen: false
+              seed: {ref: scene.die_seed}
+              route: {ref: crossing}
+              balance_bonus: {ref: actor.balance_bonus}
+      guard:
+        all:
+        - call:
+            ref: transport.unboarded
+            args:
+              seats: {ref: scene.balloon_seats}
+              person: {ref: actor.name}
+        - actor.name == payload.actor
+        - 0 < actor.current_movement_speed
+        - not_none: {ref: crossing}
+        - not_none: {ref: floor}
+        - actor.site == crossing.start
+        - payload.base_move_cost == crossing.base_move_cost
+        - call: {ref: movement.knows_crossing, args: {known: {ref: actor.known_crossings},
+            key: {ref: crossing.key}, start: {ref: crossing.start},
+            intended: {ref: crossing.intended}, cost: {ref: crossing.base_move_cost}}}
+      outputs:
+        action: {ref: occurrence}
+        roll: {ref: movement.roll}
+        next_seed: {ref: movement.next_seed}
+        site: {ref: movement.site}
+        known_sites:
+          call:
+            ref: movement.remember_site
+            args:
+              known_sites: {ref: actor.known_sites}
+              destination: {ref: movement.site}
+        known_crossings:
+          call:
+            ref: movement.remember_crossing
+            args:
+              known: {ref: actor.known_crossings}
+              followup:
+                if:
+                  when: {ref: movement.succeeded}
+                  then: {ref: success_followup}
+                  else: {ref: failure_followup}
+        last_action_ref: {ref: occurrence}
+        last_cross_ref: {ref: occurrence}

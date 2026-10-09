@@ -1,0 +1,44 @@
+{
+  "schema": "c0.action.value.v1",
+  "source_key": "c0.example.parcel_read.v1",
+  "event_type": "c0.example.parcel_read_started.v1",
+  "value": {
+    "schema": "c0.value.v1",
+    "bindings": [
+      {
+        "name": "item",
+        "collection": "scene.parcels",
+        "key": "id",
+        "value": {"ref": "payload.item_id"},
+        "required": true
+      }
+    ],
+    "guard": {"all": [
+      {"eq": [{"ref": "actor.heard"}, {"const": true}]},
+      {"eq": [{"ref": "payload.target"}, {"ref": "actor.role"}]},
+      {"eq": [{"ref": "item.status"}, {"const": "arrived"}]},
+      {"eq": [{"ref": "item.recipient"}, {"ref": "actor.role"}]},
+      {"none_matching": {
+        "collection": {"ref": "actor.receipts"},
+        "as": "prior",
+        "where": {"eq": [
+          {"ref": "prior.item_id"}, {"ref": "payload.item_id"}
+        ]}
+      }}
+    ]},
+    "outputs": {
+      "receipts": {"append": [
+        {"ref": "actor.receipts"},
+        {"record": {
+          "type": "Receipt",
+          "fields": {
+            "item_id": {"ref": "payload.item_id"},
+            "action": {"ref": "occurrence"}
+          }
+        }}
+      ]},
+      "action": {"ref": "occurrence"},
+      "content": {"const": "read-started"}
+    }
+  }
+}

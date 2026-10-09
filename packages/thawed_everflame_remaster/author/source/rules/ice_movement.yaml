@@ -1,0 +1,112 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+# Both Actions share one crossing input/eligibility definition, not a scripted outcome.
+lawdefs:
+- name: action.cross_ice
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: &ice_inputs
+      - name: crossing
+        collection: scene.crossings
+        key: key
+        value: {ref: payload.crossing}
+        required: false
+      - name: floor
+        collection: scene.floors
+        key: key
+        value:
+          if:
+            when: {not_none: {ref: crossing}}
+            then: {ref: crossing.floor_key}
+            else: {const: null}
+        required: false
+      - name: success_followup
+        collection: scene.crossings
+        key: key
+        value:
+          if:
+            when: {not_none: {ref: crossing}}
+            then: {ref: crossing.success_followup}
+            else: {const: null}
+        required: false
+      - name: failure_followup
+        collection: scene.crossings
+        key: key
+        value:
+          if:
+            when: {not_none: {ref: crossing}}
+            then: {ref: crossing.failure_followup}
+            else: {const: null}
+        required: false
+      - name: movement
+        stage: effect
+        let:
+          call: {ref: movement.resolve, args: {frozen: {ref: floor.frozen}, seed: {ref: scene.die_seed}, route: {
+                ref: crossing}, balance_bonus: {ref: actor.balance_bonus}}}
+      guard: &ice_admission
+        all:
+        - call: {ref: transport.unboarded, args: {seats: {ref: scene.balloon_seats}, person: {ref: actor.name}}}
+        - actor.name == payload.actor
+        - 0 < actor.current_movement_speed
+        - {not_none: {ref: crossing}}
+        - {not_none: {ref: floor}}
+        - actor.site == crossing.start
+        - payload.base_move_cost == crossing.base_move_cost
+        - call: {ref: movement.knows_crossing, args: {known: {ref: actor.known_crossings},
+            key: {ref: crossing.key}, start: {ref: crossing.start},
+            intended: {ref: crossing.intended}, cost: {ref: crossing.base_move_cost}}}
+      outputs:
+        action: {ref: occurrence}
+        roll: {ref: movement.roll}
+        next_seed: {ref: movement.next_seed}
+        site: {ref: movement.site}
+        known_sites:
+          call: {ref: movement.remember_site, args: {known_sites: {ref: actor.known_sites}, destination: {ref: movement.site}}}
+        known_crossings:
+          call: {ref: movement.remember_crossing, args: {known: {ref: actor.known_crossings}, followup: {if: {when: {
+                    ref: movement.succeeded}, then: {ref: success_followup}, else: {ref: failure_followup}}}}}
+        last_action_ref: {ref: occurrence}
+        last_cross_ref: {ref: occurrence}
+        actor_motion:
+          record:
+            type: ActorMotion
+            fields: {name: {ref: actor.name}, start: {ref: actor.site}, end: {ref: movement.site}, action: {ref: occurrence}}
+- name: action.balloon_push_ice
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: *ice_inputs
+      guard:
+        all:
+        - all:
+          - actor.name == 'adventurer' and actor.vital.life == 'alive' and actor.vital.endurance > 0 and actor.cold_state
+            != 'frozen' and actor.current_movement_speed > 0
+          - actor.site == balloon.site and not balloon.inflated and not balloon.tied
+          - call: {ref: transport.vehicle_unoccupied, args: {seats: {ref: scene.balloon_seats}, vehicle: {ref: payload.balloon}}}
+          - (bear_one.site != actor.site or bear_one.occupancy != 'blocking_balloon' or bear_one.vital.life == 'dead')
+            and (bear_two.site != actor.site or bear_two.occupancy != 'blocking_balloon' or bear_two.vital.life
+            == 'dead')
+          - call: {ref: movement.has_declared_site, args: {sites: {ref: scene.sites}, site: {ref: actor.site}}}
+        - *ice_admission
+      outputs:
+        action: {ref: occurrence}
+        balloon_site: {ref: movement.site}
+        balloon_action: {ref: occurrence}
+        site: {ref: movement.site}
+        roll: {ref: movement.roll}
+        next_seed: {ref: movement.next_seed}
+        known_sites:
+          call: {ref: movement.remember_site, args: {known_sites: {ref: actor.known_sites}, destination: {ref: movement.site}}}
+        known_crossings:
+          call: {ref: movement.remember_crossing, args: {known: {ref: actor.known_crossings}, followup: {if: {when: {
+                    ref: movement.succeeded}, then: {ref: success_followup}, else: {ref: failure_followup}}}}}
+        last_action_ref: {ref: occurrence}
+        last_cross_ref: {ref: occurrence}
+        actor_motion:
+          record:
+            type: ActorMotion
+            fields: {name: {ref: actor.name}, start: {ref: actor.site}, end: {ref: movement.site}, action: {ref: occurrence}}

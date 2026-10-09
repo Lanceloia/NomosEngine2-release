@@ -1,0 +1,5971 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+schema: c0.nominal_lib.v1
+pure_definitions:
+  - name: conversation.decision
+    parameters: {request: occurrence_ref, accepted: bool, action: occurrence_ref}
+    result: GuestDecision
+    stage: effect
+    body:
+      record:
+        type: GuestDecision
+        fields: {request: {ref: request}, accepted: {ref: accepted}, action: {ref: action}}
+  - name: perception.update_person_in_place
+    parameters: {known_people: {tuple: KnownResident}, observer_site: str, subject_name: str, subject_site: str, basis: occurrence_ref}
+    result: {tuple: KnownResident}
+    stage: effect
+    body:
+      if:
+        when: observer_site == subject_site
+        then:
+          if:
+            when: {none_matching: {collection: {ref: known_people}, as: known, where: known.name == subject_name}}
+            then:
+              append:
+                - {ref: known_people}
+                - {record: {type: KnownResident, fields: {name: {ref: subject_name}, site: {ref: subject_site}, observation: {ref: basis}}}}
+            else:
+              collect_matching:
+                collection: {ref: known_people}
+                as: known
+                where: true
+                value:
+                  if:
+                    when: known.name == subject_name
+                    then: {record: {type: KnownResident, fields: {name: {ref: subject_name}, site: {ref: subject_site}, observation: {ref: basis}}}}
+                    else: {ref: known}
+        else: {ref: known_people}
+  - name: everflame.known_self_protection
+    parameters: {coverage: {tuple: Coverage}, charges: int, destination: str}
+    result: str
+    stage: admission
+    body:
+      if:
+        when: charges == 0
+        then: {const: exposed}
+        else:
+          if:
+            when: {exists: {collection: {ref: coverage}, as: known_area, where: known_area.origin == destination}}
+            then:
+              if:
+                when:
+                  lt:
+                    - 0
+                    - {call: {ref: everflame.covered_count, args: {coverage: {ref: coverage}, origin: {ref: destination}, destination: {ref: destination}, charges: {ref: charges}}}}
+                then: {const: protected}
+                else: {const: exposed}
+            else: {const: unknown}
+  - name: treasure.chest_sighting
+    parameters: {chest: individual_ref, site: str, opened: bool, gold: {optional: int}, basis: occurrence_ref}
+    result: ChestSighting
+    stage: effect
+    body:
+      record:
+        type: ChestSighting
+        fields: {chest: {ref: chest}, site: {ref: site}, opened: {ref: opened}, gold: {ref: gold}, basis: {ref: basis}}
+  - name: transport.boarded_on
+    parameters: {seats: {tuple: BalloonSeat}, person: str, vehicle: individual_ref}
+    result: bool
+    stage: admission
+    body:
+      exactly_one: {collection: seats, as: seat, where: seat.passenger == person and seat.vehicle == vehicle}
+  - name: movement.has_declared_site
+    parameters: {sites: {tuple: str}, site: str}
+    result: bool
+    stage: admission
+    body:
+      exactly_one: {collection: sites, as: declared, where: declared == site}
+  - name: movement.has_path
+    parameters: {paths: {tuple: Path}, start: str, end: str, cost: int}
+    result: bool
+    stage: admission
+    body:
+      exists:
+        collection: paths
+        as: path
+        where: path.start == start and path.end == end and path.base_move_cost == cost
+  - name: movement.knows_crossing
+    parameters: {known: {tuple: KnownCrossing}, key: str, start: str, intended: str, cost: int}
+    result: bool
+    stage: admission
+    body:
+      exists:
+        collection: known
+        as: entry
+        where: entry.key == key and entry.start == start and entry.intended == intended and entry.base_move_cost == cost
+  - name: transport.vehicle_unoccupied
+    parameters: {seats: {tuple: BalloonSeat}, vehicle: individual_ref}
+    result: bool
+    stage: admission
+    body:
+      none_matching: {collection: seats, as: seat, where: seat.vehicle == vehicle}
+  - name: movement.endpoints_clear_of_frozen_floor
+    parameters: {floors: {tuple: FloorRegion}, start: str, end: str}
+    result: bool
+    stage: admission
+    body:
+      none_matching:
+        collection: floors
+        as: floor
+        where:
+          all:
+            - floor.frozen
+            - exists: {collection: floor.sites, as: site, where: site == start or site == end}
+  - name: movement.has_unique_path
+    parameters: {paths: {tuple: Path}, start: str, end: str, cost: int}
+    result: bool
+    stage: admission
+    body:
+      exactly_one:
+        collection: paths
+        as: path
+        where: path.start == start and path.end == end and path.base_move_cost == cost
+  - name: movement.no_known_exit
+    parameters: {paths: {tuple: Path}, crossings: {tuple: KnownCrossing}, bridges: {tuple: Path}, site: str}
+    result: bool
+    stage: admission
+    body:
+      all:
+        - none_matching: {collection: {ref: paths}, as: path, where: path.start == site}
+        - none_matching: {collection: {ref: crossings}, as: crossing, where: crossing.start == site}
+        - none_matching: {collection: {ref: bridges}, as: bridge, where: bridge.start == site}
+  - name: movement.remember_crossing
+    parameters: {known: {tuple: KnownCrossing}, followup: {optional: RegionCrossing}}
+    result: {tuple: KnownCrossing}
+    stage: effect
+    body:
+      if:
+        when: followup is not None
+        then:
+          if:
+            when:
+              none_matching: {collection: {ref: known}, as: previous, where: previous.key == followup.key}
+            then:
+              append:
+              - {ref: known}
+              - record:
+                  type: KnownCrossing
+                  fields: {key: {ref: followup.key}, start: {ref: followup.start}, intended: {ref: followup.intended}, base_move_cost: {ref: followup.base_move_cost}}
+            else: {ref: known}
+        else: {ref: known}
+  - name: movement.remember_site
+    parameters: {known_sites: {tuple: KnownSite}, destination: str}
+    result: {tuple: KnownSite}
+    stage: effect
+    body:
+      if:
+        when:
+          none_matching: {collection: {ref: known_sites}, as: known, where: known.site == destination}
+        then:
+          append:
+          - {ref: known_sites}
+          - {record: {type: KnownSite, fields: {site: {ref: destination}}}}
+        else: {ref: known_sites}
+  - name: reward.unpaid_survivor
+    parameters: {known: {tuple: VerifiedSurvivor}, observer_site: str, name: str, site: str, life: str, rescue: str, has_rescue: bool}
+    result: bool
+    stage: admission
+    body:
+      all:
+        - "observer_site == 'palace_exit' and site == observer_site and life == 'alive' and rescue == 'safe' and has_rescue"
+        - exactly_one:
+            collection: known
+            as: previous
+            where: previous.name == name and previous.payment is None
+  - name: reward.new_survivor
+    parameters: {known: {tuple: VerifiedSurvivor}, observer_site: str, name: str, site: str, life: str, rescue: str, has_rescue: bool}
+    result: bool
+    stage: admission
+    body:
+      all:
+        - "observer_site == 'palace_exit' and site == observer_site and life == 'alive' and rescue == 'safe' and has_rescue"
+        - none_matching: {collection: {ref: known}, as: previous, where: "previous.name == name"}
+  - name: reward.present_survivor
+    parameters:
+      observer_site: str
+      site: str
+      life: str
+      rescue: str
+      has_rescue: bool
+    result: bool
+    stage: admission
+    body: observer_site == 'palace_exit' and site == observer_site and life == 'alive'
+      and rescue == 'safe' and has_rescue
+  - name: transport.unboarded
+    parameters: {seats: {tuple: BalloonSeat}, person: str}
+    result: bool
+    stage: admission
+    body:
+      none_matching:
+        collection: {ref: seats}
+        as: seat
+        where: "seat.passenger == person"
+  - name: combat.contact_vital
+    parameters: {vital: Vital, hit: bool, frozen: bool, weak: bool, damage: int, basis: occurrence_ref}
+    result: Vital
+    stage: effect
+    body:
+      if:
+        when: hit and vital.life != 'dead'
+        then:
+          call:
+            ref: vital.damage
+            args:
+              vital: {ref: vital}
+              amount: {add: [{ref: damage}, {if: {when: {ref: weak}, then: 1, else: 0}}]}
+              frozen: {ref: frozen}
+              monitored: false
+              basis: {ref: basis}
+        else: {ref: vital}
+  - name: perception.observe_named_person
+    parameters:
+      known: {tuple: KnownResident}
+      observer_site: str
+      subject_name: str
+      subject_site: str
+      basis: occurrence_ref
+    result: {tuple: KnownResident}
+    stage: effect
+    body:
+      if:
+        when: observer_site == subject_site
+        then:
+          append:
+          - {collect_matching: {collection: {ref: known}, as: previous, where: "previous.name != subject_name", value: {ref: previous}}}
+          - {record: {type: KnownResident, fields: {name: {ref: subject_name}, site: {ref: subject_site}, observation: {ref: basis}}}}
+        else: {ref: known}
+  - name: perception.refresh_named_person
+    parameters:
+      known: {tuple: KnownResident}
+      observer_site: str
+      subject_name: str
+      subject_site: str
+      basis: occurrence_ref
+    result: {tuple: KnownResident}
+    stage: effect
+    body:
+      let:
+        name: others
+        value:
+          collect_matching:
+            collection: {ref: known}
+            as: previous
+            where: previous.name != subject_name
+            value: {ref: previous}
+        in:
+          call:
+            ref: perception.observe_named_person
+            args:
+              known: {ref: others}
+              observer_site: {ref: observer_site}
+              subject_name: {ref: subject_name}
+              subject_site: {ref: subject_site}
+              basis: {ref: basis}
+  - name: combat.fireball_vital
+    parameters:
+      zones:
+        tuple: FireballZone
+      origin: str
+      aim: str
+      site: str
+      vital: Vital
+      frozen: bool
+      monitored: bool
+      weak: bool
+      rolled: int
+      damage: int
+      basis: occurrence_ref
+    result: Vital
+    stage: effect
+    body:
+      if:
+        when:
+          all:
+          - rolled >= 10
+          - vital.life != 'dead'
+          - exists:
+              collection: zones
+              as: zone
+              where:
+                all:
+                - zone.origin == origin
+                - zone.aim == aim
+                - exists:
+                    collection: zone.affected_sites
+                    as: affected
+                    where: affected == site
+        then:
+          call:
+            ref: vital.damage
+            args:
+              vital:
+                ref: vital
+              amount:
+                add:
+                - ref: damage
+                - if:
+                    when:
+                      ref: weak
+                    then: 1
+                    else: 0
+              frozen:
+                ref: frozen
+              monitored:
+                ref: monitored
+              basis:
+                ref: basis
+        else:
+          ref: vital
+  - name: movement.action_cost
+    parameters: {base_cost: int, maximum_speed: int, current_speed: int}
+    result: int
+    stage: admission
+    body:
+      ceil_div:
+        - {mul: [{ref: base_cost}, {ref: maximum_speed}]}
+        - {ref: current_speed}
+  - name: treasure.collection_amount
+    parameters: {available: int}
+    result: int
+    stage: admission
+    body: {ref: available}
+  - name: movement.ordinary_floor_passable
+    parameters: {floors: {tuple: FloorRegion}, stairs: {tuple: Path}, unclimbable_stairs: {tuple: Path}, start: str, destination: str}
+    result: bool
+    stage: admission
+    body:
+      all:
+        - none_matching:
+            collection: {ref: unclimbable_stairs}
+            as: stair
+            where: stair.start == start and stair.end == destination
+        - none_matching:
+            collection: {ref: floors}
+            as: floor
+            where:
+              all:
+                - floor.frozen
+                - any:
+                    - all:
+                        - {exactly_one: {collection: floor.sites, as: start_site, where: start_site == start}}
+                        - {exactly_one: {collection: floor.sites, as: end_site, where: end_site == destination}}
+                    - all:
+                        - {exists: {collection: stairs, as: stair, where: stair.start == start and stair.end == destination}}
+                        - {exists: {collection: floor.sites, as: stair_site, where: stair_site == start or stair_site == destination}}
+  - name: movement.resolve
+    parameters: {frozen: bool, seed: int, route: RegionCrossing, balance_bonus: int}
+    result: MovementResolution
+    stage: effect
+    body:
+      let:
+        name: rolled
+        value:
+          if:
+            when: {ref: frozen}
+            then: {die_roll: {seed: {ref: seed}, sides: {ref: route.die_sides}}}
+            else: null
+        in:
+          let:
+            name: succeeded
+            value:
+              if:
+                when: {not_none: {ref: rolled}}
+                then: {le: [{ref: route.difficulty}, {add: [{ref: rolled}, {ref: balance_bonus}]}]}
+                else: true
+            in:
+              record:
+                type: MovementResolution
+                fields:
+                  site: {if: {when: {ref: succeeded}, then: {ref: route.intended}, else: {ref: route.collision}}}
+                  succeeded: {ref: succeeded}
+                  roll: {ref: rolled}
+                  next_seed: {if: {when: {ref: frozen}, then: {die_next_seed: {ref: seed}}, else: {ref: seed}}}
+  - name: everflame.holder_site
+    parameters:
+      holder: str
+      adventurer_site: str
+      ritual_site: str
+      huddled_one_site: str
+      huddled_two_site: str
+      wall_resident_site: str
+      bokold_one_site: str
+      bokold_two_site: str
+      prison_resident_one_site: str
+      prison_resident_two_site: str
+    result: str
+    stage: admission
+    body:
+      if:
+        when: holder == 'adventurer'
+        then: {ref: adventurer_site}
+        else:
+          if:
+            when: holder == 'ritual_resident'
+            then: {ref: ritual_site}
+            else:
+              if:
+                when: holder == 'huddled_one'
+                then: {ref: huddled_one_site}
+                else:
+                  if:
+                    when: holder == 'huddled_two'
+                    then: {ref: huddled_two_site}
+                    else:
+                      if:
+                        when: holder == 'bokold_one'
+                        then: {ref: bokold_one_site}
+                        else:
+                          if:
+                            when: holder == 'bokold_two'
+                            then: {ref: bokold_two_site}
+                            else:
+                              if:
+                                when: holder == 'prison_resident_one'
+                                then: {ref: prison_resident_one_site}
+                                else:
+                                  if:
+                                    when: holder == 'prison_resident_two'
+                                    then: {ref: prison_resident_two_site}
+                                    else: {ref: wall_resident_site}
+  - name: everflame.covered_count
+    parameters:
+      coverage: {tuple: Coverage}
+      origin: str
+      destination: str
+      charges: int
+    result: int
+    stage: admission
+    body:
+      count_matching:
+        collection: {ref: coverage}
+        as: area
+        where:
+          all:
+            - area.origin == origin
+            - charges > 0
+            - exists:
+                collection:
+                  if:
+                    when: charges <= 2
+                    then:
+                      ref: area.near_sites
+                    else:
+                      if:
+                        when: charges <= 4
+                        then:
+                          ref: area.mid_sites
+                        else:
+                          ref: area.far_sites
+                as: covered_site
+                where: covered_site == destination
+  - name: rescue.cold_step
+    parameters: {vital: Vital, frozen_after: bool, monitored: bool, basis: occurrence_ref}
+    result: Vital
+    stage: effect
+    body:
+      record:
+        type: Vital
+        fields:
+          life: {ref: vital.life}
+          endurance: {ref: vital.endurance}
+          max_endurance: {ref: vital.max_endurance}
+          change_ref: {ref: vital.change_ref}
+          death_ref: {ref: vital.death_ref}
+          rescue_episode:
+            if:
+              when: monitored and vital.life != 'dead' and (frozen_after or vital.endurance == 0)
+              then:
+                if:
+                  when: vital.rescue_episode is not None
+                  then:
+                    record:
+                      type: RescueEpisode
+                      fields:
+                        start_ref: {ref: vital.rescue_episode.start_ref}
+                        elapsed_cold: {if: {when: vital.rescue_episode.elapsed_cold < 5, then: {add: [{ref: vital.rescue_episode.elapsed_cold}, 1]}, else: 5}}
+                        last_cold_ref: {ref: basis}
+                  else: {record: {type: RescueEpisode, fields: {start_ref: {ref: basis}, elapsed_cold: 0, last_cold_ref: null}}}
+              else: null
+  - name: vital.thaw
+    parameters: {vital: Vital}
+    result: Vital
+    stage: effect
+    body:
+      record:
+        type: Vital
+        fields:
+          life: {ref: vital.life}
+          endurance: {ref: vital.endurance}
+          max_endurance: {ref: vital.max_endurance}
+          change_ref: {ref: vital.change_ref}
+          death_ref: {ref: vital.death_ref}
+          rescue_episode: {if: {when: vital.life == 'alive' and vital.endurance > 0, then: null, else: {ref: vital.rescue_episode}}}
+  - name: vital.damage
+    parameters:
+      vital: Vital
+      amount: int
+      frozen: bool
+      monitored: bool
+      basis: occurrence_ref
+    result: Vital
+    stage: effect
+    body:
+      record:
+        type: Vital
+        fields:
+          life:
+            if:
+              when: vital.endurance == 0
+              then:
+                const: dead
+              else:
+                if:
+                  when: vital.endurance <= amount
+                  then:
+                    const: incapacitated
+                  else:
+                    const: alive
+          endurance:
+            if:
+              when: vital.endurance <= amount
+              then: 0
+              else:
+                sub:
+                - ref: vital.endurance
+                - ref: amount
+          max_endurance:
+            ref: vital.max_endurance
+          change_ref:
+            ref: basis
+          death_ref:
+            if:
+              when: vital.endurance == 0
+              then:
+                ref: basis
+              else: null
+          rescue_episode:
+            if:
+              when: vital.endurance == 0
+              then: null
+              else:
+                if:
+                  when: monitored and (frozen or vital.endurance <= amount)
+                  then:
+                    if:
+                      when: vital.rescue_episode is not None
+                      then:
+                        ref: vital.rescue_episode
+                      else:
+                        record:
+                          type: RescueEpisode
+                          fields:
+                            start_ref:
+                              ref: basis
+                            elapsed_cold: 0
+                            last_cold_ref: null
+                  else: null
+appraisal_definitions:
+  - name: queen.local_wait
+    formals: {}
+    entries:
+    - verify_survivors
+    - pay_reward
+    - wait
+    - balloon_control
+    - observe_routes
+    - move
+    - cross_ice
+    - bridge_slow
+    - pass_door
+    fallback_entry: wait
+    tie_order:
+    - pay_reward
+    - verify_survivors
+    - wait
+    - balloon_control
+    - observe_routes
+    - move
+    - cross_ice
+    - bridge_slow
+    - pass_door
+    rules:
+    - {entry: verify_survivors, mode: score, value: 1}
+    - {entry: pay_reward, mode: score, value: 3}
+    - entry: wait
+      mode: default
+    - entry: observe_routes
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - &queen_unspent_guide "actor.rescue_state != 'safe' and actor.guide_step is not None and actor.escort_heard_ref is not None and actor.escort_utterance_ref is not None and actor.guide_step.invitation == actor.escort_utterance_ref and actor.guide_step.hearing == actor.escort_heard_ref and actor.guide_step.motion.start == actor.site and actor.guide_step.motion.name == actor.escort_speaker and (actor.guide_consumption is None or (actor.guide_consumption is not None and actor.guide_consumption.step != actor.guide_step.observation))"
+            - actor.route_observation is None or (actor.route_observation is not None and actor.route_observation.site != actor.site)
+          then: 1
+          else: 0
+    - entry: move
+      mode: score
+      value:
+        if:
+          when: &queen_follow_destination
+            all:
+            - *queen_unspent_guide
+            - actor.route_observation is not None and actor.route_observation.site == actor.site
+            - payload.destination == actor.guide_step.motion.end
+          then: 3
+          else: 0
+    - entry: cross_ice
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - *queen_unspent_guide
+            - actor.route_observation is not None and actor.route_observation.site == actor.site
+            - exists:
+                collection: actor.known_crossings
+                as: crossing
+                where: crossing.key == payload.crossing and crossing.start == actor.site and crossing.intended == actor.guide_step.motion.end
+          then: 3
+          else: 0
+    - entry: bridge_slow
+      mode: score
+      value: {if: {when: *queen_follow_destination, then: 3, else: 0}}
+    - entry: pass_door
+      mode: score
+      value: {if: {when: *queen_follow_destination, then: 3, else: 0}}
+    - entry: balloon_control
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - actor.heard_balloon_explanation is not None
+            - payload.balloon == actor.heard_balloon_explanation.speech.balloon
+            - any:
+              - payload.operation == 'board' and actor.site == actor.heard_balloon_explanation.speech.site
+              - payload.operation == 'leave' and actor.site == actor.heard_balloon_explanation.speech.destination
+          then: 5
+          else: 0
+  - name: tower.local_bargain
+    formals: {delivery_score: int, refusal_score: int, display_score: int}
+    entries: [watch, propose, clear, deliver, withdraw, show_magic, withdraw_magic]
+    fallback_entry: watch
+    tie_order: [watch, propose, clear, withdraw, deliver, show_magic, withdraw_magic]
+    rules:
+    - {entry: watch, mode: default}
+    - {entry: show_magic, mode: score, value: {arg: display_score}}
+    - {entry: withdraw_magic, mode: score, value: 0}
+    - entry: propose
+      mode: score
+      value:
+        if:
+          when: actor.heard_tower_request is not None and actor.tower_hearing_ref is not None and actor.site == actor.heard_tower_request.site and (actor.tower_proposal is None or (actor.tower_proposal is not None and actor.tower_proposal.request != actor.heard_tower_request.utterance))
+          then: 3
+          else: 0
+    - entry: clear
+      mode: score
+      value:
+        if:
+          when: actor.heard_tower_acceptance is not None and actor.acceptance_hearing_ref is not None and actor.tower_proposal is not None and actor.heard_tower_acceptance.offer == actor.tower_proposal.utterance and actor.heard_tower_acceptance.site == actor.site and actor.clearance is None
+          then: 4
+          else: 0
+    - entry: deliver
+      mode: score
+      value: {arg: delivery_score}
+    - entry: withdraw
+      mode: score
+      value: {arg: refusal_score}
+  - name: tower.local_guard
+    formals: {}
+    entries: [watch, aside]
+    fallback_entry: watch
+    tie_order: [watch, aside]
+    rules:
+    - {entry: watch, mode: default}
+    - entry: aside
+      mode: score
+      value:
+        if:
+          when: actor.heard_clearance is not None and actor.clearance_hearing_ref is not None and actor.heard_clearance.site == actor.site and actor.occupancy == 'blocking_balloon' and actor.current_movement_speed > 0
+          then: 3
+          else: 0
+  - name: hall.local_art
+    formals: {}
+    entries: [draw, wait, show, withdraw, observe, study, observe_self, study_self, observe_ground, study_ground, observe_alpha, study_alpha]
+    fallback_entry: wait
+    tie_order: [wait, withdraw, draw, show, observe, observe_self, observe_ground, observe_alpha, study, study_self, study_ground, study_alpha]
+    rules:
+    - {entry: wait, mode: default}
+    - {entry: withdraw, mode: score, value: 0}
+    - {entry: show, mode: score, value: 2}
+    - {entry: observe, mode: score, value: 3}
+    - {entry: study, mode: score, value: 4}
+    - {entry: observe_self, mode: score, value: 3}
+    - {entry: study_self, mode: score, value: 4}
+    - {entry: observe_ground, mode: score, value: 3}
+    - {entry: study_ground, mode: score, value: 4}
+    - {entry: observe_alpha, mode: score, value: 3}
+    - {entry: study_alpha, mode: score, value: 4}
+    - entry: draw
+      mode: score
+      value: {if: {when: "actor.last_action_ref is None", then: 2, else: 0}}
+  - name: prison.respond
+    formals:
+      threshold: int
+    entries:
+    - wait
+    - answer
+    - decline
+    - permit_charge
+    fallback_entry: wait
+    tie_order:
+    - wait
+    - decline
+    - answer
+    - permit_charge
+    rules:
+    - entry: wait
+      mode: default
+    - entry: answer
+      mode: score
+      value:
+        if:
+          when:
+            le:
+            - arg: threshold
+            - ref: actor.answer_willingness
+          then: 2
+          else: 0
+    - entry: decline
+      mode: score
+      value:
+        if:
+          when: actor.heard_question is not None and actor.heard_question.topic == 'charge'
+          then:
+            if:
+              when:
+                any:
+                - lt:
+                  - ref: actor.share_willingness
+                  - arg: threshold
+                - actor.charge_used_ref is not None
+              then: 2
+              else: 0
+          else:
+            if:
+              when:
+                lt:
+                - ref: actor.answer_willingness
+                - arg: threshold
+              then: 2
+              else: 0
+    - entry: permit_charge
+      mode: score
+      value:
+        if:
+          when:
+            le:
+            - arg: threshold
+            - ref: actor.share_willingness
+          then: 2
+          else: 0
+  - name: icebar.response
+    formals:
+      threshold: int
+      response_score: int
+    entries:
+    - wait
+    - accept
+    - refuse
+    - inspect_drink
+    - drink
+    - observe_routes
+    - move
+    - cross_ice
+    - pass_door
+    - guest_accept
+    - guest_refuse
+    - guest_return
+    - guest_finish
+    - look_guard
+    - invite_guard
+    - offer_share
+    - withdraw_share
+    - finish_share
+    fallback_entry: wait
+    tie_order:
+    - wait
+    - refuse
+    - accept
+    - guest_finish
+    - guest_return
+    - finish_share
+    - guest_refuse
+    - guest_accept
+    - withdraw_share
+    - offer_share
+    - invite_guard
+    - look_guard
+    - cross_ice
+    - move
+    - pass_door
+    - observe_routes
+    - inspect_drink
+    - drink
+    rules:
+    - entry: wait
+      mode: default
+    - entry: accept
+      mode: score
+      value:
+        if:
+          when:
+            le:
+            - arg: threshold
+            - ref: actor.share_willingness
+          then:
+            arg: response_score
+          else: 0
+    - entry: refuse
+      mode: score
+      value:
+        if:
+          when:
+            lt:
+            - ref: actor.share_willingness
+            - arg: threshold
+          then:
+            arg: response_score
+          else: 0
+    - entry: inspect_drink
+      mode: score
+      value:
+        if:
+          when: actor.guest_task is not None
+          then: 8
+          else: 2
+    - entry: drink
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - actor.guest_task is None
+            - any:
+              - actor.permission_used_ref is not None
+              - lt:
+                - ref: actor.share_willingness
+                - arg: threshold
+          then: 4
+          else: 0
+    - entry: guest_accept
+      mode: score
+      value:
+        if:
+          when: actor.guest_task is None and actor.guest_willingness >= 2
+          then: 6
+          else: 0
+    - entry: guest_refuse
+      mode: score
+      value:
+        if:
+          when: actor.guest_task is None and actor.guest_willingness < 2
+          then: 6
+          else: 0
+    - entry: guest_return
+      mode: score
+      value: 6
+    - entry: guest_finish
+      mode: score
+      value: 7
+    - entry: look_guard
+      mode: score
+      value:
+        if:
+          when: actor.guest_task is not None and not actor.guest_returning and actor.site == actor.guest_destination and (actor.guard_sighting
+            is None or (actor.guard_sighting is not None and actor.guard_sighting.site != actor.site))
+          then: 4
+          else: 0
+    - entry: invite_guard
+      mode: score
+      value:
+        if:
+          when: actor.guest_task is not None and not actor.guest_returning and actor.guest_task.invitation.messenger == actor.name
+          then: 6
+          else: 0
+    - entry: offer_share
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - actor.guest_task is not None and actor.guest_task.invitation.messenger != actor.name and actor.guest_task.container
+              == payload.drink
+            - le:
+              - arg: threshold
+              - ref: actor.share_willingness
+          then: 6
+          else: 0
+    - entry: withdraw_share
+      mode: ignore
+    - entry: finish_share
+      mode: score
+      value: 7
+    - entry: observe_routes
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - all:
+              - actor.guest_task is not None
+              - actor.guest_task.invitation.messenger == actor.name
+              - actor.site != actor.guest_destination
+              - any:
+                - actor.guest_returning
+                - actor.drink_sighting is not None and actor.drink_sighting.container == actor.guest_task.container and actor.drink_sighting.holder
+                  == actor.name and not actor.drink_sighting.frozen and actor.drink_sighting.portions == 1
+            - actor.last_route_observed_site != actor.site
+          then: 3
+          else: 0
+    - entry: move
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - all:
+              - actor.guest_task is not None
+              - actor.guest_task.invitation.messenger == actor.name
+              - actor.site != actor.guest_destination
+              - any:
+                - actor.guest_returning
+                - actor.drink_sighting is not None and actor.drink_sighting.container == actor.guest_task.container and actor.drink_sighting.holder
+                  == actor.name and not actor.drink_sighting.frozen and actor.drink_sighting.portions == 1
+            - exactly_one:
+                collection:
+                  if:
+                    when:
+                      ref: actor.guest_returning
+                    then:
+                      ref: actor.known_return_steps
+                    else:
+                      ref: actor.known_guest_steps
+                as: step
+                where: step.start == actor.site and step.end == payload.destination
+          then: 4
+          else: 0
+    - entry: pass_door
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - all:
+              - actor.guest_task is not None
+              - actor.guest_task.invitation.messenger == actor.name
+              - actor.site != actor.guest_destination
+              - any:
+                - actor.guest_returning
+                - actor.drink_sighting is not None and actor.drink_sighting.container == actor.guest_task.container and actor.drink_sighting.holder
+                  == actor.name and not actor.drink_sighting.frozen and actor.drink_sighting.portions == 1
+            - exactly_one:
+                collection:
+                  if:
+                    when:
+                      ref: actor.guest_returning
+                    then:
+                      ref: actor.known_return_steps
+                    else:
+                      ref: actor.known_guest_steps
+                as: step
+                where: step.start == actor.site and step.end == payload.destination
+          then: 4
+          else: 0
+    - entry: cross_ice
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - all:
+              - actor.guest_task is not None
+              - actor.guest_task.invitation.messenger == actor.name
+              - actor.site != actor.guest_destination
+              - any:
+                - actor.guest_returning
+                - actor.drink_sighting is not None and actor.drink_sighting.container == actor.guest_task.container and actor.drink_sighting.holder
+                  == actor.name and not actor.drink_sighting.frozen and actor.drink_sighting.portions == 1
+            - exactly_one:
+                collection:
+                  if:
+                    when:
+                      ref: actor.guest_returning
+                    then:
+                      ref: actor.known_return_steps
+                    else:
+                      ref: actor.known_guest_steps
+                as: step
+                where:
+                  all:
+                  - step.start == actor.site
+                  - exists:
+                      collection: actor.known_crossings
+                      as: crossing
+                      where: crossing.key == payload.crossing and crossing.start == step.start and crossing.intended == step.end
+          then: 4
+          else: 0
+  - name: prison.guard_response
+    formals: {}
+    entries:
+    - wait
+    - observe_visitor
+    - inspect_drink
+    - accept
+    - refuse
+    - observe_routes
+    - move
+    - cross_ice
+    - pass_door
+    - arrive_bar
+    - return_post
+    - finish_visit
+    - receive_share
+    - decline_share
+    - inspect_held_drink
+    - drink
+    fallback_entry: wait
+    tie_order:
+    - wait
+    - finish_visit
+    - return_post
+    - arrive_bar
+    - refuse
+    - accept
+    - decline_share
+    - receive_share
+    - cross_ice
+    - move
+    - pass_door
+    - drink
+    - inspect_held_drink
+    - inspect_drink
+    - observe_visitor
+    - observe_routes
+    rules:
+    - entry: wait
+      mode: default
+    - entry: observe_visitor
+      mode: score
+      value: 3
+    - entry: inspect_drink
+      mode: score
+      value: 4
+    - entry: accept
+      mode: score
+      value:
+        if:
+          when: actor.drink_interest > actor.duty_priority
+          then: 6
+          else: 0
+    - entry: refuse
+      mode: score
+      value:
+        if:
+          when: actor.visit_task is not None or actor.drink_interest <= actor.duty_priority
+          then: 6
+          else: 0
+    - entry: arrive_bar
+      mode: score
+      value: 7
+    - entry: finish_visit
+      mode: score
+      value: 7
+    - entry: receive_share
+      mode: score
+      value:
+        if:
+          when: actor.drink_interest > actor.duty_priority
+          then: 6
+          else: 0
+    - entry: decline_share
+      mode: score
+      value:
+        if:
+          when: actor.drink_interest <= actor.duty_priority
+          then: 6
+          else: 0
+    - entry: inspect_held_drink
+      mode: score
+      value: 7
+    - entry: drink
+      mode: score
+      value: 6
+    - entry: return_post
+      mode: score
+      value:
+        if:
+          when:
+            any:
+            - actor.duty_priority >= actor.drink_interest
+            - actor.visit_task is not None and actor.portions_drunk > actor.visit_task.drinks_before
+            - actor.drink_sighting is not None and actor.drink_sighting.holder == actor.name and actor.drink_sighting.site ==
+              actor.site and actor.drink_sighting.portions == 0
+          then: 8
+          else: 0
+    - entry: observe_routes
+      mode: score
+      value:
+        if:
+          when: actor.visit_task is not None and actor.site != actor.visit_destination and (actor.visit_phase == 'outbound'
+            or actor.visit_phase == 'returning') and actor.last_route_observed_site != actor.site
+          then: 3
+          else: 0
+    - entry: move
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - actor.visit_task is not None and actor.site != actor.visit_destination and (actor.visit_phase == 'outbound' or
+              actor.visit_phase == 'returning')
+            - exactly_one:
+                collection:
+                  if:
+                    when: actor.visit_phase == 'returning'
+                    then:
+                      ref: actor.known_post_steps
+                    else:
+                      ref: actor.known_bar_steps
+                as: step
+                where: step.start == actor.site and step.end == payload.destination
+          then: 4
+          else: 0
+    - entry: pass_door
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - actor.visit_task is not None and actor.site != actor.visit_destination and (actor.visit_phase == 'outbound' or
+              actor.visit_phase == 'returning')
+            - exactly_one:
+                collection:
+                  if:
+                    when: actor.visit_phase == 'returning'
+                    then:
+                      ref: actor.known_post_steps
+                    else:
+                      ref: actor.known_bar_steps
+                as: step
+                where: step.start == actor.site and step.end == payload.destination
+          then: 4
+          else: 0
+    - entry: cross_ice
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - actor.visit_task is not None and actor.site != actor.visit_destination and (actor.visit_phase == 'outbound' or
+              actor.visit_phase == 'returning')
+            - exactly_one:
+                collection:
+                  if:
+                    when: actor.visit_phase == 'returning'
+                    then:
+                      ref: actor.known_post_steps
+                    else:
+                      ref: actor.known_bar_steps
+                as: step
+                where:
+                  all:
+                  - step.start == actor.site
+                  - exists:
+                      collection: actor.known_crossings
+                      as: crossing
+                      where: crossing.key == payload.crossing and crossing.start == step.start and crossing.intended == step.end
+          then: 4
+          else: 0
+  - name: resident.toward_exit
+    formals:
+      movement_score: int
+    entries:
+    - wait
+    - cross_ice
+    - move
+    - accept_torch
+    - observe_person
+    - thaw_person
+    - care_person
+    - bridge_slow
+    - carry_move
+    - carry_cross_ice
+    - carry_bridge_slow
+    - carry_pass_door
+    - strike_person
+    - bridge_rush
+    - inspect_patient
+    fallback_entry: wait
+    tie_order:
+    - wait
+    - cross_ice
+    - move
+    - accept_torch
+    - observe_person
+    - thaw_person
+    - care_person
+    - bridge_slow
+    - carry_move
+    - carry_cross_ice
+    - carry_bridge_slow
+    - carry_pass_door
+    - strike_person
+    - bridge_rush
+    - inspect_patient
+    rules:
+    - entry: bridge_slow
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - not_none:
+                ref: actor.escort_heard_ref
+            - exactly_one:
+                collection: actor.known_exit_steps
+                as: step
+                where:
+                  all:
+                  - step.start == actor.site
+                  - step.end == payload.destination
+          then:
+            arg: movement_score
+          else: 0
+    - entry: accept_torch
+      mode: ignore
+    - entry: observe_person
+      mode: ignore
+    - entry: thaw_person
+      mode: ignore
+    - entry: care_person
+      mode: score
+      value: 9
+    - entry: cross_ice
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - not_none:
+                ref: actor.escort_heard_ref
+            - exactly_one:
+                collection: actor.known_exit_steps
+                as: step
+                where:
+                  all:
+                  - step.start == actor.site
+                  - exists:
+                      collection: actor.known_crossings
+                      as: crossing
+                      where:
+                        all:
+                        - crossing.key == payload.crossing
+                        - crossing.start == step.start
+                        - crossing.intended == step.end
+          then:
+            arg: movement_score
+          else: 0
+    - entry: move
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - not_none:
+                ref: actor.escort_heard_ref
+            - exactly_one:
+                collection: actor.known_exit_steps
+                as: step
+                where:
+                  all:
+                  - step.start == actor.site
+                  - step.end == payload.destination
+          then:
+            arg: movement_score
+          else: 0
+    - entry: wait
+      mode: default
+    - entry: carry_move
+      mode: ignore
+    - entry: carry_cross_ice
+      mode: ignore
+    - entry: carry_bridge_slow
+      mode: ignore
+    - entry: carry_pass_door
+      mode: ignore
+    - entry: strike_person
+      mode: ignore
+    - entry: bridge_rush
+      mode: ignore
+    - entry: inspect_patient
+      mode: ignore
+  - name: resident.prison_exit
+    formals:
+      movement_score: int
+      light_wait_bonus: int
+      guarded_destination: str
+    entries:
+    - observe_prison_line
+    - wait_near_guide
+    - try_prison_line
+    - pass_prison_line
+    - pass_door
+    - wait
+    - cross_ice
+    - move
+    - accept_torch
+    - observe_person
+    - thaw_person
+    - care_person
+    - bridge_slow
+    - carry_move
+    - carry_cross_ice
+    - carry_bridge_slow
+    - carry_pass_door
+    - strike_person
+    - bridge_rush
+    - inspect_patient
+    fallback_entry: wait
+    tie_order:
+    - wait
+    - observe_prison_line
+    - wait_near_guide
+    - try_prison_line
+    - pass_prison_line
+    - pass_door
+    - cross_ice
+    - move
+    - accept_torch
+    - observe_person
+    - thaw_person
+    - care_person
+    - bridge_slow
+    - carry_move
+    - carry_cross_ice
+    - carry_bridge_slow
+    - carry_pass_door
+    - strike_person
+    - bridge_rush
+    - inspect_patient
+    rules:
+    - entry: observe_prison_line
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - actor.escort_heard_ref is not None
+            - exists:
+                collection: actor.known_exit_steps
+                as: step
+                where:
+                  all:
+                  - step.start == actor.site
+                  - eq:
+                    - ref: step.end
+                    - arg: guarded_destination
+          then:
+            if:
+              when: actor.prison_access.line is not None
+              then:
+                if:
+                  when: actor.prison_access.line.guardian.site != actor.site or (actor.prison_access.line.guardian.present and
+                    actor.last_action_ref != actor.prison_access.line.guardian.observation)
+                  then:
+                    add:
+                    - arg: movement_score
+                    - 1
+                  else: 0
+              else:
+                add:
+                - arg: movement_score
+                - 1
+          else: 0
+    - entry: wait_near_guide
+      mode: score
+      value:
+        add:
+        - arg: movement_score
+        - arg: light_wait_bonus
+    - entry: try_prison_line
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - not_none:
+                ref: actor.escort_heard_ref
+            - exactly_one:
+                collection: actor.known_exit_steps
+                as: step
+                where:
+                  all:
+                  - step.start == actor.site
+                  - step.end == payload.destination
+          then:
+            arg: movement_score
+          else: 0
+    - entry: pass_prison_line
+      mode: ignore
+    - entry: pass_door
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - not_none:
+                ref: actor.escort_heard_ref
+            - exactly_one:
+                collection: actor.known_exit_steps
+                as: step
+                where:
+                  all:
+                  - step.start == actor.site
+                  - step.end == payload.destination
+          then:
+            arg: movement_score
+          else: 0
+    - entry: bridge_slow
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - not_none:
+                ref: actor.escort_heard_ref
+            - exactly_one:
+                collection: actor.known_exit_steps
+                as: step
+                where:
+                  all:
+                  - step.start == actor.site
+                  - step.end == payload.destination
+          then:
+            arg: movement_score
+          else: 0
+    - entry: accept_torch
+      mode: ignore
+    - entry: observe_person
+      mode: ignore
+    - entry: thaw_person
+      mode: ignore
+    - entry: care_person
+      mode: score
+      value: 9
+    - entry: cross_ice
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - not_none:
+                ref: actor.escort_heard_ref
+            - exactly_one:
+                collection: actor.known_exit_steps
+                as: step
+                where:
+                  all:
+                  - step.start == actor.site
+                  - exists:
+                      collection: actor.known_crossings
+                      as: crossing
+                      where:
+                        all:
+                        - crossing.key == payload.crossing
+                        - crossing.start == step.start
+                        - crossing.intended == step.end
+          then:
+            arg: movement_score
+          else: 0
+    - entry: move
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - not_none:
+                ref: actor.escort_heard_ref
+            - exactly_one:
+                collection: actor.known_exit_steps
+                as: step
+                where:
+                  all:
+                  - step.start == actor.site
+                  - step.end == payload.destination
+          then:
+            arg: movement_score
+          else: 0
+    - entry: wait
+      mode: default
+    - entry: carry_move
+      mode: ignore
+    - entry: carry_cross_ice
+      mode: ignore
+    - entry: carry_bridge_slow
+      mode: ignore
+    - entry: carry_pass_door
+      mode: ignore
+    - entry: strike_person
+      mode: ignore
+    - entry: bridge_rush
+      mode: ignore
+    - entry: inspect_patient
+      mode: ignore
+  - name: resident.remain_hidden
+    formals: {}
+    entries: &id001 [wait, cross_ice, move, accept_torch, observe_person, thaw_person, bridge_slow, care_person,
+      carry_move, carry_cross_ice, carry_bridge_slow, carry_pass_door, strike_person, bridge_rush, inspect_patient]
+    fallback_entry: wait
+    tie_order: *id001
+    rules:
+    - {entry: care_person, mode: ignore}
+    - {entry: bridge_slow, mode: ignore}
+    - {entry: accept_torch, mode: ignore}
+    - {entry: observe_person, mode: ignore}
+    - {entry: thaw_person, mode: ignore}
+    - {entry: cross_ice, mode: ignore}
+    - {entry: move, mode: ignore}
+    - {entry: wait, mode: default}
+    - {entry: carry_move, mode: ignore}
+    - {entry: carry_cross_ice, mode: ignore}
+    - {entry: carry_bridge_slow, mode: ignore}
+    - {entry: carry_pass_door, mode: ignore}
+    - {entry: strike_person, mode: ignore}
+    - {entry: bridge_rush, mode: ignore}
+    - {entry: inspect_patient, mode: ignore}
+  - name: bokold.ritualist
+    formals: {}
+    entries: &id002 [ritual_advance, retreat, observe_light, approach_light, wait]
+    fallback_entry: wait
+    tie_order: *id002
+    rules:
+    - entry: ritual_advance
+      mode: score
+      value: {const: 3}
+    - entry: retreat
+      mode: score
+      value: {const: 1}
+    - {entry: observe_light, mode: ignore}
+    - {entry: approach_light, mode: ignore}
+    - {entry: wait, mode: default}
+  - name: bokold.retreater
+    formals: {}
+    entries: &id003 [retreat, ritual_advance, observe_light, approach_light, wait]
+    fallback_entry: wait
+    tie_order: *id003
+    rules:
+    - entry: retreat
+      mode: score
+      value: {const: 3}
+    - entry: ritual_advance
+      mode: score
+      value: {const: 1}
+    - {entry: observe_light, mode: ignore}
+    - {entry: approach_light, mode: ignore}
+    - {entry: wait, mode: default}
+  - name: bokold.seek_light
+    formals: {}
+    entries: &id004 [approach_light, wait, observe_light, ritual_advance, retreat]
+    fallback_entry: wait
+    tie_order: *id004
+    rules:
+    - entry: approach_light
+      mode: score
+      value: {const: 5}
+    - entry: observe_light
+      mode: score
+      value:
+        if:
+          when:
+            any:
+            - is_none: {ref: actor.light_observation_ref}
+            - not:
+                eq:
+                - {ref: actor.last_action_ref}
+                - {ref: actor.light_observation_ref}
+          then: {const: 4}
+          else: {const: 0}
+    - {entry: ritual_advance, mode: ignore}
+    - {entry: retreat, mode: ignore}
+    - {entry: wait, mode: default}
+  - name: fox.local_follow
+    formals: {}
+    entries: &id005 [fox_sniff, fox_observe_routes, fox_move, fox_cross_ice, fox_pass_door, fox_wait, fox_bridge_slow,
+      fox_bridge_rush, accept_tame]
+    fallback_entry: fox_wait
+    tie_order: *id005
+    rules:
+    - {entry: fox_wait, mode: default}
+    - entry: fox_sniff
+      mode: score
+      value: {const: 2}
+    - entry: fox_observe_routes
+      mode: score
+      value:
+        if:
+          when:
+            call:
+              ref: movement.no_known_exit
+              args: {paths: {ref: actor.known_paths}, crossings: {ref: actor.known_crossings}, bridges: {ref: actor.known_bridge_paths}, site: {ref: actor.site}}
+          then: 1
+          else: 0
+    - entry: fox_move
+      mode: score
+      value:
+        if: {when: actor.following_destination is not None and payload.destination == actor.following_destination,
+          then: 3, else: 0}
+    - entry: fox_cross_ice
+      mode: score
+      value:
+        if:
+          when:
+            exactly_one:
+              collection: {ref: actor.known_crossings}
+              as: path
+              where: path.key == payload.crossing and path.intended == actor.following_destination
+          then: 3
+          else: 0
+    - entry: fox_pass_door
+      mode: score
+      value:
+        if: {when: actor.following_destination is not None and payload.destination == actor.following_destination,
+          then: 3, else: 0}
+    - entry: fox_bridge_slow
+      mode: score
+      value:
+        if: {when: actor.following_destination is not None and payload.destination == actor.following_destination,
+          then: 3, else: 0}
+    - {entry: fox_bridge_rush, mode: score, value: 0}
+    - {entry: accept_tame, mode: score, value: 4}
+  - name: stable.local_wait
+    formals: {}
+    entries: &id006 [stable_observe_routes, stable_move, stable_cross_ice, stable_pass_door, stable_wait]
+    fallback_entry: stable_wait
+    tie_order: *id006
+    rules:
+    - {entry: stable_wait, mode: default}
+    - entry: stable_observe_routes
+      mode: score
+      value:
+        if:
+          when:
+            call:
+              ref: movement.no_known_exit
+              args: {paths: {ref: actor.known_paths}, crossings: {ref: actor.known_crossings}, bridges: {ref: actor.known_bridge_paths}, site: {ref: actor.site}}
+          then: 1
+          else: 0
+    - {entry: stable_move, mode: score, value: 0}
+    - {entry: stable_cross_ice, mode: score, value: 0}
+    - {entry: stable_pass_door, mode: score, value: 0}
+records:
+  - name: VerifiedSurvivor
+    fields:
+      - {name: name, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: observation, type: occurrence_ref}
+      - {name: payment, type: {optional: RewardReceipt}}
+    invariant: "state.site == 'palace_exit' and (state.payment is None or (state.payment is not None and state.payment.resident == state.name and state.payment.verification == state.observation))"
+  - name: RewardReceipt
+    fields:
+      - {name: resident, type: {str: [1, 48]}}
+      - {name: recipient, type: {str: [1, 48]}}
+      - {name: box, type: individual_ref}
+      - {name: verification, type: occurrence_ref}
+      - {name: action, type: occurrence_ref}
+      - {name: gold, type: {int: [1, 1200]}}
+    invariant: null
+  - name: RewardAccount
+    fields:
+      - {name: verified, type: {tuple: {item: VerifiedSurvivor, max: 6}}}
+    invariant:
+      all:
+        - unique_by: {collection: {ref: state.verified}, as: person, keys: [person.name]}
+  - name: VerifySurvivorsAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: ritual, type: {str: [1, 48]}}
+      - {name: first, type: {str: [1, 48]}}
+      - {name: second, type: {str: [1, 48]}}
+      - {name: wall, type: {str: [1, 48]}}
+      - {name: prison_one, type: {str: [1, 48]}}
+      - {name: prison_two, type: {str: [1, 48]}}
+    invariant: null
+  - name: PayRewardAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: ritual, type: {str: [1, 48]}}
+      - {name: first, type: {str: [1, 48]}}
+      - {name: second, type: {str: [1, 48]}}
+      - {name: wall, type: {str: [1, 48]}}
+      - {name: prison_one, type: {str: [1, 48]}}
+      - {name: prison_two, type: {str: [1, 48]}}
+      - {name: recipient, type: {str: [1, 48]}}
+      - {name: box, type: individual_ref}
+    invariant: null
+  - name: BalloonSeat
+    fields:
+    - {name: vehicle, type: individual_ref}
+    - {name: passenger, type: {enum: [adventurer, emma]}}
+    invariant: null
+  - name: Balloon
+    fields:
+    - {name: label, type: {str: [1, 64]}}
+    - {name: site, type: {str: [1, 48]}}
+    - {name: charges, type: {int: [0, 1]}}
+    - {name: inflated, type: bool}
+    - {name: tied, type: bool}
+    - {name: change_ref, type: {optional: occurrence_ref}}
+    - {name: power_origin, type: {optional: occurrence_ref}}
+    invariant: null
+  - name: BalloonControlAttempt
+    fields:
+    - {name: actor, type: {str: [1, 48]}}
+    - {name: balloon, type: individual_ref}
+    - {name: bear_one, type: {str: [1, 48]}}
+    - {name: bear_two, type: {str: [1, 48]}}
+    - {name: operation, type: {enum: [board, leave, untie, deflate, inflate]}}
+    invariant: null
+  - name: BalloonFlightAttempt
+    fields:
+    - {name: actor, type: {str: [1, 48]}}
+    - {name: balloon, type: individual_ref}
+    - {name: destination, type: {enum: [tower_base, tower_top]}}
+    - {name: emma, type: {optional: {str: [1, 48]}}}
+    invariant: null
+  - name: BalloonPower
+    fields:
+      - {name: label, type: {str: [1, 64]}}
+      - {name: holder, type: {str: [1, 48]}}
+      - {name: charges, type: {int: [0, 1]}}
+      - {name: origin, type: occurrence_ref}
+      - {name: change_ref, type: occurrence_ref}
+    invariant: null
+  - name: BalloonPowerSighting
+    fields:
+      - {name: balloon, type: individual_ref}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: charges, type: {int: [0, 1]}}
+      - {name: basis, type: occurrence_ref}
+    invariant: null
+  - name: ResourceObservations
+    fields:
+      - {name: display, type: {optional: MagicDisplay}}
+      - {name: display_notice_ref, type: {optional: occurrence_ref}}
+      - {name: study, type: {optional: MagicStudySighting}}
+      - {name: chest, type: {optional: ChestSighting}}
+      - {name: balloon, type: {optional: BalloonPowerSighting}}
+      - {name: power_origin, type: {optional: occurrence_ref}}
+    invariant: null
+  - name: BalloonPushAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: balloon, type: individual_ref}
+      - {name: bear_one, type: {str: [1, 48]}}
+      - {name: bear_two, type: {str: [1, 48]}}
+      - {name: destination, type: {str: [1, 48]}}
+      - {name: base_move_cost, type: {int: [1, 100000]}}
+    invariant: null
+  - name: BalloonDoorPushAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: balloon, type: individual_ref}
+      - {name: bear_one, type: {str: [1, 48]}}
+      - {name: bear_two, type: {str: [1, 48]}}
+      - {name: door, type: individual_ref}
+      - {name: destination, type: {str: [1, 48]}}
+      - {name: base_move_cost, type: {int: [1, 100000]}}
+    invariant: null
+  - name: BalloonExplanationAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: balloon, type: individual_ref}
+    invariant: null
+  - name: BalloonPowerAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: balloon, type: individual_ref}
+      - {name: bear_one, type: {str: [1, 48]}}
+      - {name: bear_two, type: {str: [1, 48]}}
+    invariant: null
+  - name: BalloonPowerTransferAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: balloon, type: individual_ref}
+      - {name: power, type: individual_ref}
+      - {name: operation, type: {enum: [withdraw, reload]}}
+      - {name: bear_one, type: {str: [1, 48]}}
+      - {name: bear_two, type: {str: [1, 48]}}
+    invariant: null
+  - name: LoadBalloonPowerAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: power, type: individual_ref}
+      - {name: torch, type: individual_ref}
+    invariant: null
+  - name: BalloonExplanation
+    fields:
+      - {name: speaker, type: {str: [1, 48]}}
+      - {name: recipient, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: balloon, type: individual_ref}
+      - {name: destination, type: {str: [1, 48]}}
+      - {name: utterance, type: occurrence_ref}
+    invariant: null
+  - name: HeardBalloonExplanation
+    fields:
+      - {name: speech, type: BalloonExplanation}
+      - {name: hearing, type: occurrence_ref}
+    invariant: null
+  - name: Queen
+    fields:
+    - {name: reward_account, type: RewardAccount}
+    - {name: guide_consumption, type: {optional: GuideConsumption}}
+    - {name: guide_step, type: {optional: GuideStepObservation}}
+    - {name: route_observation, type: {optional: RouteObservation}}
+    - name: known_sites
+      type:
+        tuple:
+          item: KnownSite
+          max: 64
+    - name: known_paths
+      type:
+        tuple:
+          item: Path
+          max: 64
+    - name: known_crossings
+      type:
+        tuple:
+          item: KnownCrossing
+          max: 16
+    - name: known_bridge_paths
+      type:
+        tuple:
+          item: Path
+          max: 16
+    - name: balance_bonus
+      type:
+        int:
+        - 0
+        - 20
+    - name: last_cross_roll
+      type:
+        optional:
+          int:
+          - 1
+          - 20
+    - name: last_cross_ref
+      type:
+        optional: occurrence_ref
+    - name: rescue_state
+      type:
+        enum:
+        - not_safe
+        - safe
+    - name: rescue_ref
+      type:
+        optional: occurrence_ref
+    - name: escort_heard_ref
+      type:
+        optional: occurrence_ref
+    - name: escort_utterance_ref
+      type:
+        optional: occurrence_ref
+    - name: escort_speaker
+      type:
+        optional:
+          str:
+          - 1
+          - 48
+    - name: escort_destination
+      type:
+        optional:
+          str:
+          - 1
+          - 48
+    - {name: attending, type: bool}
+    - {name: heard_balloon_explanation, type: {optional: HeardBalloonExplanation}}
+    - name: name
+      type:
+        str:
+        - 1
+        - 48
+    - name: site
+      type:
+        str:
+        - 1
+        - 48
+    - name: cold_state
+      type:
+        enum:
+        - mobile
+        - frozen
+        - immune
+    - name: vital
+      type: Vital
+    - name: max_movement_speed
+      type:
+        int:
+        - 1
+        - 100
+    - name: current_movement_speed
+      type:
+        int:
+        - 0
+        - 100
+    - name: cold_loss_step
+      type:
+        int:
+        - 1
+        - 100
+    - name: cold_save_bonus
+      type:
+        int:
+        - 0
+        - 20
+    - name: cold_seed
+      type:
+        int:
+        - 0
+        - 9223372036854775807
+    - name: last_cold_roll
+      type:
+        optional:
+          int:
+          - 1
+          - 20
+    - name: last_cold_ref
+      type:
+        optional: occurrence_ref
+    - name: last_action_ref
+      type:
+        optional: occurrence_ref
+    - name: last_thaw_ref
+      type:
+        optional: occurrence_ref
+    invariant: state.current_movement_speed <= state.max_movement_speed and (state.cold_state != 'frozen' or state.current_movement_speed
+      == 0)
+  - name: ObserveQueenAttempt
+    fields:
+    - name: actor
+      type:
+        str:
+        - 1
+        - 48
+    - name: site
+      type:
+        str:
+        - 1
+        - 48
+    - name: queen
+      type:
+        str:
+        - 1
+        - 48
+    invariant: null
+  - name: TowerBear
+    fields:
+    - {name: name, type: {str: [1, 48]}}
+    - {name: site, type: {str: [1, 48]}}
+    - {name: awake, type: bool}
+    - {name: attending, type: bool}
+    - {name: heard_tower_request, type: {optional: TowerRequest}}
+    - {name: tower_hearing_ref, type: {optional: occurrence_ref}}
+    - {name: tower_proposal, type: {optional: TowerOffer}}
+    - {name: heard_tower_acceptance, type: {optional: TowerAcceptance}}
+    - {name: acceptance_hearing_ref, type: {optional: occurrence_ref}}
+    - {name: heard_exit_report, type: {optional: TowerExitReport}}
+    - {name: exit_report_hearing_ref, type: {optional: occurrence_ref}}
+    - {name: trade_decision, type: {optional: TowerTradeDecision}}
+    - {name: occupancy, type: {enum: [none, blocking_balloon, aside]}}
+    - {name: clearance, type: {optional: TowerClearance}}
+    - {name: heard_clearance, type: {optional: TowerClearance}}
+    - {name: clearance_hearing_ref, type: {optional: occurrence_ref}}
+    - {name: vital, type: Vital}
+    - {name: max_movement_speed, type: {int: [1, 100]}}
+    - {name: current_movement_speed, type: {int: [0, 100]}}
+    - {name: last_action_ref, type: {optional: occurrence_ref}}
+    invariant:
+      all:
+      - state.current_movement_speed <= state.max_movement_speed and (state.vital.life == 'alive' or not state.awake)
+      - {eq: [{is_none: {ref: state.heard_tower_request}}, {is_none: {ref: state.tower_hearing_ref}}]}
+      - {eq: [{is_none: {ref: state.heard_tower_acceptance}}, {is_none: {ref: state.acceptance_hearing_ref}}]}
+      - {eq: [{is_none: {ref: state.heard_exit_report}}, {is_none: {ref: state.exit_report_hearing_ref}}]}
+      - {eq: [{is_none: {ref: state.heard_clearance}}, {is_none: {ref: state.clearance_hearing_ref}}]}
+      - state.tower_proposal is None or (state.tower_proposal is not None and state.tower_proposal.speaker == state.name)
+  - name: ObserveTowerAttempt
+    fields:
+    - {name: actor, type: {str: [1, 48]}}
+    - {name: site, type: {str: [1, 48]}}
+    - {name: alpha, type: {str: [1, 48]}}
+    - {name: bear_one, type: {str: [1, 48]}}
+    - {name: bear_two, type: {str: [1, 48]}}
+    invariant: null
+  - name: HallDrawing
+    fields:
+    - {name: artist, type: {str: [1, 48]}}
+    - {name: site, type: {str: [1, 48]}}
+    - {name: stroke, type: occurrence_ref}
+    invariant: null
+  - name: ObserveHallAttempt
+    fields:
+    - {name: actor, type: {str: [1, 48]}}
+    - {name: site, type: {str: [1, 48]}}
+    - {name: hall_one, type: {str: [1, 48]}}
+    - {name: hall_two, type: {str: [1, 48]}}
+    - {name: hall_three, type: {str: [1, 48]}}
+    - {name: hall_four, type: {str: [1, 48]}}
+    - {name: hall_five, type: {str: [1, 48]}}
+    invariant: null
+  - name: FireballZone
+    fields:
+    - name: origin
+      type:
+        str:
+        - 1
+        - 48
+    - name: aim
+      type:
+        str:
+        - 1
+        - 48
+    - name: affected_sites
+      type:
+        tuple:
+          item:
+            str:
+            - 1
+            - 48
+          max: 16
+    invariant: null
+  - name: FireballAttempt
+    fields:
+    - name: actor
+      type:
+        str:
+        - 1
+        - 48
+    - name: item
+      type: individual_ref
+    - name: area
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_captive_bear
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_prison_bokold
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_prison_guard
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_alpha
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_tower_bear_one
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_tower_bear_two
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_icebar_bear_one
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_icebar_bear_two
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_wall_resident
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_ritual_resident
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_prison_resident_one
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_prison_resident_two
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_huddled_one
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_huddled_two
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_bokold_one
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_bokold_two
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_arctic_fox_one
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_arctic_fox_two
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_arctic_fox_three
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_arctic_fox_four
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_hall_bokold_one
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_hall_bokold_two
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_hall_bokold_three
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_hall_bokold_four
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_hall_bokold_five
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_stable_bokold_one
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_stable_bokold_two
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_stable_bokold_three
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_stable_bokold_four
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_emma
+      type:
+        str:
+        - 1
+        - 48
+    invariant: null
+  - name: ChargePacket
+    fields:
+      - {name: label, type: {str: [1, 64]}}
+      - {name: holder, type: {str: [1, 48]}}
+      - {name: charges, type: {int: [0, 1]}}
+      - {name: change_ref, type: {optional: occurrence_ref}}
+    invariant: null
+  - name: ChargeReceipt
+    fields:
+      - {name: packet, type: individual_ref}
+      - {name: giver, type: {str: [1, 48]}}
+      - {name: request, type: occurrence_ref}
+      - {name: permission, type: occurrence_ref}
+      - {name: transfer, type: occurrence_ref}
+    invariant: null
+  - name: ChargePermissionAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: recipient, type: {str: [1, 48]}}
+      - {name: packet, type: individual_ref}
+    invariant: null
+  - name: TakeChargeAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: giver, type: {str: [1, 48]}}
+      - {name: packet, type: individual_ref}
+    invariant: null
+  - name: LoadChargeAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: packet, type: individual_ref}
+      - {name: torch, type: individual_ref}
+    invariant: null
+  - name: PrisonContact
+    fields:
+      - {name: name, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: observation, type: occurrence_ref}
+    invariant: null
+  - name: PrisonQuestion
+    fields:
+      - {name: speaker, type: {str: [1, 48]}}
+      - {name: recipient, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: topic, type: {enum: [yourself, charge]}}
+      - {name: utterance, type: occurrence_ref}
+    invariant: null
+  - name: PrisonAnswer
+    fields:
+      - {name: speaker, type: {str: [1, 48]}}
+      - {name: recipient, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: question, type: occurrence_ref}
+      - {name: statement, type: {enum: [once_butler, sad_here, declined, charge_granted]}}
+      - {name: packet, type: {optional: individual_ref}}
+      - {name: utterance, type: occurrence_ref}
+    invariant: (state.statement == 'charge_granted') == (state.packet is not None)
+  - name: PrisonHeardAnswer
+    fields:
+      - {name: answer, type: PrisonAnswer}
+      - {name: hearing, type: occurrence_ref}
+    invariant: null
+  - name: PrisonConversation
+    fields:
+      - {name: contacts, type: {tuple: {item: PrisonContact, max: 2}}}
+      - {name: questions, type: {tuple: {item: PrisonQuestion, max: 2}}}
+      - {name: answers, type: {tuple: {item: PrisonHeardAnswer, max: 2}}}
+      - {name: charge_receipt, type: {optional: ChargeReceipt}}
+      - {name: charge_load_ref, type: {optional: occurrence_ref}}
+    invariant: null
+  - name: PersonConversations
+    fields:
+      - {name: prison, type: PrisonConversation}
+      - {name: tower, type: {optional: TowerConversation}}
+    invariant: null
+  - name: TowerRequest
+    fields:
+      - {name: speaker, type: {str: [1, 48]}}
+      - {name: recipient, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: utterance, type: occurrence_ref}
+    invariant: null
+  - name: TowerOffer
+    fields:
+      - {name: speaker, type: {str: [1, 48]}}
+      - {name: recipient, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: request, type: occurrence_ref}
+      - {name: item, type: individual_ref}
+      - {name: condition, type: {enum: [emma_leaves_alive]}}
+      - {name: utterance, type: occurrence_ref}
+    invariant: null
+  - name: TowerConversation
+    fields:
+      - {name: request, type: TowerRequest}
+      - {name: offer, type: {optional: TowerOffer}}
+      - {name: hearing, type: {optional: occurrence_ref}}
+      - {name: acceptance, type: {optional: TowerAcceptance}}
+    invariant:
+      all:
+      - {eq: [{is_none: {ref: state.offer}}, {is_none: {ref: state.hearing}}]}
+      - state.offer is None or (state.offer is not None and state.offer.request == state.request.utterance and state.offer.speaker == state.request.recipient and state.offer.recipient == state.request.speaker)
+      - state.acceptance is None or (state.acceptance is not None and state.offer is not None and state.acceptance.offer == state.offer.utterance and state.acceptance.speaker == state.request.speaker and state.acceptance.recipient == state.request.recipient)
+  - name: TowerAcceptance
+    fields:
+      - {name: speaker, type: {str: [1, 48]}}
+      - {name: recipient, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: offer, type: occurrence_ref}
+      - {name: utterance, type: occurrence_ref}
+    invariant: null
+  - name: TowerClearance
+    fields:
+      - {name: speaker, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: acceptance, type: occurrence_ref}
+      - {name: offer, type: occurrence_ref}
+      - {name: utterance, type: occurrence_ref}
+    invariant: null
+  - name: AcceptAlphaAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: recipient, type: {str: [1, 48]}}
+      - {name: offer, type: occurrence_ref}
+    invariant: null
+  - name: TowerExitReport
+    fields:
+      - {name: speaker, type: {str: [1, 48]}}
+      - {name: recipient, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: offer, type: occurrence_ref}
+      - {name: sighting, type: PersonSighting}
+      - {name: utterance, type: occurrence_ref}
+    invariant: "state.sighting.subject == 'emma' and state.sighting.site == 'palace_exit' and state.sighting.life == 'alive'"
+  - name: TowerTradeDecision
+    fields:
+      - {name: offer, type: occurrence_ref}
+      - {name: report, type: occurrence_ref}
+      - {name: hearing, type: occurrence_ref}
+      - {name: item, type: individual_ref}
+      - {name: recipient, type: {str: [1, 48]}}
+      - {name: decision, type: {enum: [delivered, withdrawn]}}
+      - {name: action, type: occurrence_ref}
+    invariant: null
+  - name: ReportAlphaAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: recipient, type: {str: [1, 48]}}
+      - {name: offer, type: occurrence_ref}
+      - {name: observation, type: occurrence_ref}
+    invariant: null
+  - name: AskAlphaAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: recipient, type: {str: [1, 48]}}
+    invariant: null
+  - name: ProposeAlphaAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: recipient, type: {str: [1, 48]}}
+      - {name: item, type: individual_ref}
+    invariant: null
+  - name: PrisonVoice
+    fields:
+      - {name: name, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: awake, type: bool}
+      - {name: attending, type: bool}
+      - {name: vital, type: Vital}
+      - {name: answer_willingness, type: {int: [0, 3]}}
+      - {name: share_willingness, type: {int: [0, 3]}}
+      - {name: personal_fact, type: {enum: [once_butler, sad_here]}}
+      - {name: heard_question, type: {optional: PrisonQuestion}}
+      - {name: question_hearing_ref, type: {optional: occurrence_ref}}
+      - {name: answer, type: {optional: PrisonAnswer}}
+      - {name: charge_used_ref, type: {optional: occurrence_ref}}
+      - {name: last_action_ref, type: {optional: occurrence_ref}}
+    invariant:
+      all:
+        - {eq: [{is_none: {ref: state.heard_question}}, {is_none: {ref: state.question_hearing_ref}}]}
+        - state.answer is None or (state.answer is not None and state.answer.speaker == state.name)
+        - state.vital.life == 'alive' or not state.awake
+  - name: LookPrisonVoicesAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: captive, type: {str: [1, 48]}}
+      - {name: bokold, type: {str: [1, 48]}}
+    invariant: null
+  - name: AskPrisonAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: recipient, type: {str: [1, 48]}}
+      - {name: topic, type: {enum: [yourself, charge]}}
+    invariant: null
+  - name: AnswerPrisonAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: recipient, type: {str: [1, 48]}}
+    invariant: null
+  - name: RescueEpisode
+    fields:
+      - {name: start_ref, type: occurrence_ref}
+      - {name: elapsed_cold, type: {int: [0, 5]}}
+      - {name: last_cold_ref, type: {optional: occurrence_ref}}
+    invariant: (state.elapsed_cold == 0 and state.last_cold_ref is None) or (state.elapsed_cold > 0 and state.last_cold_ref is not None)
+  - name: Vital
+    fields:
+      - {name: life, type: {enum: [alive, incapacitated, dead]}}
+      - {name: endurance, type: {int: [0, 100]}}
+      - {name: max_endurance, type: {int: [1, 100]}}
+      - {name: change_ref, type: {optional: occurrence_ref}}
+      - {name: death_ref, type: {optional: occurrence_ref}}
+      - {name: rescue_episode, type: {optional: RescueEpisode}}
+    invariant:
+      all:
+        - state.endurance <= state.max_endurance
+        - (state.life == 'alive' and state.endurance > 0) or (state.life != 'alive' and state.endurance == 0)
+        - state.death_ref is None or state.life == 'dead'
+        - state.life != 'dead' or state.rescue_episode is None
+  - name: IceElemental
+    fields:
+      - {name: site, type: {str: [1, 48]}}
+      - {name: known_destination, type: {str: [1, 48]}}
+      - {name: max_movement_speed, type: {int: [1, 5]}}
+      - {name: current_movement_speed, type: {int: [0, 5]}}
+      - {name: cold_state, type: {enum: [mobile, frozen, immune]}}
+      - {name: vital, type: Vital}
+      - {name: cold_save_bonus, type: {int: [0, 20]}}
+      - {name: cold_loss_step, type: {int: [1, 5]}}
+      - {name: cold_seed, type: {int: [0, 9223372036854775807]}}
+      - {name: last_cold_roll, type: {optional: {int: [1, 20]}}}
+      - {name: last_cold_ref, type: {optional: occurrence_ref}}
+      - {name: last_move_ref, type: {optional: occurrence_ref}}
+      - {name: last_wait_ref, type: {optional: occurrence_ref}}
+      - {name: target_sighting, type: {optional: ElementalTargetSighting}}
+      - {name: last_breath_roll, type: {optional: {int: [1, 20]}}}
+      - {name: last_breath_ref, type: {optional: occurrence_ref}}
+      - {name: last_observe_origin, type: {optional: {str: [1, 48]}}}
+      - {name: last_observe_ref, type: {optional: occurrence_ref}}
+    invariant:
+      all:
+        - state.current_movement_speed <= state.max_movement_speed
+        - (state.cold_state != 'frozen') or (state.current_movement_speed == 0)
+  - name: ElementalBasis
+    fields:
+      - {name: ref, type: actor_ref}
+      - {name: site, type: {str: [1, 48]}}
+    invariant: null
+  - name: ElementalTargetSighting
+    fields:
+      - {name: origin, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: observation, type: occurrence_ref}
+    invariant: null
+  - name: ElementalBreathAttempt
+    fields:
+    - name: actor
+      type: actor_ref
+    - name: area
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_captive_bear
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_prison_bokold
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_prison_guard
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_alpha
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_tower_bear_one
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_tower_bear_two
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_icebar_bear_one
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_icebar_bear_two
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_wall_resident
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_ritual_resident
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_prison_resident_one
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_prison_resident_two
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_huddled_one
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_huddled_two
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_bokold_one
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_bokold_two
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_arctic_fox_one
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_arctic_fox_two
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_arctic_fox_three
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_arctic_fox_four
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_hall_bokold_one
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_hall_bokold_two
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_hall_bokold_three
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_hall_bokold_four
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_hall_bokold_five
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_stable_bokold_one
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_stable_bokold_two
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_stable_bokold_three
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_stable_bokold_four
+      type:
+        str:
+        - 1
+        - 48
+    - name: subject
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim_emma
+      type:
+        str:
+        - 1
+        - 48
+    invariant: null
+  - name: ElementalObserveAttempt
+    fields:
+      - {name: actor, type: actor_ref}
+      - {name: subject, type: {str: [1, 48]}}
+    invariant: null
+  - name: ElementalDomain
+    fields:
+      - {name: members, type: {tuple: {item: ElementalBasis, max: 1}}}
+    invariant: null
+  - name: ElementalDeathBasis
+    fields:
+      - {name: ref, type: actor_ref}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: vital, type: Vital}
+    invariant: null
+  - name: ElementalDeathDomain
+    fields:
+      - {name: members, type: {tuple: {item: ElementalDeathBasis, max: 1}}}
+    invariant: null
+  - name: ElementalCharge
+    fields:
+      - {name: label, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: holder, type: {optional: {str: [1, 48]}}}
+      - {name: units, type: {int: [0, 1]}}
+      - {name: elemental, type: actor_ref}
+      - {name: death_ref, type: occurrence_ref}
+      - {name: formed_ref, type: occurrence_ref}
+      - {name: taken_ref, type: {optional: occurrence_ref}}
+      - {name: load_ref, type: {optional: occurrence_ref}}
+    invariant:
+      all:
+        - "state.holder is None or state.taken_ref is not None"
+        - "state.units == 1 or state.load_ref is not None"
+        - "state.death_ref != state.formed_ref"
+  - name: ElementalChargeLoadAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: packet, type: individual_ref}
+      - {name: storage, type: individual_ref}
+    invariant: null
+  - name: ElementalSighting
+    fields:
+      - {name: subject, type: actor_ref}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: observation, type: occurrence_ref}
+    invariant: null
+  - name: ElementalAttempt
+    fields:
+      - {name: actor, type: actor_ref}
+    invariant: null
+  - name: FocusPersonAttempt
+    fields:
+    - name: actor
+      type:
+        str:
+        - 1
+        - 48
+    - name: mirror
+      type: individual_ref
+    - name: torch
+      type: individual_ref
+    - name: victim
+      type:
+        str:
+        - 1
+        - 48
+    invariant: null
+  - name: FocusElementalAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: mirror, type: individual_ref}
+      - {name: torch, type: individual_ref}
+      - {name: victim, type: actor_ref}
+    invariant: null
+  - name: LoadFirelockAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: item, type: individual_ref}
+      - {name: torch, type: individual_ref}
+    invariant: null
+  - name: MoveMagicCustodyAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: item, type: individual_ref}
+    invariant: null
+  - name: Path
+    fields:
+      - {name: start, type: {str: [1, 48]}}
+      - {name: end, type: {str: [1, 48]}}
+      - {name: base_move_cost, type: {int: [1, 100000]}}
+    invariant: {not: {eq: [{ref: state.start}, {ref: state.end}]}}
+  - name: ClimbPath
+    fields:
+      - {name: start, type: {str: [1, 48]}}
+      - {name: end, type: {str: [1, 48]}}
+      - {name: distance_ft, type: {int: [1, 100]}}
+    invariant: state.start != state.end
+  - name: KnownClimb
+    fields:
+      - {name: route, type: ClimbPath}
+      - {name: observation, type: occurrence_ref}
+    invariant: null
+  - name: ClimbAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: item, type: individual_ref}
+      - {name: destination, type: {str: [1, 48]}}
+      - {name: distance_ft, type: {int: [1, 100]}}
+    invariant: null
+  - name: FloorRegion
+    fields:
+      - {name: key, type: {str: [1, 48]}}
+      - {name: sites, type: {tuple: {item: {str: [1, 48]}, max: 32}}}
+      - {name: frozen, type: bool}
+      - {name: change_ref, type: {optional: occurrence_ref}}
+    invariant: null
+  - name: FloorSighting
+    fields:
+      - {name: key, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: frozen, type: bool}
+      - {name: change_ref, type: {optional: occurrence_ref}}
+      - {name: observation, type: occurrence_ref}
+    invariant: null
+  - name: FloorAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: torch, type: individual_ref}
+      - {name: floor_key, type: {str: [1, 48]}}
+    invariant: null
+  - name: RegionCrossing
+    fields:
+      - {name: key, type: {str: [1, 48]}}
+      - {name: start, type: {str: [1, 48]}}
+      - {name: intended, type: {str: [1, 48]}}
+      - {name: collision, type: {str: [1, 48]}}
+      - {name: floor_key, type: {str: [1, 48]}}
+      - {name: base_move_cost, type: {int: [1, 100000]}}
+      - {name: difficulty, type: {int: [2, 40]}}
+      - {name: die_sides, type: {int: [2, 1000]}}
+      - {name: success_followup, type: {optional: {str: [1, 48]}}}
+      - {name: failure_followup, type: {optional: {str: [1, 48]}}}
+    invariant: null
+  - name: KnownCrossing
+    fields:
+      - {name: key, type: {str: [1, 48]}}
+      - {name: start, type: {str: [1, 48]}}
+      - {name: intended, type: {str: [1, 48]}}
+      - {name: base_move_cost, type: {int: [1, 100000]}}
+    invariant: null
+  - name: MovementResolution
+    fields:
+      - {name: site, type: {str: [1, 48]}}
+      - {name: succeeded, type: bool}
+      - {name: roll, type: {optional: {int: [1, 1000]}}}
+      - {name: next_seed, type: {int: [0, 9223372036854775807]}}
+    invariant: null
+  - name: KnownResident
+    fields:
+      - {name: name, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: observation, type: {optional: occurrence_ref}}
+    invariant: null
+  - name: TorchOffer
+    fields:
+      - {name: speaker, type: {str: [1, 48]}}
+      - {name: recipient, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: destination, type: {str: [1, 48]}}
+      - {name: torch, type: individual_ref}
+      - {name: utterance, type: occurrence_ref}
+    invariant: null
+  - name: PrisonLineSighting
+    fields:
+      - {name: guardian, type: GuardSighting}
+      - {name: paths, type: {tuple: {item: Path, max: 8}}}
+    invariant: null
+  - name: PrisonLineAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: guardian, type: {str: [1, 48]}}
+      - {name: destination, type: {str: [1, 48]}}
+      - {name: base_move_cost, type: {int: [1, 100000]}}
+    invariant: null
+  - name: PrisonBarsSighting
+    fields:
+      - {name: individual, type: individual_ref}
+      - {name: label, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: outside, type: {enum: [prison_holding]}}
+      - {name: inside, type: {enum: [captive_cell]}}
+      - {name: opened, type: bool}
+      - {name: change_ref, type: {optional: occurrence_ref}}
+      - {name: observation, type: occurrence_ref}
+    invariant: state.site == state.outside or state.site == state.inside
+  - name: PrisonBarsAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: bars, type: individual_ref}
+    invariant: null
+  - name: SetPrisonBarsAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: bars, type: individual_ref}
+      - {name: opened, type: bool}
+    invariant: null
+  - name: PassPrisonBarsAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: bars, type: individual_ref}
+      - {name: destination, type: {str: [1, 48]}}
+      - {name: base_move_cost, type: {int: [1, 100000]}}
+    invariant: null
+  - name: ChandelierSighting
+    fields:
+      - {name: notice, type: {str: [1, 256]}}
+      - {name: observation, type: occurrence_ref}
+      - {name: mount_observed, type: bool}
+    invariant: null
+  - name: PersonSighting
+    fields:
+      - {name: subject, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: cold_state, type: {enum: [mobile, frozen, immune]}}
+      - {name: life, type: {enum: [alive, incapacitated, dead]}}
+      - {name: observation, type: occurrence_ref}
+    invariant: null
+  - name: KnownSite
+    fields:
+      - {name: site, type: {str: [1, 48]}}
+    invariant: null
+  - name: RouteObservation
+    fields:
+      - {name: site, type: {str: [1, 48]}}
+      - {name: action, type: occurrence_ref}
+    invariant: null
+  - name: GuideStepObservation
+    fields:
+      - {name: motion, type: ActorMotion}
+      - {name: observation, type: occurrence_ref}
+      - {name: invitation, type: occurrence_ref}
+      - {name: hearing, type: occurrence_ref}
+    invariant: null
+  - name: GuideConsumption
+    fields:
+      - {name: step, type: occurrence_ref}
+      - {name: action, type: occurrence_ref}
+      - {name: settlement, type: occurrence_ref}
+    invariant: null
+  - name: Coverage
+    fields:
+      - {name: origin, type: {str: [1, 48]}}
+      - {name: near_sites, type: {tuple: {item: {str: [1, 48]}, max: 16}}}
+      - {name: mid_sites, type: {tuple: {item: {str: [1, 48]}, max: 16}}}
+      - {name: far_sites, type: {tuple: {item: {str: [1, 48]}, max: 16}}}
+    invariant:
+      all:
+        - none_matching:
+            collection: {ref: state.near_sites}
+            as: near_site
+            where:
+              any:
+                - not:
+                    exactly_one:
+                      collection: state.near_sites
+                      as: near_copy
+                      where:
+                        eq:
+                        - ref: near_copy
+                        - ref: near_site
+                - none_matching:
+                    collection: state.mid_sites
+                    as: mid_site
+                    where:
+                      eq:
+                      - ref: mid_site
+                      - ref: near_site
+        - none_matching:
+            collection: {ref: state.mid_sites}
+            as: mid_site
+            where:
+              any:
+                - not:
+                    exactly_one:
+                      collection: state.mid_sites
+                      as: mid_copy
+                      where:
+                        eq:
+                        - ref: mid_copy
+                        - ref: mid_site
+                - none_matching:
+                    collection: state.far_sites
+                    as: far_site
+                    where:
+                      eq:
+                      - ref: far_site
+                      - ref: mid_site
+        - none_matching:
+            collection: {ref: state.far_sites}
+            as: far_site
+            where:
+              not:
+                exactly_one:
+                  collection: state.far_sites
+                  as: far_copy
+                  where:
+                    eq:
+                    - ref: far_copy
+                    - ref: far_site
+  - name: DepartureSummary
+    fields:
+      - {name: action_ref, type: occurrence_ref}
+      - {name: ritual_status, type: {enum: [active, interrupted, completed]}}
+      - {name: ritual_resident_safe, type: bool}
+      - {name: huddled_one_safe, type: bool}
+      - {name: huddled_two_safe, type: bool}
+      - {name: wall_resident_safe, type: bool}
+      - {name: prison_resident_one_safe, type: bool}
+      - {name: prison_resident_two_safe, type: bool}
+      - {name: everflame_charges, type: {int: [0, 5]}}
+      - {name: reservoir_charges, type: {int: [0, 2]}}
+    invariant: null
+  - name: PassageDoor
+    fields:
+      - {name: label, type: {str: [1, 48]}}
+      - {name: front, type: {str: [1, 48]}}
+      - {name: back, type: {str: [1, 48]}}
+      - {name: base_move_cost, type: {int: [1, 100000]}}
+      - {name: frozen, type: bool}
+      - {name: opened, type: bool}
+      - {name: change_ref, type: {optional: occurrence_ref}}
+    invariant: state.front != state.back and not (state.frozen and state.opened)
+  - name: PrisonBars
+    fields:
+      - {name: label, type: {str: [1, 48]}}
+      - {name: outside, type: {enum: [prison_holding]}}
+      - {name: inside, type: {enum: [captive_cell]}}
+      - {name: base_move_cost, type: {int: [10000, 10000]}}
+      - {name: opened, type: bool}
+      - {name: change_ref, type: {optional: occurrence_ref}}
+    invariant: state.outside != state.inside
+  - name: DoorAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: door, type: individual_ref}
+    invariant: null
+  - name: PassDoorAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: door, type: individual_ref}
+      - {name: destination, type: {str: [1, 48]}}
+      - {name: base_move_cost, type: {int: [1, 100000]}}
+    invariant: null
+  - name: ThawDoorAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: door, type: individual_ref}
+      - {name: torch, type: individual_ref}
+    invariant: null
+  - name: DrinkAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: drink, type: individual_ref}
+    invariant: null
+  - name: DrinkConsumption
+    fields:
+      - {name: consumer, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: container, type: individual_ref}
+      - {name: action, type: occurrence_ref}
+    invariant: null
+  - name: DrinkShareOffer
+    fields:
+      - {name: speaker, type: {str: [1, 48]}}
+      - {name: recipient, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: container, type: individual_ref}
+      - {name: container_change_ref, type: {optional: occurrence_ref}}
+      - {name: utterance, type: occurrence_ref}
+    invariant: state.speaker != state.recipient
+  - name: DrinkShareWithdrawal
+    fields:
+      - {name: speaker, type: {str: [1, 48]}}
+      - {name: recipient, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: offer, type: occurrence_ref}
+      - {name: utterance, type: occurrence_ref}
+    invariant: state.speaker != state.recipient
+  - name: DrinkShareReceipt
+    fields:
+      - {name: offer, type: occurrence_ref}
+      - {name: giver, type: {str: [1, 48]}}
+      - {name: container, type: individual_ref}
+      - {name: transfer, type: occurrence_ref}
+    invariant: null
+  - name: ShareDrinkAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: guardian, type: {str: [1, 48]}}
+      - {name: drink, type: individual_ref}
+    invariant: null
+  - name: ReceiveDrinkAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: giver, type: {str: [1, 48]}}
+      - {name: drink, type: individual_ref}
+      - {name: offer, type: occurrence_ref}
+    invariant: null
+  - name: DrinkPairAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: origin, type: individual_ref}
+      - {name: destination, type: individual_ref}
+      - {name: bear_one, type: {str: [1, 48]}}
+      - {name: bear_two, type: {str: [1, 48]}}
+    invariant: null
+  - name: DrinkRequest
+    fields:
+      - {name: speaker, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: origin, type: individual_ref}
+      - {name: destination, type: individual_ref}
+      - {name: utterance, type: occurrence_ref}
+    invariant: state.origin != state.destination
+  - name: DrinkReply
+    fields:
+      - {name: speaker, type: {str: [1, 48]}}
+      - {name: recipient, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: request, type: occurrence_ref}
+      - {name: origin, type: individual_ref}
+      - {name: destination, type: individual_ref}
+      - {name: accepted, type: bool}
+      - {name: utterance, type: occurrence_ref}
+      - {name: hearing, type: {optional: occurrence_ref}}
+    invariant: state.origin != state.destination
+  - name: GuestStep
+    fields:
+      - {name: start, type: {str: [1, 48]}}
+      - {name: end, type: {str: [1, 48]}}
+    invariant: state.start != state.end
+  - name: InviteGuestAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: messenger, type: {str: [1, 48]}}
+      - {name: drink, type: individual_ref}
+    invariant: null
+  - name: GuestRequest
+    fields:
+      - {name: speaker, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: messenger, type: {str: [1, 48]}}
+      - {name: drink, type: individual_ref}
+      - {name: utterance, type: occurrence_ref}
+    invariant: null
+  - name: GuestDecision
+    fields:
+      - {name: request, type: occurrence_ref}
+      - {name: accepted, type: bool}
+      - {name: action, type: occurrence_ref}
+    invariant: null
+  - name: GuestTask
+    fields:
+      - {name: invitation, type: GuestRequest}
+      - {name: container, type: individual_ref}
+      - {name: acceptance, type: occurrence_ref}
+    invariant: null
+  - name: GuardSighting
+    fields:
+      - {name: name, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: present, type: bool}
+      - {name: observation, type: occurrence_ref}
+    invariant: null
+  - name: ActorMotion
+    fields:
+      - {name: name, type: {str: [1, 48]}}
+      - {name: start, type: {str: [1, 48]}}
+      - {name: end, type: {str: [1, 48]}}
+      - {name: action, type: occurrence_ref}
+    invariant: null
+  - name: ScentStep
+    fields:
+    - {name: motion, type: ActorMotion}
+    - {name: deposited, type: occurrence_ref}
+    invariant: null
+  - name: ScentSighting
+    fields:
+    - {name: step, type: ScentStep}
+    - {name: observation, type: occurrence_ref}
+    - {name: window, type: occurrence_ref}
+    invariant: null
+  - name: PrisonInvitation
+    fields:
+      - {name: speaker, type: {str: [1, 48]}}
+      - {name: recipient, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: drink, type: individual_ref}
+      - {name: destination, type: {str: [1, 48]}}
+      - {name: origin_request, type: occurrence_ref}
+      - {name: utterance, type: occurrence_ref}
+    invariant: null
+  - name: PrisonReply
+    fields:
+      - {name: speaker, type: {str: [1, 48]}}
+      - {name: recipient, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: for_request, type: occurrence_ref}
+      - {name: accepted, type: bool}
+      - {name: utterance, type: occurrence_ref}
+    invariant: null
+  - name: PrisonVisitTask
+    fields:
+      - {name: invitation, type: PrisonInvitation}
+      - {name: acceptance, type: occurrence_ref}
+      - {name: drinks_before, type: {int: [0, 1000000]}}
+    invariant: null
+  - name: LookPrisonAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: resident_one, type: {str: [1, 48]}}
+      - {name: resident_two, type: {str: [1, 48]}}
+    invariant: null
+  - name: LookGuardAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: guardian, type: {str: [1, 48]}}
+    invariant: null
+  - name: InviteGuardAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: guardian, type: {str: [1, 48]}}
+      - {name: drink, type: individual_ref}
+    invariant: null
+  - name: GuardInspectAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: messenger, type: {str: [1, 48]}}
+      - {name: drink, type: individual_ref}
+    invariant: null
+  - name: LookVisitorAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: messenger, type: {str: [1, 48]}}
+    invariant: null
+  - name: PrisonGuard
+    fields:
+      - {name: name, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: awake, type: bool}
+      - {name: attending, type: bool}
+      - {name: vital, type: Vital}
+      - {name: drink_interest, type: {int: [0, 3]}}
+      - {name: duty_priority, type: {int: [0, 3]}}
+      - {name: visitor_sightings, type: {tuple: {item: GuardSighting, max: 2}}}
+      - {name: heard_invitation, type: {optional: PrisonInvitation}}
+      - {name: invitation_hearing_ref, type: {optional: occurrence_ref}}
+      - {name: drink_sighting, type: {optional: DrinkSighting}}
+      - {name: visit_decision, type: {optional: GuestDecision}}
+      - {name: visit_destination, type: {optional: {str: [1, 48]}}}
+      - {name: last_action_ref, type: {optional: occurrence_ref}}
+      - {name: visit_task, type: {optional: PrisonVisitTask}}
+      - {name: visit_phase, type: {enum: [on_duty, outbound, sharing, returning]}}
+      - {name: finished_visit_request, type: {optional: occurrence_ref}}
+      - {name: finished_visit_ref, type: {optional: occurrence_ref}}
+      - {name: max_movement_speed, type: {int: [1, 100]}}
+      - {name: current_movement_speed, type: {int: [0, 100]}}
+      - {name: balance_bonus, type: {int: [0, 100]}}
+      - {name: known_sites, type: {tuple: {item: KnownSite, max: 32}}}
+      - {name: known_paths, type: {tuple: {item: Path, max: 32}}}
+      - {name: known_crossings, type: {tuple: {item: KnownCrossing, max: 32}}}
+      - {name: known_bridge_paths, type: {tuple: {item: Path, max: 8}}}
+      - {name: known_bar_steps, type: {tuple: {item: GuestStep, max: 32}}}
+      - {name: known_post_steps, type: {tuple: {item: GuestStep, max: 32}}}
+      - {name: last_cross_roll, type: {optional: {int: [1, 1000]}}}
+      - {name: last_cross_ref, type: {optional: occurrence_ref}}
+      - {name: last_route_observed_site, type: {optional: {str: [1, 48]}}}
+      - {name: last_route_observation_ref, type: {optional: occurrence_ref}}
+      - {name: heard_share, type: {optional: DrinkShareOffer}}
+      - {name: share_hearing_ref, type: {optional: occurrence_ref}}
+      - {name: share_withdrawal, type: {optional: DrinkShareWithdrawal}}
+      - {name: share_withdrawal_hearing_ref, type: {optional: occurrence_ref}}
+      - {name: share_decision, type: {optional: GuestDecision}}
+      - {name: share_receipt, type: {optional: DrinkShareReceipt}}
+      - {name: portions_drunk, type: {int: [0, 1000000]}}
+      - {name: last_drink_ref, type: {optional: occurrence_ref}}
+    invariant:
+      all:
+        - {eq: [{is_none: {ref: state.heard_invitation}}, {is_none: {ref: state.invitation_hearing_ref}}]}
+        - {eq: [state.visit_phase == 'on_duty', {is_none: {ref: state.visit_task}}]}
+        - {eq: [state.visit_phase == 'outbound' or state.visit_phase == 'returning', {not_none: {ref: state.visit_destination}}]}
+        - {eq: [{is_none: {ref: state.finished_visit_request}}, {is_none: {ref: state.finished_visit_ref}}]}
+        - {eq: [{is_none: {ref: state.last_route_observed_site}}, {is_none: {ref: state.last_route_observation_ref}}]}
+        - state.current_movement_speed <= state.max_movement_speed
+        - {eq: [{is_none: {ref: state.heard_share}}, {is_none: {ref: state.share_hearing_ref}}]}
+        - {eq: [{is_none: {ref: state.share_withdrawal}}, {is_none: {ref: state.share_withdrawal_hearing_ref}}]}
+        - {eq: [state.portions_drunk == 0, {is_none: {ref: state.last_drink_ref}}]}
+        - state.vital.life == 'alive' or not state.awake
+  - name: BarBear
+    fields:
+      - {name: name, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: awake, type: bool}
+      - {name: attending, type: bool}
+      - {name: vital, type: Vital}
+      - {name: share_willingness, type: {int: [0, 3]}}
+      - {name: drink_sighting, type: {optional: DrinkSighting}}
+      - {name: portions_drunk, type: {int: [0, 1000000]}}
+      - {name: last_drink_ref, type: {optional: occurrence_ref}}
+      - {name: heard_request, type: {optional: DrinkRequest}}
+      - {name: hearing_ref, type: {optional: occurrence_ref}}
+      - {name: reply_request, type: {optional: occurrence_ref}}
+      - {name: reply_accept, type: {optional: bool}}
+      - {name: reply_action, type: {optional: occurrence_ref}}
+      - {name: permission_used_ref, type: {optional: occurrence_ref}}
+      - {name: last_action_ref, type: {optional: occurrence_ref}}
+      - {name: max_movement_speed, type: {int: [1, 100]}}
+      - {name: current_movement_speed, type: {int: [0, 100]}}
+      - {name: balance_bonus, type: {int: [0, 100]}}
+      - {name: known_sites, type: {tuple: {item: KnownSite, max: 32}}}
+      - {name: known_paths, type: {tuple: {item: Path, max: 32}}}
+      - {name: known_crossings, type: {tuple: {item: KnownCrossing, max: 32}}}
+      - {name: known_bridge_paths, type: {tuple: {item: Path, max: 8}}}
+      - {name: last_cross_roll, type: {optional: {int: [1, 1000]}}}
+      - {name: last_cross_ref, type: {optional: occurrence_ref}}
+      - {name: heard_guest, type: {optional: GuestRequest}}
+      - {name: guest_hearing_ref, type: {optional: occurrence_ref}}
+      - {name: guest_decision, type: {optional: GuestDecision}}
+      - {name: guest_task, type: {optional: GuestTask}}
+      - {name: guest_willingness, type: {int: [0, 3]}}
+      - {name: guest_destination, type: {str: [1, 48]}}
+      - {name: known_guest_steps, type: {tuple: {item: GuestStep, max: 32}}}
+      - {name: last_route_observed_site, type: {optional: {str: [1, 48]}}}
+      - {name: last_route_observation_ref, type: {optional: occurrence_ref}}
+      - {name: guard_sighting, type: {optional: GuardSighting}}
+      - {name: last_guard_request, type: {optional: occurrence_ref}}
+      - {name: last_guard_invitation_ref, type: {optional: occurrence_ref}}
+      - {name: guard_reply, type: {optional: PrisonReply}}
+      - {name: guard_reply_hearing_ref, type: {optional: occurrence_ref}}
+      - {name: guest_returning, type: bool}
+      - {name: last_guest_return_ref, type: {optional: occurrence_ref}}
+      - {name: finished_guest_request, type: {optional: occurrence_ref}}
+      - {name: finished_guest_ref, type: {optional: occurrence_ref}}
+      - {name: known_return_steps, type: {tuple: {item: GuestStep, max: 32}}}
+      - {name: share_offer, type: {optional: DrinkShareOffer}}
+      - {name: share_used_ref, type: {optional: occurrence_ref}}
+      - {name: share_withdrawn_ref, type: {optional: occurrence_ref}}
+    invariant:
+      all:
+        - {eq: [{is_none: {ref: state.heard_request}}, {is_none: {ref: state.hearing_ref}}]}
+        - {eq: [{is_none: {ref: state.reply_request}}, {is_none: {ref: state.reply_accept}}]}
+        - {eq: [{is_none: {ref: state.reply_request}}, {is_none: {ref: state.reply_action}}]}
+        - state.permission_used_ref is None or (state.reply_accept is not None and state.reply_accept)
+        - {eq: [{eq: [{ref: state.portions_drunk}, 0]}, {is_none: {ref: state.last_drink_ref}}]}
+        - state.current_movement_speed <= state.max_movement_speed
+        - {eq: [{is_none: {ref: state.heard_guest}}, {is_none: {ref: state.guest_hearing_ref}}]}
+        - {eq: [{is_none: {ref: state.last_route_observed_site}}, {is_none: {ref: state.last_route_observation_ref}}]}
+        - {eq: [{is_none: {ref: state.last_guard_request}}, {is_none: {ref: state.last_guard_invitation_ref}}]}
+        - {eq: [{is_none: {ref: state.guard_reply}}, {is_none: {ref: state.guard_reply_hearing_ref}}]}
+        - state.guest_task is None or (state.guest_task is not None and state.guest_decision is not None and state.guest_decision.accepted and state.guest_decision.request == state.guest_task.invitation.utterance and state.guest_decision.action == state.guest_task.acceptance)
+        - not state.guest_returning or (state.guest_task is not None and state.last_guest_return_ref is not None)
+        - {eq: [{is_none: {ref: state.finished_guest_request}}, {is_none: {ref: state.finished_guest_ref}}]}
+        - state.share_used_ref is None or (state.share_offer is not None and state.share_withdrawn_ref is None)
+        - state.share_withdrawn_ref is None or (state.share_offer is not None and state.share_used_ref is None)
+        - state.vital.life == 'alive' or not state.awake
+  - name: BarBearer
+    fields:
+      - {name: name, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: observation, type: {optional: occurrence_ref}}
+      - {name: last_drink_action, type: {optional: occurrence_ref}}
+    invariant: null
+  - name: DrinkContainer
+    fields:
+      - {name: label, type: {str: [1, 48]}}
+      - {name: rest_site, type: {str: [1, 48]}}
+      - {name: holder, type: {str: [1, 48]}}
+      - {name: frozen, type: bool}
+      - {name: portions, type: {int: [0, 2]}}
+      - {name: capacity, type: {int: [1, 2]}}
+      - {name: change_ref, type: {optional: occurrence_ref}}
+    invariant: state.portions <= state.capacity
+  - name: DrinkSighting
+    fields:
+      - {name: container, type: individual_ref}
+      - {name: holder, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: frozen, type: bool}
+      - {name: portions, type: {int: [0, 2]}}
+      - {name: capacity, type: {int: [1, 2]}}
+      - {name: change_ref, type: {optional: occurrence_ref}}
+      - {name: observation, type: occurrence_ref}
+    invariant: state.portions <= state.capacity
+  - name: ObserveBarAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: bear_one, type: {str: [1, 48]}}
+      - {name: bear_two, type: {str: [1, 48]}}
+    invariant: null
+  - name: ObserveDrinkAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: drink, type: individual_ref}
+      - {name: holder, type: {str: [1, 48]}}
+    invariant: null
+  - name: ThawDrinkAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: drink, type: individual_ref}
+      - {name: holder, type: {str: [1, 48]}}
+      - {name: torch, type: individual_ref}
+    invariant: null
+  - name: PalaceWindowDraw
+    fields:
+      - {name: ordinal, type: {int: [1, 4]}}
+      - {name: time, type: {int: [0, 9223372036854775807]}}
+      - {name: kind, type: {int: [1, 4]}}
+      - {name: rank, type: {optional: {int: [1, 4]}}}
+      - {name: input_seed, type: {int: [0, 9223372036854775807]}}
+      - {name: output_seed, type: {int: [0, 9223372036854775807]}}
+      - {name: occurrence, type: occurrence_ref}
+    invariant: null
+  - name: MagicStudyEntry
+    fields:
+      - {name: individual, type: individual_ref}
+      - {name: holder, type: {optional: {str: [1, 48]}}}
+      - {name: rest_site, type: {str: [1, 48]}}
+      - {name: taken_ref, type: {optional: occurrence_ref}}
+      - {name: released_ref, type: {optional: occurrence_ref}}
+    invariant: null
+  - name: MagicStudySighting
+    fields:
+    - {name: item, type: individual_ref}
+    - {name: form, type: {enum: [firelock, focusing_mirror, branding_iron, skyhook]}}
+    - {name: window, type: occurrence_ref}
+    - {name: display, type: {optional: occurrence_ref}}
+    - {name: custody_basis, type: {optional: occurrence_ref}}
+    - {name: observation, type: occurrence_ref}
+    - {name: study, type: {optional: occurrence_ref}}
+    invariant: null
+  - name: MagicDisplay
+    fields:
+    - {name: item, type: individual_ref}
+    - {name: holder, type: {str: [1, 48]}}
+    - {name: site, type: {str: [1, 48]}}
+    - {name: window, type: occurrence_ref}
+    - {name: action, type: occurrence_ref}
+    - {name: custody_basis, type: {optional: occurrence_ref}}
+    invariant: null
+  - name: MagicStudyAttempt
+    fields:
+    - {name: actor, type: {str: [1, 48]}}
+    - {name: item, type: individual_ref}
+    - {name: holder, type: {str: [1, 48]}}
+    invariant: null
+  - name: GroundMagicAttempt
+    fields:
+    - {name: actor, type: {str: [1, 48]}}
+    - {name: item, type: individual_ref}
+    invariant: null
+  - name: MagicStudyDomain
+    fields:
+      - {name: members, type: {tuple: {item: MagicStudyEntry, max: 5}}}
+    invariant: null
+  - name: MagicResearchWindow
+    fields:
+      - {name: basis, type: occurrence_ref}
+      - {name: time, type: {int: [0, 9223372036854775807]}}
+      - {name: status, type: {enum: [selected, no_eligible_item]}}
+      - {name: eligible, type: {tuple: {item: MagicStudyEntry, max: 5}}}
+      - {name: selected, type: {optional: MagicStudyEntry}}
+      - {name: rank, type: {optional: {int: [1, 5]}}}
+      - {name: input_seed, type: {int: [0, 9223372036854775807]}}
+      - {name: output_seed, type: {int: [0, 9223372036854775807]}}
+    invariant: null
+  - name: Scene
+    fields:
+    - {name: magic_research, type: {optional: MagicResearchWindow}}
+    - {name: magic_display, type: {optional: MagicDisplay}}
+    - {name: research_seed, type: {int: [0, 9223372036854775807]}}
+    - {name: balloon_explanation, type: {optional: BalloonExplanation}}
+    - {name: balloon_seats, type: {tuple: {item: BalloonSeat, max: 2}}}
+    - {name: tower_request, type: {optional: TowerRequest}}
+    - {name: tower_offer, type: {optional: TowerOffer}}
+    - {name: tower_acceptance, type: {optional: TowerAcceptance}}
+    - {name: tower_exit_report, type: {optional: TowerExitReport}}
+    - {name: tower_clearance, type: {optional: TowerClearance}}
+    - {name: hall_drawings, type: {tuple: {item: HallDrawing, max: 5}}}
+    - {name: climb_paths, type: {tuple: {item: ClimbPath, max: 8}}}
+    - {name: breath_zones, type: {tuple: {item: FireballZone, max: 64}}}
+    - name: fireball_zones
+      type:
+        tuple:
+          item: FireballZone
+          max: 64
+    - name: prison_question
+      type:
+        optional: PrisonQuestion
+    - name: prison_answer
+      type:
+        optional: PrisonAnswer
+    - name: prison_lines
+      type:
+        tuple:
+          item: Path
+          max: 8
+    - name: floors
+      type:
+        tuple:
+          item: FloorRegion
+          max: 32
+    - name: sites
+      type:
+        tuple:
+          item:
+            str:
+            - 1
+            - 48
+          max: 64
+    - name: paths
+      type:
+        tuple:
+          item: Path
+          max: 32
+    - name: stair_paths
+      type:
+        tuple:
+          item: Path
+          max: 8
+    - name: unclimbable_stairs
+      type:
+        tuple:
+          item: Path
+          max: 8
+    - name: bridge_paths
+      type:
+        tuple:
+          item: Path
+          max: 8
+    - name: crossings
+      type:
+        tuple:
+          item: RegionCrossing
+          max: 32
+    - name: die_seed
+      type:
+        int:
+        - 0
+        - 9223372036854775807
+    - name: notice_site
+      type:
+        str:
+        - 1
+        - 48
+    - name: notice_subject
+      type:
+        str:
+        - 1
+        - 48
+    - name: coverage
+      type:
+        tuple:
+          item: Coverage
+          max: 64
+    - name: cold_dc
+      type:
+        int:
+        - 1
+        - 40
+    - name: ritual_completion_signal
+      type: bool
+    - name: ritual_cue_site
+      type:
+        str:
+        - 1
+        - 48
+    - name: ritual_cue_stage
+      type:
+        enum:
+        - preparing
+        - gathering
+        - critical
+        - erupted
+        - disrupted
+    - name: elemental_summoned
+      type: bool
+    - {name: elemental_charge_formed_ref, type: {optional: occurrence_ref}}
+    - name: summon_ref
+      type:
+        optional: occurrence_ref
+    - name: palace_event_seed
+      type:
+        int:
+        - 0
+        - 9223372036854775807
+    - {name: palace_event_pool, type: {tuple: {item: {int: [1, 4]}, max: 4}}}
+    - {name: palace_event_draws, type: {tuple: {item: PalaceWindowDraw, max: 4}}}
+    - name: palace_event_roll
+      type:
+        optional:
+          int:
+          - 1
+          - 4
+    - name: palace_event_ref
+      type:
+        optional: occurrence_ref
+    - name: departure
+      type:
+        optional: DepartureSummary
+    - name: departure_event_ref
+      type:
+        optional: occurrence_ref
+    - name: escort_offer_site
+      type:
+        optional:
+          str:
+          - 1
+          - 48
+    - name: escort_offer_ref
+      type:
+        optional: occurrence_ref
+    - name: escort_offer_speaker
+      type:
+        optional:
+          str:
+          - 1
+          - 48
+    - name: escort_offer_destination
+      type:
+        optional:
+          str:
+          - 1
+          - 48
+    - name: torch_offer
+      type:
+        optional: TorchOffer
+    - name: drink_request
+      type:
+        optional: DrinkRequest
+    - name: drink_reply
+      type:
+        optional: DrinkReply
+    - name: drink_consumption
+      type:
+        optional: DrinkConsumption
+    - name: guest_request
+      type:
+        optional: GuestRequest
+    - name: prison_invitation
+      type:
+        optional: PrisonInvitation
+    - name: prison_reply
+      type:
+        optional: PrisonReply
+    - name: actor_motion
+      type:
+        optional: ActorMotion
+    - {name: scent_steps, type: {tuple: {item: ScentStep, max: 64}}}
+    - name: drink_share_offer
+      type:
+        optional: DrinkShareOffer
+    - name: drink_share_withdrawal
+      type:
+        optional: DrinkShareWithdrawal
+    - name: cold_context
+      type:
+        optional: ColdContext
+    invariant:
+      all:
+      - any:
+        - is_none:
+            ref: state.departure_event_ref
+        - not_none:
+            ref: state.departure
+      - eq:
+        - is_none:
+            ref: state.escort_offer_site
+        - is_none:
+            ref: state.escort_offer_ref
+      - eq:
+        - is_none:
+            ref: state.escort_offer_ref
+        - is_none:
+            ref: state.escort_offer_speaker
+      - eq:
+        - is_none:
+            ref: state.escort_offer_ref
+        - is_none:
+            ref: state.escort_offer_destination
+  - name: PrisonAccess
+    fields:
+      - {name: line, type: {optional: PrisonLineSighting}}
+      - {name: bars, type: {optional: PrisonBarsSighting}}
+    invariant: null
+  - name: CastingFeedback
+    fields:
+      - {name: focus_roll, type: {optional: {int: [1, 20]}}}
+      - {name: fireball_roll, type: {optional: {int: [1, 20]}}}
+      - {name: branding, type: {optional: BrandKnowledge}}
+    invariant: null
+  - name: Person
+    fields:
+    - {name: known_climbs, type: {tuple: {item: KnownClimb, max: 8}}}
+    - {name: casting_feedback, type: {optional: CastingFeedback}}
+    - name: prison_access
+      type: PrisonAccess
+    - name: conversations
+      type: PersonConversations
+    - name: known_bar_bears
+      type:
+        tuple:
+          item: BarBearer
+          max: 7
+    - name: drink_sighting
+      type:
+        optional: DrinkSighting
+    - name: bar_replies
+      type:
+        tuple:
+          item: DrinkReply
+          max: 2
+    - name: pending_pour_request
+      type:
+        optional: occurrence_ref
+    - name: gold
+      type:
+        int:
+        - 0
+        - 1000000
+    - {name: resources, type: ResourceObservations}
+    - name: treasure_receipt
+      type:
+        optional: TreasureReceipt
+    - name: gold_taken_ref
+      type:
+        optional: occurrence_ref
+    - name: floor_sighting
+      type:
+        optional: FloorSighting
+    - name: elemental_sighting
+      type:
+        optional: ElementalSighting
+    - name: name
+      type:
+        str:
+        - 1
+        - 48
+    - name: site
+      type:
+        str:
+        - 1
+        - 48
+    - name: known_sites
+      type:
+        tuple:
+          item: KnownSite
+          max: 64
+    - name: known_paths
+      type:
+        tuple:
+          item: Path
+          max: 32
+    - name: known_bridge_paths
+      type:
+        tuple:
+          item: Path
+          max: 8
+    - name: known_exit_steps
+      type:
+        tuple:
+          item: Path
+          max: 32
+    - name: known_crossings
+      type:
+        tuple:
+          item: KnownCrossing
+          max: 32
+    - name: known_residents
+      type:
+        tuple:
+          item: KnownResident
+          max: 32
+    - name: known_walls
+      type:
+        tuple:
+          item: KnownWall
+          max: 2
+    - name: last_opened_wall
+      type:
+        optional:
+          str:
+          - 1
+          - 48
+    - name: last_wall_open_ref
+      type:
+        optional: occurrence_ref
+    - name: heard_torch_offer
+      type:
+        optional: TorchOffer
+    - name: torch_offer_hearing_ref
+      type:
+        optional: occurrence_ref
+    - name: accepted_torch_offer_ref
+      type:
+        optional: occurrence_ref
+    - name: torch_accept_ref
+      type:
+        optional: occurrence_ref
+    - name: person_sighting
+      type:
+        optional: PersonSighting
+    - name: known_coverage
+      type:
+        tuple:
+          item: Coverage
+          max: 32
+    - name: sighting_ref
+      type:
+        optional: occurrence_ref
+    - name: sighting_site
+      type:
+        optional:
+          str:
+          - 1
+          - 48
+    - name: ritual_notice
+      type:
+        optional:
+          enum:
+          - preparing
+          - gathering
+          - critical
+          - erupted
+          - disrupted
+    - name: ritual_notice_ref
+      type:
+        optional: occurrence_ref
+    - name: chandelier_sighting
+      type:
+        optional: ChandelierSighting
+    - name: light_observation
+      type:
+        optional:
+          enum:
+          - seen
+          - not_seen
+    - name: light_observation_ref
+      type:
+        optional: occurrence_ref
+    - name: light_sighting_site
+      type:
+        optional:
+          str:
+          - 1
+          - 48
+    - name: known_everflame_charges
+      type:
+        optional:
+          int:
+          - 0
+          - 5
+    - name: known_reservoir_charges
+      type:
+        optional:
+          int:
+          - 0
+          - 2
+    - name: reservoir_detach_ref
+      type:
+        optional: occurrence_ref
+    - name: reservoir_reload_ref
+      type:
+        optional: occurrence_ref
+    - name: balance_bonus
+      type:
+        int:
+        - 0
+        - 20
+    - name: last_cross_roll
+      type:
+        optional:
+          int:
+          - 1
+          - 1000
+    - name: last_cross_ref
+      type:
+        optional: occurrence_ref
+    - name: last_thaw_ref
+      type:
+        optional: occurrence_ref
+    - name: last_thawed
+      type:
+        optional:
+          str:
+          - 1
+          - 48
+    - name: cold_state
+      type:
+        enum:
+        - mobile
+        - frozen
+        - immune
+    - name: vital
+      type: Vital
+    - name: rescue_state
+      type:
+        enum:
+        - not_safe
+        - safe
+    - name: rescue_ref
+      type:
+        optional: occurrence_ref
+    - name: escort_heard_ref
+      type:
+        optional: occurrence_ref
+    - name: escort_utterance_ref
+      type:
+        optional: occurrence_ref
+    - name: escort_speaker
+      type:
+        optional:
+          str:
+          - 1
+          - 48
+    - name: escort_destination
+      type:
+        optional:
+          str:
+          - 1
+          - 48
+    - name: max_movement_speed
+      type:
+        int:
+        - 1
+        - 100
+    - name: current_movement_speed
+      type:
+        int:
+        - 0
+        - 100
+    - name: cold_loss_step
+      type:
+        int:
+        - 1
+        - 100
+    - name: cold_save_bonus
+      type:
+        int:
+        - 0
+        - 20
+    - name: cold_seed
+      type:
+        int:
+        - 0
+        - 9223372036854775807
+    - name: last_cold_roll
+      type:
+        optional:
+          int:
+          - 1
+          - 20
+    - name: last_cold_ref
+      type:
+        optional: occurrence_ref
+    - name: last_action_ref
+      type:
+        optional: occurrence_ref
+    invariant:
+      all:
+      - eq:
+        - mul:
+          - ref: state.cold_loss_step
+          - const: 5
+        - ref: state.max_movement_speed
+      - le:
+        - ref: state.current_movement_speed
+        - ref: state.max_movement_speed
+      - eq:
+        - is_none:
+            ref: state.heard_torch_offer
+        - is_none:
+            ref: state.torch_offer_hearing_ref
+      - eq:
+        - is_none:
+            ref: state.accepted_torch_offer_ref
+        - is_none:
+            ref: state.torch_accept_ref
+      - any:
+        - all:
+          - eq:
+            - ref: state.rescue_state
+            - const: not_safe
+          - is_none:
+              ref: state.rescue_ref
+        - all:
+          - eq:
+            - ref: state.rescue_state
+            - const: safe
+          - not_none:
+              ref: state.rescue_ref
+          - eq:
+            - ref: state.site
+            - const: palace_exit
+      - eq:
+        - is_none:
+            ref: state.escort_heard_ref
+        - is_none:
+            ref: state.escort_utterance_ref
+      - eq:
+        - is_none:
+            ref: state.escort_heard_ref
+        - is_none:
+            ref: state.escort_speaker
+      - eq:
+        - is_none:
+            ref: state.escort_heard_ref
+        - is_none:
+            ref: state.escort_destination
+      - any:
+        - all:
+          - eq:
+            - ref: state.cold_state
+            - const: frozen
+          - eq:
+            - ref: state.current_movement_speed
+            - const: 0
+        - all:
+          - not:
+              eq:
+              - ref: state.cold_state
+              - const: frozen
+          - lt:
+            - const: 0
+            - ref: state.current_movement_speed
+  - name: Ritual
+    fields:
+      - {name: id, type: {str: [1, 48]}}
+      - {name: target, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: progress, type: {int: [0, 4]}}
+      - {name: required_progress, type: {int: [4, 4]}}
+      - {name: status, type: {enum: [active, interrupted, completed]}}
+      - {name: contribution_refs, type: {tuple: {item: occurrence_ref, max: 4}}}
+    invariant:
+      all:
+        - {eq: [{ref: state.progress}, {count_matching: {collection: {ref: state.contribution_refs}, as: contribution, where: {const: true}}}]}
+        - {eq: [{eq: [{ref: state.status}, {const: completed}]}, {eq: [{ref: state.progress}, {ref: state.required_progress}]}]}
+  - name: Everflame
+    fields:
+      - {name: label, type: {str: [1, 48]}}
+      - {name: holder, type: {enum: [adventurer, ritual_resident, huddled_one, huddled_two, wall_resident, bokold_one, bokold_two, prison_resident_one, prison_resident_two]}}
+      - {name: charges, type: {int: [0, 5]}}
+    invariant: null
+  - name: Chandelier
+    fields:
+      - {name: site, type: {str: [1, 48]}}
+    invariant: null
+  - name: Reservoir
+    fields:
+      - {name: site, type: {str: [1, 48]}}
+      - {name: holder, type: {str: [1, 48]}}
+      - {name: mounted, type: bool}
+      - {name: pulse_visible, type: bool}
+      - {name: charges, type: {int: [0, 2]}}
+    invariant: null
+  - name: WaitAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+    invariant: null
+  - name: WaitNearGuideAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: guide, type: {str: [1, 48]}}
+      - {name: torch, type: individual_ref}
+    invariant: null
+  - name: OfferTorchAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: torch, type: individual_ref}
+      - {name: recipient, type: {str: [1, 48]}}
+      - {name: destination, type: {str: [1, 48]}}
+    invariant: null
+  - name: AcceptTorchAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: torch, type: individual_ref}
+      - {name: giver, type: {str: [1, 48]}}
+    invariant: null
+  - name: ObservePersonAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: victim, type: {str: [1, 48]}}
+    invariant: null
+  - name: CarePersonAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: victim, type: {str: [1, 48]}}
+    invariant: null
+  - name: ThawPersonAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: torch, type: individual_ref}
+      - {name: victim, type: {str: [1, 48]}}
+    invariant: null
+  - name: RitualAdvanceAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: ritual, type: {str: [1, 48]}}
+      - {name: victim, type: {str: [1, 48]}}
+    invariant: null
+  - name: MoveAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: destination, type: {str: [1, 48]}}
+      - {name: base_move_cost, type: {int: [1, 100000]}}
+    invariant: null
+  - name: KnownWall
+    fields:
+      - {name: individual, type: individual_ref}
+      - {name: observed_ref, type: occurrence_ref}
+    invariant: null
+  - name: WallRelease
+    fields:
+      - {name: resident, type: {str: [1, 48]}}
+      - {name: resident_site, type: {str: [1, 48]}}
+      - {name: released_site, type: {str: [1, 48]}}
+    invariant: null
+  - name: IceWall
+    fields:
+      - {name: label, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: passage, type: Path}
+      - {name: release, type: {optional: WallRelease}}
+      - {name: closed, type: bool}
+      - {name: open_ref, type: {optional: occurrence_ref}}
+    invariant:
+      all:
+        - "state.passage.start == state.site"
+        - if:
+            when: "state.release is not None"
+            then: "state.release.resident_site != state.release.released_site and state.release.released_site == state.passage.end"
+            else: true
+        - {eq: [{ref: state.closed}, {is_none: {ref: state.open_ref}}]}
+  - name: ObserveWallAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: target, type: individual_ref}
+    invariant: null
+  - name: ChestSighting
+    fields:
+      - {name: chest, type: individual_ref}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: opened, type: bool}
+      - {name: gold, type: {optional: {int: [0, 100]}}}
+      - {name: basis, type: occurrence_ref}
+    invariant: "state.opened == (state.gold is not None)"
+  - name: TreasureReceipt
+    fields:
+      - {name: item, type: individual_ref}
+      - {name: label, type: {str: [1, 48]}}
+      - {name: acquisition, type: occurrence_ref}
+    invariant: null
+  - name: RewardBox
+    fields:
+      - {name: label, type: {str: [1, 48]}}
+      - {name: holder, type: {str: [1, 48]}}
+      - {name: locked, type: bool}
+      - {name: gold, type: {int: [0, 1200]}}
+    invariant: "state.holder == 'emma' and state.locked"
+  - name: TreasureChest
+    fields:
+      - {name: label, type: {str: [1, 48]}}
+      - {name: site, type: {str: [1, 48]}}
+      - {name: interior, type: {str: [1, 48]}}
+      - {name: opened, type: bool}
+      - {name: open_ref, type: {optional: occurrence_ref}}
+      - {name: gold, type: {int: [0, 100]}}
+    invariant:
+      all:
+        - "state.site != state.interior"
+        - {eq: [{ref: state.opened}, {not_none: {ref: state.open_ref}}]}
+  - name: BrandMark
+    fields:
+      - {name: person, type: {optional: {str: [1, 48]}}}
+      - {name: elemental, type: {optional: actor_ref}}
+      - {name: contact, type: occurrence_ref}
+    invariant: "(state.person is None) != (state.elemental is None)"
+  - name: BrandLocation
+    fields:
+      - {name: mark, type: BrandMark}
+      - {name: site, type: {optional: {str: [1, 48]}}}
+      - {name: observation, type: occurrence_ref}
+    invariant: null
+  - name: BrandKnowledge
+    fields:
+      - {name: iron, type: individual_ref}
+      - {name: marks, type: {tuple: {item: BrandMark, max: 32}}}
+      - {name: inspection, type: occurrence_ref}
+      - {name: location, type: {optional: BrandLocation}}
+    invariant: null
+  - name: KnownBrandedPerson
+    fields:
+      - {name: name, type: {str: [1, 48]}}
+      - {name: mark, type: BrandMark}
+    invariant: "state.mark.person == state.name"
+  - name: KnownBrandedElemental
+    fields:
+      - {name: ref, type: actor_ref}
+      - {name: mark, type: BrandMark}
+    invariant: "state.mark.elemental == state.ref"
+  - name: BrandPersonAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: item, type: individual_ref}
+      - {name: victim, type: {str: [1, 48]}}
+    invariant: null
+  - name: BrandElementalAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: item, type: individual_ref}
+      - {name: victim, type: actor_ref}
+    invariant: null
+  - name: LocateBrandedPersonAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: item, type: individual_ref}
+      - {name: victim, type: {str: [1, 48]}}
+      - {name: contact, type: occurrence_ref}
+    invariant: null
+  - name: LocateBrandedElementalAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: item, type: individual_ref}
+      - {name: victim, type: actor_ref}
+      - {name: contact, type: occurrence_ref}
+    invariant: null
+  - name: MagicItem
+    fields:
+      - {name: label, type: {str: [1, 48]}}
+      - {name: form, type: {enum: [firelock, focusing_mirror, branding_iron, skyhook]}}
+      - {name: charges, type: {int: [0, 1]}}
+      - {name: rest_site, type: {str: [1, 48]}}
+      - {name: holder, type: {optional: {str: [1, 48]}}}
+      - {name: taken_ref, type: {optional: occurrence_ref}}
+      - {name: released_ref, type: {optional: occurrence_ref}}
+      - {name: brands, type: {tuple: {item: BrandMark, max: 32}}}
+    # Initial custody is an opening fact; acquisition history is not current custody.
+    invariant: null
+  - name: ChestAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: target, type: individual_ref}
+    invariant: null
+  - name: TakeMagicItemAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: item, type: individual_ref}
+      - {name: chest, type: individual_ref}
+    invariant: null
+  - name: OpenWallAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: wall, type: individual_ref}
+      - {name: torch, type: individual_ref}
+      - {name: victim, type: {str: [1, 48]}}
+    invariant: null
+  - name: OpenPlainWallAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: wall, type: individual_ref}
+      - {name: torch, type: individual_ref}
+    invariant: null
+  - name: WallMoveAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: target, type: individual_ref}
+      - {name: destination, type: {str: [1, 48]}}
+      - {name: base_move_cost, type: {int: [1, 100000]}}
+    invariant: null
+  - name: CarryFromRitualAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: victim, type: {str: [1, 48]}}
+      - {name: ritual, type: {str: [1, 48]}}
+      - {name: destination, type: {str: [1, 48]}}
+      - {name: base_move_cost, type: {int: [1, 100000]}}
+    invariant: null
+  - name: BalloonCrossAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: balloon, type: individual_ref}
+      - {name: bear_one, type: {str: [1, 48]}}
+      - {name: bear_two, type: {str: [1, 48]}}
+      - {name: crossing, type: {str: [1, 48]}}
+      - {name: base_move_cost, type: {int: [1, 100000]}}
+    invariant: null
+  - name: CrossAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: crossing, type: {str: [1, 48]}}
+      - {name: base_move_cost, type: {int: [1, 100000]}}
+    invariant: null
+  - name: ThawAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: torch, type: individual_ref}
+      - {name: victim, type: {str: [1, 48]}}
+      - {name: ritual, type: {str: [1, 48]}}
+    invariant: null
+  - name: ObserveChandelierAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: chandelier, type: individual_ref}
+      - {name: reservoir, type: individual_ref}
+      - {name: resident_one, type: {str: [1, 48]}}
+      - {name: resident_two, type: {str: [1, 48]}}
+    invariant: null
+  - name: ObserveBokoldLightAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: bearer, type: {str: [1, 48]}}
+      - {name: torch, type: individual_ref}
+    invariant: null
+  - name: DetachReservoirAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: chandelier, type: individual_ref}
+      - {name: reservoir, type: individual_ref}
+    invariant: null
+  - name: ReloadEverflameAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: reservoir, type: individual_ref}
+      - {name: torch, type: individual_ref}
+    invariant: null
+  - name: LeavePalaceAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: ritual, type: {str: [1, 48]}}
+      - {name: ritual_resident, type: {str: [1, 48]}}
+      - {name: huddled_one, type: {str: [1, 48]}}
+      - {name: huddled_two, type: {str: [1, 48]}}
+      - {name: wall_resident, type: {str: [1, 48]}}
+      - {name: prison_resident_one, type: {str: [1, 48]}}
+      - {name: prison_resident_two, type: {str: [1, 48]}}
+      - {name: torch, type: individual_ref}
+      - {name: reservoir, type: individual_ref}
+    invariant: null
+  - name: OfferEscortAttempt
+    fields:
+      - {name: actor, type: {str: [1, 48]}}
+      - {name: destination, type: {enum: [palace_exit]}}
+    invariant: null
+  - name: ActionEnvelope
+    fields:
+      - {name: action, type: occurrence_ref}
+    invariant: null
+  - name: CarryMoveAttempt
+    fields:
+    - name: actor
+      type:
+        str:
+        - 1
+        - 48
+    - name: destination
+      type:
+        str:
+        - 1
+        - 48
+    - name: base_move_cost
+      type:
+        int:
+        - 1
+        - 100000
+    - name: victim
+      type:
+        str:
+        - 1
+        - 48
+    - name: ritual
+      type:
+        str:
+        - 1
+        - 48
+    invariant: null
+  - name: CarryCrossAttempt
+    fields:
+    - name: actor
+      type:
+        str:
+        - 1
+        - 48
+    - name: crossing
+      type:
+        str:
+        - 1
+        - 48
+    - name: base_move_cost
+      type:
+        int:
+        - 1
+        - 100000
+    - name: victim
+      type:
+        str:
+        - 1
+        - 48
+    - name: ritual
+      type:
+        str:
+        - 1
+        - 48
+    invariant: null
+  - name: CarryPassDoorAttempt
+    fields:
+    - name: actor
+      type:
+        str:
+        - 1
+        - 48
+    - name: door
+      type: individual_ref
+    - name: destination
+      type:
+        str:
+        - 1
+        - 48
+    - name: base_move_cost
+      type:
+        int:
+        - 1
+        - 100000
+    - name: victim
+      type:
+        str:
+        - 1
+        - 48
+    - name: ritual
+      type:
+        str:
+        - 1
+        - 48
+    invariant: null
+  - name: StrikePersonAttempt
+    fields:
+    - name: actor
+      type:
+        str:
+        - 1
+        - 48
+    - name: victim
+      type:
+        str:
+        - 1
+        - 48
+    invariant: null
+  - name: Fox
+    fields:
+    - {name: scent_sighting, type: {optional: ScentSighting}}
+    - name: name
+      type:
+        str:
+        - 1
+        - 48
+    - name: site
+      type:
+        str:
+        - 1
+        - 48
+    - name: known_sites
+      type:
+        tuple:
+          item: KnownSite
+          max: 32
+    - name: known_paths
+      type:
+        tuple:
+          item: Path
+          max: 32
+    - name: known_bridge_paths
+      type:
+        tuple:
+          item: Path
+          max: 8
+    - name: known_exit_steps
+      type:
+        tuple:
+          item: Path
+          max: 32
+    - name: known_crossings
+      type:
+        tuple:
+          item: KnownCrossing
+          max: 32
+    - name: known_residents
+      type:
+        tuple:
+          item: KnownResident
+          max: 32
+    - name: sighting_ref
+      type:
+        optional: occurrence_ref
+    - name: sighting_site
+      type:
+        optional:
+          str:
+          - 1
+          - 48
+    - name: balance_bonus
+      type:
+        int:
+        - 0
+        - 20
+    - name: last_cross_roll
+      type:
+        optional:
+          int:
+          - 1
+          - 1000
+    - name: last_cross_ref
+      type:
+        optional: occurrence_ref
+    - name: cold_state
+      type:
+        enum:
+        - mobile
+        - frozen
+        - immune
+    - name: vital
+      type: Vital
+    - name: max_movement_speed
+      type:
+        int:
+        - 1
+        - 100
+    - name: current_movement_speed
+      type:
+        int:
+        - 0
+        - 100
+    - name: cold_loss_step
+      type:
+        int:
+        - 1
+        - 100
+    - name: cold_save_bonus
+      type:
+        int:
+        - 0
+        - 20
+    - name: cold_seed
+      type:
+        int:
+        - 0
+        - 9223372036854775807
+    - name: last_cold_roll
+      type:
+        optional:
+          int:
+          - 1
+          - 20
+    - name: last_cold_ref
+      type:
+        optional: occurrence_ref
+    - name: last_action_ref
+      type:
+        optional: occurrence_ref
+    - name: master
+      type:
+        str:
+        - 1
+        - 48
+    - name: pending_tamer
+      type:
+        optional:
+          str:
+          - 1
+          - 48
+    - name: tame_hearing_ref
+      type:
+        optional: occurrence_ref
+    - name: following_destination
+      type:
+        optional:
+          str:
+          - 1
+          - 48
+    - name: following_ref
+      type:
+        optional: occurrence_ref
+    - name: tame_willingness
+      type:
+        int:
+        - 0
+        - 1
+    - name: last_thaw_ref
+      type:
+        optional: occurrence_ref
+    invariant: state.current_movement_speed <= state.max_movement_speed and (state.cold_state != 'frozen' or state.current_movement_speed
+      == 0)
+  - name: TameFoxAttempt
+    fields:
+    - name: actor
+      type:
+        str:
+        - 1
+        - 48
+    - name: fox
+      type:
+        str:
+        - 1
+        - 48
+    - name: other_0
+      type:
+        str:
+        - 1
+        - 48
+    - name: other_1
+      type:
+        str:
+        - 1
+        - 48
+    - name: other_2
+      type:
+        str:
+        - 1
+        - 48
+    - name: other_3
+      type:
+        str:
+        - 1
+        - 48
+    - name: other_4
+      type:
+        str:
+        - 1
+        - 48
+    - name: other_5
+      type:
+        str:
+        - 1
+        - 48
+    - name: other_6
+      type:
+        str:
+        - 1
+        - 48
+    invariant: null
+  - name: AcceptTameAttempt
+    fields:
+    - name: actor
+      type:
+        str:
+        - 1
+        - 48
+    - name: other_0
+      type:
+        str:
+        - 1
+        - 48
+    - name: other_1
+      type:
+        str:
+        - 1
+        - 48
+    - name: other_2
+      type:
+        str:
+        - 1
+        - 48
+    - name: other_3
+      type:
+        str:
+        - 1
+        - 48
+    - name: other_4
+      type:
+        str:
+        - 1
+        - 48
+    - name: other_5
+      type:
+        str:
+        - 1
+        - 48
+    - name: other_6
+      type:
+        str:
+        - 1
+        - 48
+    - name: tamer
+      type:
+        str:
+        - 1
+        - 48
+    invariant: null
+  - name: ColdContext
+    fields:
+    - name: pulse
+      type: occurrence_ref
+    - name: origin
+      type:
+        str:
+        - 1
+        - 48
+    - name: charges
+      type:
+        int:
+        - 0
+        - 5
+    invariant: null
+  - name: ObserveFoxesAttempt
+    fields:
+    - name: actor
+      type:
+        str:
+        - 1
+        - 48
+    - name: fox_0
+      type:
+        str:
+        - 1
+        - 48
+    - name: fox_1
+      type:
+        str:
+        - 1
+        - 48
+    - name: fox_2
+      type:
+        str:
+        - 1
+        - 48
+    - name: fox_3
+      type:
+        str:
+        - 1
+        - 48
+    invariant: null
+owners:
+  - symbol: emma
+    key: m1.v2.emma
+    version: queen-v1
+    state: Queen
+    identity_field: name
+    write: replace_one
+    seat_read:
+    - reward_account
+    - reward_account.verified
+    - guide_consumption
+    - guide_consumption.step
+    - guide_consumption.action
+    - guide_consumption.settlement
+    - guide_step
+    - guide_step.motion
+    - guide_step.motion.start
+    - guide_step.motion.end
+    - guide_step.motion.name
+    - guide_step.motion.action
+    - guide_step.observation
+    - guide_step.invitation
+    - guide_step.hearing
+    - route_observation
+    - route_observation.site
+    - route_observation.action
+    - attending
+    - heard_balloon_explanation
+    - heard_balloon_explanation.speech
+    - heard_balloon_explanation.speech.site
+    - heard_balloon_explanation.speech.balloon
+    - heard_balloon_explanation.speech.destination
+    - heard_balloon_explanation.speech.utterance
+    - heard_balloon_explanation.hearing
+    - name
+    - site
+    - cold_state
+    - vital.life
+    - current_movement_speed
+    - last_action_ref
+    - known_sites
+    - known_paths
+    - known_crossings
+    - known_bridge_paths
+    - balance_bonus
+    - last_cross_roll
+    - last_cross_ref
+    - rescue_state
+    - rescue_ref
+    - escort_heard_ref
+    - escort_utterance_ref
+    - escort_speaker
+    - escort_destination
+    - max_movement_speed
+  - {symbol: alpha, key: m1.v2.alpha, version: tower-bear-v1, state: TowerBear, identity_field: name, write: replace_one, seat_read: [name, site, awake, vital.life, current_movement_speed, last_action_ref, heard_tower_request, heard_tower_request.speaker, heard_tower_request.recipient, heard_tower_request.site, heard_tower_request.utterance, tower_hearing_ref, tower_proposal, tower_proposal.request, tower_proposal.utterance, tower_proposal.item, heard_tower_acceptance, heard_tower_acceptance.offer, heard_tower_acceptance.site, acceptance_hearing_ref, clearance, heard_exit_report, heard_exit_report.offer, heard_exit_report.speaker, heard_exit_report.sighting, exit_report_hearing_ref, trade_decision]}
+  - {symbol: tower_bear_one, key: m1.v2.tower_bear_one, version: tower-bear-v1, state: TowerBear, identity_field: name, write: replace_one, seat_read: [name, site, awake, vital.life, current_movement_speed, last_action_ref, occupancy, heard_clearance, heard_clearance.site, clearance_hearing_ref]}
+  - {symbol: tower_bear_two, key: m1.v2.tower_bear_two, version: tower-bear-v1, state: TowerBear, identity_field: name, write: replace_one, seat_read: [name, site, awake, vital.life, current_movement_speed, last_action_ref, occupancy, heard_clearance, heard_clearance.site, clearance_hearing_ref]}
+  - {symbol: captive_bear, key: m1.v2.captive_bear, version: prison-voice-v1, state: PrisonVoice, identity_field: name, write: replace_one, seat_read: [name, site, awake, attending, answer_willingness, share_willingness, charge_used_ref, personal_fact, heard_question, heard_question.speaker, heard_question.recipient, heard_question.site, heard_question.topic, heard_question.utterance, question_hearing_ref, answer, answer.speaker, answer.recipient, answer.site, answer.question, answer.statement, answer.utterance, last_action_ref, vital.life]}
+  - {symbol: prison_bokold, key: m1.v2.prison_bokold, version: prison-voice-v1, state: PrisonVoice, identity_field: name, write: replace_one, seat_read: [name, site, awake, attending, answer_willingness, share_willingness, charge_used_ref, personal_fact, heard_question, heard_question.speaker, heard_question.recipient, heard_question.site, heard_question.topic, heard_question.utterance, question_hearing_ref, answer, answer.speaker, answer.recipient, answer.site, answer.question, answer.statement, answer.utterance, last_action_ref, vital.life]}
+  - symbol: prison_guard
+    key: m1.v2.prison_guard
+    version: prison-guard-v1
+    state: PrisonGuard
+    identity_field: name
+    write: replace_one
+    seat_read:
+      - vital.life
+      - name
+      - site
+      - awake
+      - attending
+      - drink_interest
+      - duty_priority
+      - visitor_sightings
+      - heard_invitation
+      - heard_invitation.speaker
+      - heard_invitation.recipient
+      - heard_invitation.site
+      - heard_invitation.drink
+      - heard_invitation.destination
+      - heard_invitation.origin_request
+      - heard_invitation.utterance
+      - invitation_hearing_ref
+      - drink_sighting
+      - drink_sighting.container
+      - drink_sighting.holder
+      - drink_sighting.site
+      - drink_sighting.frozen
+      - drink_sighting.portions
+      - drink_sighting.change_ref
+      - visit_decision
+      - visit_decision.request
+      - visit_destination
+      - last_action_ref
+      - visit_task
+      - visit_task.invitation
+      - visit_task.invitation.utterance
+      - visit_task.acceptance
+      - visit_task.drinks_before
+      - visit_phase
+      - finished_visit_request
+      - finished_visit_ref
+      - max_movement_speed
+      - current_movement_speed
+      - balance_bonus
+      - known_sites
+      - known_paths
+      - known_crossings
+      - known_bridge_paths
+      - known_bar_steps
+      - known_post_steps
+      - last_cross_roll
+      - last_cross_ref
+      - last_route_observed_site
+      - last_route_observation_ref
+      - heard_share
+      - heard_share.speaker
+      - heard_share.recipient
+      - heard_share.site
+      - heard_share.container
+      - heard_share.container_change_ref
+      - heard_share.utterance
+      - share_hearing_ref
+      - share_withdrawal
+      - share_withdrawal.offer
+      - share_withdrawal_hearing_ref
+      - share_decision
+      - share_decision.request
+      - share_receipt
+      - portions_drunk
+      - last_drink_ref
+  - symbol: icebar_bear_one
+    key: m1.v2.icebar_bear_one
+    version: bar-bear-v1
+    state: BarBear
+    identity_field: name
+    write: replace_one
+    seat_read: &bar_bear_read
+      - vital.life
+      - name
+      - site
+      - awake
+      - attending
+      - share_willingness
+      - drink_sighting
+      - drink_sighting.container
+      - drink_sighting.holder
+      - drink_sighting.site
+      - drink_sighting.frozen
+      - drink_sighting.portions
+      - drink_sighting.change_ref
+      - portions_drunk
+      - last_drink_ref
+      - heard_request
+      - heard_request.speaker
+      - heard_request.site
+      - heard_request.origin
+      - heard_request.destination
+      - heard_request.utterance
+      - hearing_ref
+      - reply_request
+      - reply_accept
+      - reply_action
+      - permission_used_ref
+      - last_action_ref
+      - max_movement_speed
+      - current_movement_speed
+      - balance_bonus
+      - known_sites
+      - known_paths
+      - known_crossings
+      - known_bridge_paths
+      - last_cross_roll
+      - last_cross_ref
+      - heard_guest
+      - heard_guest.site
+      - heard_guest.utterance
+      - guest_hearing_ref
+      - guest_decision
+      - guest_decision.request
+      - guest_task
+      - guest_task.invitation.messenger
+      - guest_task.invitation.utterance
+      - guest_task.container
+      - guest_willingness
+      - guest_destination
+      - known_guest_steps
+      - last_route_observed_site
+      - last_route_observation_ref
+      - guard_sighting
+      - guard_sighting.name
+      - guard_sighting.site
+      - guard_sighting.present
+      - last_guard_request
+      - last_guard_invitation_ref
+      - guard_reply
+      - guard_reply.for_request
+      - guard_reply_hearing_ref
+      - guest_returning
+      - last_guest_return_ref
+      - finished_guest_request
+      - finished_guest_ref
+      - known_return_steps
+      - share_offer
+      - share_offer.utterance
+      - share_offer.container
+      - share_offer.container_change_ref
+      - share_used_ref
+      - share_withdrawn_ref
+  - {symbol: icebar_bear_two, key: m1.v2.icebar_bear_two, version: bar-bear-v1, state: BarBear, identity_field: name, write: replace_one, seat_read: *bar_bear_read}
+  - symbol: wall_resident
+    key: m1.v2.wall_resident
+    version: person-v2
+    state: Person
+    identity_field: name
+    write: replace_one
+    seat_read:
+    - name
+    - site
+    - known_walls
+    - known_residents
+    - known_paths
+    - known_bridge_paths
+    - known_exit_steps
+    - known_crossings
+    - heard_torch_offer
+    - heard_torch_offer.recipient
+    - heard_torch_offer.site
+    - heard_torch_offer.utterance
+    - heard_torch_offer.speaker
+    - heard_torch_offer.destination
+    - torch_offer_hearing_ref
+    - accepted_torch_offer_ref
+    - torch_accept_ref
+    - person_sighting
+    - person_sighting.subject
+    - person_sighting.site
+    - person_sighting.cold_state
+    - person_sighting.life
+    - known_everflame_charges
+    - last_thawed
+    - escort_heard_ref
+    - escort_utterance_ref
+    - escort_speaker
+    - escort_destination
+    - rescue_state
+    - rescue_ref
+    - cold_state
+    - vital.life
+    - max_movement_speed
+    - current_movement_speed
+    - cold_loss_step
+    - cold_save_bonus
+    - last_cold_roll
+    - last_cold_ref
+    - last_action_ref
+  - {symbol: scene, key: m1.v2.scene, version: scene-v2, state: Scene, identity_field: null, write: replace_one, seat_read: []}
+  - {symbol: ritual, key: m1.v2.ritual, version: ritual-v1, state: Ritual, identity_field: id, write: replace_one, seat_read: []}
+  - symbol: adventurer
+    key: m1.v2.adventurer
+    version: person-v2
+    state: Person
+    identity_field: name
+    write: replace_one
+    seat_read:
+    - conversations.tower
+    - conversations.tower.offer
+    - conversations.tower.offer.site
+    - conversations.tower.offer.utterance
+    - conversations.tower.hearing
+    - conversations.tower.acceptance
+    - conversations.tower.acceptance.offer
+    - person_sighting.observation
+    - conversations.prison.charge_receipt
+    - conversations.prison.charge_receipt.packet
+    - conversations.prison.charge_load_ref
+    - conversations.prison.contacts
+    - conversations.prison.questions
+    - conversations.prison.answers
+    - prison_access.bars
+    - prison_access.bars.individual
+    - prison_access.bars.label
+    - prison_access.bars.site
+    - prison_access.bars.outside
+    - prison_access.bars.inside
+    - prison_access.bars.opened
+    - prison_access.bars.change_ref
+    - prison_access.bars.observation
+    - prison_access.line
+    - prison_access.line.guardian
+    - prison_access.line.guardian.name
+    - prison_access.line.guardian.site
+    - prison_access.line.guardian.present
+    - prison_access.line.guardian.observation
+    - prison_access.line.paths
+    - bar_replies
+    - pending_pour_request
+    - known_bar_bears
+    - drink_sighting
+    - drink_sighting.container
+    - drink_sighting.frozen
+    - drink_sighting.site
+    - drink_sighting.portions
+    - drink_sighting.change_ref
+    - gold
+    - gold_taken_ref
+    - resources.chest
+    - resources.chest.chest
+    - resources.chest.site
+    - resources.chest.opened
+    - resources.chest.gold
+    - resources.chest.basis
+    - resources.balloon
+    - resources.balloon.site
+    - resources.balloon.charges
+    - resources.balloon.basis
+    - resources.power_origin
+    - treasure_receipt
+    - treasure_receipt.item
+    - treasure_receipt.label
+    - treasure_receipt.acquisition
+    - floor_sighting
+    - floor_sighting.key
+    - floor_sighting.site
+    - floor_sighting.frozen
+    - elemental_sighting
+    - elemental_sighting.subject
+    - elemental_sighting.site
+    - elemental_sighting.observation
+    - known_sites
+    - casting_feedback
+    - casting_feedback.focus_roll
+    - casting_feedback.fireball_roll
+    - casting_feedback.branding
+    - casting_feedback.branding.iron
+    - casting_feedback.branding.marks
+    - casting_feedback.branding.inspection
+    - casting_feedback.branding.location
+    - casting_feedback.branding.location.site
+    - known_climbs
+    - name
+    - site
+    - person_sighting
+    - person_sighting.subject
+    - person_sighting.site
+    - person_sighting.cold_state
+    - person_sighting.life
+    - known_walls
+    - last_opened_wall
+    - last_wall_open_ref
+    - known_paths
+    - known_bridge_paths
+    - known_exit_steps
+    - known_crossings
+    - known_residents
+    - sighting_ref
+    - sighting_site
+    - ritual_notice
+    - chandelier_sighting
+    - chandelier_sighting.notice
+    - chandelier_sighting.observation
+    - chandelier_sighting.mount_observed
+    - known_everflame_charges
+    - known_reservoir_charges
+    - reservoir_detach_ref
+    - reservoir_reload_ref
+    - balance_bonus
+    - last_cross_roll
+    - last_cross_ref
+    - last_thaw_ref
+    - last_thawed
+    - cold_state
+    - vital
+    - vital.life
+    - vital.endurance
+    - vital.max_endurance
+    - vital.rescue_episode
+    - vital.rescue_episode.start_ref
+    - vital.rescue_episode.elapsed_cold
+    - max_movement_speed
+    - current_movement_speed
+    - cold_loss_step
+    - cold_save_bonus
+    - last_cold_roll
+    - last_cold_ref
+    - last_action_ref
+  - symbol: ritual_resident
+    key: m1.v2.ritual_resident
+    version: person-v2
+    state: Person
+    identity_field: name
+    write: replace_one
+    seat_read:
+    - name
+    - site
+    - known_paths
+    - known_bridge_paths
+    - known_exit_steps
+    - known_crossings
+    - heard_torch_offer
+    - heard_torch_offer.recipient
+    - heard_torch_offer.site
+    - heard_torch_offer.utterance
+    - heard_torch_offer.speaker
+    - heard_torch_offer.destination
+    - torch_offer_hearing_ref
+    - accepted_torch_offer_ref
+    - torch_accept_ref
+    - person_sighting
+    - person_sighting.subject
+    - person_sighting.site
+    - person_sighting.cold_state
+    - person_sighting.life
+    - known_everflame_charges
+    - last_thawed
+    - escort_heard_ref
+    - escort_utterance_ref
+    - escort_speaker
+    - escort_destination
+    - rescue_state
+    - rescue_ref
+    - cold_state
+    - vital.life
+    - max_movement_speed
+    - current_movement_speed
+    - cold_loss_step
+    - cold_save_bonus
+    - last_cold_roll
+    - last_cold_ref
+    - last_action_ref
+    - known_residents
+  - symbol: prison_resident_one
+    key: m1.v2.prison_resident_one
+    version: person-v2
+    state: Person
+    identity_field: name
+    write: replace_one
+    seat_read:
+    - prison_access.line
+    - prison_access.line.guardian
+    - prison_access.line.guardian.name
+    - prison_access.line.guardian.site
+    - prison_access.line.guardian.present
+    - prison_access.line.guardian.observation
+    - prison_access.line.paths
+    - name
+    - site
+    - known_paths
+    - known_bridge_paths
+    - known_exit_steps
+    - known_crossings
+    - heard_torch_offer
+    - heard_torch_offer.recipient
+    - heard_torch_offer.site
+    - heard_torch_offer.utterance
+    - heard_torch_offer.speaker
+    - heard_torch_offer.destination
+    - torch_offer_hearing_ref
+    - accepted_torch_offer_ref
+    - torch_accept_ref
+    - person_sighting
+    - person_sighting.subject
+    - person_sighting.site
+    - person_sighting.cold_state
+    - person_sighting.life
+    - known_everflame_charges
+    - last_thawed
+    - escort_heard_ref
+    - escort_utterance_ref
+    - escort_speaker
+    - escort_destination
+    - rescue_state
+    - rescue_ref
+    - cold_state
+    - vital.life
+    - max_movement_speed
+    - current_movement_speed
+    - cold_loss_step
+    - cold_save_bonus
+    - last_cold_roll
+    - last_cold_ref
+    - last_action_ref
+    - known_residents
+  - symbol: prison_resident_two
+    key: m1.v2.prison_resident_two
+    version: person-v2
+    state: Person
+    identity_field: name
+    write: replace_one
+    seat_read:
+    - prison_access.line
+    - prison_access.line.guardian
+    - prison_access.line.guardian.name
+    - prison_access.line.guardian.site
+    - prison_access.line.guardian.present
+    - prison_access.line.guardian.observation
+    - prison_access.line.paths
+    - name
+    - site
+    - known_paths
+    - known_bridge_paths
+    - known_exit_steps
+    - known_crossings
+    - heard_torch_offer
+    - heard_torch_offer.recipient
+    - heard_torch_offer.site
+    - heard_torch_offer.utterance
+    - heard_torch_offer.speaker
+    - heard_torch_offer.destination
+    - torch_offer_hearing_ref
+    - accepted_torch_offer_ref
+    - torch_accept_ref
+    - person_sighting
+    - person_sighting.subject
+    - person_sighting.site
+    - person_sighting.cold_state
+    - person_sighting.life
+    - known_everflame_charges
+    - last_thawed
+    - escort_heard_ref
+    - escort_utterance_ref
+    - escort_speaker
+    - escort_destination
+    - rescue_state
+    - rescue_ref
+    - cold_state
+    - vital.life
+    - max_movement_speed
+    - current_movement_speed
+    - cold_loss_step
+    - cold_save_bonus
+    - last_cold_roll
+    - last_cold_ref
+    - last_action_ref
+    - known_residents
+  - symbol: huddled_one
+    key: m1.v2.huddled_one
+    version: person-v2
+    state: Person
+    identity_field: name
+    write: replace_one
+    seat_read:
+    - name
+    - site
+    - known_paths
+    - known_bridge_paths
+    - known_exit_steps
+    - known_crossings
+    - heard_torch_offer
+    - heard_torch_offer.recipient
+    - heard_torch_offer.site
+    - heard_torch_offer.utterance
+    - heard_torch_offer.speaker
+    - heard_torch_offer.destination
+    - torch_offer_hearing_ref
+    - accepted_torch_offer_ref
+    - torch_accept_ref
+    - person_sighting
+    - person_sighting.subject
+    - person_sighting.site
+    - person_sighting.cold_state
+    - person_sighting.life
+    - known_everflame_charges
+    - last_thawed
+    - escort_heard_ref
+    - escort_utterance_ref
+    - escort_speaker
+    - escort_destination
+    - rescue_state
+    - rescue_ref
+    - cold_state
+    - vital.life
+    - max_movement_speed
+    - current_movement_speed
+    - cold_loss_step
+    - cold_save_bonus
+    - last_cold_roll
+    - last_cold_ref
+    - last_action_ref
+    - known_residents
+  - symbol: huddled_two
+    key: m1.v2.huddled_two
+    version: person-v2
+    state: Person
+    identity_field: name
+    write: replace_one
+    seat_read:
+    - name
+    - site
+    - known_paths
+    - known_bridge_paths
+    - known_exit_steps
+    - known_crossings
+    - heard_torch_offer
+    - heard_torch_offer.recipient
+    - heard_torch_offer.site
+    - heard_torch_offer.utterance
+    - heard_torch_offer.speaker
+    - heard_torch_offer.destination
+    - torch_offer_hearing_ref
+    - accepted_torch_offer_ref
+    - torch_accept_ref
+    - person_sighting
+    - person_sighting.subject
+    - person_sighting.site
+    - person_sighting.cold_state
+    - person_sighting.life
+    - known_everflame_charges
+    - last_thawed
+    - escort_heard_ref
+    - escort_utterance_ref
+    - escort_speaker
+    - escort_destination
+    - rescue_state
+    - rescue_ref
+    - cold_state
+    - vital.life
+    - max_movement_speed
+    - current_movement_speed
+    - cold_loss_step
+    - cold_save_bonus
+    - last_cold_roll
+    - last_cold_ref
+    - last_action_ref
+    - known_residents
+  - {symbol: bokold_one, key: m1.v2.bokold_one, version: person-v2, state: Person, identity_field: name, write: replace_one, seat_read: [name, site, known_paths, known_bridge_paths, known_exit_steps, known_residents, ritual_notice, ritual_notice_ref, light_observation, light_observation_ref, light_sighting_site, cold_state, vital.life, max_movement_speed, current_movement_speed, cold_loss_step, cold_save_bonus, last_cold_roll, last_cold_ref, last_action_ref]}
+  - {symbol: bokold_two, key: m1.v2.bokold_two, version: person-v2, state: Person, identity_field: name, write: replace_one, seat_read: [name, site, known_paths, known_bridge_paths, known_exit_steps, known_residents, ritual_notice, ritual_notice_ref, light_observation, light_observation_ref, light_sighting_site, cold_state, vital.life, max_movement_speed, current_movement_speed, cold_loss_step, cold_save_bonus, last_cold_roll, last_cold_ref, last_action_ref]}
+  - symbol: arctic_fox_one
+    key: m1.v2.arctic_fox_one
+    version: person-v2
+    state: Fox
+    identity_field: name
+    write: replace_one
+    seat_read:
+    - name
+    - site
+    - known_paths
+    - known_bridge_paths
+    - known_exit_steps
+    - known_crossings
+    - cold_state
+    - vital.life
+    - max_movement_speed
+    - current_movement_speed
+    - cold_loss_step
+    - cold_save_bonus
+    - last_cold_roll
+    - last_cold_ref
+    - last_action_ref
+    - known_sites
+    - known_residents
+    - master
+    - pending_tamer
+    - tame_hearing_ref
+    - following_destination
+    - following_ref
+    - scent_sighting
+    - scent_sighting.step
+    - scent_sighting.step.motion
+    - scent_sighting.step.motion.name
+    - scent_sighting.step.motion.start
+    - scent_sighting.step.motion.end
+    - scent_sighting.step.motion.action
+    - scent_sighting.step.deposited
+    - scent_sighting.observation
+    - scent_sighting.window
+    - tame_willingness
+  - symbol: arctic_fox_two
+    key: m1.v2.arctic_fox_two
+    version: person-v2
+    state: Fox
+    identity_field: name
+    write: replace_one
+    seat_read:
+    - name
+    - site
+    - known_paths
+    - known_bridge_paths
+    - known_exit_steps
+    - known_crossings
+    - cold_state
+    - vital.life
+    - max_movement_speed
+    - current_movement_speed
+    - cold_loss_step
+    - cold_save_bonus
+    - last_cold_roll
+    - last_cold_ref
+    - last_action_ref
+    - known_sites
+    - known_residents
+    - master
+    - pending_tamer
+    - tame_hearing_ref
+    - following_destination
+    - following_ref
+    - scent_sighting
+    - scent_sighting.step
+    - scent_sighting.step.motion
+    - scent_sighting.step.motion.name
+    - scent_sighting.step.motion.start
+    - scent_sighting.step.motion.end
+    - scent_sighting.step.motion.action
+    - scent_sighting.step.deposited
+    - scent_sighting.observation
+    - scent_sighting.window
+    - tame_willingness
+  - symbol: arctic_fox_three
+    key: m1.v2.arctic_fox_three
+    version: person-v2
+    state: Fox
+    identity_field: name
+    write: replace_one
+    seat_read:
+    - name
+    - site
+    - known_paths
+    - known_bridge_paths
+    - known_exit_steps
+    - known_crossings
+    - cold_state
+    - vital.life
+    - max_movement_speed
+    - current_movement_speed
+    - cold_loss_step
+    - cold_save_bonus
+    - last_cold_roll
+    - last_cold_ref
+    - last_action_ref
+    - known_sites
+    - known_residents
+    - master
+    - pending_tamer
+    - tame_hearing_ref
+    - following_destination
+    - following_ref
+    - scent_sighting
+    - scent_sighting.step
+    - scent_sighting.step.motion
+    - scent_sighting.step.motion.name
+    - scent_sighting.step.motion.start
+    - scent_sighting.step.motion.end
+    - scent_sighting.step.motion.action
+    - scent_sighting.step.deposited
+    - scent_sighting.observation
+    - scent_sighting.window
+    - tame_willingness
+  - symbol: arctic_fox_four
+    key: m1.v2.arctic_fox_four
+    version: person-v2
+    state: Fox
+    identity_field: name
+    write: replace_one
+    seat_read:
+    - name
+    - site
+    - known_paths
+    - known_bridge_paths
+    - known_exit_steps
+    - known_crossings
+    - cold_state
+    - vital.life
+    - max_movement_speed
+    - current_movement_speed
+    - cold_loss_step
+    - cold_save_bonus
+    - last_cold_roll
+    - last_cold_ref
+    - last_action_ref
+    - known_sites
+    - known_residents
+    - master
+    - pending_tamer
+    - tame_hearing_ref
+    - following_destination
+    - following_ref
+    - scent_sighting
+    - scent_sighting.step
+    - scent_sighting.step.motion
+    - scent_sighting.step.motion.name
+    - scent_sighting.step.motion.start
+    - scent_sighting.step.motion.end
+    - scent_sighting.step.motion.action
+    - scent_sighting.step.deposited
+    - scent_sighting.observation
+    - scent_sighting.window
+    - tame_willingness
+  - symbol: hall_bokold_one
+    key: m1.v2.hall_bokold_one
+    version: person-v2
+    state: Person
+    identity_field: name
+    write: replace_one
+    seat_read:
+    - resources.display
+    - resources.display.item
+    - resources.display.holder
+    - resources.display.site
+    - resources.display.window
+    - resources.display.action
+    - resources.display_notice_ref
+    - resources.study
+    - resources.study.item
+    - resources.study.form
+    - resources.study.window
+    - resources.study.display
+    - resources.study.custody_basis
+    - resources.study.observation
+    - resources.study.study
+    - name
+    - site
+    - known_paths
+    - known_bridge_paths
+    - known_exit_steps
+    - known_crossings
+    - heard_torch_offer
+    - heard_torch_offer.recipient
+    - heard_torch_offer.site
+    - heard_torch_offer.utterance
+    - heard_torch_offer.speaker
+    - heard_torch_offer.destination
+    - torch_offer_hearing_ref
+    - accepted_torch_offer_ref
+    - torch_accept_ref
+    - person_sighting
+    - person_sighting.subject
+    - person_sighting.site
+    - person_sighting.cold_state
+    - person_sighting.life
+    - known_everflame_charges
+    - last_thawed
+    - escort_heard_ref
+    - escort_utterance_ref
+    - escort_speaker
+    - escort_destination
+    - rescue_state
+    - rescue_ref
+    - cold_state
+    - vital.life
+    - max_movement_speed
+    - current_movement_speed
+    - cold_loss_step
+    - cold_save_bonus
+    - last_cold_roll
+    - last_cold_ref
+    - last_action_ref
+    - known_sites
+    - known_residents
+  - symbol: hall_bokold_two
+    key: m1.v2.hall_bokold_two
+    version: person-v2
+    state: Person
+    identity_field: name
+    write: replace_one
+    seat_read:
+    - resources.display
+    - resources.display.item
+    - resources.display.holder
+    - resources.display.site
+    - resources.display.window
+    - resources.display.action
+    - resources.display_notice_ref
+    - resources.study
+    - resources.study.item
+    - resources.study.form
+    - resources.study.window
+    - resources.study.display
+    - resources.study.custody_basis
+    - resources.study.observation
+    - resources.study.study
+    - name
+    - site
+    - known_paths
+    - known_bridge_paths
+    - known_exit_steps
+    - known_crossings
+    - heard_torch_offer
+    - heard_torch_offer.recipient
+    - heard_torch_offer.site
+    - heard_torch_offer.utterance
+    - heard_torch_offer.speaker
+    - heard_torch_offer.destination
+    - torch_offer_hearing_ref
+    - accepted_torch_offer_ref
+    - torch_accept_ref
+    - person_sighting
+    - person_sighting.subject
+    - person_sighting.site
+    - person_sighting.cold_state
+    - person_sighting.life
+    - known_everflame_charges
+    - last_thawed
+    - escort_heard_ref
+    - escort_utterance_ref
+    - escort_speaker
+    - escort_destination
+    - rescue_state
+    - rescue_ref
+    - cold_state
+    - vital.life
+    - max_movement_speed
+    - current_movement_speed
+    - cold_loss_step
+    - cold_save_bonus
+    - last_cold_roll
+    - last_cold_ref
+    - last_action_ref
+    - known_sites
+    - known_residents
+  - symbol: hall_bokold_three
+    key: m1.v2.hall_bokold_three
+    version: person-v2
+    state: Person
+    identity_field: name
+    write: replace_one
+    seat_read:
+    - resources.display
+    - resources.display.item
+    - resources.display.holder
+    - resources.display.site
+    - resources.display.window
+    - resources.display.action
+    - resources.display_notice_ref
+    - resources.study
+    - resources.study.item
+    - resources.study.form
+    - resources.study.window
+    - resources.study.display
+    - resources.study.custody_basis
+    - resources.study.observation
+    - resources.study.study
+    - name
+    - site
+    - known_paths
+    - known_bridge_paths
+    - known_exit_steps
+    - known_crossings
+    - heard_torch_offer
+    - heard_torch_offer.recipient
+    - heard_torch_offer.site
+    - heard_torch_offer.utterance
+    - heard_torch_offer.speaker
+    - heard_torch_offer.destination
+    - torch_offer_hearing_ref
+    - accepted_torch_offer_ref
+    - torch_accept_ref
+    - person_sighting
+    - person_sighting.subject
+    - person_sighting.site
+    - person_sighting.cold_state
+    - person_sighting.life
+    - known_everflame_charges
+    - last_thawed
+    - escort_heard_ref
+    - escort_utterance_ref
+    - escort_speaker
+    - escort_destination
+    - rescue_state
+    - rescue_ref
+    - cold_state
+    - vital.life
+    - max_movement_speed
+    - current_movement_speed
+    - cold_loss_step
+    - cold_save_bonus
+    - last_cold_roll
+    - last_cold_ref
+    - last_action_ref
+    - known_sites
+    - known_residents
+  - symbol: hall_bokold_four
+    key: m1.v2.hall_bokold_four
+    version: person-v2
+    state: Person
+    identity_field: name
+    write: replace_one
+    seat_read:
+    - resources.display
+    - resources.display.item
+    - resources.display.holder
+    - resources.display.site
+    - resources.display.window
+    - resources.display.action
+    - resources.display_notice_ref
+    - resources.study
+    - resources.study.item
+    - resources.study.form
+    - resources.study.window
+    - resources.study.display
+    - resources.study.custody_basis
+    - resources.study.observation
+    - resources.study.study
+    - name
+    - site
+    - known_paths
+    - known_bridge_paths
+    - known_exit_steps
+    - known_crossings
+    - heard_torch_offer
+    - heard_torch_offer.recipient
+    - heard_torch_offer.site
+    - heard_torch_offer.utterance
+    - heard_torch_offer.speaker
+    - heard_torch_offer.destination
+    - torch_offer_hearing_ref
+    - accepted_torch_offer_ref
+    - torch_accept_ref
+    - person_sighting
+    - person_sighting.subject
+    - person_sighting.site
+    - person_sighting.cold_state
+    - person_sighting.life
+    - known_everflame_charges
+    - last_thawed
+    - escort_heard_ref
+    - escort_utterance_ref
+    - escort_speaker
+    - escort_destination
+    - rescue_state
+    - rescue_ref
+    - cold_state
+    - vital.life
+    - max_movement_speed
+    - current_movement_speed
+    - cold_loss_step
+    - cold_save_bonus
+    - last_cold_roll
+    - last_cold_ref
+    - last_action_ref
+    - known_sites
+    - known_residents
+  - symbol: hall_bokold_five
+    key: m1.v2.hall_bokold_five
+    version: person-v2
+    state: Person
+    identity_field: name
+    write: replace_one
+    seat_read:
+    - resources.display
+    - resources.display.item
+    - resources.display.holder
+    - resources.display.site
+    - resources.display.window
+    - resources.display.action
+    - resources.display_notice_ref
+    - resources.study
+    - resources.study.item
+    - resources.study.form
+    - resources.study.window
+    - resources.study.display
+    - resources.study.custody_basis
+    - resources.study.observation
+    - resources.study.study
+    - name
+    - site
+    - known_paths
+    - known_bridge_paths
+    - known_exit_steps
+    - known_crossings
+    - heard_torch_offer
+    - heard_torch_offer.recipient
+    - heard_torch_offer.site
+    - heard_torch_offer.utterance
+    - heard_torch_offer.speaker
+    - heard_torch_offer.destination
+    - torch_offer_hearing_ref
+    - accepted_torch_offer_ref
+    - torch_accept_ref
+    - person_sighting
+    - person_sighting.subject
+    - person_sighting.site
+    - person_sighting.cold_state
+    - person_sighting.life
+    - known_everflame_charges
+    - last_thawed
+    - escort_heard_ref
+    - escort_utterance_ref
+    - escort_speaker
+    - escort_destination
+    - rescue_state
+    - rescue_ref
+    - cold_state
+    - vital.life
+    - max_movement_speed
+    - current_movement_speed
+    - cold_loss_step
+    - cold_save_bonus
+    - last_cold_roll
+    - last_cold_ref
+    - last_action_ref
+    - known_sites
+    - known_residents
+  - symbol: stable_bokold_one
+    key: m1.v2.stable_bokold_one
+    version: person-v2
+    state: Person
+    identity_field: name
+    write: replace_one
+    seat_read:
+    - name
+    - site
+    - known_paths
+    - known_bridge_paths
+    - known_exit_steps
+    - known_crossings
+    - heard_torch_offer
+    - heard_torch_offer.recipient
+    - heard_torch_offer.site
+    - heard_torch_offer.utterance
+    - heard_torch_offer.speaker
+    - heard_torch_offer.destination
+    - torch_offer_hearing_ref
+    - accepted_torch_offer_ref
+    - torch_accept_ref
+    - person_sighting
+    - person_sighting.subject
+    - person_sighting.site
+    - person_sighting.cold_state
+    - person_sighting.life
+    - known_everflame_charges
+    - last_thawed
+    - escort_heard_ref
+    - escort_utterance_ref
+    - escort_speaker
+    - escort_destination
+    - rescue_state
+    - rescue_ref
+    - cold_state
+    - vital.life
+    - max_movement_speed
+    - current_movement_speed
+    - cold_loss_step
+    - cold_save_bonus
+    - last_cold_roll
+    - last_cold_ref
+    - last_action_ref
+    - known_sites
+    - known_residents
+  - symbol: stable_bokold_two
+    key: m1.v2.stable_bokold_two
+    version: person-v2
+    state: Person
+    identity_field: name
+    write: replace_one
+    seat_read:
+    - name
+    - site
+    - known_paths
+    - known_bridge_paths
+    - known_exit_steps
+    - known_crossings
+    - heard_torch_offer
+    - heard_torch_offer.recipient
+    - heard_torch_offer.site
+    - heard_torch_offer.utterance
+    - heard_torch_offer.speaker
+    - heard_torch_offer.destination
+    - torch_offer_hearing_ref
+    - accepted_torch_offer_ref
+    - torch_accept_ref
+    - person_sighting
+    - person_sighting.subject
+    - person_sighting.site
+    - person_sighting.cold_state
+    - person_sighting.life
+    - known_everflame_charges
+    - last_thawed
+    - escort_heard_ref
+    - escort_utterance_ref
+    - escort_speaker
+    - escort_destination
+    - rescue_state
+    - rescue_ref
+    - cold_state
+    - vital.life
+    - max_movement_speed
+    - current_movement_speed
+    - cold_loss_step
+    - cold_save_bonus
+    - last_cold_roll
+    - last_cold_ref
+    - last_action_ref
+    - known_sites
+    - known_residents
+  - symbol: stable_bokold_three
+    key: m1.v2.stable_bokold_three
+    version: person-v2
+    state: Person
+    identity_field: name
+    write: replace_one
+    seat_read:
+    - name
+    - site
+    - known_paths
+    - known_bridge_paths
+    - known_exit_steps
+    - known_crossings
+    - heard_torch_offer
+    - heard_torch_offer.recipient
+    - heard_torch_offer.site
+    - heard_torch_offer.utterance
+    - heard_torch_offer.speaker
+    - heard_torch_offer.destination
+    - torch_offer_hearing_ref
+    - accepted_torch_offer_ref
+    - torch_accept_ref
+    - person_sighting
+    - person_sighting.subject
+    - person_sighting.site
+    - person_sighting.cold_state
+    - person_sighting.life
+    - known_everflame_charges
+    - last_thawed
+    - escort_heard_ref
+    - escort_utterance_ref
+    - escort_speaker
+    - escort_destination
+    - rescue_state
+    - rescue_ref
+    - cold_state
+    - vital.life
+    - max_movement_speed
+    - current_movement_speed
+    - cold_loss_step
+    - cold_save_bonus
+    - last_cold_roll
+    - last_cold_ref
+    - last_action_ref
+    - known_sites
+    - known_residents
+  - symbol: stable_bokold_four
+    key: m1.v2.stable_bokold_four
+    version: person-v2
+    state: Person
+    identity_field: name
+    write: replace_one
+    seat_read:
+    - name
+    - site
+    - known_paths
+    - known_bridge_paths
+    - known_exit_steps
+    - known_crossings
+    - heard_torch_offer
+    - heard_torch_offer.recipient
+    - heard_torch_offer.site
+    - heard_torch_offer.utterance
+    - heard_torch_offer.speaker
+    - heard_torch_offer.destination
+    - torch_offer_hearing_ref
+    - accepted_torch_offer_ref
+    - torch_accept_ref
+    - person_sighting
+    - person_sighting.subject
+    - person_sighting.site
+    - person_sighting.cold_state
+    - person_sighting.life
+    - known_everflame_charges
+    - last_thawed
+    - escort_heard_ref
+    - escort_utterance_ref
+    - escort_speaker
+    - escort_destination
+    - rescue_state
+    - rescue_ref
+    - cold_state
+    - vital.life
+    - max_movement_speed
+    - current_movement_speed
+    - cold_loss_step
+    - cold_save_bonus
+    - last_cold_roll
+    - last_cold_ref
+    - last_action_ref
+    - known_sites
+    - known_residents
+object_kinds:
+  - {symbol: reward_box, sort: M1.REWARD_BOX@1, state: RewardBox, version: reward-box-v1, max_instances: 1}
+  - {symbol: balloon_power, sort: M1.BALLOON_POWER@1, state: BalloonPower, version: balloon-power-v1, max_instances: 1}
+  - {symbol: balloon, sort: M1.BALLOON@1, state: Balloon, version: balloon-v1, max_instances: 1}
+  - {symbol: elemental_charge, sort: M1.ELEMENTAL_CHARGE@1, state: ElementalCharge, version: elemental-charge-v1, max_instances: 1}
+  - {symbol: charge_packet, sort: M1.CHARGE_PACKET@1, state: ChargePacket, version: charge-packet-v1, max_instances: 8}
+  - {symbol: cell_bars, sort: M1.CELL_BARS@1, state: PrisonBars, version: cell-bars-v1, max_instances: 1}
+  - {symbol: passage_door, sort: M1.PASSAGE_DOOR@1, state: PassageDoor, version: passage-door-v1, max_instances: 1}
+  - {symbol: drink_container, sort: M1.DRINK_CONTAINER@1, state: DrinkContainer, version: drink-container-v1, max_instances: 8}
+  - {symbol: treasure_chest, sort: M1.TREASURE_CHEST@1, state: TreasureChest, version: treasure-chest-v1, max_instances: 2}
+  - {symbol: magic_item, sort: M1.MAGIC_ITEM@1, state: MagicItem, version: magic-item-v1, max_instances: 5}
+  - {symbol: everflame, sort: M1.EVERFLAME@2, state: Everflame, version: everflame-v2, max_instances: 1}
+  - {symbol: chandelier, sort: M1.CHANDELIER@2, state: Chandelier, version: chandelier-v2, max_instances: 1}
+  - {symbol: reservoir, sort: M1.RESERVOIR@2, state: Reservoir, version: reservoir-v2, max_instances: 1}
+  - {symbol: ice_wall, sort: M1.ICE_WALL@1, state: IceWall, version: ice-wall-v1, max_instances: 2}
+actor_kinds:
+  - symbol: ice_elemental
+    state: IceElemental
+    version: elemental-v1
+    max_instances: 1
+    seat_read: [site, known_destination, current_movement_speed, max_movement_speed, cold_state, vital.life, last_move_ref, last_wait_ref, target_sighting, target_sighting.origin, target_sighting.site, target_sighting.observation, last_breath_roll, last_breath_ref, last_observe_origin, last_observe_ref]

@@ -1,0 +1,441 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+appraisal_profiles:
+  - name: local_emma
+    seat: emma
+    definition:
+      ref: queen.local_wait
+      args: {}
+    entries:
+      verify_survivors: queen_verify_survivors_emma
+      pay_reward: queen_pay_reward_emma
+      wait: queen_wait_emma
+      balloon_control: balloon_control_emma
+      observe_routes: queen_observe_routes_emma
+      move: queen_move_emma
+      cross_ice: queen_cross_ice_emma
+      bridge_slow: queen_bridge_slow_emma
+      pass_door: queen_pass_door_emma
+  - name: local_alpha
+    seat: alpha
+    definition: {ref: tower.local_bargain, args: {delivery_score: 3, refusal_score: 0, display_score: 2}}
+    entries: {watch: tower_watch_alpha, propose: propose_alpha, clear: clear_balloon_alpha, deliver: deliver_alpha, withdraw: withdraw_alpha, show_magic: show_magic_alpha, withdraw_magic: withdraw_magic_alpha}
+  - appraisal_family: tower_guards
+    profiles: {tower_bear_one: local_tower_bear_one, tower_bear_two: local_tower_bear_two}
+    definition:
+      ref: tower.local_guard
+      args: {}
+    entries: {watch: tower_watch, aside: step_aside}
+  - appraisal_family: hall_bokolds
+    profiles: {hall_bokold_one: local_hall_bokold_one, hall_bokold_two: local_hall_bokold_two, hall_bokold_three: local_hall_bokold_three, hall_bokold_four: local_hall_bokold_four, hall_bokold_five: local_hall_bokold_five}
+    definition: {ref: hall.local_art, args: {}}
+    entries: {draw: hall_draw, wait: hall_wait, show: show_magic, withdraw: withdraw_magic, observe: observe_magic, study: study_magic, observe_self: observe_my_magic, study_self: study_my_magic, observe_ground: observe_ground_magic, study_ground: study_ground_magic, observe_alpha: observe_alpha_magic, study_alpha: study_alpha_magic}
+  - appraisal_family: prison_voices
+    profiles: {captive_bear: captive_response, prison_bokold: prison_bokold_response}
+    definition: {ref: prison.respond, args: {threshold: 1}}
+    entries: {wait: prison_wait, answer: prison_answer, decline: prison_decline, permit_charge: permit_charge}
+  - appraisal_family: prison_residents
+    profiles:
+      prison_resident_one: toward_exit_prison_resident_one
+      prison_resident_two: toward_exit_prison_resident_two
+    definition:
+      ref: resident.prison_exit
+      args:
+        movement_score: 3
+        light_wait_bonus: 1
+        guarded_destination: prison_outer
+    entries:
+      wait: wait
+      wait_near_guide: wait_near_guide
+      cross_ice: cross_ice
+      move: move
+      accept_torch: accept_torch
+      observe_person: observe_person
+      thaw_person: thaw_person
+      care_person: care_person
+      bridge_slow: bridge_slow
+      observe_prison_line: observe_prison_line
+      try_prison_line: try_prison_line
+      pass_prison_line: pass_prison_line
+      pass_door: pass_door
+      carry_move: carry_move
+      carry_cross_ice: carry_cross_ice
+      carry_bridge_slow: carry_bridge_slow
+      carry_pass_door: carry_pass_door
+      strike_person: strike_person
+      bridge_rush: bridge_rush
+      inspect_patient: inspect_patient
+  - name: prison_watch
+    seat: prison_guard
+    definition: {ref: prison.guard_response, args: {}}
+    entries: {wait: guard_wait, observe_visitor: guard_observe_visitor, inspect_drink: guard_inspect_drink, accept: guard_accept_invitation, refuse: guard_decline_invitation, observe_routes: guard_observe_routes, move: guard_move, cross_ice: guard_cross_ice, pass_door: guard_pass_door, arrive_bar: guard_arrive_bar, return_post: guard_return_post, finish_visit: guard_finish_visit, receive_share: guard_receive_share, decline_share: guard_decline_share, inspect_held_drink: guard_inspect_held_drink, drink: guard_drink}
+  - name: toward_exit_wall_resident
+    seat: wall_resident
+    fallback_entry: wait_wall_resident
+    tie_order:
+    - wait_wall_resident
+    - observe_wall_wall_resident
+    - move_wall_wall_resident
+    - move_wall_resident
+    - cross_ice_wall_resident
+    - accept_torch_wall_resident
+    - observe_person_wall_resident
+    - thaw_person_wall_resident
+    - bridge_slow_wall_resident
+    - care_person_wall_resident
+    - carry_move_wall_resident
+    - carry_cross_ice_wall_resident
+    - carry_bridge_slow_wall_resident
+    - carry_pass_door_wall_resident
+    - strike_person_wall_resident
+    - bridge_rush_wall_resident
+    - inspect_patient_wall_resident
+    rules:
+    - entry: care_person_wall_resident
+      mode: score
+      value: 10
+    - entry: bridge_slow_wall_resident
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - not_none:
+                ref: actor.escort_heard_ref
+            - exactly_one:
+                collection:
+                  ref: actor.known_exit_steps
+                as: step
+                where:
+                  all:
+                  - step.start == actor.site
+                  - step.end == payload.destination
+          then: 3
+          else: 0
+    - entry: wait_wall_resident
+      mode: default
+    - entry: accept_torch_wall_resident
+      mode: ignore
+    - entry: observe_person_wall_resident
+      mode: ignore
+    - entry: thaw_person_wall_resident
+      mode: ignore
+    - entry: observe_wall_wall_resident
+      mode: score
+      value:
+        if:
+          when:
+            not_none:
+              ref: actor.escort_heard_ref
+          then:
+            const: 4
+          else:
+            const: 0
+    - entry: move_wall_wall_resident
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - not_none:
+                ref: actor.escort_heard_ref
+            - eq:
+              - ref: payload.destination
+              - const: treasure_approach
+          then:
+            const: 3
+          else:
+            const: 0
+    - entry: move_wall_resident
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - not_none:
+                ref: actor.escort_heard_ref
+            - exactly_one:
+                collection:
+                  ref: actor.known_exit_steps
+                as: step
+                where:
+                  all:
+                  - step.start == actor.site
+                  - step.end == payload.destination
+          then: 3
+          else: 0
+    - entry: cross_ice_wall_resident
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - not_none:
+                ref: actor.escort_heard_ref
+            - exactly_one:
+                collection:
+                  ref: actor.known_exit_steps
+                as: step
+                where:
+                  all:
+                  - step.start == actor.site
+                  - exists:
+                      collection:
+                        ref: actor.known_crossings
+                      as: crossing
+                      where:
+                        all:
+                        - crossing.key == payload.crossing
+                        - crossing.start == step.start
+                        - crossing.intended == step.end
+          then: 3
+          else: 0
+    - entry: carry_move_wall_resident
+      mode: ignore
+    - entry: carry_cross_ice_wall_resident
+      mode: ignore
+    - entry: carry_bridge_slow_wall_resident
+      mode: ignore
+    - entry: carry_pass_door_wall_resident
+      mode: ignore
+    - entry: strike_person_wall_resident
+      mode: ignore
+    - entry: bridge_rush_wall_resident
+      mode: ignore
+    - entry: inspect_patient_wall_resident
+      mode: ignore
+  - name: rescue_adventurer_ritual_resident
+    seat: ritual_resident
+    fallback_entry: wait_ritual_resident
+    tie_order:
+    - wait_ritual_resident
+    - thaw_person_ritual_resident
+    - observe_person_ritual_resident
+    - accept_torch_ritual_resident
+    - move_ritual_resident
+    - cross_ice_ritual_resident
+    - bridge_slow_ritual_resident
+    - care_person_ritual_resident
+    - carry_move_ritual_resident
+    - carry_cross_ice_ritual_resident
+    - carry_bridge_slow_ritual_resident
+    - carry_pass_door_ritual_resident
+    - strike_person_ritual_resident
+    - bridge_rush_ritual_resident
+    - inspect_patient_ritual_resident
+    rules:
+    - entry: care_person_ritual_resident
+      mode: score
+      value: 10
+    - entry: bridge_slow_ritual_resident
+      mode: ignore
+    - entry: accept_torch_ritual_resident
+      mode: score
+      value:
+        const: 8
+    - entry: observe_person_ritual_resident
+      mode: score
+      value:
+        const: 7
+    - entry: thaw_person_ritual_resident
+      mode: score
+      value:
+        const: 9
+    - entry: move_ritual_resident
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - not_none:
+                ref: actor.heard_torch_offer
+            - not_none:
+                ref: actor.torch_accept_ref
+            - eq:
+              - ref: payload.destination
+              - ref: actor.heard_torch_offer.destination
+          then:
+            const: 5
+          else:
+            const: 0
+    - entry: cross_ice_ritual_resident
+      mode: score
+      value:
+        if:
+          when:
+            all:
+            - not_none:
+                ref: actor.heard_torch_offer
+            - not_none:
+                ref: actor.torch_accept_ref
+            - exactly_one:
+                collection:
+                  ref: actor.known_crossings
+                as: crossing
+                where:
+                  all:
+                  - eq:
+                    - ref: crossing.key
+                    - ref: payload.crossing
+                  - eq:
+                    - ref: crossing.intended
+                    - ref: actor.heard_torch_offer.destination
+          then:
+            const: 5
+          else:
+            const: 0
+    - entry: wait_ritual_resident
+      mode: default
+    - entry: carry_move_ritual_resident
+      mode: ignore
+    - entry: carry_cross_ice_ritual_resident
+      mode: ignore
+    - entry: carry_bridge_slow_ritual_resident
+      mode: ignore
+    - entry: carry_pass_door_ritual_resident
+      mode: ignore
+    - entry: strike_person_ritual_resident
+      mode: ignore
+    - entry: bridge_rush_ritual_resident
+      mode: ignore
+    - entry: inspect_patient_ritual_resident
+      mode: ignore
+  - appraisal_family: open_route_residents
+    profiles:
+      ritual_resident: toward_exit_ritual_resident
+      huddled_one: toward_exit_huddled_one
+      huddled_two: toward_exit_huddled_two
+    definition:
+      ref: resident.toward_exit
+      args:
+        movement_score: 3
+    entries:
+      wait: wait
+      cross_ice: cross_ice
+      move: move
+      accept_torch: accept_torch
+      observe_person: observe_person
+      thaw_person: thaw_person
+      care_person: care_person
+      bridge_slow: bridge_slow
+      carry_move: carry_move
+      carry_cross_ice: carry_cross_ice
+      carry_bridge_slow: carry_bridge_slow
+      carry_pass_door: carry_pass_door
+      strike_person: strike_person
+      bridge_rush: bridge_rush
+      inspect_patient: inspect_patient
+  - name: remain_hidden_ritual_resident
+    seat: ritual_resident
+    definition:
+      ref: resident.remain_hidden
+      args: {}
+    entries: {wait: wait_ritual_resident, cross_ice: cross_ice_ritual_resident, move: move_ritual_resident,
+      accept_torch: accept_torch_ritual_resident, observe_person: observe_person_ritual_resident, thaw_person: thaw_person_ritual_resident,
+      bridge_slow: bridge_slow_ritual_resident, care_person: care_person_ritual_resident, carry_move: carry_move_ritual_resident,
+      carry_cross_ice: carry_cross_ice_ritual_resident, carry_bridge_slow: carry_bridge_slow_ritual_resident,
+      carry_pass_door: carry_pass_door_ritual_resident, strike_person: strike_person_ritual_resident, bridge_rush: bridge_rush_ritual_resident,
+      inspect_patient: inspect_patient_ritual_resident}
+  - name: remain_hidden_huddled_one
+    seat: huddled_one
+    definition:
+      ref: resident.remain_hidden
+      args: {}
+    entries: {wait: wait_huddled_one, cross_ice: cross_ice_huddled_one, move: move_huddled_one, accept_torch: accept_torch_huddled_one,
+      observe_person: observe_person_huddled_one, thaw_person: thaw_person_huddled_one, bridge_slow: bridge_slow_huddled_one,
+      care_person: care_person_huddled_one, carry_move: carry_move_huddled_one, carry_cross_ice: carry_cross_ice_huddled_one,
+      carry_bridge_slow: carry_bridge_slow_huddled_one, carry_pass_door: carry_pass_door_huddled_one, strike_person: strike_person_huddled_one,
+      bridge_rush: bridge_rush_huddled_one, inspect_patient: inspect_patient_huddled_one}
+  - name: remain_hidden_huddled_two
+    seat: huddled_two
+    definition:
+      ref: resident.remain_hidden
+      args: {}
+    entries: {wait: wait_huddled_two, cross_ice: cross_ice_huddled_two, move: move_huddled_two, accept_torch: accept_torch_huddled_two,
+      observe_person: observe_person_huddled_two, thaw_person: thaw_person_huddled_two, bridge_slow: bridge_slow_huddled_two,
+      care_person: care_person_huddled_two, carry_move: carry_move_huddled_two, carry_cross_ice: carry_cross_ice_huddled_two,
+      carry_bridge_slow: carry_bridge_slow_huddled_two, carry_pass_door: carry_pass_door_huddled_two, strike_person: strike_person_huddled_two,
+      bridge_rush: bridge_rush_huddled_two, inspect_patient: inspect_patient_huddled_two}
+  - name: ritualist_bokold_one
+    seat: bokold_one
+    definition:
+      ref: bokold.ritualist
+      args: {}
+    entries: {ritual_advance: ritual_advance_bokold_one, retreat: retreat_bokold_one, observe_light: observe_light_bokold_one,
+      approach_light: approach_light_bokold_one, wait: wait_bokold_one}
+  - name: retreater_bokold_one
+    seat: bokold_one
+    definition:
+      ref: bokold.retreater
+      args: {}
+    entries: {retreat: retreat_bokold_one, ritual_advance: ritual_advance_bokold_one, observe_light: observe_light_bokold_one,
+      approach_light: approach_light_bokold_one, wait: wait_bokold_one}
+  - name: light_seeker_bokold_one
+    seat: bokold_one
+    definition:
+      ref: bokold.seek_light
+      args: {}
+    entries: {approach_light: approach_light_bokold_one, wait: wait_bokold_one, observe_light: observe_light_bokold_one,
+      ritual_advance: ritual_advance_bokold_one, retreat: retreat_bokold_one}
+  - name: ritualist_bokold_two
+    seat: bokold_two
+    definition:
+      ref: bokold.ritualist
+      args: {}
+    entries: {ritual_advance: ritual_advance_bokold_two, retreat: retreat_bokold_two, observe_light: observe_light_bokold_two,
+      approach_light: approach_light_bokold_two, wait: wait_bokold_two}
+  - name: retreater_bokold_two
+    seat: bokold_two
+    definition:
+      ref: bokold.retreater
+      args: {}
+    entries: {retreat: retreat_bokold_two, ritual_advance: ritual_advance_bokold_two, observe_light: observe_light_bokold_two,
+      approach_light: approach_light_bokold_two, wait: wait_bokold_two}
+  - appraisal_family: bar_bears
+    profiles: {icebar_bear_one: icebar_idle_one, icebar_bear_two: icebar_idle_two}
+    definition: {ref: icebar.response, args: {threshold: 2, response_score: 5}}
+    entries: {wait: bar_wait, accept: bar_accept, refuse: bar_refuse, inspect_drink: bar_inspect_drink, drink: bar_drink, observe_routes: bear_observe_routes, move: bear_move, cross_ice: bear_cross_ice, pass_door: bear_pass_door, guest_accept: guest_accept, guest_refuse: guest_refuse, guest_return: guest_return, guest_finish: guest_finish, look_guard: bear_look_guard, invite_guard: bear_invite_guard, offer_share: offer_share, withdraw_share: withdraw_share, finish_share: finish_share}
+  - name: light_seeker_bokold_two
+    seat: bokold_two
+    definition:
+      ref: bokold.seek_light
+      args: {}
+    entries: {approach_light: approach_light_bokold_two, wait: wait_bokold_two, observe_light: observe_light_bokold_two,
+      ritual_advance: ritual_advance_bokold_two, retreat: retreat_bokold_two}
+  - name: local_arctic_fox_one
+    seat: arctic_fox_one
+    definition: &id001
+      ref: fox.local_follow
+      args: {}
+    entries: {fox_sniff: fox_sniff_arctic_fox_one, fox_observe_routes: fox_observe_routes_arctic_fox_one,
+      fox_move: fox_move_arctic_fox_one, fox_cross_ice: fox_cross_ice_arctic_fox_one, fox_pass_door: fox_pass_door_arctic_fox_one,
+      fox_wait: fox_wait_arctic_fox_one, fox_bridge_slow: fox_bridge_slow_arctic_fox_one, fox_bridge_rush: fox_bridge_rush_arctic_fox_one,
+      accept_tame: accept_tame_arctic_fox_one}
+  - name: local_arctic_fox_two
+    seat: arctic_fox_two
+    definition: *id001
+    entries: {fox_sniff: fox_sniff_arctic_fox_two, fox_observe_routes: fox_observe_routes_arctic_fox_two,
+      fox_move: fox_move_arctic_fox_two, fox_cross_ice: fox_cross_ice_arctic_fox_two, fox_pass_door: fox_pass_door_arctic_fox_two,
+      fox_wait: fox_wait_arctic_fox_two, fox_bridge_slow: fox_bridge_slow_arctic_fox_two, fox_bridge_rush: fox_bridge_rush_arctic_fox_two,
+      accept_tame: accept_tame_arctic_fox_two}
+  - name: local_arctic_fox_three
+    seat: arctic_fox_three
+    definition: *id001
+    entries: {fox_sniff: fox_sniff_arctic_fox_three, fox_observe_routes: fox_observe_routes_arctic_fox_three,
+      fox_move: fox_move_arctic_fox_three, fox_cross_ice: fox_cross_ice_arctic_fox_three, fox_pass_door: fox_pass_door_arctic_fox_three,
+      fox_wait: fox_wait_arctic_fox_three, fox_bridge_slow: fox_bridge_slow_arctic_fox_three, fox_bridge_rush: fox_bridge_rush_arctic_fox_three,
+      accept_tame: accept_tame_arctic_fox_three}
+  - name: local_arctic_fox_four
+    seat: arctic_fox_four
+    definition: *id001
+    entries: {fox_sniff: fox_sniff_arctic_fox_four, fox_observe_routes: fox_observe_routes_arctic_fox_four,
+      fox_move: fox_move_arctic_fox_four, fox_cross_ice: fox_cross_ice_arctic_fox_four, fox_pass_door: fox_pass_door_arctic_fox_four,
+      fox_wait: fox_wait_arctic_fox_four, fox_bridge_slow: fox_bridge_slow_arctic_fox_four, fox_bridge_rush: fox_bridge_rush_arctic_fox_four,
+      accept_tame: accept_tame_arctic_fox_four}
+  - appraisal_family: stable_bokolds
+    profiles: {stable_bokold_one: local_stable_bokold_one, stable_bokold_two: local_stable_bokold_two, stable_bokold_three: local_stable_bokold_three,
+      stable_bokold_four: local_stable_bokold_four}
+    definition:
+      ref: stable.local_wait
+      args: {}
+    entries: {stable_observe_routes: stable_observe_routes, stable_move: stable_move, stable_cross_ice: stable_cross_ice,
+      stable_pass_door: stable_pass_door, stable_wait: stable_wait}

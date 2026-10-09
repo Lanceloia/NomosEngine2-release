@@ -1,0 +1,21 @@
+# The schedule requests control opportunities; each seat still chooses locally.
+schema: t0.case.v0
+max_steps: 5
+schedule:
+  - sender
+  - sender
+  - receiver
+  - {continue: receiver}
+  - receiver
+controllers:
+  sender:
+    - {if_offer: {label: Dispatch parcel}, select: {label: Dispatch parcel}}
+    - {defer: true}
+  receiver:
+    - {if_offer: {label: Acknowledge delivery}, select: {label: Acknowledge delivery}}
+    - {defer: true}
+goal:
+  all:
+    - {source_published: c0.parcel.arrive.due}
+    - {source_published: c0.parcel.confirm}
+    - {owner_field_eq: {owner: scene, path: [parcel, status], value: arrived}}

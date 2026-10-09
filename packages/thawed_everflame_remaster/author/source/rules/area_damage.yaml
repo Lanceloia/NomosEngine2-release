@@ -1,0 +1,272 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+# One shared roll; target groups preserve vulnerability, monitoring and wakefulness.
+lawdefs:
+- name: action.elemental_breath
+  family: action
+  formals:
+    damage: int
+  body:
+    value:
+      schema: c0.value.v1
+      bindings:
+      - name: rolled
+        stage: effect
+        let:
+          die_roll:
+            seed: {ref: scene.die_seed}
+            sides: 20
+      guard:
+        require:
+        - active: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+        - observed: actor.target_sighting is not None
+        - origin: actor.target_sighting.origin == actor.site
+        - aim: actor.target_sighting.site == payload.area and subject.site == payload.area
+        - sector:
+            exactly_one:
+              collection: scene.breath_zones
+              as: zone
+              where: zone.origin == actor.site and zone.aim == payload.area
+      outputs:
+        action: {ref: occurrence}
+        next_seed:
+          die_next_seed: {ref: scene.die_seed}
+        rolled: {ref: rolled}
+        breath_ref: {ref: occurrence}
+        reset_origin: {const: null}
+        sighting: {const: null}
+        subject_vital:
+          call:
+            ref: combat.fireball_vital
+            args:
+              zones: {ref: scene.breath_zones}
+              origin: {ref: actor.site}
+              aim: {ref: payload.area}
+              site: {ref: subject.site}
+              vital: {ref: subject.vital}
+              frozen: subject.cold_state == 'frozen'
+              monitored: true
+              weak: false
+              rolled: {ref: rolled}
+              damage: {arg: damage}
+              basis: {ref: occurrence}
+      output_families:
+      - name: alert_targets
+        owners: [victim_captive_bear, victim_prison_bokold, victim_prison_guard, victim_alpha, victim_tower_bear_one,
+          victim_tower_bear_two, victim_icebar_bear_one, victim_icebar_bear_two]
+        as: person
+        bindings:
+          vital_after:
+            call:
+              ref: combat.fireball_vital
+              args:
+                zones: {ref: scene.breath_zones}
+                origin: {ref: actor.site}
+                aim: {ref: payload.area}
+                site: {ref: person.site}
+                vital: {ref: person.vital}
+                frozen: false
+                monitored: false
+                weak: false
+                rolled: {ref: rolled}
+                damage: {arg: damage}
+                basis: {ref: occurrence}
+        fields:
+          vital: vital_after
+          awake: person.awake and vital_after.life == 'alive'
+      - name: rescue_targets
+        owners: [victim_wall_resident, victim_ritual_resident, victim_prison_resident_one, victim_prison_resident_two,
+          victim_huddled_one, victim_huddled_two]
+        as: person
+        fields:
+          vital:
+            call:
+              ref: combat.fireball_vital
+              args:
+                zones: {ref: scene.breath_zones}
+                origin: {ref: actor.site}
+                aim: {ref: payload.area}
+                site: {ref: person.site}
+                vital: {ref: person.vital}
+                frozen: person.cold_state == 'frozen'
+                monitored: true
+                weak: false
+                rolled: {ref: rolled}
+                damage: {arg: damage}
+                basis: {ref: occurrence}
+      - name: cold_targets
+        owners: [victim_bokold_one, victim_bokold_two, victim_arctic_fox_one, victim_arctic_fox_two, victim_arctic_fox_three,
+          victim_arctic_fox_four, victim_hall_bokold_one, victim_hall_bokold_two, victim_hall_bokold_three,
+          victim_hall_bokold_four, victim_hall_bokold_five, victim_stable_bokold_one, victim_stable_bokold_two,
+          victim_stable_bokold_three, victim_stable_bokold_four, victim_emma]
+        as: person
+        fields:
+          vital:
+            call:
+              ref: combat.fireball_vital
+              args:
+                zones: {ref: scene.breath_zones}
+                origin: {ref: actor.site}
+                aim: {ref: payload.area}
+                site: {ref: person.site}
+                vital: {ref: person.vital}
+                frozen: person.cold_state == 'frozen'
+                monitored: false
+                weak: false
+                rolled: {ref: rolled}
+                damage: {arg: damage}
+                basis: {ref: occurrence}
+- name: action.fireball
+  family: action
+  formals:
+    damage: int
+  body:
+    value:
+      schema: c0.value.v1
+      bindings:
+      - name: rolled
+        stage: effect
+        let:
+          die_roll:
+            seed: {ref: scene.die_seed}
+            sides: 20
+      guard:
+        all:
+        - actor.vital.life == 'alive'
+        - actor.cold_state != 'frozen'
+        - payload.actor == actor.name
+        - item.form == 'firelock' and item.holder == actor.name and item.charges > 0
+        - exists:
+            collection: actor.known_sites
+            as: known
+            where: known.site == payload.area
+        - exists:
+            collection: scene.fireball_zones
+            as: zone
+            where: zone.origin == actor.site and zone.aim == payload.area
+      outputs:
+        action: {ref: occurrence}
+        next_seed:
+          die_next_seed: {ref: scene.die_seed}
+        last_action_ref: {ref: occurrence}
+        charges:
+          sub:
+          - {ref: item.charges}
+          - 1
+        casting_feedback:
+          record:
+            type: CastingFeedback
+            fields:
+              fireball_roll: {ref: rolled}
+              branding:
+                if:
+                  when: actor.casting_feedback is not None
+                  then: {ref: actor.casting_feedback.branding}
+                  else: null
+              focus_roll:
+                if:
+                  when: actor.casting_feedback is not None
+                  then: {ref: actor.casting_feedback.focus_roll}
+                  else: null
+        caster_vital:
+          call:
+            ref: combat.fireball_vital
+            args:
+              zones: {ref: scene.fireball_zones}
+              origin: {ref: actor.site}
+              aim: {ref: payload.area}
+              site: {ref: actor.site}
+              vital: {ref: actor.vital}
+              frozen: actor.cold_state == 'frozen'
+              monitored: true
+              weak: false
+              rolled: {ref: rolled}
+              damage: {arg: damage}
+              basis: {ref: occurrence}
+      output_families:
+      - name: fire_vulnerable_alert_targets
+        owners: [victim_captive_bear, victim_prison_guard, victim_alpha, victim_tower_bear_one, victim_tower_bear_two,
+          victim_icebar_bear_one, victim_icebar_bear_two]
+        as: person
+        bindings:
+          vital_after:
+            call:
+              ref: combat.fireball_vital
+              args:
+                zones: {ref: scene.fireball_zones}
+                origin: {ref: actor.site}
+                aim: {ref: payload.area}
+                site: {ref: person.site}
+                vital: {ref: person.vital}
+                frozen: false
+                monitored: false
+                weak: true
+                rolled: {ref: rolled}
+                damage: {arg: damage}
+                basis: {ref: occurrence}
+        fields:
+          vital: vital_after
+          awake: person.awake and vital_after.life == 'alive'
+      - name: alert_targets
+        owners: [victim_prison_bokold]
+        as: person
+        bindings:
+          vital_after:
+            call:
+              ref: combat.fireball_vital
+              args:
+                zones: {ref: scene.fireball_zones}
+                origin: {ref: actor.site}
+                aim: {ref: payload.area}
+                site: {ref: person.site}
+                vital: {ref: person.vital}
+                frozen: false
+                monitored: false
+                weak: false
+                rolled: {ref: rolled}
+                damage: {arg: damage}
+                basis: {ref: occurrence}
+        fields:
+          vital: vital_after
+          awake: person.awake and vital_after.life == 'alive'
+      - name: rescue_targets
+        owners: [victim_wall_resident, victim_ritual_resident, victim_prison_resident_one, victim_prison_resident_two,
+          victim_huddled_one, victim_huddled_two]
+        as: person
+        fields:
+          vital:
+            call:
+              ref: combat.fireball_vital
+              args:
+                zones: {ref: scene.fireball_zones}
+                origin: {ref: actor.site}
+                aim: {ref: payload.area}
+                site: {ref: person.site}
+                vital: {ref: person.vital}
+                frozen: person.cold_state == 'frozen'
+                monitored: true
+                weak: false
+                rolled: {ref: rolled}
+                damage: {arg: damage}
+                basis: {ref: occurrence}
+      - name: cold_targets
+        owners: [victim_bokold_one, victim_bokold_two, victim_arctic_fox_one, victim_arctic_fox_two, victim_arctic_fox_three,
+          victim_arctic_fox_four, victim_hall_bokold_one, victim_hall_bokold_two, victim_hall_bokold_three,
+          victim_hall_bokold_four, victim_hall_bokold_five, victim_stable_bokold_one, victim_stable_bokold_two,
+          victim_stable_bokold_three, victim_stable_bokold_four, victim_emma]
+        as: person
+        fields:
+          vital:
+            call:
+              ref: combat.fireball_vital
+              args:
+                zones: {ref: scene.fireball_zones}
+                origin: {ref: actor.site}
+                aim: {ref: payload.area}
+                site: {ref: person.site}
+                vital: {ref: person.vital}
+                frozen: person.cold_state == 'frozen'
+                monitored: false
+                weak: false
+                rolled: {ref: rolled}
+                damage: {arg: damage}
+                basis: {ref: occurrence}

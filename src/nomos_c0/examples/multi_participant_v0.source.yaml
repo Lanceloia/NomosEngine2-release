@@ -1,0 +1,32 @@
+schema: c0.owner_graph.v6
+owners: [scene, maker, a, b]
+object_kinds:
+  - {kind: tool, sort: EXAMPLE.PARTICIPANT_TOOL@1}
+offer_provider: {name: finite_value, version: '1'}
+game_form: {mode: manual}
+actions:
+  - name: enable
+    template: enable
+    actor: maker
+    source_key: c0.participants.enable
+    event_type: c0.participants.enable.action
+    law: {ref: action.enable, args: {}}
+    participants:
+      tool: {kind: tool}
+      victim: {actors: [a, b]}
+events: []
+lawdefs: []
+seats:
+  - name: maker
+    actor: maker
+    entries: [enable]
+    read: [maker.name, maker.known]
+    offers:
+      - entry: enable
+        for_each_participants:
+          tool: {kind: tool, read: [tool.label, tool.ready, tool.visible]}
+          victim: {collection: {ref: actor.known}, as: candidate}
+        label: [{const: 'Use '}, {ref: tool.label}, {const: ' on '}, {ref: candidate.name}]
+        visible_when: {ref: tool.visible}
+        when: {ref: tool.ready}
+        payload: {tool: {ref: tool_ref}, victim: {ref: candidate.name}}

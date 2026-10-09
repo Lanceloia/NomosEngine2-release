@@ -1,0 +1,18 @@
+schema: c0.owner_graph.assets.v1
+opening:
+  scene:
+    regions: [start, goal, wall]
+    crossings:
+      - {key: passage, start: start, intended: goal, collision: wall, difficulty: 11, die_sides: 20}
+    die_seed: 1
+  traveler:
+    name: traveler
+    region: start
+    balance_bonus: 0
+    balance_penalty: 0
+    known_crossings:
+      - {key: passage, start: start, intended: goal}
+    last_roll: null
+    last_total: null
+    last_passed: null
+    last_crossing_ref: null

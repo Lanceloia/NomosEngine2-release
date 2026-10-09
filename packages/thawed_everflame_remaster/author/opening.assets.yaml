@@ -1,0 +1,2816 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+schema: c0.owner_graph.assets.v1
+time: 0
+opening_seeds: {magic_items: 0}
+opening:
+  alpha: {occupancy: none, name: alpha, site: tower_base, awake: true, attending: true, vital: {life: alive, endurance: 4, max_endurance: 4}, max_movement_speed: 5, current_movement_speed: 5}
+  tower_bear_one: {occupancy: blocking_balloon, name: tower_bear_one, site: tower_base, awake: true, attending: true, vital: {life: alive, endurance: 4, max_endurance: 4}, max_movement_speed: 5, current_movement_speed: 5}
+  tower_bear_two: {occupancy: blocking_balloon, name: tower_bear_two, site: tower_base, awake: true, attending: true, vital: {life: alive, endurance: 4, max_endurance: 4}, max_movement_speed: 5, current_movement_speed: 5}
+  captive_bear:
+    name: captive_bear
+    vital: {life: alive, endurance: 4, max_endurance: 4}
+    site: captive_cell
+    awake: true
+    attending: true
+    answer_willingness: 2
+    share_willingness: 2
+    personal_fact: once_butler
+  prison_bokold:
+    name: prison_bokold
+    vital: {life: alive, endurance: 3, max_endurance: 3}
+    site: prison_deep
+    awake: true
+    attending: true
+    answer_willingness: 1
+    share_willingness: 0
+    personal_fact: sad_here
+  emma:
+    reward_account: {verified: []}
+    known_sites: [{site: tower_top}]
+    known_paths: []
+    known_crossings: []
+    known_bridge_paths: []
+    balance_bonus: 0
+    rescue_state: not_safe
+    attending: true
+    name: emma
+    site: tower_top
+    cold_state: frozen
+    vital:
+      life: alive
+      endurance: 3
+      max_endurance: 3
+    max_movement_speed: 5
+    current_movement_speed: 0
+    cold_loss_step: 1
+    cold_save_bonus: 0
+    cold_seed: 31
+  scene:
+    research_seed: 17
+    balloon_seats: []
+    hall_drawings: []
+    # Two 10 ft supported wall segments are a finite adaptation, not measured tower height.
+    climb_paths:
+    - {start: tower_base, end: tower_wall_landing, distance_ft: 10}
+    - {start: tower_wall_landing, end: tower_top, distance_ft: 10}
+    - {start: tower_top, end: tower_wall_landing, distance_ft: 10}
+    - {start: tower_wall_landing, end: tower_base, distance_ft: 10}
+    # Directed finite approximation of a 20 ft cone, not inferred from movement edges.
+    breath_zones:
+    - {origin: ritual_ring, aim: ritual_threshold, affected_sites: [ritual_threshold]}
+    - {origin: ritual_threshold, aim: ritual_ring, affected_sites: [ritual_ring]}
+    fireball_zones:
+    # Explicit finite tower geometry, independent of movement and protection tables.
+    - {origin: tower_base, aim: tower_base, affected_sites: [tower_base, tower_wall_landing, tower_top]}
+    - {origin: tower_base, aim: tower_wall_landing, affected_sites: [tower_base, tower_wall_landing, tower_top]}
+    - {origin: tower_base, aim: tower_top, affected_sites: [tower_base, tower_wall_landing, tower_top]}
+    - {origin: tower_wall_landing, aim: tower_base, affected_sites: [tower_base, tower_wall_landing, tower_top]}
+    - {origin: tower_wall_landing, aim: tower_wall_landing, affected_sites: [tower_base, tower_wall_landing, tower_top]}
+    - {origin: tower_wall_landing, aim: tower_top, affected_sites: [tower_base, tower_wall_landing, tower_top]}
+    - {origin: tower_top, aim: tower_base, affected_sites: [tower_base, tower_wall_landing, tower_top]}
+    - {origin: tower_top, aim: tower_wall_landing, affected_sites: [tower_base, tower_wall_landing, tower_top]}
+    - {origin: tower_top, aim: tower_top, affected_sites: [tower_base, tower_wall_landing, tower_top]}
+    - origin: palace_exit
+      aim: palace_exit
+      affected_sites:
+      - palace_exit
+    - origin: ballroom_entrance
+      aim: ballroom_entrance
+      affected_sites:
+      - ballroom_entrance
+    - origin: ritual_passage_entry
+      aim: ritual_passage_entry
+      affected_sites:
+      - ritual_passage_entry
+    - origin: ritual_threshold
+      aim: ritual_threshold
+      affected_sites:
+      - ritual_threshold
+      - ritual_ring
+    - origin: ritual_ring
+      aim: ritual_ring
+      affected_sites:
+      - ritual_threshold
+      - ritual_ring
+    - origin: ballroom_chandelier_reach
+      aim: ballroom_chandelier_reach
+      affected_sites:
+      - ballroom_chandelier_reach
+    - origin: ballroom_opposite_wall
+      aim: ballroom_opposite_wall
+      affected_sites:
+      - ballroom_opposite_wall
+    - origin: ballroom_chandelier_far_wall
+      aim: ballroom_chandelier_far_wall
+      affected_sites:
+      - ballroom_chandelier_far_wall
+    - origin: ballroom_bar_side_wall
+      aim: ballroom_bar_side_wall
+      affected_sites:
+      - ballroom_bar_side_wall
+    - origin: ritual_side_wall
+      aim: ritual_side_wall
+      affected_sites:
+      - ritual_side_wall
+    - origin: treasure_approach
+      aim: treasure_approach
+      affected_sites:
+      - treasure_approach
+    - origin: treasure_release
+      aim: treasure_release
+      affected_sites:
+      - treasure_release
+    - origin: treasure_side
+      aim: treasure_side
+      affected_sites:
+      - treasure_side
+    - origin: treasure_ice
+      aim: treasure_ice
+      affected_sites:
+      - treasure_ice
+    - origin: treasure_box_interior
+      aim: treasure_box_interior
+      affected_sites:
+      - treasure_box_interior
+    - origin: ritual_collision_wall
+      aim: ritual_collision_wall
+      affected_sites:
+      - ritual_collision_wall
+    - origin: halls_ballroom_door
+      aim: halls_ballroom_door
+      affected_sites:
+      - halls_ballroom_door
+    - origin: halls_bridge_door
+      aim: halls_bridge_door
+      affected_sites:
+      - halls_bridge_door
+    - origin: halls_collision_wall
+      aim: halls_collision_wall
+      affected_sites:
+      - halls_collision_wall
+    - origin: bridge_palace_landing
+      aim: bridge_palace_landing
+      affected_sites:
+      - bridge_palace_landing
+    - origin: bridge_midspan
+      aim: bridge_midspan
+      affected_sites:
+      - bridge_midspan
+    - origin: ballroom_icebar_door
+      aim: ballroom_icebar_door
+      affected_sites:
+      - ballroom_icebar_door
+    - origin: icebar_entry
+      aim: icebar_entry
+      affected_sites:
+      - icebar_entry
+    - origin: ritual_lower_door
+      aim: ritual_lower_door
+      affected_sites:
+      - ritual_lower_door
+    - origin: lower_corridor_entry
+      aim: lower_corridor_entry
+      affected_sites:
+      - lower_corridor_entry
+    - origin: stables_approach
+      aim: stables_approach
+      affected_sites:
+      - stables_approach
+    - origin: lower_corridor_wall
+      aim: lower_corridor_wall
+      affected_sites:
+      - lower_corridor_wall
+    - origin: stables_entry
+      aim: stables_entry
+      affected_sites:
+      - stables_entry
+    - origin: stables_collision_wall
+      aim: stables_collision_wall
+      affected_sites:
+      - stables_collision_wall
+    - origin: prison_outer
+      aim: prison_outer
+      affected_sites:
+      - prison_outer
+    - origin: prison_holding
+      aim: prison_holding
+      affected_sites:
+      - prison_holding
+    - origin: prison_deep
+      aim: prison_deep
+      affected_sites:
+      - prison_deep
+    - origin: captive_cell
+      aim: captive_cell
+      affected_sites:
+      - captive_cell
+    - origin: endless_abyss
+      aim: endless_abyss
+      affected_sites:
+      - endless_abyss
+    - origin: ritual_threshold
+      aim: ritual_ring
+      affected_sites:
+      - ritual_threshold
+      - ritual_ring
+    - origin: ritual_ring
+      aim: ritual_threshold
+      affected_sites:
+      - ritual_threshold
+      - ritual_ring
+    prison_lines:
+    - start: prison_outer
+      end: prison_holding
+      base_move_cost: 10000
+    - start: prison_holding
+      end: prison_outer
+      base_move_cost: 10000
+    floors:
+    - key: ballroom
+      sites:
+      - ballroom_entrance
+      - ritual_passage_entry
+      - ballroom_chandelier_reach
+      - ballroom_opposite_wall
+      - ballroom_chandelier_far_wall
+      - ballroom_bar_side_wall
+      - ritual_side_wall
+      - ballroom_icebar_door
+      frozen: true
+    - key: ritual
+      sites:
+      - ritual_threshold
+      - ritual_ring
+      - ritual_collision_wall
+      - ritual_lower_door
+      frozen: false
+    - key: treasure
+      sites:
+      - treasure_approach
+      - treasure_release
+      - treasure_side
+      - treasure_ice
+      frozen: false
+    - key: halls
+      sites:
+      - halls_ballroom_door
+      - halls_bridge_door
+      - halls_collision_wall
+      frozen: false
+    - key: bridge
+      sites:
+      - bridge_palace_landing
+      - bridge_midspan
+      frozen: false
+    - key: icebar
+      sites:
+      - icebar_entry
+      frozen: false
+    - key: lower_corridor
+      sites:
+      - lower_corridor_entry
+      - stables_approach
+      - lower_corridor_wall
+      frozen: false
+    - key: stables
+      sites:
+      - stables_entry
+      - stables_collision_wall
+      - prison_outer
+      frozen: true
+    - {key: tower, sites: [tower_base, tower_top], frozen: true}
+    - key: prison
+      sites:
+      - prison_holding
+      - prison_deep
+      - captive_cell
+      frozen: false
+    cold_dc: 10
+    ritual_completion_signal: false
+    ritual_cue_site: ritual_ring
+    ritual_cue_stage: preparing
+    elemental_summoned: false
+    palace_event_seed: 13
+    palace_event_pool: [1, 2, 3, 4]
+    palace_event_draws: []
+    scent_steps: []
+    die_seed: 13
+    notice_site: ritual_ring
+    notice_subject: ritual_resident
+    sites:
+    - tower_base
+    - tower_wall_landing
+    - tower_top
+    - palace_exit
+    - ballroom_entrance
+    - ritual_passage_entry
+    - ritual_threshold
+    - ritual_ring
+    - ballroom_chandelier_reach
+    - ballroom_opposite_wall
+    - ballroom_chandelier_far_wall
+    - ballroom_bar_side_wall
+    - ritual_side_wall
+    - treasure_approach
+    - treasure_release
+    - treasure_side
+    - treasure_ice
+    - treasure_box_interior
+    - ritual_collision_wall
+    - halls_ballroom_door
+    - halls_bridge_door
+    - halls_collision_wall
+    - bridge_palace_landing
+    - bridge_midspan
+    - ballroom_icebar_door
+    - icebar_entry
+    - ritual_lower_door
+    - lower_corridor_entry
+    - stables_approach
+    - lower_corridor_wall
+    - stables_entry
+    - stables_collision_wall
+    - prison_outer
+    - prison_holding
+    - prison_deep
+    - captive_cell
+    - endless_abyss
+    paths:
+    - {start: lower_corridor_entry, end: tower_base, base_move_cost: 10000}
+    - {start: tower_base, end: lower_corridor_entry, base_move_cost: 10000}
+    - {start: tower_base, end: tower_top, base_move_cost: 20000}
+    - {start: tower_top, end: tower_base, base_move_cost: 20000}
+    - start: ritual_passage_entry
+      end: ritual_threshold
+      base_move_cost: 10000
+    - start: ritual_threshold
+      end: ritual_passage_entry
+      base_move_cost: 10000
+    - start: ritual_threshold
+      end: ritual_ring
+      base_move_cost: 10000
+    - start: ritual_ring
+      end: ritual_threshold
+      base_move_cost: 10000
+    - start: ritual_threshold
+      end: treasure_approach
+      base_move_cost: 10000
+    - start: treasure_approach
+      end: ritual_threshold
+      base_move_cost: 10000
+    - start: ballroom_entrance
+      end: halls_ballroom_door
+      base_move_cost: 10000
+    - start: halls_ballroom_door
+      end: halls_bridge_door
+      base_move_cost: 10000
+    - start: halls_bridge_door
+      end: bridge_palace_landing
+      base_move_cost: 10000
+    - start: ballroom_icebar_door
+      end: icebar_entry
+      base_move_cost: 10000
+    - start: ritual_lower_door
+      end: lower_corridor_entry
+      base_move_cost: 10000
+    - start: lower_corridor_entry
+      end: stables_approach
+      base_move_cost: 10000
+    - start: halls_ballroom_door
+      end: ballroom_entrance
+      base_move_cost: 10000
+    - start: halls_bridge_door
+      end: halls_ballroom_door
+      base_move_cost: 10000
+    - start: bridge_palace_landing
+      end: halls_bridge_door
+      base_move_cost: 10000
+    - start: icebar_entry
+      end: ballroom_icebar_door
+      base_move_cost: 10000
+    - start: lower_corridor_entry
+      end: ritual_lower_door
+      base_move_cost: 10000
+    - start: stables_approach
+      end: lower_corridor_entry
+      base_move_cost: 10000
+    - start: stables_entry
+      end: prison_outer
+      base_move_cost: 10000
+    - start: prison_outer
+      end: stables_entry
+      base_move_cost: 10000
+    - start: prison_holding
+      end: prison_deep
+      base_move_cost: 10000
+    - start: prison_deep
+      end: prison_holding
+      base_move_cost: 10000
+    crossings:
+    - key: ritual_threshold_to_ring
+      start: ritual_threshold
+      intended: ritual_ring
+      collision: ritual_collision_wall
+      floor_key: ritual
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      success_followup: ritual_ring_to_threshold
+      failure_followup: recover_ritual_room_wall
+    - key: ritual_ring_to_threshold
+      start: ritual_ring
+      intended: ritual_threshold
+      collision: ritual_collision_wall
+      floor_key: ritual
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      success_followup: ritual_threshold_to_ring
+      failure_followup: recover_ritual_room_wall
+    - key: recover_ritual_room_wall
+      start: ritual_collision_wall
+      intended: ritual_threshold
+      collision: ritual_collision_wall
+      floor_key: ritual
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      success_followup: ritual_threshold_to_ring
+      failure_followup: recover_ritual_room_wall
+    - key: entrance_to_ritual
+      start: ballroom_entrance
+      intended: ritual_passage_entry
+      collision: ballroom_opposite_wall
+      floor_key: ballroom
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      success_followup: ritual_to_entrance
+      failure_followup: recover_opposite_wall
+    - key: entrance_to_chandelier
+      start: ballroom_entrance
+      intended: ballroom_chandelier_reach
+      collision: ballroom_chandelier_far_wall
+      floor_key: ballroom
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      success_followup: chandelier_to_entrance
+      failure_followup: recover_chandelier_wall
+    - key: chandelier_to_entrance
+      start: ballroom_chandelier_reach
+      intended: ballroom_entrance
+      collision: ballroom_bar_side_wall
+      floor_key: ballroom
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      failure_followup: recover_bar_side_wall
+    - key: recover_opposite_wall
+      start: ballroom_opposite_wall
+      intended: ballroom_entrance
+      collision: ballroom_bar_side_wall
+      floor_key: ballroom
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      failure_followup: recover_bar_side_wall
+    - key: recover_chandelier_wall
+      start: ballroom_chandelier_far_wall
+      intended: ballroom_entrance
+      collision: ballroom_bar_side_wall
+      floor_key: ballroom
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      failure_followup: recover_bar_side_wall
+    - key: recover_bar_side_wall
+      start: ballroom_bar_side_wall
+      intended: ballroom_entrance
+      collision: ballroom_bar_side_wall
+      floor_key: ballroom
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      failure_followup: recover_bar_side_wall
+    - key: ritual_to_entrance
+      start: ritual_passage_entry
+      intended: ballroom_entrance
+      collision: ritual_side_wall
+      floor_key: ballroom
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      failure_followup: recover_ritual_side_wall
+    - key: recover_ritual_side_wall
+      start: ritual_side_wall
+      intended: ritual_passage_entry
+      collision: ritual_side_wall
+      floor_key: ballroom
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      success_followup: ritual_to_entrance
+      failure_followup: recover_ritual_side_wall
+    - key: entrance_to_icebar
+      start: ballroom_entrance
+      intended: ballroom_icebar_door
+      collision: ballroom_opposite_wall
+      floor_key: ballroom
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      success_followup: icebar_to_entrance
+      failure_followup: recover_opposite_wall
+    - key: icebar_to_entrance
+      start: ballroom_icebar_door
+      intended: ballroom_entrance
+      collision: ballroom_bar_side_wall
+      floor_key: ballroom
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      failure_followup: recover_bar_side_wall
+    - key: ritual_to_lower_door
+      start: ritual_threshold
+      intended: ritual_lower_door
+      collision: ritual_collision_wall
+      floor_key: ritual
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      success_followup: lower_door_to_ritual
+      failure_followup: recover_ritual_room_wall
+    - key: lower_door_to_ritual
+      start: ritual_lower_door
+      intended: ritual_threshold
+      collision: ritual_collision_wall
+      floor_key: ritual
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      success_followup: ritual_to_lower_door
+      failure_followup: recover_ritual_room_wall
+    - key: halls_to_bridge_door
+      start: halls_ballroom_door
+      intended: halls_bridge_door
+      collision: halls_collision_wall
+      floor_key: halls
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      success_followup: halls_to_ballroom_door
+      failure_followup: recover_halls_wall
+    - key: halls_to_ballroom_door
+      start: halls_bridge_door
+      intended: halls_ballroom_door
+      collision: halls_collision_wall
+      floor_key: halls
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      success_followup: halls_to_bridge_door
+      failure_followup: recover_halls_wall
+    - key: recover_halls_wall
+      start: halls_collision_wall
+      intended: halls_ballroom_door
+      collision: halls_collision_wall
+      floor_key: halls
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      success_followup: halls_to_bridge_door
+      failure_followup: recover_halls_wall
+    - key: corridor_to_stables
+      start: lower_corridor_entry
+      intended: stables_approach
+      collision: lower_corridor_wall
+      floor_key: lower_corridor
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      success_followup: stables_to_corridor
+      failure_followup: recover_corridor_wall
+    - key: stables_to_corridor
+      start: stables_approach
+      intended: lower_corridor_entry
+      collision: lower_corridor_wall
+      floor_key: lower_corridor
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      success_followup: corridor_to_stables
+      failure_followup: recover_corridor_wall
+    - key: recover_corridor_wall
+      start: lower_corridor_wall
+      intended: lower_corridor_entry
+      collision: lower_corridor_wall
+      floor_key: lower_corridor
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      success_followup: corridor_to_stables
+      failure_followup: recover_corridor_wall
+    - key: stables_to_prison
+      start: stables_entry
+      intended: prison_outer
+      collision: stables_collision_wall
+      floor_key: stables
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      success_followup: prison_to_stables
+      failure_followup: recover_stables_wall
+    - key: prison_to_stables
+      start: prison_outer
+      intended: stables_entry
+      collision: stables_collision_wall
+      floor_key: stables
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      success_followup: stables_to_prison
+      failure_followup: recover_stables_wall
+    - key: recover_stables_wall
+      start: stables_collision_wall
+      intended: stables_entry
+      collision: stables_collision_wall
+      floor_key: stables
+      base_move_cost: 10000
+      difficulty: 10
+      die_sides: 20
+      success_followup: stables_to_prison
+      failure_followup: recover_stables_wall
+    coverage:
+    - {origin: tower_base, near_sites: [tower_base, tower_wall_landing], mid_sites: [tower_base, tower_wall_landing, tower_top], far_sites: [tower_base, tower_wall_landing, tower_top]}
+    - {origin: tower_wall_landing, near_sites: [tower_base, tower_wall_landing, tower_top], mid_sites: [tower_base, tower_wall_landing, tower_top], far_sites: [tower_base, tower_wall_landing, tower_top]}
+    - {origin: tower_top, near_sites: [tower_wall_landing, tower_top], mid_sites: [tower_base, tower_wall_landing, tower_top], far_sites: [tower_base, tower_wall_landing, tower_top]}
+    - origin: stables_collision_wall
+      near_sites:
+      - stables_collision_wall
+      mid_sites:
+      - stables_collision_wall
+      far_sites:
+      - stables_collision_wall
+    - origin: prison_outer
+      near_sites:
+      - prison_outer
+      mid_sites:
+      - prison_outer
+      far_sites:
+      - prison_outer
+    - origin: prison_holding
+      near_sites:
+      - prison_holding
+      mid_sites:
+      - prison_holding
+      far_sites:
+      - prison_holding
+    - origin: prison_deep
+      near_sites:
+      - prison_deep
+      mid_sites:
+      - prison_deep
+      far_sites:
+      - prison_deep
+    - origin: captive_cell
+      near_sites:
+      - captive_cell
+      mid_sites:
+      - captive_cell
+      far_sites:
+      - captive_cell
+    - origin: ballroom_entrance
+      near_sites:
+      - ballroom_entrance
+      mid_sites:
+      - ballroom_entrance
+      far_sites:
+      - ballroom_entrance
+    - origin: palace_exit
+      near_sites:
+      - palace_exit
+      mid_sites:
+      - palace_exit
+      far_sites:
+      - palace_exit
+    - origin: ballroom_opposite_wall
+      near_sites:
+      - ballroom_opposite_wall
+      mid_sites:
+      - ballroom_opposite_wall
+      far_sites:
+      - ballroom_opposite_wall
+    - origin: ballroom_chandelier_reach
+      near_sites:
+      - ballroom_chandelier_reach
+      mid_sites:
+      - ballroom_chandelier_reach
+      far_sites:
+      - ballroom_chandelier_reach
+    - origin: ballroom_chandelier_far_wall
+      near_sites:
+      - ballroom_chandelier_far_wall
+      mid_sites:
+      - ballroom_chandelier_far_wall
+      far_sites:
+      - ballroom_chandelier_far_wall
+    - origin: ballroom_bar_side_wall
+      near_sites:
+      - ballroom_bar_side_wall
+      mid_sites:
+      - ballroom_bar_side_wall
+      far_sites:
+      - ballroom_bar_side_wall
+    - origin: ritual_passage_entry
+      near_sites:
+      - ritual_passage_entry
+      mid_sites:
+      - ritual_passage_entry
+      far_sites:
+      - ritual_passage_entry
+    - origin: ritual_threshold
+      near_sites:
+      - ritual_threshold
+      mid_sites:
+      - ritual_threshold
+      far_sites:
+      - ritual_threshold
+    - origin: ritual_ring
+      near_sites:
+      - ritual_ring
+      mid_sites:
+      - ritual_ring
+      far_sites:
+      - ritual_ring
+    - origin: ritual_side_wall
+      near_sites:
+      - ritual_side_wall
+      mid_sites:
+      - ritual_side_wall
+      far_sites:
+      - ritual_side_wall
+    - origin: treasure_approach
+      near_sites:
+      - treasure_approach
+      mid_sites:
+      - treasure_approach
+      far_sites:
+      - treasure_approach
+    - origin: treasure_release
+      near_sites:
+      - treasure_release
+      mid_sites:
+      - treasure_release
+      far_sites:
+      - treasure_release
+    - origin: treasure_side
+      near_sites:
+      - treasure_side
+      mid_sites:
+      - treasure_side
+      far_sites:
+      - treasure_side
+    - origin: treasure_ice
+      near_sites:
+      - treasure_ice
+      mid_sites:
+      - treasure_ice
+      far_sites:
+      - treasure_ice
+    - origin: ritual_collision_wall
+      near_sites:
+      - ritual_collision_wall
+      mid_sites:
+      - ritual_collision_wall
+      far_sites:
+      - ritual_collision_wall
+    - origin: halls_ballroom_door
+      near_sites:
+      - halls_ballroom_door
+      mid_sites:
+      - halls_ballroom_door
+      far_sites:
+      - halls_ballroom_door
+    - origin: halls_bridge_door
+      near_sites:
+      - halls_bridge_door
+      mid_sites:
+      - halls_bridge_door
+      far_sites:
+      - halls_bridge_door
+    - origin: halls_collision_wall
+      near_sites:
+      - halls_collision_wall
+      mid_sites:
+      - halls_collision_wall
+      far_sites:
+      - halls_collision_wall
+    - origin: bridge_palace_landing
+      near_sites:
+      - bridge_palace_landing
+      mid_sites:
+      - bridge_palace_landing
+      far_sites:
+      - bridge_palace_landing
+    - origin: bridge_midspan
+      near_sites:
+      - bridge_midspan
+      mid_sites:
+      - bridge_midspan
+      far_sites:
+      - bridge_midspan
+    - origin: ballroom_icebar_door
+      near_sites:
+      - ballroom_icebar_door
+      mid_sites:
+      - ballroom_icebar_door
+      far_sites:
+      - ballroom_icebar_door
+    - origin: icebar_entry
+      near_sites:
+      - icebar_entry
+      mid_sites:
+      - icebar_entry
+      far_sites:
+      - icebar_entry
+    - origin: ritual_lower_door
+      near_sites:
+      - ritual_lower_door
+      mid_sites:
+      - ritual_lower_door
+      far_sites:
+      - ritual_lower_door
+    - origin: lower_corridor_entry
+      near_sites:
+      - lower_corridor_entry
+      mid_sites:
+      - lower_corridor_entry
+      far_sites:
+      - lower_corridor_entry
+    - origin: stables_approach
+      near_sites:
+      - stables_approach
+      mid_sites:
+      - stables_approach
+      far_sites:
+      - stables_approach
+    - origin: lower_corridor_wall
+      near_sites:
+      - lower_corridor_wall
+      mid_sites:
+      - lower_corridor_wall
+      far_sites:
+      - lower_corridor_wall
+    - origin: stables_entry
+      near_sites:
+      - stables_entry
+      mid_sites:
+      - stables_entry
+      far_sites:
+      - stables_entry
+    - origin: endless_abyss
+      near_sites: []
+      mid_sites: []
+      far_sites: []
+    bridge_paths:
+    - start: bridge_palace_landing
+      end: bridge_midspan
+      base_move_cost: 20000
+    - start: bridge_midspan
+      end: palace_exit
+      base_move_cost: 20000
+    - start: bridge_midspan
+      end: bridge_palace_landing
+      base_move_cost: 20000
+    - start: palace_exit
+      end: bridge_midspan
+      base_move_cost: 20000
+    unclimbable_stairs:
+    - {start: tower_base, end: tower_top, base_move_cost: 20000}
+    - {start: tower_top, end: tower_base, base_move_cost: 20000}
+    stair_paths:
+    - {start: tower_base, end: tower_top, base_move_cost: 20000}
+    - {start: tower_top, end: tower_base, base_move_cost: 20000}
+    - start: halls_bridge_door
+      end: bridge_palace_landing
+      base_move_cost: 10000
+    - start: ritual_lower_door
+      end: lower_corridor_entry
+      base_move_cost: 10000
+    - start: bridge_palace_landing
+      end: halls_bridge_door
+      base_move_cost: 10000
+    - start: lower_corridor_entry
+      end: ritual_lower_door
+      base_move_cost: 10000
+  ritual:
+    id: ritual
+    target: ritual_resident
+    site: ritual_ring
+    progress: 0
+    required_progress: 4
+    status: active
+    contribution_refs: []
+  prison_guard:
+    name: prison_guard
+    vital: {life: alive, endurance: 4, max_endurance: 4}
+    site: prison_outer
+    awake: true
+    attending: true
+    drink_interest: 3
+    duty_priority: 1
+    portions_drunk: 0
+    visitor_sightings: []
+    visit_phase: on_duty
+    max_movement_speed: 5
+    current_movement_speed: 5
+    balance_bonus: 0
+    known_sites:
+    - site: prison_outer
+    known_paths: []
+    known_crossings: []
+    known_bridge_paths: []
+    known_bar_steps:
+    - start: prison_outer
+      end: stables_entry
+    - start: stables_entry
+      end: stables_approach
+    - start: stables_approach
+      end: lower_corridor_entry
+    - start: lower_corridor_entry
+      end: ritual_lower_door
+    - start: ritual_lower_door
+      end: ritual_threshold
+    - start: ritual_threshold
+      end: ritual_passage_entry
+    - start: ritual_passage_entry
+      end: ballroom_entrance
+    - start: ballroom_entrance
+      end: ballroom_icebar_door
+    - start: ballroom_icebar_door
+      end: icebar_entry
+    - start: stables_collision_wall
+      end: stables_entry
+    - start: lower_corridor_wall
+      end: lower_corridor_entry
+    - start: ritual_collision_wall
+      end: ritual_threshold
+    - start: ritual_side_wall
+      end: ritual_passage_entry
+    - start: ballroom_opposite_wall
+      end: ballroom_entrance
+    - start: ballroom_bar_side_wall
+      end: ballroom_entrance
+    known_post_steps:
+    - start: icebar_entry
+      end: ballroom_icebar_door
+    - start: ballroom_icebar_door
+      end: ballroom_entrance
+    - start: ballroom_entrance
+      end: ritual_passage_entry
+    - start: ritual_passage_entry
+      end: ritual_threshold
+    - start: ritual_threshold
+      end: ritual_lower_door
+    - start: ritual_lower_door
+      end: lower_corridor_entry
+    - start: lower_corridor_entry
+      end: stables_approach
+    - start: stables_approach
+      end: stables_entry
+    - start: stables_entry
+      end: prison_outer
+    - start: ballroom_opposite_wall
+      end: ballroom_entrance
+    - start: ballroom_bar_side_wall
+      end: ballroom_entrance
+    - start: ritual_side_wall
+      end: ritual_passage_entry
+    - start: ritual_collision_wall
+      end: ritual_threshold
+    - start: lower_corridor_wall
+      end: lower_corridor_entry
+    - start: stables_collision_wall
+      end: stables_entry
+  icebar_bear_one:
+    name: icebar_bear_one
+    vital: {life: alive, endurance: 4, max_endurance: 4}
+    site: icebar_entry
+    awake: true
+    attending: true
+    share_willingness: 2
+    portions_drunk: 0
+    max_movement_speed: 5
+    current_movement_speed: 5
+    balance_bonus: 0
+    known_sites:
+    - site: icebar_entry
+    known_paths: []
+    known_crossings: []
+    known_bridge_paths: []
+    guest_willingness: 2
+    guest_destination: prison_outer
+    guest_returning: false
+    known_return_steps:
+    - start: prison_outer
+      end: stables_entry
+    - start: stables_entry
+      end: stables_approach
+    - start: stables_approach
+      end: lower_corridor_entry
+    - start: lower_corridor_entry
+      end: ritual_lower_door
+    - start: ritual_lower_door
+      end: ritual_threshold
+    - start: ritual_threshold
+      end: ritual_passage_entry
+    - start: ritual_passage_entry
+      end: ballroom_entrance
+    - start: ballroom_entrance
+      end: ballroom_icebar_door
+    - start: ballroom_icebar_door
+      end: icebar_entry
+    - start: stables_collision_wall
+      end: stables_entry
+    - start: lower_corridor_wall
+      end: lower_corridor_entry
+    - start: ritual_collision_wall
+      end: ritual_threshold
+    - start: ritual_side_wall
+      end: ritual_passage_entry
+    - start: ballroom_opposite_wall
+      end: ballroom_entrance
+    - start: ballroom_bar_side_wall
+      end: ballroom_entrance
+    known_guest_steps:
+    - start: icebar_entry
+      end: ballroom_icebar_door
+    - start: ballroom_icebar_door
+      end: ballroom_entrance
+    - start: ballroom_entrance
+      end: ritual_passage_entry
+    - start: ritual_passage_entry
+      end: ritual_threshold
+    - start: ritual_threshold
+      end: ritual_lower_door
+    - start: ritual_lower_door
+      end: lower_corridor_entry
+    - start: lower_corridor_entry
+      end: stables_approach
+    - start: stables_approach
+      end: stables_entry
+    - start: stables_entry
+      end: prison_outer
+    - start: ballroom_opposite_wall
+      end: ballroom_entrance
+    - start: ballroom_bar_side_wall
+      end: ballroom_entrance
+    - start: ritual_side_wall
+      end: ritual_passage_entry
+    - start: ritual_collision_wall
+      end: ritual_threshold
+    - start: lower_corridor_wall
+      end: lower_corridor_entry
+    - start: stables_collision_wall
+      end: stables_entry
+  icebar_bear_two:
+    name: icebar_bear_two
+    vital: {life: alive, endurance: 4, max_endurance: 4}
+    site: icebar_entry
+    awake: true
+    attending: true
+    share_willingness: 2
+    portions_drunk: 0
+    max_movement_speed: 5
+    current_movement_speed: 5
+    balance_bonus: 0
+    known_sites:
+    - site: icebar_entry
+    known_paths: []
+    known_crossings: []
+    known_bridge_paths: []
+    guest_willingness: 3
+    guest_destination: prison_outer
+    guest_returning: false
+    known_return_steps:
+    - start: prison_outer
+      end: stables_entry
+    - start: stables_entry
+      end: stables_approach
+    - start: stables_approach
+      end: lower_corridor_entry
+    - start: lower_corridor_entry
+      end: ritual_lower_door
+    - start: ritual_lower_door
+      end: ritual_threshold
+    - start: ritual_threshold
+      end: ritual_passage_entry
+    - start: ritual_passage_entry
+      end: ballroom_entrance
+    - start: ballroom_entrance
+      end: ballroom_icebar_door
+    - start: ballroom_icebar_door
+      end: icebar_entry
+    - start: stables_collision_wall
+      end: stables_entry
+    - start: lower_corridor_wall
+      end: lower_corridor_entry
+    - start: ritual_collision_wall
+      end: ritual_threshold
+    - start: ritual_side_wall
+      end: ritual_passage_entry
+    - start: ballroom_opposite_wall
+      end: ballroom_entrance
+    - start: ballroom_bar_side_wall
+      end: ballroom_entrance
+    known_guest_steps:
+    - start: icebar_entry
+      end: ballroom_icebar_door
+    - start: ballroom_icebar_door
+      end: ballroom_entrance
+    - start: ballroom_entrance
+      end: ritual_passage_entry
+    - start: ritual_passage_entry
+      end: ritual_threshold
+    - start: ritual_threshold
+      end: ritual_lower_door
+    - start: ritual_lower_door
+      end: lower_corridor_entry
+    - start: lower_corridor_entry
+      end: stables_approach
+    - start: stables_approach
+      end: stables_entry
+    - start: stables_entry
+      end: prison_outer
+    - start: ballroom_opposite_wall
+      end: ballroom_entrance
+    - start: ballroom_bar_side_wall
+      end: ballroom_entrance
+    - start: ritual_side_wall
+      end: ritual_passage_entry
+    - start: ritual_collision_wall
+      end: ritual_threshold
+    - start: lower_corridor_wall
+      end: lower_corridor_entry
+    - start: stables_collision_wall
+      end: stables_entry
+  adventurer:
+    name: adventurer
+    prison_access: {}
+    known_climbs: []
+    resources: {}
+    conversations:
+      prison:
+        contacts: []
+        questions: []
+        answers: []
+    known_bar_bears: []
+    bar_replies: []
+    gold: 0
+    known_walls: []
+    site: ballroom_entrance
+    known_sites:
+    - site: ballroom_entrance
+    known_paths:
+    - start: ballroom_entrance
+      end: halls_ballroom_door
+      base_move_cost: 10000
+    - start: ritual_passage_entry
+      end: ritual_threshold
+      base_move_cost: 10000
+    - start: ritual_threshold
+      end: ritual_passage_entry
+      base_move_cost: 10000
+    - start: ritual_threshold
+      end: ritual_ring
+      base_move_cost: 10000
+    - start: ritual_ring
+      end: ritual_threshold
+      base_move_cost: 10000
+    - start: ritual_threshold
+      end: treasure_approach
+      base_move_cost: 10000
+    - start: treasure_approach
+      end: ritual_threshold
+      base_move_cost: 10000
+    known_crossings:
+    - key: entrance_to_ritual
+      start: ballroom_entrance
+      intended: ritual_passage_entry
+      base_move_cost: 10000
+    - key: entrance_to_chandelier
+      start: ballroom_entrance
+      intended: ballroom_chandelier_reach
+      base_move_cost: 10000
+    known_residents: []
+    known_coverage:
+    - origin: ballroom_entrance
+      near_sites:
+      - ballroom_entrance
+      mid_sites:
+      - ballroom_entrance
+      far_sites:
+      - ballroom_entrance
+    known_everflame_charges: 5
+    balance_bonus: 0
+    cold_state: mobile
+    vital:
+      life: alive
+      endurance: 3
+      max_endurance: 3
+    rescue_state: not_safe
+    max_movement_speed: 5
+    current_movement_speed: 5
+    cold_loss_step: 1
+    cold_save_bonus: 0
+    cold_seed: 1
+    known_bridge_paths: []
+    known_exit_steps: []
+  prison_resident_one:
+    name: prison_resident_one
+    prison_access: {}
+    known_climbs: []
+    resources: {}
+    conversations:
+      prison:
+        contacts: []
+        questions: []
+        answers: []
+    site: prison_holding
+    known_sites:
+    - site: prison_holding
+    known_bar_bears: []
+    bar_replies: []
+    gold: 0
+    known_walls: []
+    known_residents: []
+    known_coverage: []
+    known_paths:
+    - start: prison_deep
+      end: prison_holding
+      base_move_cost: 10000
+    - start: prison_holding
+      end: prison_deep
+      base_move_cost: 10000
+    - start: lower_corridor_entry
+      end: ritual_lower_door
+      base_move_cost: 10000
+    - start: ritual_threshold
+      end: ritual_passage_entry
+      base_move_cost: 10000
+    - start: ballroom_entrance
+      end: halls_ballroom_door
+      base_move_cost: 10000
+    - start: halls_bridge_door
+      end: bridge_palace_landing
+      base_move_cost: 10000
+    known_crossings:
+    - key: prison_to_stables
+      start: prison_outer
+      intended: stables_entry
+      base_move_cost: 10000
+    - key: recover_stables_wall
+      start: stables_collision_wall
+      intended: stables_entry
+      base_move_cost: 10000
+    - key: stables_to_corridor
+      start: stables_approach
+      intended: lower_corridor_entry
+      base_move_cost: 10000
+    - key: recover_corridor_wall
+      start: lower_corridor_wall
+      intended: lower_corridor_entry
+      base_move_cost: 10000
+    - key: lower_door_to_ritual
+      start: ritual_lower_door
+      intended: ritual_threshold
+      base_move_cost: 10000
+    - key: recover_ritual_room_wall
+      start: ritual_collision_wall
+      intended: ritual_threshold
+      base_move_cost: 10000
+    - key: ritual_to_entrance
+      start: ritual_passage_entry
+      intended: ballroom_entrance
+      base_move_cost: 10000
+    - key: recover_ritual_side_wall
+      start: ritual_side_wall
+      intended: ritual_passage_entry
+      base_move_cost: 10000
+    - key: recover_bar_side_wall
+      start: ballroom_bar_side_wall
+      intended: ballroom_entrance
+      base_move_cost: 10000
+    - key: halls_to_bridge_door
+      start: halls_ballroom_door
+      intended: halls_bridge_door
+      base_move_cost: 10000
+    - key: recover_halls_wall
+      start: halls_collision_wall
+      intended: halls_ballroom_door
+      base_move_cost: 10000
+    known_bridge_paths:
+    - start: bridge_palace_landing
+      end: bridge_midspan
+      base_move_cost: 20000
+    - start: bridge_midspan
+      end: palace_exit
+      base_move_cost: 20000
+    known_exit_steps:
+    - start: prison_deep
+      end: prison_holding
+      base_move_cost: 10000
+    - start: prison_holding
+      end: prison_outer
+      base_move_cost: 10000
+    - start: prison_outer
+      end: stables_entry
+      base_move_cost: 10000
+    - start: stables_entry
+      end: stables_approach
+      base_move_cost: 10000
+    - start: stables_approach
+      end: lower_corridor_entry
+      base_move_cost: 10000
+    - start: lower_corridor_entry
+      end: ritual_lower_door
+      base_move_cost: 10000
+    - start: ritual_lower_door
+      end: ritual_threshold
+      base_move_cost: 10000
+    - start: ritual_threshold
+      end: ritual_passage_entry
+      base_move_cost: 10000
+    - start: ritual_passage_entry
+      end: ballroom_entrance
+      base_move_cost: 10000
+    - start: ballroom_entrance
+      end: halls_ballroom_door
+      base_move_cost: 10000
+    - start: halls_ballroom_door
+      end: halls_bridge_door
+      base_move_cost: 10000
+    - start: halls_bridge_door
+      end: bridge_palace_landing
+      base_move_cost: 10000
+    - start: bridge_palace_landing
+      end: bridge_midspan
+      base_move_cost: 20000
+    - start: bridge_midspan
+      end: palace_exit
+      base_move_cost: 20000
+    - start: stables_collision_wall
+      end: stables_entry
+      base_move_cost: 10000
+    - start: lower_corridor_wall
+      end: lower_corridor_entry
+      base_move_cost: 10000
+    - start: ritual_collision_wall
+      end: ritual_threshold
+      base_move_cost: 10000
+    - start: ritual_side_wall
+      end: ritual_passage_entry
+      base_move_cost: 10000
+    - start: halls_collision_wall
+      end: halls_ballroom_door
+      base_move_cost: 10000
+    - start: ballroom_bar_side_wall
+      end: ballroom_entrance
+      base_move_cost: 10000
+    balance_bonus: 0
+    cold_state: frozen
+    vital:
+      life: alive
+      endurance: 3
+      max_endurance: 3
+    rescue_state: not_safe
+    max_movement_speed: 5
+    current_movement_speed: 0
+    cold_loss_step: 1
+    cold_save_bonus: 0
+    cold_seed: 11
+  prison_resident_two:
+    name: prison_resident_two
+    prison_access: {}
+    known_climbs: []
+    resources: {}
+    conversations:
+      prison:
+        contacts: []
+        questions: []
+        answers: []
+    site: prison_deep
+    known_sites:
+    - site: prison_deep
+    known_bar_bears: []
+    bar_replies: []
+    gold: 0
+    known_walls: []
+    known_residents: []
+    known_coverage: []
+    known_paths:
+    - start: prison_deep
+      end: prison_holding
+      base_move_cost: 10000
+    - start: prison_holding
+      end: prison_deep
+      base_move_cost: 10000
+    - start: lower_corridor_entry
+      end: ritual_lower_door
+      base_move_cost: 10000
+    - start: ritual_threshold
+      end: ritual_passage_entry
+      base_move_cost: 10000
+    - start: ballroom_entrance
+      end: halls_ballroom_door
+      base_move_cost: 10000
+    - start: halls_bridge_door
+      end: bridge_palace_landing
+      base_move_cost: 10000
+    known_crossings:
+    - key: prison_to_stables
+      start: prison_outer
+      intended: stables_entry
+      base_move_cost: 10000
+    - key: recover_stables_wall
+      start: stables_collision_wall
+      intended: stables_entry
+      base_move_cost: 10000
+    - key: stables_to_corridor
+      start: stables_approach
+      intended: lower_corridor_entry
+      base_move_cost: 10000
+    - key: recover_corridor_wall
+      start: lower_corridor_wall
+      intended: lower_corridor_entry
+      base_move_cost: 10000
+    - key: lower_door_to_ritual
+      start: ritual_lower_door
+      intended: ritual_threshold
+      base_move_cost: 10000
+    - key: recover_ritual_room_wall
+      start: ritual_collision_wall
+      intended: ritual_threshold
+      base_move_cost: 10000
+    - key: ritual_to_entrance
+      start: ritual_passage_entry
+      intended: ballroom_entrance
+      base_move_cost: 10000
+    - key: recover_ritual_side_wall
+      start: ritual_side_wall
+      intended: ritual_passage_entry
+      base_move_cost: 10000
+    - key: recover_bar_side_wall
+      start: ballroom_bar_side_wall
+      intended: ballroom_entrance
+      base_move_cost: 10000
+    - key: halls_to_bridge_door
+      start: halls_ballroom_door
+      intended: halls_bridge_door
+      base_move_cost: 10000
+    - key: recover_halls_wall
+      start: halls_collision_wall
+      intended: halls_ballroom_door
+      base_move_cost: 10000
+    known_bridge_paths:
+    - start: bridge_palace_landing
+      end: bridge_midspan
+      base_move_cost: 20000
+    - start: bridge_midspan
+      end: palace_exit
+      base_move_cost: 20000
+    known_exit_steps:
+    - start: prison_deep
+      end: prison_holding
+      base_move_cost: 10000
+    - start: prison_holding
+      end: prison_outer
+      base_move_cost: 10000
+    - start: prison_outer
+      end: stables_entry
+      base_move_cost: 10000
+    - start: stables_entry
+      end: stables_approach
+      base_move_cost: 10000
+    - start: stables_approach
+      end: lower_corridor_entry
+      base_move_cost: 10000
+    - start: lower_corridor_entry
+      end: ritual_lower_door
+      base_move_cost: 10000
+    - start: ritual_lower_door
+      end: ritual_threshold
+      base_move_cost: 10000
+    - start: ritual_threshold
+      end: ritual_passage_entry
+      base_move_cost: 10000
+    - start: ritual_passage_entry
+      end: ballroom_entrance
+      base_move_cost: 10000
+    - start: ballroom_entrance
+      end: halls_ballroom_door
+      base_move_cost: 10000
+    - start: halls_ballroom_door
+      end: halls_bridge_door
+      base_move_cost: 10000
+    - start: halls_bridge_door
+      end: bridge_palace_landing
+      base_move_cost: 10000
+    - start: bridge_palace_landing
+      end: bridge_midspan
+      base_move_cost: 20000
+    - start: bridge_midspan
+      end: palace_exit
+      base_move_cost: 20000
+    - start: stables_collision_wall
+      end: stables_entry
+      base_move_cost: 10000
+    - start: lower_corridor_wall
+      end: lower_corridor_entry
+      base_move_cost: 10000
+    - start: ritual_collision_wall
+      end: ritual_threshold
+      base_move_cost: 10000
+    - start: ritual_side_wall
+      end: ritual_passage_entry
+      base_move_cost: 10000
+    - start: halls_collision_wall
+      end: halls_ballroom_door
+      base_move_cost: 10000
+    - start: ballroom_bar_side_wall
+      end: ballroom_entrance
+      base_move_cost: 10000
+    balance_bonus: 0
+    cold_state: frozen
+    vital:
+      life: alive
+      endurance: 3
+      max_endurance: 3
+    rescue_state: not_safe
+    max_movement_speed: 5
+    current_movement_speed: 0
+    cold_loss_step: 1
+    cold_save_bonus: 0
+    cold_seed: 12
+  ritual_resident:
+    name: ritual_resident
+    prison_access: {}
+    known_climbs: []
+    resources: {}
+    conversations:
+      prison:
+        contacts: []
+        questions: []
+        answers: []
+    known_bar_bears: []
+    bar_replies: []
+    gold: 0
+    known_walls: []
+    site: ritual_ring
+    known_sites:
+    - site: ritual_ring
+    known_paths:
+    - start: ritual_ring
+      end: ritual_threshold
+      base_move_cost: 10000
+    - start: ritual_threshold
+      end: ritual_passage_entry
+      base_move_cost: 10000
+    - start: ballroom_entrance
+      end: halls_ballroom_door
+      base_move_cost: 10000
+    - start: halls_ballroom_door
+      end: halls_bridge_door
+      base_move_cost: 10000
+    - start: halls_bridge_door
+      end: bridge_palace_landing
+      base_move_cost: 10000
+    known_crossings:
+    - key: ritual_ring_to_threshold
+      start: ritual_ring
+      intended: ritual_threshold
+      base_move_cost: 10000
+    - key: ritual_to_entrance
+      start: ritual_passage_entry
+      intended: ballroom_entrance
+      base_move_cost: 10000
+    - key: halls_to_bridge_door
+      start: halls_ballroom_door
+      intended: halls_bridge_door
+      base_move_cost: 10000
+    known_residents: []
+    known_coverage: []
+    balance_bonus: 0
+    cold_state: frozen
+    vital:
+      life: alive
+      endurance: 3
+      max_endurance: 3
+    rescue_state: not_safe
+    max_movement_speed: 5
+    current_movement_speed: 0
+    cold_loss_step: 1
+    cold_save_bonus: 0
+    cold_seed: 2
+    known_bridge_paths:
+    - start: bridge_palace_landing
+      end: bridge_midspan
+      base_move_cost: 20000
+    - start: bridge_midspan
+      end: palace_exit
+      base_move_cost: 20000
+    - start: bridge_midspan
+      end: bridge_palace_landing
+      base_move_cost: 20000
+    - start: palace_exit
+      end: bridge_midspan
+      base_move_cost: 20000
+    known_exit_steps:
+    - start: ballroom_entrance
+      end: halls_ballroom_door
+      base_move_cost: 10000
+    - start: halls_ballroom_door
+      end: halls_bridge_door
+      base_move_cost: 10000
+    - start: halls_bridge_door
+      end: bridge_palace_landing
+      base_move_cost: 10000
+    - start: bridge_palace_landing
+      end: bridge_midspan
+      base_move_cost: 20000
+    - start: bridge_midspan
+      end: palace_exit
+      base_move_cost: 20000
+    - start: ritual_ring
+      end: ritual_threshold
+      base_move_cost: 10000
+    - start: ritual_threshold
+      end: ritual_passage_entry
+      base_move_cost: 10000
+    - start: ritual_passage_entry
+      end: ballroom_entrance
+      base_move_cost: 10000
+    - start: ballroom_chandelier_reach
+      end: ballroom_entrance
+      base_move_cost: 10000
+    - start: treasure_release
+      end: treasure_approach
+      base_move_cost: 10000
+    - start: treasure_approach
+      end: ritual_threshold
+      base_move_cost: 10000
+    - start: ballroom_opposite_wall
+      end: ballroom_entrance
+      base_move_cost: 10000
+    - start: ballroom_chandelier_far_wall
+      end: ballroom_entrance
+      base_move_cost: 10000
+    - start: ballroom_bar_side_wall
+      end: ballroom_entrance
+      base_move_cost: 10000
+    - start: ritual_side_wall
+      end: ritual_passage_entry
+      base_move_cost: 10000
+    - start: ritual_collision_wall
+      end: ritual_threshold
+      base_move_cost: 10000
+    - start: halls_collision_wall
+      end: halls_ballroom_door
+      base_move_cost: 10000
+  huddled_one:
+    name: huddled_one
+    prison_access: {}
+    known_climbs: []
+    resources: {}
+    conversations:
+      prison:
+        contacts: []
+        questions: []
+        answers: []
+    known_bar_bears: []
+    bar_replies: []
+    gold: 0
+    known_walls: []
+    site: ballroom_chandelier_reach
+    known_sites:
+    - site: ballroom_chandelier_reach
+    known_paths:
+    - start: ballroom_entrance
+      end: halls_ballroom_door
+      base_move_cost: 10000
+    - start: halls_ballroom_door
+      end: halls_bridge_door
+      base_move_cost: 10000
+    - start: halls_bridge_door
+      end: bridge_palace_landing
+      base_move_cost: 10000
+    known_crossings:
+    - key: chandelier_to_entrance
+      start: ballroom_chandelier_reach
+      intended: ballroom_entrance
+      base_move_cost: 10000
+    - key: halls_to_bridge_door
+      start: halls_ballroom_door
+      intended: halls_bridge_door
+      base_move_cost: 10000
+    known_residents: []
+    known_coverage: []
+    balance_bonus: 0
+    cold_state: mobile
+    vital:
+      life: alive
+      endurance: 3
+      max_endurance: 3
+    rescue_state: not_safe
+    max_movement_speed: 5
+    current_movement_speed: 5
+    cold_loss_step: 1
+    cold_save_bonus: 0
+    cold_seed: 3
+    known_bridge_paths:
+    - start: bridge_palace_landing
+      end: bridge_midspan
+      base_move_cost: 20000
+    - start: bridge_midspan
+      end: palace_exit
+      base_move_cost: 20000
+    - start: bridge_midspan
+      end: bridge_palace_landing
+      base_move_cost: 20000
+    - start: palace_exit
+      end: bridge_midspan
+      base_move_cost: 20000
+    known_exit_steps:
+    - start: ballroom_entrance
+      end: halls_ballroom_door
+      base_move_cost: 10000
+    - start: halls_ballroom_door
+      end: halls_bridge_door
+      base_move_cost: 10000
+    - start: halls_bridge_door
+      end: bridge_palace_landing
+      base_move_cost: 10000
+    - start: bridge_palace_landing
+      end: bridge_midspan
+      base_move_cost: 20000
+    - start: bridge_midspan
+      end: palace_exit
+      base_move_cost: 20000
+    - start: ritual_ring
+      end: ritual_threshold
+      base_move_cost: 10000
+    - start: ritual_threshold
+      end: ritual_passage_entry
+      base_move_cost: 10000
+    - start: ritual_passage_entry
+      end: ballroom_entrance
+      base_move_cost: 10000
+    - start: ballroom_chandelier_reach
+      end: ballroom_entrance
+      base_move_cost: 10000
+    - start: treasure_release
+      end: treasure_approach
+      base_move_cost: 10000
+    - start: treasure_approach
+      end: ritual_threshold
+      base_move_cost: 10000
+    - start: ballroom_opposite_wall
+      end: ballroom_entrance
+      base_move_cost: 10000
+    - start: ballroom_chandelier_far_wall
+      end: ballroom_entrance
+      base_move_cost: 10000
+    - start: ballroom_bar_side_wall
+      end: ballroom_entrance
+      base_move_cost: 10000
+    - start: ritual_side_wall
+      end: ritual_passage_entry
+      base_move_cost: 10000
+    - start: ritual_collision_wall
+      end: ritual_threshold
+      base_move_cost: 10000
+    - start: halls_collision_wall
+      end: halls_ballroom_door
+      base_move_cost: 10000
+  huddled_two:
+    name: huddled_two
+    prison_access: {}
+    known_climbs: []
+    resources: {}
+    conversations:
+      prison:
+        contacts: []
+        questions: []
+        answers: []
+    known_bar_bears: []
+    bar_replies: []
+    gold: 0
+    known_walls: []
+    site: ballroom_chandelier_reach
+    known_sites:
+    - site: ballroom_chandelier_reach
+    known_paths:
+    - start: ballroom_entrance
+      end: halls_ballroom_door
+      base_move_cost: 10000
+    - start: halls_ballroom_door
+      end: halls_bridge_door
+      base_move_cost: 10000
+    - start: halls_bridge_door
+      end: bridge_palace_landing
+      base_move_cost: 10000
+    known_crossings:
+    - key: chandelier_to_entrance
+      start: ballroom_chandelier_reach
+      intended: ballroom_entrance
+      base_move_cost: 10000
+    - key: halls_to_bridge_door
+      start: halls_ballroom_door
+      intended: halls_bridge_door
+      base_move_cost: 10000
+    known_residents: []
+    known_coverage: []
+    balance_bonus: 0
+    cold_state: mobile
+    vital:
+      life: alive
+      endurance: 3
+      max_endurance: 3
+    rescue_state: not_safe
+    max_movement_speed: 5
+    current_movement_speed: 5
+    cold_loss_step: 1
+    cold_save_bonus: 0
+    cold_seed: 4
+    known_bridge_paths:
+    - start: bridge_palace_landing
+      end: bridge_midspan
+      base_move_cost: 20000
+    - start: bridge_midspan
+      end: palace_exit
+      base_move_cost: 20000
+    - start: bridge_midspan
+      end: bridge_palace_landing
+      base_move_cost: 20000
+    - start: palace_exit
+      end: bridge_midspan
+      base_move_cost: 20000
+    known_exit_steps:
+    - start: ballroom_entrance
+      end: halls_ballroom_door
+      base_move_cost: 10000
+    - start: halls_ballroom_door
+      end: halls_bridge_door
+      base_move_cost: 10000
+    - start: halls_bridge_door
+      end: bridge_palace_landing
+      base_move_cost: 10000
+    - start: bridge_palace_landing
+      end: bridge_midspan
+      base_move_cost: 20000
+    - start: bridge_midspan
+      end: palace_exit
+      base_move_cost: 20000
+    - start: ritual_ring
+      end: ritual_threshold
+      base_move_cost: 10000
+    - start: ritual_threshold
+      end: ritual_passage_entry
+      base_move_cost: 10000
+    - start: ritual_passage_entry
+      end: ballroom_entrance
+      base_move_cost: 10000
+    - start: ballroom_chandelier_reach
+      end: ballroom_entrance
+      base_move_cost: 10000
+    - start: treasure_release
+      end: treasure_approach
+      base_move_cost: 10000
+    - start: treasure_approach
+      end: ritual_threshold
+      base_move_cost: 10000
+    - start: ballroom_opposite_wall
+      end: ballroom_entrance
+      base_move_cost: 10000
+    - start: ballroom_chandelier_far_wall
+      end: ballroom_entrance
+      base_move_cost: 10000
+    - start: ballroom_bar_side_wall
+      end: ballroom_entrance
+      base_move_cost: 10000
+    - start: ritual_side_wall
+      end: ritual_passage_entry
+      base_move_cost: 10000
+    - start: ritual_collision_wall
+      end: ritual_threshold
+      base_move_cost: 10000
+    - start: halls_collision_wall
+      end: halls_ballroom_door
+      base_move_cost: 10000
+  wall_resident:
+    name: wall_resident
+    prison_access: {}
+    known_climbs: []
+    resources: {}
+    conversations:
+      prison:
+        contacts: []
+        questions: []
+        answers: []
+    known_bar_bears: []
+    bar_replies: []
+    gold: 0
+    site: treasure_ice
+    known_sites:
+    - site: treasure_ice
+    known_paths:
+    - start: treasure_approach
+      end: ritual_threshold
+      base_move_cost: 10000
+    - start: ritual_threshold
+      end: ritual_passage_entry
+      base_move_cost: 10000
+    - start: ballroom_entrance
+      end: halls_ballroom_door
+      base_move_cost: 10000
+    - start: halls_ballroom_door
+      end: halls_bridge_door
+      base_move_cost: 10000
+    - start: halls_bridge_door
+      end: bridge_palace_landing
+      base_move_cost: 10000
+    known_crossings:
+    - key: ritual_to_entrance
+      start: ritual_passage_entry
+      intended: ballroom_entrance
+      base_move_cost: 10000
+    - key: halls_to_bridge_door
+      start: halls_ballroom_door
+      intended: halls_bridge_door
+      base_move_cost: 10000
+    known_residents: []
+    known_coverage: []
+    known_walls: []
+    balance_bonus: 0
+    cold_state: frozen
+    vital:
+      life: alive
+      endurance: 3
+      max_endurance: 3
+    rescue_state: not_safe
+    max_movement_speed: 5
+    current_movement_speed: 0
+    cold_loss_step: 1
+    cold_save_bonus: 0
+    cold_seed: 7
+    known_bridge_paths:
+    - start: bridge_palace_landing
+      end: bridge_midspan
+      base_move_cost: 20000
+    - start: bridge_midspan
+      end: palace_exit
+      base_move_cost: 20000
+    - start: bridge_midspan
+      end: bridge_palace_landing
+      base_move_cost: 20000
+    - start: palace_exit
+      end: bridge_midspan
+      base_move_cost: 20000
+    known_exit_steps:
+    - start: ballroom_entrance
+      end: halls_ballroom_door
+      base_move_cost: 10000
+    - start: halls_ballroom_door
+      end: halls_bridge_door
+      base_move_cost: 10000
+    - start: halls_bridge_door
+      end: bridge_palace_landing
+      base_move_cost: 10000
+    - start: bridge_palace_landing
+      end: bridge_midspan
+      base_move_cost: 20000
+    - start: bridge_midspan
+      end: palace_exit
+      base_move_cost: 20000
+    - start: ritual_ring
+      end: ritual_threshold
+      base_move_cost: 10000
+    - start: ritual_threshold
+      end: ritual_passage_entry
+      base_move_cost: 10000
+    - start: ritual_passage_entry
+      end: ballroom_entrance
+      base_move_cost: 10000
+    - start: ballroom_chandelier_reach
+      end: ballroom_entrance
+      base_move_cost: 10000
+    - start: treasure_release
+      end: treasure_approach
+      base_move_cost: 10000
+    - start: treasure_approach
+      end: ritual_threshold
+      base_move_cost: 10000
+    - start: ballroom_opposite_wall
+      end: ballroom_entrance
+      base_move_cost: 10000
+    - start: ballroom_chandelier_far_wall
+      end: ballroom_entrance
+      base_move_cost: 10000
+    - start: ballroom_bar_side_wall
+      end: ballroom_entrance
+      base_move_cost: 10000
+    - start: ritual_side_wall
+      end: ritual_passage_entry
+      base_move_cost: 10000
+    - start: ritual_collision_wall
+      end: ritual_threshold
+      base_move_cost: 10000
+    - start: halls_collision_wall
+      end: halls_ballroom_door
+      base_move_cost: 10000
+  bokold_one:
+    name: bokold_one
+    prison_access: {}
+    known_climbs: []
+    resources: {}
+    conversations:
+      prison:
+        contacts: []
+        questions: []
+        answers: []
+    known_bar_bears: []
+    bar_replies: []
+    gold: 0
+    known_walls: []
+    site: ritual_ring
+    known_sites:
+    - site: ritual_ring
+    known_paths:
+    - start: ritual_ring
+      end: ritual_threshold
+      base_move_cost: 10000
+    known_crossings: []
+    known_residents:
+    - name: ritual_resident
+      site: ritual_ring
+    known_coverage: []
+    balance_bonus: 0
+    cold_state: immune
+    vital:
+      life: alive
+      endurance: 3
+      max_endurance: 3
+    rescue_state: not_safe
+    max_movement_speed: 5
+    current_movement_speed: 5
+    cold_loss_step: 1
+    cold_save_bonus: 0
+    cold_seed: 5
+    known_bridge_paths: []
+    known_exit_steps: []
+  bokold_two:
+    name: bokold_two
+    prison_access: {}
+    known_climbs: []
+    resources: {}
+    conversations:
+      prison:
+        contacts: []
+        questions: []
+        answers: []
+    known_bar_bears: []
+    bar_replies: []
+    gold: 0
+    known_walls: []
+    site: ritual_ring
+    known_sites:
+    - site: ritual_ring
+    known_paths:
+    - start: ritual_ring
+      end: ritual_threshold
+      base_move_cost: 10000
+    known_crossings: []
+    known_residents:
+    - name: ritual_resident
+      site: ritual_ring
+    known_coverage: []
+    balance_bonus: 0
+    cold_state: immune
+    vital:
+      life: alive
+      endurance: 3
+      max_endurance: 3
+    rescue_state: not_safe
+    max_movement_speed: 5
+    current_movement_speed: 5
+    cold_loss_step: 1
+    cold_save_bonus: 0
+    cold_seed: 6
+    known_bridge_paths: []
+    known_exit_steps: []
+  arctic_fox_one:
+    name: arctic_fox_one
+    site: stables_entry
+    known_sites:
+    - site: stables_entry
+    known_paths: []
+    known_crossings: []
+    known_residents: []
+    balance_bonus: 0
+    cold_state: mobile
+    vital:
+      life: alive
+      endurance: 3
+      max_endurance: 3
+    max_movement_speed: 5
+    current_movement_speed: 5
+    cold_loss_step: 1
+    cold_save_bonus: 0
+    cold_seed: 23
+    known_bridge_paths: []
+    known_exit_steps: []
+    master: stable_bokold_one
+    tame_willingness: 1
+  arctic_fox_two:
+    name: arctic_fox_two
+    site: stables_entry
+    known_sites:
+    - site: stables_entry
+    known_paths: []
+    known_crossings: []
+    known_residents: []
+    balance_bonus: 0
+    cold_state: mobile
+    vital:
+      life: alive
+      endurance: 3
+      max_endurance: 3
+    max_movement_speed: 5
+    current_movement_speed: 5
+    cold_loss_step: 1
+    cold_save_bonus: 0
+    cold_seed: 24
+    known_bridge_paths: []
+    known_exit_steps: []
+    master: stable_bokold_two
+    tame_willingness: 1
+  arctic_fox_three:
+    name: arctic_fox_three
+    site: stables_entry
+    known_sites:
+    - site: stables_entry
+    known_paths: []
+    known_crossings: []
+    known_residents: []
+    balance_bonus: 0
+    cold_state: mobile
+    vital:
+      life: alive
+      endurance: 3
+      max_endurance: 3
+    max_movement_speed: 5
+    current_movement_speed: 5
+    cold_loss_step: 1
+    cold_save_bonus: 0
+    cold_seed: 25
+    known_bridge_paths: []
+    known_exit_steps: []
+    master: stable_bokold_three
+    tame_willingness: 1
+  arctic_fox_four:
+    name: arctic_fox_four
+    site: stables_entry
+    known_sites:
+    - site: stables_entry
+    known_paths: []
+    known_crossings: []
+    known_residents: []
+    balance_bonus: 0
+    cold_state: mobile
+    vital:
+      life: alive
+      endurance: 3
+      max_endurance: 3
+    max_movement_speed: 5
+    current_movement_speed: 5
+    cold_loss_step: 1
+    cold_save_bonus: 0
+    cold_seed: 26
+    known_bridge_paths: []
+    known_exit_steps: []
+    master: stable_bokold_four
+    tame_willingness: 1
+  hall_bokold_one:
+    name: hall_bokold_one
+    prison_access: {}
+    known_climbs: []
+    resources: {}
+    conversations:
+      prison:
+        contacts: []
+        questions: []
+        answers: []
+    known_bar_bears: []
+    bar_replies: []
+    gold: 0
+    known_walls: []
+    site: halls_ballroom_door
+    known_sites:
+    - site: halls_ballroom_door
+    known_paths: []
+    known_crossings: []
+    known_residents: []
+    known_coverage: []
+    balance_bonus: 0
+    cold_state: immune
+    vital:
+      life: alive
+      endurance: 3
+      max_endurance: 3
+    rescue_state: not_safe
+    max_movement_speed: 5
+    current_movement_speed: 5
+    cold_loss_step: 1
+    cold_save_bonus: 0
+    cold_seed: 31
+    known_bridge_paths: []
+    known_exit_steps: []
+  hall_bokold_two:
+    name: hall_bokold_two
+    prison_access: {}
+    known_climbs: []
+    resources: {}
+    conversations:
+      prison:
+        contacts: []
+        questions: []
+        answers: []
+    known_bar_bears: []
+    bar_replies: []
+    gold: 0
+    known_walls: []
+    site: halls_ballroom_door
+    known_sites:
+    - site: halls_ballroom_door
+    known_paths: []
+    known_crossings: []
+    known_residents: []
+    known_coverage: []
+    balance_bonus: 0
+    cold_state: immune
+    vital:
+      life: alive
+      endurance: 3
+      max_endurance: 3
+    rescue_state: not_safe
+    max_movement_speed: 5
+    current_movement_speed: 5
+    cold_loss_step: 1
+    cold_save_bonus: 0
+    cold_seed: 32
+    known_bridge_paths: []
+    known_exit_steps: []
+  hall_bokold_three:
+    name: hall_bokold_three
+    prison_access: {}
+    known_climbs: []
+    resources: {}
+    conversations:
+      prison:
+        contacts: []
+        questions: []
+        answers: []
+    known_bar_bears: []
+    bar_replies: []
+    gold: 0
+    known_walls: []
+    site: halls_ballroom_door
+    known_sites:
+    - site: halls_ballroom_door
+    known_paths: []
+    known_crossings: []
+    known_residents: []
+    known_coverage: []
+    balance_bonus: 0
+    cold_state: immune
+    vital:
+      life: alive
+      endurance: 3
+      max_endurance: 3
+    rescue_state: not_safe
+    max_movement_speed: 5
+    current_movement_speed: 5
+    cold_loss_step: 1
+    cold_save_bonus: 0
+    cold_seed: 33
+    known_bridge_paths: []
+    known_exit_steps: []
+  hall_bokold_four:
+    name: hall_bokold_four
+    prison_access: {}
+    known_climbs: []
+    resources: {}
+    conversations:
+      prison:
+        contacts: []
+        questions: []
+        answers: []
+    known_bar_bears: []
+    bar_replies: []
+    gold: 0
+    known_walls: []
+    site: halls_ballroom_door
+    known_sites:
+    - site: halls_ballroom_door
+    known_paths: []
+    known_crossings: []
+    known_residents: []
+    known_coverage: []
+    balance_bonus: 0
+    cold_state: immune
+    vital:
+      life: alive
+      endurance: 3
+      max_endurance: 3
+    rescue_state: not_safe
+    max_movement_speed: 5
+    current_movement_speed: 5
+    cold_loss_step: 1
+    cold_save_bonus: 0
+    cold_seed: 34
+    known_bridge_paths: []
+    known_exit_steps: []
+  hall_bokold_five:
+    name: hall_bokold_five
+    prison_access: {}
+    known_climbs: []
+    resources: {}
+    conversations:
+      prison:
+        contacts: []
+        questions: []
+        answers: []
+    known_bar_bears: []
+    bar_replies: []
+    gold: 0
+    known_walls: []
+    site: halls_ballroom_door
+    known_sites:
+    - site: halls_ballroom_door
+    known_paths: []
+    known_crossings: []
+    known_residents: []
+    known_coverage: []
+    balance_bonus: 0
+    cold_state: immune
+    vital:
+      life: alive
+      endurance: 3
+      max_endurance: 3
+    rescue_state: not_safe
+    max_movement_speed: 5
+    current_movement_speed: 5
+    cold_loss_step: 1
+    cold_save_bonus: 0
+    cold_seed: 35
+    known_bridge_paths: []
+    known_exit_steps: []
+  stable_bokold_one:
+    name: stable_bokold_one
+    prison_access: {}
+    known_climbs: []
+    resources: {}
+    conversations:
+      prison:
+        contacts: []
+        questions: []
+        answers: []
+    known_bar_bears: []
+    bar_replies: []
+    gold: 0
+    known_walls: []
+    site: stables_entry
+    known_sites:
+    - site: stables_entry
+    known_paths: []
+    known_crossings: []
+    known_residents: []
+    known_coverage: []
+    balance_bonus: 0
+    cold_state: immune
+    vital:
+      life: alive
+      endurance: 3
+      max_endurance: 3
+    rescue_state: not_safe
+    max_movement_speed: 5
+    current_movement_speed: 5
+    cold_loss_step: 1
+    cold_save_bonus: 0
+    cold_seed: 27
+    known_bridge_paths: []
+    known_exit_steps: []
+  stable_bokold_two:
+    name: stable_bokold_two
+    prison_access: {}
+    known_climbs: []
+    resources: {}
+    conversations:
+      prison:
+        contacts: []
+        questions: []
+        answers: []
+    known_bar_bears: []
+    bar_replies: []
+    gold: 0
+    known_walls: []
+    site: stables_entry
+    known_sites:
+    - site: stables_entry
+    known_paths: []
+    known_crossings: []
+    known_residents: []
+    known_coverage: []
+    balance_bonus: 0
+    cold_state: immune
+    vital:
+      life: alive
+      endurance: 3
+      max_endurance: 3
+    rescue_state: not_safe
+    max_movement_speed: 5
+    current_movement_speed: 5
+    cold_loss_step: 1
+    cold_save_bonus: 0
+    cold_seed: 28
+    known_bridge_paths: []
+    known_exit_steps: []
+  stable_bokold_three:
+    name: stable_bokold_three
+    prison_access: {}
+    known_climbs: []
+    resources: {}
+    conversations:
+      prison:
+        contacts: []
+        questions: []
+        answers: []
+    known_bar_bears: []
+    bar_replies: []
+    gold: 0
+    known_walls: []
+    site: stables_entry
+    known_sites:
+    - site: stables_entry
+    known_paths: []
+    known_crossings: []
+    known_residents: []
+    known_coverage: []
+    balance_bonus: 0
+    cold_state: immune
+    vital:
+      life: alive
+      endurance: 3
+      max_endurance: 3
+    rescue_state: not_safe
+    max_movement_speed: 5
+    current_movement_speed: 5
+    cold_loss_step: 1
+    cold_save_bonus: 0
+    cold_seed: 29
+    known_bridge_paths: []
+    known_exit_steps: []
+  stable_bokold_four:
+    name: stable_bokold_four
+    prison_access: {}
+    known_climbs: []
+    resources: {}
+    conversations:
+      prison:
+        contacts: []
+        questions: []
+        answers: []
+    known_bar_bears: []
+    bar_replies: []
+    gold: 0
+    known_walls: []
+    site: stables_entry
+    known_sites:
+    - site: stables_entry
+    known_paths: []
+    known_crossings: []
+    known_residents: []
+    known_coverage: []
+    balance_bonus: 0
+    cold_state: immune
+    vital:
+      life: alive
+      endurance: 3
+      max_endurance: 3
+    rescue_state: not_safe
+    max_movement_speed: 5
+    current_movement_speed: 5
+    cold_loss_step: 1
+    cold_save_bonus: 0
+    cold_seed: 30
+    known_bridge_paths: []
+    known_exit_steps: []
+opening_actors: []
+opening_objects:
+- kind: reward_box
+  state:
+    label: Emma's reward lockbox
+    holder: emma
+    locked: true
+    gold: 1200
+- kind: charge_packet
+  state:
+    label: Captive bear charge
+    holder: captive_bear
+    charges: 1
+- kind: cell_bars
+  state:
+    label: Prison cell bars
+    outside: prison_holding
+    inside: captive_cell
+    base_move_cost: 10000
+    opened: false
+- kind: passage_door
+  state:
+    label: Frozen stable door
+    front: stables_approach
+    back: stables_entry
+    base_move_cost: 10000
+    frozen: true
+    opened: false
+- kind: everflame
+  state:
+    label: Everflame
+    holder: adventurer
+    charges: 5
+- kind: chandelier
+  state:
+    site: ballroom_chandelier_reach
+- kind: reservoir
+  state:
+    site: ballroom_chandelier_reach
+    holder: chandelier
+    mounted: true
+    pulse_visible: true
+    charges: 2
+- kind: ice_wall
+  state:
+    label: Release ice wall
+    site: treasure_approach
+    passage:
+      start: treasure_approach
+      end: treasure_release
+      base_move_cost: 10000
+    release:
+      resident: wall_resident
+      resident_site: treasure_ice
+      released_site: treasure_release
+    closed: true
+- kind: ice_wall
+  state:
+    label: Treasure ice wall
+    site: treasure_approach
+    passage:
+      start: treasure_approach
+      end: treasure_side
+      base_move_cost: 10000
+    closed: true
+- kind: treasure_chest
+  state:
+    label: Treasure chest
+    site: treasure_side
+    interior: treasure_box_interior
+    opened: false
+    gold: 100
+- kind: magic_item
+  state:
+    brands: []
+    charges: 0
+    rest_site: treasure_box_interior
+# The fifth-item finite adaptation uses an actual hall companion as holder.
+- kind: magic_item
+  state: {brands: [], charges: 0, rest_site: halls_ballroom_door, holder: hall_bokold_one}
+- kind: magic_item
+  state: {brands: [], charges: 0, rest_site: tower_base, holder: alpha}
+- kind: magic_item
+  state: {brands: [], charges: 0, rest_site: tower_base, holder: alpha}
+- kind: magic_item
+  state: {brands: [], charges: 0, rest_site: alpha_box_interior}
+- kind: treasure_chest
+  state: {label: Alpha chest, site: tower_base, interior: alpha_box_interior, opened: false, gold: 0}
+- kind: drink_container
+  state:
+    label: Frozen drink bottle
+    rest_site: icebar_entry
+    holder: icebar_bear_one
+    frozen: true
+    portions: 2
+    capacity: 2
+- kind: drink_container
+  state:
+    label: Empty drinking cup
+    rest_site: icebar_entry
+    holder: icebar_bear_two
+    frozen: false
+    portions: 0
+    capacity: 1
+- kind: balloon
+  state: {label: Tower balloon, site: tower_base, charges: 1, inflated: true, tied: true}
+periodic_due_openings:
+- plan: palace_event
+  first_at: 600
+- plan: cold_pulse
+  first_at: 100
+action_value_openings:
+- seat: alpha
+  debt: 0
+  tie_priority: 33
+- seat: tower_bear_one
+  debt: 0
+  tie_priority: 34
+- seat: tower_bear_two
+  debt: 0
+  tie_priority: 35
+- seat: hall_bokold_one
+  debt: 0
+  tie_priority: 28
+- seat: hall_bokold_two
+  debt: 0
+  tie_priority: 29
+- seat: hall_bokold_three
+  debt: 0
+  tie_priority: 30
+- seat: hall_bokold_four
+  debt: 0
+  tie_priority: 31
+- seat: hall_bokold_five
+  debt: 0
+  tie_priority: 32
+- seat: captive_bear
+  debt: 0
+  tie_priority: 12
+- seat: prison_bokold
+  debt: 0
+  tie_priority: 13
+- seat: prison_resident_one
+  debt: 0
+  tie_priority: 10
+- seat: prison_resident_two
+  debt: 0
+  tie_priority: 11
+- seat: prison_guard
+  debt: 0
+  tie_priority: 9
+- seat: icebar_bear_one
+  debt: 0
+  tie_priority: 7
+- seat: icebar_bear_two
+  debt: 0
+  tie_priority: 8
+- seat: adventurer
+  debt: 0
+  tie_priority: 0
+- seat: ritual_resident
+  debt: 0
+  tie_priority: 1
+- seat: huddled_one
+  debt: 0
+  tie_priority: 2
+- seat: huddled_two
+  debt: 0
+  tie_priority: 3
+- seat: bokold_one
+  debt: 0
+  tie_priority: 4
+- seat: bokold_two
+  debt: 0
+  tie_priority: 5
+- seat: wall_resident
+  debt: 0
+  tie_priority: 6
+- seat: arctic_fox_one
+  debt: 10000
+  tie_priority: 20
+- seat: arctic_fox_two
+  debt: 10000
+  tie_priority: 21
+- seat: arctic_fox_three
+  debt: 10000
+  tie_priority: 22
+- seat: arctic_fox_four
+  debt: 10000
+  tie_priority: 23
+- seat: stable_bokold_one
+  debt: 10000
+  tie_priority: 24
+- seat: stable_bokold_two
+  debt: 10000
+  tie_priority: 25
+- seat: stable_bokold_three
+  debt: 10000
+  tie_priority: 26
+- seat: stable_bokold_four
+  debt: 10000
+  tie_priority: 27
+- seat: emma
+  debt: 10000
+  tie_priority: 36
+controllers:
+- seat: alpha
+  mode: finite_appraisal
+  profile: local_alpha
+- seat: tower_bear_one
+  mode: finite_appraisal
+  profile: local_tower_bear_one
+- seat: tower_bear_two
+  mode: finite_appraisal
+  profile: local_tower_bear_two
+- seat: hall_bokold_one
+  mode: finite_appraisal
+  profile: local_hall_bokold_one
+- seat: hall_bokold_two
+  mode: finite_appraisal
+  profile: local_hall_bokold_two
+- seat: hall_bokold_three
+  mode: finite_appraisal
+  profile: local_hall_bokold_three
+- seat: hall_bokold_four
+  mode: finite_appraisal
+  profile: local_hall_bokold_four
+- seat: hall_bokold_five
+  mode: finite_appraisal
+  profile: local_hall_bokold_five
+- seat: captive_bear
+  mode: finite_appraisal
+  profile: captive_response
+- seat: prison_bokold
+  mode: finite_appraisal
+  profile: prison_bokold_response
+- seat: prison_resident_one
+  mode: finite_appraisal
+  profile: toward_exit_prison_resident_one
+- seat: prison_resident_two
+  mode: finite_appraisal
+  profile: toward_exit_prison_resident_two
+- seat: prison_guard
+  mode: finite_appraisal
+  profile: prison_watch
+- seat: icebar_bear_one
+  mode: finite_appraisal
+  profile: icebar_idle_one
+- seat: icebar_bear_two
+  mode: finite_appraisal
+  profile: icebar_idle_two
+- seat: adventurer
+  mode: human_prompt
+- seat: ritual_resident
+  mode: finite_appraisal
+  profile: toward_exit_ritual_resident
+- seat: huddled_one
+  mode: finite_appraisal
+  profile: toward_exit_huddled_one
+- seat: huddled_two
+  mode: finite_appraisal
+  profile: toward_exit_huddled_two
+- seat: bokold_one
+  mode: finite_appraisal
+  profile: ritualist_bokold_one
+- seat: bokold_two
+  mode: finite_appraisal
+  profile: light_seeker_bokold_two
+- seat: wall_resident
+  mode: finite_appraisal
+  profile: toward_exit_wall_resident
+- seat: arctic_fox_one
+  mode: finite_appraisal
+  profile: local_arctic_fox_one
+- seat: arctic_fox_two
+  mode: finite_appraisal
+  profile: local_arctic_fox_two
+- seat: arctic_fox_three
+  mode: finite_appraisal
+  profile: local_arctic_fox_three
+- seat: arctic_fox_four
+  mode: finite_appraisal
+  profile: local_arctic_fox_four
+- seat: stable_bokold_one
+  mode: finite_appraisal
+  profile: local_stable_bokold_one
+- seat: stable_bokold_two
+  mode: finite_appraisal
+  profile: local_stable_bokold_two
+- seat: stable_bokold_three
+  mode: finite_appraisal
+  profile: local_stable_bokold_three
+- seat: stable_bokold_four
+  mode: finite_appraisal
+  profile: local_stable_bokold_four
+- seat: emma
+  mode: finite_appraisal
+  profile: local_emma

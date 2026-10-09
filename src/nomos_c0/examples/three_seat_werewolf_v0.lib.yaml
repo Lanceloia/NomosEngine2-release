@@ -1,0 +1,1029 @@
+# Reusable record, owner, and LawDef declarations for the Werewolf test world.
+schema: c0.nominal_lib.v1
+pure_definitions:
+  - name: town.remaining_count
+    parameters:
+      players: {tuple: Player}
+      roles: {tuple: Assignment}
+      excluded: {optional: str}
+      wolf_side: bool
+    result: int
+    stage: admission
+    body:
+      count_matching:
+        collection:
+          query:
+            from: {collection: {ref: players}, as: survivor, key: id}
+            join: {collection: {ref: roles}, as: assignment, key: id}
+            where:
+              all:
+                - survivor.alive
+                - survivor.id != excluded
+                - if:
+                    when: {ref: wolf_side}
+                    then: assignment.role == 'wolf'
+                    else: assignment.role != 'wolf'
+        as: survivor
+        where: true
+  - name: town.living_role_count
+    parameters:
+      players: {tuple: Player}
+      roles: {tuple: Assignment}
+      role: str
+    result: int
+    stage: admission
+    body:
+      count_matching:
+        collection:
+          query:
+            from: {collection: {ref: players}, as: living, key: id}
+            join: {collection: {ref: roles}, as: assignment, key: id}
+            where: living.alive and assignment.role == role
+        as: living
+        where: true
+records:
+  - name: Player
+    fields:
+      - name: id
+        type:
+          str:
+            - 1
+            - 64
+      - name: alive
+        type: bool
+    invariant: null
+  - name: Assignment
+    fields:
+      - name: id
+        type:
+          str:
+            - 1
+            - 64
+      - name: role
+        type:
+          enum:
+            - wolf
+            - seer
+            - witch
+            - villager
+    invariant: null
+  - name: Vote
+    fields:
+      - name: round
+        type:
+          int:
+            - 1
+            - 1000000
+      - name: voter
+        type:
+          str:
+            - 1
+            - 64
+      - name: target
+        type:
+          str:
+            - 1
+            - 64
+      - name: action
+        type: occurrence_ref
+    invariant: null
+  - name: OwnVote
+    fields:
+      - name: round
+        type:
+          int:
+            - 1
+            - 1000000
+      - name: target
+        type:
+          str:
+            - 1
+            - 64
+      - name: action
+        type: occurrence_ref
+    invariant: null
+  - name: Observation
+    fields:
+      - name: round
+        type:
+          int:
+            - 1
+            - 1000000
+      - name: target
+        type:
+          str:
+            - 1
+            - 64
+      - name: faction
+        type:
+          enum:
+            - wolf
+            - town
+      - name: action
+        type: occurrence_ref
+    invariant: null
+  - name: Scene
+    fields:
+      - name: phase
+        type:
+          enum:
+            - day
+            - night
+            - finished
+      - name: round
+        type:
+          int:
+            - 1
+            - 1000000
+      - name: players
+        type:
+          tuple:
+            item: Player
+            max: 64
+      - name: roles
+        type:
+          tuple:
+            item: Assignment
+            max: 64
+      - name: ballots
+        type:
+          tuple:
+            item: Vote
+            max: 128
+      - name: wolf_ballots
+        type:
+          tuple:
+            item: Vote
+            max: 128
+      - name: winner
+        type:
+          enum:
+            - none
+            - wolf
+            - town
+      - name: pending_attack
+        type:
+          optional:
+            str:
+              - 1
+              - 64
+      - name: selection_done
+        type: bool
+      - name: witch_done
+        type: bool
+      - name: witch_saved
+        type: bool
+      - name: seer_done
+        type: bool
+      - name: last_death
+        type:
+          optional:
+            str:
+              - 1
+              - 64
+    invariant: null
+  - name: AttackChoice
+    fields:
+      - name: round
+        type:
+          int:
+            - 1
+            - 1000000
+      - name: target
+        type:
+          str:
+            - 1
+            - 64
+      - name: action
+        type: occurrence_ref
+    invariant: null
+  - name: NightChoice
+    fields:
+      - name: round
+        type:
+          int:
+            - 1
+            - 1000000
+      - name: kind
+        type:
+          enum:
+            - inspect
+            - pass
+      - name: action
+        type: occurrence_ref
+    invariant: null
+  - name: WitchNotice
+    fields:
+      - name: round
+        type:
+          int:
+            - 1
+            - 1000000
+      - name: target
+        type:
+          optional:
+            str:
+              - 1
+              - 64
+      - name: selection
+        type: occurrence_ref
+      - name: notice
+        type: occurrence_ref
+    invariant: null
+  - name: WitchChoice
+    fields:
+      - name: round
+        type:
+          int:
+            - 1
+            - 1000000
+      - name: saved
+        type: bool
+      - name: target
+        type:
+          optional:
+            str:
+              - 1
+              - 64
+      - name: selection
+        type: occurrence_ref
+      - name: notice
+        type: occurrence_ref
+      - name: action
+        type: occurrence_ref
+    invariant: null
+  - name: Actor
+    fields:
+      - name: name
+        type:
+          str:
+            - 1
+            - 64
+      - name: own_role
+        type:
+          enum:
+            - wolf
+            - seer
+            - witch
+            - villager
+      - name: votes
+        type:
+          tuple:
+            item: OwnVote
+            max: 128
+      - name: observations
+        type:
+          tuple:
+            item: Observation
+            max: 128
+      - name: choices
+        type:
+          tuple:
+            item: NightChoice
+            max: 128
+      - name: attacks
+        type:
+          tuple:
+            item: AttackChoice
+            max: 128
+      - name: witch_notice
+        type:
+          optional: WitchNotice
+      - name: witch_choices
+        type:
+          tuple:
+            item: WitchChoice
+            max: 128
+      - name: healing_available
+        type: bool
+    invariant: null
+  - name: VoteAttempt
+    fields:
+      - name: actor
+        type:
+          str:
+            - 1
+            - 64
+      - name: target
+        type:
+          str:
+            - 1
+            - 64
+    invariant: null
+  - name: Envelope
+    fields:
+      - name: action
+        type: occurrence_ref
+      - name: target
+        type:
+          str:
+            - 1
+            - 64
+    invariant: null
+  - name: PassAttempt
+    fields:
+      - name: actor
+        type:
+          str:
+            - 1
+            - 64
+    invariant: null
+  - name: PassEnvelope
+    fields:
+      - name: action
+        type: occurrence_ref
+    invariant: null
+  - name: WitchAttempt
+    fields:
+      - name: actor
+        type:
+          str:
+            - 1
+            - 64
+      - name: save
+        type: bool
+    invariant: null
+owners:
+  - symbol: scene
+    key: c0.three-seat.scene
+    version: three-seat-scene-v1
+    state: Scene
+    identity_field: null
+    write: replace_one
+    seat_read:
+      - phase
+      - round
+      - players
+      - winner
+      - last_death
+  - template: participant
+    key_prefix: c0.werewolf.actor.
+    version: werewolf-actor-v1
+    state: Actor
+    identity_field: name
+    write: replace_one
+    seat_read:
+      - name
+      - own_role
+      - votes
+      - observations
+      - choices
+      - attacks
+      - witch_notice
+      - witch_notice.round
+      - witch_notice.target
+      - witch_choices
+      - healing_available
+lawdefs:
+  - name: action.vote
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+          - name: voter_state
+            collection: scene.players
+            as: candidate
+            where: {eq: [{ref: candidate.id}, {ref: payload.actor}]}
+            required: true
+          - name: target_state
+            collection: scene.players
+            as: candidate
+            where: {eq: [{ref: candidate.id}, {ref: payload.target}]}
+            required: true
+        guard:
+          all:
+            - {eq: [{ref: scene.phase}, {const: day}]}
+            - {eq: [{ref: scene.winner}, {const: none}]}
+            - {eq: [{ref: actor.name}, {ref: payload.actor}]}
+            - {eq: [{ref: voter_state.alive}, {const: true}]}
+            - {eq: [{ref: target_state.alive}, {const: true}]}
+            - none_matching:
+                collection: {ref: scene.ballots}
+                as: prior
+                where:
+                  all:
+                    - {eq: [{ref: prior.round}, {ref: scene.round}]}
+                    - {eq: [{ref: prior.voter}, {ref: payload.actor}]}
+        outputs:
+          ballots:
+            append:
+              - {ref: scene.ballots}
+              - record:
+                  type: Vote
+                  fields:
+                    round: {ref: scene.round}
+                    voter: {ref: payload.actor}
+                    target: {ref: payload.target}
+                    action: {ref: occurrence}
+          votes:
+            append:
+              - {ref: actor.votes}
+              - record:
+                  type: OwnVote
+                  fields:
+                    round: {ref: scene.round}
+                    target: {ref: payload.target}
+                    action: {ref: occurrence}
+          action: {ref: occurrence}
+          target: {ref: payload.target}
+  - name: event.resolve_day
+    family: direct_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings:
+          - name: leader
+            collection: scene.players
+            as: candidate
+            where:
+              all:
+                - {eq: [{ref: candidate.alive}, {const: true}]}
+                - lt:
+                    - count_matching:
+                        collection: {ref: scene.players}
+                        as: player
+                        where: {eq: [{ref: player.alive}, {const: true}]}
+                    - add:
+                        - count_matching:
+                            collection: {ref: scene.ballots}
+                            as: ballot
+                            where:
+                              all:
+                                - {eq: [{ref: ballot.round}, {ref: scene.round}]}
+                                - {eq: [{ref: ballot.target}, {ref: candidate.id}]}
+                        - count_matching:
+                            collection: {ref: scene.ballots}
+                            as: ballot
+                            where:
+                              all:
+                                - {eq: [{ref: ballot.round}, {ref: scene.round}]}
+                                - {eq: [{ref: ballot.target}, {ref: candidate.id}]}
+            required: false
+          - name: remaining_wolves
+            stage: effect
+            let:
+              call:
+                ref: town.remaining_count
+                args:
+                  players: {ref: scene.players}
+                  roles: {ref: scene.roles}
+                  excluded: {if: {when: {not_none: {ref: leader}}, then: {ref: leader.id}, else: {const: null}}}
+                  wolf_side: {const: true}
+          - name: remaining_town
+            stage: effect
+            let:
+              call:
+                ref: town.remaining_count
+                args:
+                  players: {ref: scene.players}
+                  roles: {ref: scene.roles}
+                  excluded: {if: {when: {not_none: {ref: leader}}, then: {ref: leader.id}, else: {const: null}}}
+                  wolf_side: {const: false}
+        guard:
+          all:
+            - {eq: [{ref: scene.phase}, {const: day}]}
+            - eq:
+                - count_matching:
+                    collection: {ref: scene.ballots}
+                    as: ballot
+                    where: {eq: [{ref: ballot.round}, {ref: scene.round}]}
+                - count_matching:
+                    collection: {ref: scene.players}
+                    as: player
+                    where: {eq: [{ref: player.alive}, {const: true}]}
+        outputs:
+          players:
+            if:
+              when:
+                not_none: {ref: leader}
+              then:
+                replace_unique:
+                  collection: {ref: scene.players}
+                  old: {ref: leader}
+                  new:
+                    copy:
+                      from: {ref: leader}
+                      changes:
+                        alive: {const: false}
+                  key: id
+              else: {ref: scene.players}
+          phase:
+            if:
+              when:
+                any:
+                  - all:
+                      - not_none: {ref: leader}
+                      - eq:
+                          - {ref: remaining_wolves}
+                          - {const: 0}
+                  - all:
+                      - not_none: {ref: leader}
+                      - eq:
+                          - {ref: remaining_town}
+                          - {const: 0}
+              then: {const: finished}
+              else: {const: night}
+          winner:
+            if:
+              when:
+                all:
+                  - not_none: {ref: leader}
+                  - eq:
+                      - {ref: remaining_wolves}
+                      - {const: 0}
+              then: {const: town}
+              else:
+                if:
+                  when:
+                    all:
+                      - not_none: {ref: leader}
+                      - eq:
+                          - {ref: remaining_town}
+                          - {const: 0}
+                  then: {const: wolf}
+                  else: {const: none}
+          last_death:
+            if:
+              when:
+                not_none: {ref: leader}
+              then: {ref: leader.id}
+              else: {ref: scene.last_death}
+  - name: action.attack
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+          - name: self_state
+            collection: scene.players
+            as: candidate
+            where: {eq: [{ref: candidate.id}, {ref: payload.actor}]}
+            required: true
+          - name: target_state
+            collection: scene.players
+            as: candidate
+            where: {eq: [{ref: candidate.id}, {ref: payload.target}]}
+            required: true
+        guard:
+          all:
+            - {eq: [{ref: scene.phase}, {const: night}]}
+            - {eq: [{ref: scene.winner}, {const: none}]}
+            - {eq: [{ref: actor.name}, {ref: payload.actor}]}
+            - {eq: [{ref: self_state.alive}, {const: true}]}
+            - {eq: [{ref: target_state.alive}, {const: true}]}
+            - not: {eq: [{ref: payload.actor}, {ref: payload.target}]}
+            - {eq: [{ref: actor.own_role}, {const: wolf}]}
+            - {eq: [{ref: scene.selection_done}, {const: false}]}
+            - none_matching:
+                collection: {ref: scene.wolf_ballots}
+                as: prior
+                where:
+                  all:
+                    - {eq: [{ref: prior.round}, {ref: scene.round}]}
+                    - {eq: [{ref: prior.voter}, {ref: payload.actor}]}
+        outputs:
+          wolf_ballots:
+            append:
+              - {ref: scene.wolf_ballots}
+              - record:
+                  type: Vote
+                  fields:
+                    round: {ref: scene.round}
+                    voter: {ref: payload.actor}
+                    target: {ref: payload.target}
+                    action: {ref: occurrence}
+          action: {ref: occurrence}
+          target: {ref: payload.target}
+          attacks:
+            append:
+              - {ref: actor.attacks}
+              - record:
+                  type: AttackChoice
+                  fields:
+                    round: {ref: scene.round}
+                    target: {ref: payload.target}
+                    action: {ref: occurrence}
+  - name: action.divine
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+          - name: self_state
+            collection: scene.players
+            as: candidate
+            where: {eq: [{ref: candidate.id}, {ref: payload.actor}]}
+            required: true
+          - name: target_state
+            collection: scene.players
+            as: candidate
+            where: {eq: [{ref: candidate.id}, {ref: payload.target}]}
+            required: true
+          - name: target_role
+            collection: scene.roles
+            key: id
+            value: {ref: payload.target}
+            required: true
+        guard:
+          all:
+            - {eq: [{ref: scene.phase}, {const: night}]}
+            - {eq: [{ref: scene.winner}, {const: none}]}
+            - {eq: [{ref: actor.name}, {ref: payload.actor}]}
+            - {eq: [{ref: self_state.alive}, {const: true}]}
+            - {eq: [{ref: target_state.alive}, {const: true}]}
+            - not: {eq: [{ref: payload.actor}, {ref: payload.target}]}
+            - {eq: [{ref: actor.own_role}, {const: seer}]}
+            - {eq: [{ref: scene.seer_done}, {const: false}]}
+        outputs:
+          seer_done: {const: true}
+          observations:
+            append:
+              - {ref: actor.observations}
+              - record:
+                  type: Observation
+                  fields:
+                    round: {ref: scene.round}
+                    target: {ref: payload.target}
+                    faction:
+                      if:
+                        when: {eq: [{ref: target_role.role}, {const: wolf}]}
+                        then: {const: wolf}
+                        else: {const: town}
+                    action: {ref: occurrence}
+          action: {ref: occurrence}
+          target: {ref: payload.target}
+          choices:
+            append:
+              - {ref: actor.choices}
+              - record:
+                  type: NightChoice
+                  fields:
+                    round: {ref: scene.round}
+                    kind: {const: inspect}
+                    action: {ref: occurrence}
+  - name: event.select_unanimous
+    family: direct_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings:
+          - name: chosen
+            collection: scene.players
+            as: candidate
+            where:
+              all:
+                - {eq: [{ref: candidate.alive}, {const: true}]}
+                - lt:
+                    - {const: 0}
+                    - count_matching:
+                        collection: {ref: scene.wolf_ballots}
+                        as: ballot
+                        where:
+                          all:
+                            - {eq: [{ref: ballot.round}, {ref: scene.round}]}
+                            - {eq: [{ref: ballot.target}, {ref: candidate.id}]}
+                - eq:
+                    - count_matching:
+                        collection: {ref: scene.wolf_ballots}
+                        as: ballot
+                        where:
+                          all:
+                            - {eq: [{ref: ballot.round}, {ref: scene.round}]}
+                            - {eq: [{ref: ballot.target}, {ref: candidate.id}]}
+                    - count_matching:
+                        collection: {ref: scene.wolf_ballots}
+                        as: ballot
+                        where: {eq: [{ref: ballot.round}, {ref: scene.round}]}
+            required: false
+        guard:
+          all:
+            - {eq: [{ref: scene.phase}, {const: night}]}
+            - {eq: [{ref: scene.selection_done}, {const: false}]}
+            - eq:
+                - count_matching:
+                    collection: {ref: scene.wolf_ballots}
+                    as: ballot
+                    where: {eq: [{ref: ballot.round}, {ref: scene.round}]}
+                - call:
+                    ref: town.living_role_count
+                    args:
+                      players: {ref: scene.players}
+                      roles: {ref: scene.roles}
+                      role: {const: wolf}
+            - any:
+                - {eq: [{ref: scene.seer_done}, {const: true}]}
+                - eq:
+                    - call:
+                        ref: town.living_role_count
+                        args:
+                          players: {ref: scene.players}
+                          roles: {ref: scene.roles}
+                          role: {const: seer}
+                    - {const: 0}
+        outputs:
+          pending_attack:
+            if:
+              when:
+                not_none: {ref: chosen}
+              then: {ref: chosen.id}
+              else: {const: null}
+          selection_done: {const: true}
+  - name: event.select_majority
+    family: direct_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings:
+          - name: chosen
+            collection: scene.players
+            as: candidate
+            where:
+              all:
+                - {eq: [{ref: candidate.alive}, {const: true}]}
+                - lt:
+                    - count_matching:
+                        collection: {ref: scene.wolf_ballots}
+                        as: ballot
+                        where: {eq: [{ref: ballot.round}, {ref: scene.round}]}
+                    - add:
+                        - count_matching:
+                            collection: {ref: scene.wolf_ballots}
+                            as: ballot
+                            where:
+                              all:
+                                - {eq: [{ref: ballot.round}, {ref: scene.round}]}
+                                - {eq: [{ref: ballot.target}, {ref: candidate.id}]}
+                        - count_matching:
+                            collection: {ref: scene.wolf_ballots}
+                            as: ballot
+                            where:
+                              all:
+                                - {eq: [{ref: ballot.round}, {ref: scene.round}]}
+                                - {eq: [{ref: ballot.target}, {ref: candidate.id}]}
+            required: false
+        guard:
+          all:
+            - {eq: [{ref: scene.phase}, {const: night}]}
+            - {eq: [{ref: scene.selection_done}, {const: false}]}
+            - eq:
+                - count_matching:
+                    collection: {ref: scene.wolf_ballots}
+                    as: ballot
+                    where: {eq: [{ref: ballot.round}, {ref: scene.round}]}
+                - call:
+                    ref: town.living_role_count
+                    args:
+                      players: {ref: scene.players}
+                      roles: {ref: scene.roles}
+                      role: {const: wolf}
+            - any:
+                - {eq: [{ref: scene.seer_done}, {const: true}]}
+                - eq:
+                    - call:
+                        ref: town.living_role_count
+                        args:
+                          players: {ref: scene.players}
+                          roles: {ref: scene.roles}
+                          role: {const: seer}
+                    - {const: 0}
+        outputs:
+          pending_attack:
+            if:
+              when:
+                not_none: {ref: chosen}
+              then: {ref: chosen.id}
+              else: {const: null}
+          selection_done: {const: true}
+  - name: event.resolve_night
+    family: direct_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings:
+          - name: target_state
+            collection: scene.players
+            as: candidate
+            where:
+              all:
+                - {eq: [{ref: candidate.id}, {ref: scene.pending_attack}]}
+                - {eq: [{ref: scene.witch_saved}, {const: false}]}
+            required: false
+          - name: remaining_wolves
+            stage: effect
+            let:
+              call:
+                ref: town.remaining_count
+                args:
+                  players: {ref: scene.players}
+                  roles: {ref: scene.roles}
+                  excluded: {if: {when: {not_none: {ref: target_state}}, then: {ref: target_state.id}, else: {const: null}}}
+                  wolf_side: {const: true}
+          - name: remaining_town
+            stage: effect
+            let:
+              call:
+                ref: town.remaining_count
+                args:
+                  players: {ref: scene.players}
+                  roles: {ref: scene.roles}
+                  excluded: {if: {when: {not_none: {ref: target_state}}, then: {ref: target_state.id}, else: {const: null}}}
+                  wolf_side: {const: false}
+        guard:
+          all:
+            - {eq: [{ref: scene.phase}, {const: night}]}
+            - {eq: [{ref: scene.selection_done}, {const: true}]}
+            - any:
+                - {eq: [{ref: scene.witch_done}, {const: true}]}
+                - eq:
+                    - count_matching:
+                        collection:
+                          query:
+                            from: {collection: {ref: scene.roles}, as: assigned, key: id}
+                            join: {collection: {ref: scene.players}, as: living, key: id}
+                            where: assigned.role == 'witch' and living.alive
+                        as: eligible
+                        where: true
+                    - 0
+        outputs:
+          players:
+            if:
+              when:
+                not_none: {ref: target_state}
+              then:
+                replace_unique:
+                  collection: {ref: scene.players}
+                  old: {ref: target_state}
+                  new:
+                    copy:
+                      from: {ref: target_state}
+                      changes:
+                        alive: {const: false}
+                  key: id
+              else: {ref: scene.players}
+          phase:
+            if:
+              when:
+                all:
+                  - not_none: {ref: target_state}
+                  - any:
+                      - eq:
+                          - {ref: remaining_wolves}
+                          - {const: 0}
+                      - eq:
+                          - {ref: remaining_town}
+                          - {const: 0}
+              then: {const: finished}
+              else: {const: day}
+          round:
+            add:
+              - {ref: scene.round}
+              - {const: 1}
+          winner:
+            if:
+              when:
+                all:
+                  - not_none: {ref: target_state}
+                  - eq:
+                      - {ref: remaining_wolves}
+                      - {const: 0}
+              then: {const: town}
+              else:
+                if:
+                  when:
+                    all:
+                      - not_none: {ref: target_state}
+                      - eq:
+                          - {ref: remaining_town}
+                          - {const: 0}
+                  then: {const: wolf}
+                  else: {const: none}
+          last_death:
+            if:
+              when:
+                not_none: {ref: target_state}
+              then: {ref: target_state.id}
+              else: {const: null}
+          pending_attack: {const: null}
+          seer_done: {const: false}
+          selection_done: {const: false}
+          witch_done: {const: false}
+          witch_saved: {const: false}
+  - name: event.witch_notice
+    family: direct_actor_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings:
+          - name: self_state
+            collection: scene.players
+            as: candidate
+            where: {eq: [{ref: candidate.id}, {ref: actor.name}]}
+            required: true
+        guard:
+          all:
+            - {eq: [{ref: scene.phase}, {const: night}]}
+            - {eq: [{ref: scene.selection_done}, {const: true}]}
+            - {eq: [{ref: actor.own_role}, {const: witch}]}
+            - {eq: [{ref: self_state.alive}, {const: true}]}
+        outputs:
+          witch_notice:
+            record:
+              type: WitchNotice
+              fields:
+                round: {ref: scene.round}
+                target: {ref: scene.pending_attack}
+                selection: {ref: trigger.occurrence}
+                notice: {ref: occurrence}
+  - name: action.witch_intervene
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+          - name: self_state
+            collection: scene.players
+            as: candidate
+            where: {eq: [{ref: candidate.id}, {ref: payload.actor}]}
+            required: true
+        guard:
+          require:
+            - night: scene.phase == 'night'
+            - target_selected: scene.selection_done == True
+            - not_yet_chosen: scene.witch_done == False
+            - game_open: scene.winner == 'none'
+            - actor_matches: actor.name == payload.actor
+            - witch_role: actor.own_role == 'witch'
+            - alive: self_state.alive == True
+            - notice_received: actor.witch_notice is not None
+            - current_notice: actor.witch_notice.round == scene.round
+            - notified_target: actor.witch_notice.target == scene.pending_attack
+            - save_choice:
+                if:
+                  when: payload.save
+                  then:
+                    require:
+                      - victim_exists: scene.pending_attack is not None
+                  else: true
+        effects:
+          - use_healing:
+              when: payload.save
+              consume: actor.healing_available
+        outputs:
+          witch_done: {const: true}
+          witch_saved: {ref: payload.save}
+          witch_choices:
+            append:
+              - {ref: actor.witch_choices}
+              - record:
+                  type: WitchChoice
+                  fields:
+                    round: {ref: scene.round}
+                    saved: {ref: payload.save}
+                    target: {ref: actor.witch_notice.target}
+                    selection: {ref: actor.witch_notice.selection}
+                    notice: {ref: actor.witch_notice.notice}
+                    action: {ref: occurrence}
+          action: {ref: occurrence}
+  - name: action.pass
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+          - name: self_state
+            collection: scene.players
+            as: candidate
+            where: {eq: [{ref: candidate.id}, {ref: payload.actor}]}
+            required: true
+        guard:
+          all:
+            - {eq: [{ref: scene.phase}, {const: night}]}
+            - {eq: [{ref: scene.winner}, {const: none}]}
+            - {eq: [{ref: actor.name}, {ref: payload.actor}]}
+            - {eq: [{ref: actor.own_role}, {const: seer}]}
+            - {eq: [{ref: self_state.alive}, {const: true}]}
+            - {eq: [{ref: scene.seer_done}, {const: false}]}
+        outputs:
+          seer_done: {const: true}
+          choices:
+            append:
+              - {ref: actor.choices}
+              - record:
+                  type: NightChoice
+                  fields:
+                    round: {ref: scene.round}
+                    kind: {const: pass}
+                    action: {ref: occurrence}
+          action: {ref: occurrence}
+# Each family is declared once; C0 instantiates it for the closed Actor domain.

@@ -1,0 +1,117 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+lawdefs:
+  - name: action.offer_torch
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - actor_matches: actor.name == payload.actor
+            - actor_awake: actor.cold_state != 'frozen' and actor.vital.life == 'alive'
+            - actual_holder: torch.holder == actor.name
+            - actual_recipient: recipient.name == payload.recipient
+            - colocated: recipient.site == actor.site
+            - recipient_awake: recipient.cold_state != 'frozen' and recipient.vital.life == 'alive'
+            - recipient_known_here:
+                exists:
+                  collection: actor.known_residents
+                  as: known
+                  where: known.name == recipient.name and known.site == recipient.site
+            - destination_is_neighbor:
+                exists:
+                  collection: scene.paths
+                  as: path
+                  where: path.start == actor.site and path.end == payload.destination
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          torch_offer:
+            record:
+              type: TorchOffer
+              fields: {speaker: {ref: actor.name}, recipient: {ref: recipient.name}, site: {ref: actor.site}, destination: {ref: payload.destination}, torch: {ref: payload.torch}, utterance: {ref: occurrence}}
+  - name: event.torch_offer_heard
+    family: direct_actor_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+          - current_offer: scene.torch_offer is not None
+          - actual_utterance: scene.torch_offer.utterance == trigger.occurrence
+          - addressed_here: scene.torch_offer.recipient == actor.name and scene.torch_offer.site == actor.site
+          - awake: actor.cold_state != 'frozen' and actor.vital.life == 'alive'
+        outputs:
+          heard_torch_offer:
+            ref: scene.torch_offer
+          torch_offer_hearing_ref:
+            ref: occurrence
+          known_residents:
+            append:
+            - collect_matching:
+                collection:
+                  ref: actor.known_residents
+                as: old
+                where: old.name != scene.torch_offer.speaker
+                value:
+                  ref: old
+            - record:
+                type: KnownResident
+                fields:
+                  name:
+                    ref: scene.torch_offer.speaker
+                  site:
+                    ref: scene.torch_offer.site
+                  observation:
+                    ref: occurrence
+  - name: action.accept_torch
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - actor_matches: actor.name == payload.actor
+            - awake: actor.cold_state != 'frozen' and actor.vital.life == 'alive'
+            - heard_offer: actor.heard_torch_offer is not None and actor.torch_offer_hearing_ref is not None
+            - current_offer: scene.torch_offer is not None
+            - same_utterance: actor.heard_torch_offer.utterance == scene.torch_offer.utterance
+            - addressed_to_self: actor.heard_torch_offer.recipient == actor.name
+            - same_torch: actor.heard_torch_offer.torch == payload.torch
+            - actual_giver: giver.name == payload.giver and giver.name == actor.heard_torch_offer.speaker
+            - giver_awake: giver.cold_state != 'frozen' and giver.vital.life == 'alive'
+            - colocated: actor.site == giver.site and actor.site == actor.heard_torch_offer.site
+            - held_by_giver: torch.holder == giver.name
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          accepted_torch_offer_ref: {ref: actor.heard_torch_offer.utterance}
+          torch_accept_ref: {ref: occurrence}
+          known_everflame_charges: {ref: torch.charges}
+          holder: {ref: actor.name}
+  - name: action.load_elemental_torch
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - identity: actor.name == payload.actor
+            - active: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+            - custody: packet.holder == actor.name and packet.taken_ref is not None and storage.holder == actor.name
+        effects:
+          - refill:
+              transfer: {from: packet.units, to: storage.charges}
+              amount: 1
+              floor: 0
+              capacity: 5
+              mirror: {to: [actor.known_everflame_charges]}
+        outputs: {action: {ref: occurrence}, last_action_ref: {ref: occurrence}, load_ref: {ref: occurrence}}

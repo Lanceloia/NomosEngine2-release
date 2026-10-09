@@ -1,0 +1,16 @@
+{
+  "schema": "c0.owner_graph.assets.v1",
+  "time": 0,
+  "opening": {
+    "scene": {
+      "parcel": {
+        "id": "P-1", "destination": "dock", "status": "home",
+        "depart_ref": null, "arrival_ref": null
+      },
+      "routes": [{"destination": "dock", "travel": 4}],
+      "signal": "none"
+    },
+    "sender": {"name": "Mira", "sent_ref": null},
+    "receiver": {"name": "Niko", "notice": null, "receipt": null}
+  }
+}

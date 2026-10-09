@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nomos-engine2"
+version = "0.1.0"
+description = "Compile declarative world rules into checked playable sessions"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = ["pyyaml>=6.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.9", "build>=1"]
+
+[tool.setuptools.packages.find]
+where = ["src", "engine/kernel/src"]
+
+[tool.setuptools.package-data]
+nomos_c0 = ["examples/*.yaml", "examples/*.json", "examples/*.md", "examples/modular_counter_v1/*.yaml", "examples/modular_counter_v1/source/*.yaml"]
+nomos_t0 = ["examples/*.yaml"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "engine/kernel/src"]
+python_files = ["test_*.py"]
+markers = ["slow_replay: explicitly selected long integration route"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["E402"]

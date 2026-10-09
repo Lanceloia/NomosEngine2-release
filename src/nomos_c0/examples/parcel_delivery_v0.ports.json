@@ -1,0 +1,71 @@
+{
+  "schema": "c0.graph_ports.v1",
+  "scene_owner": "scene",
+  "offer_provider": {"name": "finite_value", "version": "1", "limit": 16},
+  "actions": [
+    {
+      "symbol": "dispatch", "actor": "sender",
+      "payload": "Attempt", "envelope": "Envelope",
+      "actor_identity_field": "name", "payload_actor_field": "actor",
+      "effects": {"scene": {}, "actor": {"sent_ref": "sent_ref"}},
+      "envelope_fields": {"action": "action"},
+      "schedule": {"one_shot_field": "sent_ref", "subject_output": "subject", "delay_output": "delay"},
+      "value": {
+        "read": ["scene.parcel.id", "scene.parcel.destination", "scene.parcel.status", "scene.routes", "actor.sent_ref", "payload.item_id", "payload.destination"],
+        "fields": {"Route": ["destination", "travel"]},
+        "write_paths": ["actor.sent_ref"],
+        "outputs": {"sent_ref": "occurrence_ref"},
+        "construct": [], "collections": {}
+      }
+    },
+    {
+      "symbol": "confirm", "actor": "receiver",
+      "payload": "Attempt", "envelope": "Envelope",
+      "actor_identity_field": "name", "payload_actor_field": "actor",
+      "effects": {"scene": {}, "actor": {"receipt": "receipt"}},
+      "envelope_fields": {"action": "action"}, "schedule": null,
+      "value": {
+        "read": ["scene.parcel.id", "scene.parcel.destination", "scene.parcel.status", "scene.parcel.arrival_ref", "actor.notice", "actor.receipt", "payload.item_id", "payload.destination"],
+        "fields": {}, "write_paths": ["actor.receipt"],
+        "outputs": {"receipt": "Receipt"},
+        "construct": ["Receipt"], "collections": {}
+      }
+    }
+  ],
+  "events": [
+    {
+      "symbol": "depart", "form": "direct_scene", "actor": null, "actor_identity_field": null,
+      "value": {
+        "read": ["scene.parcel", "scene.parcel.status"],
+        "fields": {}, "write_paths": ["scene.parcel", "scene.parcel.status", "scene.parcel.depart_ref"],
+        "outputs": {"parcel": "scene.parcel"}, "construct": [], "collections": {}
+      }
+    },
+    {
+      "symbol": "notice", "form": "direct_actor", "actor": "receiver", "actor_identity_field": "name",
+      "value": {
+        "read": ["scene.parcel.status", "actor.notice", "trigger.occurrence"],
+        "fields": {}, "write_paths": ["actor.notice"],
+        "outputs": {"notice": {"target": "actor.notice", "type": "Notice"}}, "construct": ["Notice"], "collections": {}
+      }
+    },
+    {
+      "symbol": "manifest", "form": "direct_scene", "actor": null, "actor_identity_field": null,
+      "value": {
+        "read": ["scene.parcel.status", "scene.signal"],
+        "fields": {}, "write_paths": ["scene.signal"],
+        "outputs": {"signal": "scene.signal"}, "construct": [], "collections": {}
+      }
+    }
+  ],
+  "due_events": [
+    {
+      "symbol": "arrive",
+      "value": {
+        "read": ["scene.parcel", "scene.parcel.id", "scene.parcel.status", "due.subject"],
+        "fields": {}, "write_paths": ["scene.parcel", "scene.parcel.status", "scene.parcel.arrival_ref"],
+        "outputs": {"parcel": "scene.parcel"}, "construct": [], "collections": {}
+      }
+    }
+  ]
+}

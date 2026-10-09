@@ -1,0 +1,57 @@
+{
+  "schema": "c0.lib.scene_due.v2",
+  "id": "c0.test.scene_due",
+  "revision": "v2",
+  "lawdefs": {
+    "token_due": {
+      "opcode": "collection_member_due_transition.v1",
+      "formals": ["carrier_id", "from_status", "due_field", "to_status", "receipt_field"]
+    }
+  },
+  "exports": {
+    "start": {
+      "native": "start",
+      "lawdef": "token_due",
+      "scene_owner": "c0.scene_due.test.scene",
+      "law_key": "c0.test.token.start.law",
+      "trigger_source": "c0.scene_due.test.step",
+      "trigger_event": "c0.scene_due.test.step.event",
+      "result_source": "c0.scene_due.test.start",
+      "result_event": "c0.scene_due.test.start.event",
+      "carrier_id": "token-A",
+      "evidence_member_field": "item_id",
+      "evidence_recipient_field": "address",
+      "transition": ["ready", "start_due", "moving", "started"]
+    },
+    "end": {
+      "native": "end",
+      "lawdef": "token_due",
+      "scene_owner": "c0.scene_due.test.scene",
+      "law_key": "c0.test.token.end.law",
+      "trigger_source": "c0.scene_due.test.step",
+      "trigger_event": "c0.scene_due.test.step.event",
+      "result_source": "c0.scene_due.test.end",
+      "result_event": "c0.scene_due.test.end.event",
+      "carrier_id": "token-B",
+      "evidence_member_field": "item_id",
+      "evidence_recipient_field": "address",
+      "transition": ["ready", "end_due", "reached", "ended"]
+    }
+  },
+  "wave_lawdefs": {
+    "merge_distinct_due_members.v1": {
+      "opcode": "merge_distinct_due_members.v1",
+      "owner": "c0.scene_due.test.scene",
+      "collection": "tokens",
+      "member_id": "token_id",
+      "events": ["start", "end"]
+    },
+    "reject_unproven_same_wave.v1": {
+      "opcode": "reject_unproven_same_wave.v1",
+      "owner": "c0.scene_due.test.scene",
+      "collection": "tokens",
+      "member_id": "token_id",
+      "events": ["start", "end"]
+    }
+  }
+}

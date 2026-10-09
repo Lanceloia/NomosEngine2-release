@@ -1,0 +1,208 @@
+{
+  "schema": "c0.owner_graph.v6",
+  "game_form": {"mode": "manual"},
+  "offer_provider": {
+    "name": "finite_value",
+    "version": "1"
+  },
+  "owners": [
+    "scene",
+    "actor_0",
+    "actor_1"
+  ],
+  "actions": [
+    {
+      "name": "count_0",
+      "template": "count_0",
+      "actor": "actor_0",
+      "source_key": "c0.graph.count_0",
+      "event_type": "c0.graph.count_0.done",
+      "law": {
+        "ref": "action.count_0",
+        "args": {}
+      }
+    },
+    {
+      "name": "count_1",
+      "template": "count_1",
+      "actor": "actor_1",
+      "source_key": "c0.graph.count_1",
+      "event_type": "c0.graph.count_1.done",
+      "law": {
+        "ref": "action.count_1",
+        "args": {}
+      }
+    }
+  ],
+  "events": [
+    {
+      "name": "unseal",
+      "template": "unseal",
+      "trigger_action": "count_0",
+      "source_key": "c0.graph.unseal",
+      "event_type": "c0.graph.unsealed",
+      "causal_key": "c0.graph.unseal.causes",
+      "law": {
+        "ref": "event.unseal",
+        "args": {}
+      }
+    }
+  ],
+  "seats": [
+    {
+      "name": "seat_0",
+      "actor": "actor_0",
+      "entries": [
+        "count_0"
+      ],
+      "read": [
+        "scene.marker",
+        "actor_0.name",
+        "actor_0.count"
+      ],
+      "offers": [
+        {
+          "entry": "count_0",
+          "label": "Count",
+          "when": {
+            "const": true
+          },
+          "payload": {
+            "target": {
+              "ref": "actor.name"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "seat_1",
+      "actor": "actor_1",
+      "entries": [
+        "count_1"
+      ],
+      "read": [
+        "scene.marker",
+        "actor_1.name",
+        "actor_1.count"
+      ],
+      "offers": [
+        {
+          "entry": "count_1",
+          "label": "Count",
+          "when": {
+            "const": true
+          },
+          "payload": {
+            "target": {
+              "ref": "actor.name"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "lawdefs": [
+    {
+      "name": "action.count_0",
+      "family": "action",
+      "formals": {},
+      "body": {
+        "value": {
+          "schema": "c0.value.v1",
+          "bindings": [],
+          "guard": {
+            "eq": [
+              {
+                "ref": "payload.target"
+              },
+              {
+                "ref": "actor.name"
+              }
+            ]
+          },
+          "outputs": {
+            "count": {
+              "add": [
+                {
+                  "ref": "actor.count"
+                },
+                {
+                  "const": 1
+                }
+              ]
+            },
+            "action": {
+              "ref": "occurrence"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "action.count_1",
+      "family": "action",
+      "formals": {},
+      "body": {
+        "value": {
+          "schema": "c0.value.v1",
+          "bindings": [],
+          "guard": {
+            "eq": [
+              {
+                "ref": "payload.target"
+              },
+              {
+                "ref": "actor.name"
+              }
+            ]
+          },
+          "outputs": {
+            "count": {
+              "add": [
+                {
+                  "ref": "actor.count"
+                },
+                {
+                  "const": 1
+                }
+              ]
+            },
+            "action": {
+              "ref": "occurrence"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "event.unseal",
+      "family": "direct_event",
+      "formals": {},
+      "body": {
+        "law": {
+          "schema": "c0.value.v1",
+          "bindings": [],
+          "guard": {
+            "eq": [
+              {
+                "ref": "scene.marker"
+              },
+              {
+                "const": "sealed"
+              }
+            ]
+          },
+          "outputs": {
+            "marker": {
+              "const": "accessible"
+            },
+            "open_ref": {
+              "ref": "occurrence"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

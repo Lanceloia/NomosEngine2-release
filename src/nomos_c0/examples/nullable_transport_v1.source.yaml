@@ -1,0 +1,88 @@
+schema: c0.owner_graph.v6
+owners: [scene, pilot, rider]
+object_kinds: [{kind: container, sort: EXAMPLE.TRANSPORT_CONTAINER@1}]
+offer_provider: {name: finite_value, version: '1'}
+game_form: {mode: manual}
+actions:
+  - name: move
+    template: move
+    actor: pilot
+    source_key: c0.transport.move
+    event_type: c0.transport.move.action
+    law: {ref: action.move, args: {}}
+    participants: {container: {kind: container}, rider: {actors: [rider]}}
+  - name: board
+    template: board
+    actor: rider
+    source_key: c0.transport.board
+    event_type: c0.transport.board.action
+    law: {ref: action.board, args: {}}
+    participants: {container: {kind: container}}
+  - name: leave
+    template: leave
+    actor: rider
+    source_key: c0.transport.leave
+    event_type: c0.transport.leave.action
+    law: {ref: action.leave, args: {}}
+    participants: {container: {kind: container}}
+events: []
+lawdefs: []
+seats:
+  - name: pilot
+    actor: pilot
+    entries: [move]
+    read: [pilot.name, pilot.site]
+    offers:
+      - entry: move
+        for_each_participants:
+          container: {kind: container, read: [container.site]}
+          rider:
+            fixed_actor: rider
+            private: true
+            when:
+              eq:
+                - {const: 1}
+                - count_matching:
+                    collection: {ref: container.passengers}
+                    as: member
+                    where: "member == 'rider'"
+        label: [{const: Move right}]
+        visible_when: "actor.site == container.site"
+        when: "actor.site == 'left'"
+        payload: {container: {ref: container_ref}, destination: {const: right}}
+      - entry: move
+        for_each_participants:
+          container: {kind: container, read: [container.site]}
+          rider:
+            fixed_actor: rider
+            private: true
+            when:
+              eq:
+                - {const: 1}
+                - count_matching:
+                    collection: {ref: container.passengers}
+                    as: member
+                    where: "member == 'rider'"
+        label: [{const: Move left}]
+        visible_when: "actor.site == container.site"
+        when: "actor.site == 'right'"
+        payload: {container: {ref: container_ref}, destination: {const: left}}
+  - name: rider
+    actor: rider
+    entries: [board, leave]
+    read: [rider.name, rider.site, rider.luggage]
+    offers:
+      - entry: board
+        for_each_participants:
+          container: {kind: container, read: [container.site]}
+        label: [{const: Board}]
+        visible_when: "actor.site == container.site"
+        when: true
+        payload: {container: {ref: container_ref}}
+      - entry: leave
+        for_each_participants:
+          container: {kind: container, read: [container.site]}
+        label: [{const: Leave}]
+        visible_when: "actor.site == container.site"
+        when: true
+        payload: {container: {ref: container_ref}}

@@ -1,0 +1,194 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+lawdefs:
+- name: action.observe_climbs
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard: actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+      outputs:
+        action: {ref: occurrence}
+        last_action_ref: {ref: occurrence}
+        known_climbs:
+          collect_matching:
+            collection: {ref: scene.climb_paths}
+            as: path
+            where: path.start == actor.site
+            value:
+              record:
+                type: KnownClimb
+                fields: {route: {ref: path}, observation: {ref: occurrence}}
+- name: action.climb_skyhook
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        require:
+          - unboarded_actor: {call: {ref: transport.unboarded, args: {seats: {ref: scene.balloon_seats}, person: {ref: actor.name}}}}
+          - active: actor.name == payload.actor and actor.vital.life == 'alive' and actor.cold_state != 'frozen' and actor.current_movement_speed > 0
+          - actual_hook: item.form == 'skyhook' and item.holder == actor.name
+          - observed_segment:
+              exists: {collection: {ref: actor.known_climbs}, as: known, where: known.route.start == actor.site and known.route.end
+                  == payload.destination and known.route.distance_ft == payload.distance_ft}
+          - current_segment:
+              exactly_one: {collection: {ref: scene.climb_paths}, as: path, where: path.start == actor.site and path.end
+                  == payload.destination and path.distance_ft == payload.distance_ft}
+      outputs:
+        action: {ref: occurrence}
+        last_action_ref: {ref: occurrence}
+        site: {ref: payload.destination}
+        known_sites:
+          append:
+            - collect_matching:
+                collection: {ref: actor.known_sites}
+                as: known
+                where: known.site != payload.destination
+                value: {ref: known}
+            - record:
+                type: KnownSite
+                fields: {site: {ref: payload.destination}}
+- name: action.observe_wall
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        require:
+          - actor_here: actor.name == payload.actor and (actor.site == target.passage.start or actor.site == target.passage.end)
+          - awake: actor.cold_state != 'frozen'
+          - not_observed:
+              none_matching: {collection: {ref: actor.known_walls}, as: known, where: known.individual == payload.target}
+      outputs:
+        action: {ref: occurrence}
+        last_action_ref: {ref: occurrence}
+        known_walls:
+          append:
+            - {ref: actor.known_walls}
+            - {record: {type: KnownWall, fields: {individual: {ref: payload.target}, observed_ref: {ref: occurrence}}}}
+        known_residents:
+          if:
+            when: "target.closed and target.release is not None"
+            then:
+              if:
+                when: {none_matching: {collection: {ref: actor.known_residents}, as: known, where: known.name == target.release.resident}}
+                then:
+                  append:
+                    - {ref: actor.known_residents}
+                    - {record: {type: KnownResident, fields: {name: {ref: target.release.resident}, site: {ref: target.release.resident_site}, observation: {ref: occurrence}}}}
+                else: {ref: actor.known_residents}
+            else: {ref: actor.known_residents}
+- name: action.open_wall
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        require:
+          - unboarded_victim: {call: {ref: transport.unboarded, args: {seats: {ref: scene.balloon_seats}, person: {ref: victim.name}}}}
+          - actor_here: actor.name == payload.actor and actor.site == wall.site
+          - awake: actor.cold_state != 'frozen'
+          - observed_wall:
+              exactly_one: {collection: {ref: actor.known_walls}, as: known, where: known.individual == payload.wall}
+          - holding_flame: torch.holder == actor.name
+          - charged: torch.charges > 0
+          - closed_wall: wall.closed
+          - has_resident: wall.release is not None
+          - correct_resident: victim.name == wall.release.resident and payload.victim == victim.name
+          - resident_here: victim.site == wall.release.resident_site
+          - resident_known_here:
+              exactly_one: {collection: {ref: actor.known_residents}, as: known, where: known.name == victim.name and known.site
+                  == victim.site}
+          - unique_resident_identity: {exactly_one: {collection: {ref: actor.known_residents}, as: known, where: known.name == victim.name}}
+          - still_frozen: victim.cold_state == 'frozen' and victim.vital.life != 'dead'
+          - valid_release: wall.release.released_site == wall.passage.end
+      effects:
+        - spend_charge:
+            debit: torch.charges
+            amount: 1
+            floor: 0
+            mirror: [actor.known_everflame_charges]
+      outputs:
+        action: {ref: occurrence}
+        last_action_ref: {ref: occurrence}
+        last_opened_wall: {ref: wall.label}
+        last_wall_open_ref: {ref: occurrence}
+        closed: {const: false}
+        open_ref: {ref: occurrence}
+        site: {ref: wall.release.released_site}
+        known_residents:
+          collect_matching:
+            collection: {ref: actor.known_residents}
+            as: known
+            where: true
+            value:
+              if:
+                when: known.name == victim.name
+                then: {record: {type: KnownResident, fields: {name: {ref: known.name}, site: {ref: wall.release.released_site}, observation: {ref: occurrence}}}}
+                else: {ref: known}
+- name: action.open_plain_wall
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        require:
+          - actor_here: actor.name == payload.actor and actor.site == wall.site
+          - awake: actor.cold_state != 'frozen' and actor.vital.life == 'alive'
+          - observed: {exactly_one: {collection: {ref: actor.known_walls}, as: known, where: known.individual == payload.wall}}
+          - plain_wall: wall.release is None
+          - closed_wall: wall.closed
+          - holding_flame: torch.holder == actor.name
+          - charged: torch.charges > 0
+      effects:
+        - opening:
+            debit: torch.charges
+            amount: 1
+            floor: 0
+            mirror: [actor.known_everflame_charges]
+      outputs:
+        action: {ref: occurrence}
+        last_action_ref: {ref: occurrence}
+        last_opened_wall: {ref: wall.label}
+        last_wall_open_ref: {ref: occurrence}
+        closed: false
+        open_ref: {ref: occurrence}
+- name: action.move_wall
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings: []
+      guard:
+        require:
+          - unboarded_actor: {call: {ref: transport.unboarded, args: {seats: {ref: scene.balloon_seats}, person: {ref: actor.name}}}}
+          - actor_identity: actor.name == payload.actor
+          - mobile: actor.current_movement_speed > 0 and actor.vital.life == 'alive'
+          - opened: not target.closed
+          - observed: {exactly_one: {collection: {ref: actor.known_walls}, as: known, where: known.individual == payload.target}}
+          - actual_edge: (actor.site == target.passage.start and payload.destination == target.passage.end) or (actor.site == target.passage.end and payload.destination == target.passage.start)
+          - paid_edge: payload.base_move_cost == target.passage.base_move_cost
+          - known_destination: {call: {ref: movement.has_declared_site, args: {sites: {ref: scene.sites}, site: {ref: payload.destination}}}}
+          - ordinary_ground:
+              call:
+                ref: movement.ordinary_floor_passable
+                args: {floors: {ref: scene.floors}, stairs: {ref: scene.stair_paths}, unclimbable_stairs: {ref: scene.unclimbable_stairs}, start: {ref: actor.site}, destination: {ref: payload.destination}}
+      outputs:
+        action: {ref: occurrence}
+        last_action_ref: {ref: occurrence}
+        site: {ref: payload.destination}
+        known_sites:
+          call:
+            ref: movement.remember_site
+            args: {known_sites: {ref: actor.known_sites}, destination: {ref: payload.destination}}
