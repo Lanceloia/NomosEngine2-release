@@ -86,7 +86,7 @@ def test_maintained_m1_bundle_has_no_retired_causal_fields():
 
     root = Path(__file__).resolve().parents[2]
     bundle = read_source_bundle(
-        root / "packages/thawed_everflame_remaster/author/world.bundle.yaml"
+        root / "src/nomos_examples/everflame/world.bundle.yaml"
     )
     document = bundle.source.to_data()
     assert all(not {"form", "when_false", "effect"} & set(row) for row in document["events"])

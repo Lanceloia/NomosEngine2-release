@@ -17,7 +17,7 @@ Lib 显式声明三个 owner 和最多三个玩家；扩为六人局不能只改
 从仓库根目录运行：
 
 ```bash
-PYTHONPATH=src:engine/kernel/src .venv/bin/python -m nomos_c0.owner_graph_play_v1 three_seat_werewolf_v0
+.venv/bin/python -m nomos_c0.owner_graph_play_v1 three_seat_werewolf_v0
 ```
 
 数字选择当前席位的选项；该席位完成本轮行动后，用 `seat B` 或 `seat C`
@@ -32,6 +32,7 @@ PYTHONPATH=src:engine/kernel/src .venv/bin/python -m nomos_c0.owner_graph_play_v
 投票、查验、袭击的目标由运行时从当前玩家集合生成。只有当前职业为狼的 Actor 能通过袭击 Law。
 新增同类型 owner 不会自动得到能力，必须修改域；逐席候选与读边界目前仍显式声明。
 
-YAML 当前只是更可读的结构化作者前端，不是独立 `.nomos` 语言；`source`
-中的逐席候选仍需要后续语法抽象。没有生成专属
-`.py` 文件，也没有自动心智选择或 T0 运行迹验证。
+YAML 是受检作者前端，不是可执行 Python。没有生成专属 `.py` 世界。
+当前另有六席实例化 Source，以及真实 T0 见证入口；
+见[当前规则编辑指南](../../../docs/AUTHORING.md)。
+三席静态样例与六席实例化声明不是同一份 Source，不凭文件名推导人数上限。

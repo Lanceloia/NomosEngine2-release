@@ -6021,7 +6021,7 @@ actions:
     value:
       read: [scene.balloon_seats, scene.paths, scene.floors, scene.stair_paths, scene.unclimbable_stairs, actor.name, actor.site, actor.known_paths, actor.known_residents, actor.max_movement_speed, actor.current_movement_speed, payload.actor, payload.victim, payload.ritual, payload.destination, payload.base_move_cost, ritual.id, ritual.target, ritual.site, ritual.status, victim.name, victim.site, victim.cold_state, victim.vital.life]
       fields: {BalloonSeat: [passenger], Path: [start, end, base_move_cost], KnownResident: [name, site, observation], FloorRegion: [sites, frozen]}
-      write_paths: [scene.notice_site, scene.ritual_cue_stage, actor.site, actor.known_residents, actor.sighting_ref, actor.sighting_site, actor.ritual_notice, actor.ritual_notice_ref, actor.last_action_ref, ritual.status]
+      write_paths: [scene.notice_site, scene.ritual_cue_stage, actor.site, actor.known_residents, actor.sighting_ref, actor.sighting_site, actor.ritual_notice, actor.ritual_notice_ref, actor.last_action_ref, ritual.status, victim.site]
       construct: [KnownResident]
       collections: {actor.known_residents: name}
   - symbol: move

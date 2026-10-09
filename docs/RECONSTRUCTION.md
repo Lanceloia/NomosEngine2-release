@@ -1,6 +1,7 @@
 # 发行重建记录
 
-状态：B00独立安装已核；B01–B04独立接受；后端/安装/性能/展示继续，尚无发行接受。
+状态：B01–B04独立接受；B05已集成；两个wheel消费者和Law编辑已运行。
+性能因噪声未过、最终整局尚欠；文档与CI候选正在复核，尚无发行接受。
 
 ## 来源与边界
 
@@ -20,17 +21,19 @@
 | B02 | 精确owner字段写路径，不能被同类型参与者洗掉 | reviewed |
 | B03 | 纯定义按键更新词法作用域、Action/Event分类解析 | reviewed |
 | B04 | 输出首错顺序、候选/控制预算故障分类 | reviewed |
-| B05 | IR执行计划与生成后端统一组织，删除替代旧路径 | pending |
-| B06 | wheel独立环境、两个作者消费者、预设性能门及一次整局集成 | pending |
-| B07 | 中文说明/导航、诚实演示与贡献、CI、陌生读者验证 | pending |
+| B05 | IR执行计划与生成后端统一组织，删除替代旧路径 | integrated_writer_verified；最终独立复核待收束 |
+| B06 | wheel独立环境、两个作者消费者、预设性能门及一次整局集成 | installed_consumers_verified；性能inconclusive，整局未放行 |
+| B07 | 中文说明/导航、诚实演示与贡献、CI、陌生读者验证 | 文档/CI候选已写，陌生读者验证待做 |
 
 六项必修缺陷的修复已写入本仓库，K0/C0已独立复核；后续发行门仍欠。
 源代码提取和短门绿色不是重构已经完成。
-详细规范和区别例保留在研究仓库的`RELEASE_SELECTED_SEMANTIC_CONTRACT_V1.md`与
-`RELEASE_CORRECTNESS_AUDIT_V1.md`；本仓库的现行维护规范将在B05/B07收束。
+本仓库的维护摘要见[语义](SEMANTICS.md)、[测试](TESTING.md)、[作者编辑](AUTHORING.md)。
+上游完整审计历史使用`RELEASE_SELECTED_SEMANTIC_CONTRACT_V1.md`与
+`RELEASE_CORRECTNESS_AUDIT_V1.md`，不作为运行或安装依赖。
 
 修复证据：[K0事务](KERNEL_TRANSACTION_REPAIR.md)、
 [精确写权](OWNER_WRITE_AUTHORITY.md)、[C0语义](C0_SEMANTIC_REPAIR.md)。
+本批安装/迁移/性能待验：[返回记录](INSTALLATION_AND_PERFORMANCE_STATUS.md)。
 
 ## B00证据
 

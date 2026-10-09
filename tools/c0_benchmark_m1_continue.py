@@ -15,7 +15,7 @@ from nomos_kernel._settlement_outcome_abi import K0Published
 
 from nomos_c0 import source_bundle_v1
 from nomos_c0.source_bundle_v1 import compile_source_bundle, read_source_bundle
-from tools.c0_profile_pipeline import _snapshot_digest
+from tools.c0_profile_pipeline import _local_value, _snapshot_digest
 
 
 def measure(bundle_path: Path, *, profile_path: Path | None = None, run_observer=None):
@@ -73,6 +73,11 @@ def measure_program(program, assets, *, compile_seconds=None, profile_path=None,
         profiler.disable()
         profiler.dump_stats(profile_path)
     snapshot = session.author_snapshot()
+    owner_refs = {row.owner: row.individual for row in snapshot.objects}
+    owner_refs.update({row.owner: row.actor for row in snapshot.actors})
+    appraisal = _local_value(
+        session.appraisal_history(), session._runtime._individual_scope, owner_refs
+    )
     return {
         "profiled": profiler is not None,
         "compile_including_load_seconds": compile_seconds,
@@ -86,6 +91,7 @@ def measure_program(program, assets, *, compile_seconds=None, profile_path=None,
         "assets_digest": sha256(json.dumps(assets, sort_keys=True).encode()).hexdigest(),
         "inputs": inputs,
         "action_value_history": [asdict(row) for row in session._runtime.action_value_history()],
+        "appraisal_digest": sha256(json.dumps(appraisal, sort_keys=True).encode()).hexdigest(),
         "compiler_origin": source_bundle_v1.__file__,
     }
 

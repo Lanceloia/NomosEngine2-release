@@ -1,0 +1,56 @@
+name: Checked Baseline
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  short-contracts-and-wheel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14.4'
+      - name: Install development tools
+        run: python -m pip install -e '.[dev]'
+      - name: Serial Named Contracts
+        run: >-
+          python -m pytest -q
+          engine/kernel/tests/test_opening_validation_isolation.py
+          engine/kernel/tests/test_pre_due_transaction_boundary.py
+          engine/kernel/tests/test_occurrence_evaluation_v1.py
+          engine/kernel/tests/test_terminal_settlement_v1.py
+          tests/nomos_c0/test_program_phases_v1.py
+          tests/nomos_c0/test_owner_write_authority_v1.py
+          tests/nomos_c0/test_formation_namespace_v1.py
+          tests/nomos_c0/test_pure_keyed_update_scope_v1.py
+          tests/nomos_c0/test_admission_output_order_v1.py
+          tests/nomos_c0/test_formation_effect_cardinality_v1.py
+          tests/nomos_c0/test_dynamic_offer_fault_isolation_v1.py
+          tests/nomos_c0/test_control_budget_v1.py
+          tests/nomos_c0/test_execution_emission.py
+          tests/nomos_c0/test_invariant_execution_v1.py
+          tests/nomos_c0/test_nominal_validation_block_v1.py
+          tests/nomos_c0/test_validation_contract_execution_v1.py
+          tests/nomos_c0/test_bundled_examples_v1.py
+          tests/nomos_c0/test_release_runtime_gate_v1.py
+          tests/nomos_t0/test_witness_v0.py
+      - name: Clean wheel
+        run: |
+          export_root=$(mktemp -d)
+          git archive HEAD | tar -x -C "$export_root"
+          python -m build --wheel --outdir "$RUNNER_TEMP/wheels" "$export_root"
+          python -m venv "$RUNNER_TEMP/installed"
+          "$RUNNER_TEMP/installed/bin/python" -m pip install "$RUNNER_TEMP"/wheels/*.whl
+      - name: Installed real consumers outside checkout
+        run: |
+          checkout="$GITHUB_WORKSPACE"
+          cd "$RUNNER_TEMP"
+          env -u PYTHONPATH -u PYTHONHOME "$RUNNER_TEMP/installed/bin/python" -I "$checkout/tools/release_install_smoke.py" werewolf
+          env -u PYTHONPATH -u PYTHONHOME "$RUNNER_TEMP/installed/bin/python" -I "$checkout/tools/release_install_smoke.py" everflame
+          env -u PYTHONPATH -u PYTHONHOME "$RUNNER_TEMP/installed/bin/python" -I "$checkout/tools/release_rule_edit_demo.py"
