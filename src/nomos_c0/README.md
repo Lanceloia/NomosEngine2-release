@@ -34,7 +34,8 @@ python -m nomos_examples werewolf
 python -m nomos_examples everflame
 ```
 
-输入当前编号、`view` 或 `quit`；狼人杀可用 `seat B` 切换受信控制视角。
+狼人杀输入当前编号、`seat B` 或 `quit`；本地视图每轮自动显示，不接受 `view`。
+M1玩家呈现入口还接受 `view` 重看已授权信息。
 这不是多人登录认证。M1 使用安装包内的多文件 bundle，不依赖仓库工作目录。
 
 规则编辑从[狼人杀文件](examples/THREE_SEAT_WEREWOLF.md)开始。

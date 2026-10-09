@@ -1,6 +1,7 @@
 # 安装与性能返回记录
 
-状态：独立 wheel 的两个消费者及一条 Law 编辑已真实运行；性能未通过，整局门尚欠。
+状态：两个wheel消费者和Law编辑已运行；B05/B06技术范围独立接受，陌生读者已试跑。
+性能未通过，整局门尚欠。
 本记录不宣称发行已接受。
 
 ## 安装
@@ -14,6 +15,9 @@ Python 3.14.4、PyYAML 6.0.3。wheel 环境独立于 checkout，工作目录为 
 | 有限M1 | 37.062秒 | 0.167秒 | 0.044秒 | 等待Action，1条发生，101模块origin |
 
 两个入口都只提交短动作，不据此宣称整局完成或此表是稳定性能统计。
+候选`89dfc8a`又从干净git archive导出构建wheel并独立安装：狼人杀
+Compile0.881/Start0.004/Run0.004秒，M1 Compile36.720/Start0.161/Run0.056秒，
+同样核真实发布及100/101模块origin；没有复用旧build目录。
 writer命令：`release_install_smoke.py werewolf`及`everflame`，实际报告保存在运行机临时目录；
 数字为单次正常执行，不是 profiler 数字。
 
@@ -50,4 +54,9 @@ M1旧 `carry_from_ritual` 声明漏了 `victim.site`，原来被同型 Person �
 短门：安装/精确M1声明6 passed；测量判定7 passed。
 候选CI的19个明确模块本地串行209 passed（31.12秒），相关Ruff及diff检查通过。
 根README、权利、docs、C0/T0/Kernel导航的相对链接存在性检查无失效路径；未验证全部锚点。
-独立最终技术复核和陌生人试玩仍欠，不把writer自测称独立接受。
+Gauss对exact`89dfc8a6f306ddec1ab7211f15e7b3d5e77a1fe4`独立复核无material finding：
+B05七模块加安装/测量两模块串行181 passed（17.22秒），show/diff检查通过。
+没有独立重跑wheel、性能或整局，不授总发行/性能接受。
+干净上下文读者独立跑通狼人杀投票/换席及规则编辑演示，正确转述动机、能力、限制及归因；
+发现`view`文档错误和两份开局未说明，已只改文档。默认狼人杀内部字段呈现仍较生硬，
+不称已完成面向普通玩家的引导或整局体验。

@@ -1,13 +1,16 @@
 # 规则编辑演示
 
 作者编辑的是世界声明；行动见证是独立验证输入，不是剧情程序。
-先用 `python -m nomos_examples werewolf` 熟悉当前菜单、换席与只读视图。
+先用 `python -m nomos_examples werewolf` 熟悉当前菜单、换席与自动显示的只读视图。
+狼人杀不接受 `view` 命令；编号、`seat B` 和 `quit` 才是此入口的输入。
 
 ## 一条 Law 的前后对照
 
 运行 `python tools/release_rule_edit_demo.py`，工具只在内存增加一个条件，
 两次真实编译、开局和回放；文件不会被改写。
 默认输出简短结果，`--json` 给完整发生、来源和形成依据。
+演示使用独立的 `werewolf_witch_b.assets.yaml` 开局，B是女巫；普通六席终端默认B是村民。
+不是同一开局自动改变了职业。
 
 要手改，在 `src/nomos_c0/examples/three_seat_werewolf_v0.lib.yaml` 中定位
 `lawdefs → action.witch_intervene → body.value.guard.require → save_choice`。

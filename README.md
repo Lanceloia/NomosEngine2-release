@@ -17,6 +17,7 @@ python3 -m venv .venv
 .venv/bin/python -m nomos_examples werewolf
 ```
 
+输入当前编号、`seat B`换席或`quit`；每轮自动显示本地视图，不接受`view`。
 该终端由同一受信控制者切换席位，不提供多人登录身份认证。
 M1作者bundle随安装包分发，入口不依赖仓库工作目录：
 
@@ -24,6 +25,8 @@ M1作者bundle随安装包分发，入口不依赖仓库工作目录：
 .venv/bin/python -m nomos_examples everflame
 ```
 
+M1的规则、区域和开局路径见[作者地图](docs/AUTHORING.md#m1-文件地图)；
+这个玩家呈现入口接受`view`重看本人已授权信息。
 当前只实际验证Python 3.14.4；`>=3.11`是语言版本要求，不代表全部平台已测。
 仅本地仓库，尚未创建新的GitHub远端或发布包。
 
@@ -47,6 +50,7 @@ M1作者bundle随安装包分发，入口不依赖仓库工作目录：
 
 此命令在内存中只给女巫救人分支增加 `actor.name != scene.pending_attack`。
 Assets 和十步行动见证不改，两次重新编译并使用同一真实 C0/K0 管线：
+演示开局的B是女巫，普通终端默认B是村民；它们是两份明确不同的Assets。
 
 | 同一见证 | 原规则 | 禁止自救 |
 | --- | --- | --- |
