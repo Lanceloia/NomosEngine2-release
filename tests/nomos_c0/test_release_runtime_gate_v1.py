@@ -55,7 +55,10 @@ def saved_report():
     return {
         "input_fingerprint": {"source": "bytes"},
         "parcel_sessions_per_pair": 2,
-        "builds": [{"input_fingerprint": {"source": "bytes"}, "parcel_sessions_per_pair": 2}] * 2,
+        "builds": [
+            {"input_fingerprint": {"source": "bytes"}, "parcel_sessions_per_pair": 2}
+            for _ in range(2)
+        ],
         "cores": [{"commit": "baseline"}, {"commit": "measured-candidate"}],
         "samples": {
             sample: {
@@ -100,7 +103,7 @@ def test_saved_assessment_rejects_different_author_inputs_and_truncated_pairs():
         assess_report(evidence)
 
 
-@pytest.mark.parametrize("change", ["pair", "build", "report", "invalid_count"])
+@pytest.mark.parametrize("change", ["pair", "build_0", "build_1", "report", "invalid_count"])
 def test_saved_assessment_rejects_workload_that_disagrees_with_declarations(change):
     evidence = saved_report()
     if change == "pair":
@@ -108,9 +111,10 @@ def test_saved_assessment_rejects_workload_that_disagrees_with_declarations(chan
         for variant in ("baseline", "candidate"):
             pair[variant]["sessions_per_pair"] = 1
             pair[variant]["digests"] = ["same"]
-    elif change == "build":
-        evidence["builds"] = deepcopy(evidence["builds"])
-        evidence["builds"][0]["parcel_sessions_per_pair"] = 1
+    elif change in ("build_0", "build_1"):
+        index = int(change[-1])
+        evidence["builds"][index]["parcel_sessions_per_pair"] = 1
+        assert evidence["builds"][1 - index]["parcel_sessions_per_pair"] == 2
     elif change == "report":
         evidence["parcel_sessions_per_pair"] = 1
     else:
