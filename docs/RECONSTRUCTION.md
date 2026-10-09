@@ -27,7 +27,7 @@
 | B06 | wheel独立环境、两个作者消费者、工程性能门及一次整局集成 | installed_consumers_verified；短门按新预算接受，成对整局通过 |
 | B07 | 中文说明/导航、诚实演示与贡献、CI、陌生读者验证 | 陌生读者已试跑并修文档；CI本地门通过，远端未跑 |
 
-六项必修缺陷的修复已写入本仓库，K0/C0已独立复核；后续发行门仍欠。
+六项必修缺陷的修复已写入本仓库，K0/C0已独立复核；本轮有限发行门已核对。
 最终入口核查又发现初次提取带入旧独立catalog；已按
 [唯一入口清理](CURRENT_ENTRY_HARD_CUT.md)删除适配闭包并保留有效K0反例，独立61项及
 wheel入口核对已通过。最后完整性能轮按旧门两组均inconclusive，
@@ -40,7 +40,7 @@ Owner随后批准10%/六对预算，已有八对数据重判短门通过，最�
 
 修复证据：[K0事务](KERNEL_TRANSACTION_REPAIR.md)、
 [精确写权](OWNER_WRITE_AUTHORITY.md)、[C0语义](C0_SEMANTIC_REPAIR.md)。
-本批安装/迁移/性能待验：[返回记录](INSTALLATION_AND_PERFORMANCE_STATUS.md)。
+安装/迁移/性能的实际结果及旧门历史：[返回记录](INSTALLATION_AND_PERFORMANCE_STATUS.md)。
 
 ## B00证据
 
