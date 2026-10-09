@@ -2,6 +2,8 @@
 
 import ast
 
+from ._execution_emission import FunctionEmission
+
 
 class _ContractExecutionType(type):
     def __setattr__(cls, name, value):
@@ -12,13 +14,9 @@ class _ContractExecutionType(type):
 
 
 def compile_contract_execution(dependencies, references):
-    namespace = {}
+    emission = FunctionEmission()
     lines = ["def execute(read, sealed):", "    try:"]
-
-    def bind(value):
-        name = f"constant_{len(namespace)}"
-        namespace[name] = value
-        return name
+    bind = emission.bind
 
     for dependency in dependencies:
         carrier = bind(dependency.carrier)
@@ -46,7 +44,7 @@ def compile_contract_execution(dependencies, references):
     )
     # Only the checked generator's dependency graph is used to issue this code.
     module = ast.parse("\n".join(lines))
-    exec(compile(module, "<c0-validation-contract>", "exec"), namespace)
+    namespace = emission.compile(module, filename="<c0-validation-contract>")
     return _ContractExecutionType(
         "_ContractExecution",
         (),

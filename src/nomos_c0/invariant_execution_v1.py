@@ -6,6 +6,7 @@ import ast
 from types import MappingProxyType
 
 from . import composable_value_v1 as values
+from ._execution_emission import FunctionEmission
 from .expression_ir_v1 import C0Expression
 
 # Match/second-match branches add at most three blocks beyond an emission boundary.
@@ -17,9 +18,8 @@ def compile_invariant_admission(program):
         return program.admits
     nodes = []
     item_plans = {}
-
-    def statements(text):
-        return ast.parse(text).body
+    emission = FunctionEmission()
+    statements = emission.statements
 
     def emit(node, depth=0, context="context", env="env", block_depth=0):
         index = len(nodes)
@@ -203,15 +203,17 @@ def compile_invariant_admission(program):
     body, result = emit(expression)
     function = ast.parse("def execute(context, env, ports):\n    pass").body[0]
     function.body = body + statements(f"return {result}")
-    module = ast.fix_missing_locations(ast.Module(body=[function], type_ignores=[]))
-    namespace = {
-        "values": values,
-        "nodes": tuple(nodes),
-        "item_plans": MappingProxyType(item_plans),
-    }
+    module = ast.Module(body=[function], type_ignores=[])
+    emission.namespace.update(
+        {
+            "values": values,
+            "nodes": tuple(nodes),
+            "item_plans": MappingProxyType(item_plans),
+        }
+    )
     # Only compiler-selected templates and numeric local names enter this AST.
     # Distinguish generated code objects in profilers; this is not a semantic identity.
-    exec(compile(module, f"<c0-invariant-execution:{id(program):x}>", "exec"), namespace)
+    namespace = emission.compile(module, filename=f"<c0-invariant-execution:{id(program):x}>")
     execute = namespace["execute"]
 
     def admits(roots):

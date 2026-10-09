@@ -6,6 +6,7 @@ from nomos_kernel import K0OccurrenceRef, K0ProfileError
 from nomos_kernel._actor_identity import _K0ActorRef
 from nomos_kernel._dynamic_owner_abi import _K0IndividualRef
 
+from ._execution_emission import FunctionEmission
 from .variant_types_v1 import validate_variant
 
 
@@ -24,19 +25,11 @@ def compile_nominal_validation_block(carrier, fields, fallback_factory):
 
 
 def _compile_nominal_validation(fields, fallback_factory, *, carrier=None):
-    namespace = {"K0ProfileError": K0ProfileError}
+    emission = FunctionEmission({"K0ProfileError": K0ProfileError})
+    namespace = emission.namespace
     lines = ["def execute(value):"]
-    serial = 0
-
-    def bind(value):
-        name = f"constant_{len(namespace)}"
-        namespace[name] = value
-        return name
-
-    def fresh():
-        nonlocal serial
-        serial += 1
-        return f"item_{serial}"
+    bind = emission.bind
+    fresh = emission.fresh
 
     def write(indent, text):
         lines.append("    " * indent + text)
@@ -128,5 +121,4 @@ def _compile_nominal_validation(fields, fallback_factory, *, carrier=None):
     filename = (
         "<c0-nominal-field-validation>" if carrier is None else "<c0-nominal-validation-block>"
     )
-    exec(compile(module, filename, "exec"), namespace)
-    return namespace
+    return emission.compile(module, filename=filename)
