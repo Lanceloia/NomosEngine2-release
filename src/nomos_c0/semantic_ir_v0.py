@@ -193,6 +193,7 @@ class C0TransitionIR:
                 root != write_root
                 or field in protected_fields
                 or field not in value_ports.writable_fields.get(state_type, frozenset())
+                or f"{root}.{field}" not in value_ports.writable_paths
                 or not _assignable(value_ports.outputs[output], fields.get(field))
             ):
                 raise C0LawError("causal transition IR crosses a typed owner write port")

@@ -35,6 +35,9 @@ def _ports():
         readable_fields={Supply: names},
         admission_readable_fields={Supply: names},
         writable_fields={Supply: frozenset({"stock", "mirrored", "permitted", "known"})},
+        writable_paths=frozenset(
+            {"supply.stock", "supply.mirrored", "supply.permitted", "supply.known"}
+        ),
         record_types={},
         tuple_fields={},
         admission_tuple_fields={},

@@ -393,6 +393,7 @@ def compile_direct_actor_event(
             type(field) is not str
             or field
             not in ports.value_ports.writable_fields.get(ports.actor_owner.state_type, frozenset())
+            or f"actor.{field}" not in ports.value_ports.writable_paths
             or type(output) is not str
             or output not in outputs
             or not _assignable(outputs[output], actor_fields.get(field))

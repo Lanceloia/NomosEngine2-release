@@ -113,6 +113,7 @@ class C0ValuePorts:
     source_context: C0SourceContext | None = None
     construction: bool = False
     participant_groups: tuple[tuple[str, tuple[str, ...]], ...] = ()
+    writable_paths: frozenset[str] = frozenset()
 
 
 def runtime_value_ports(ports: C0ValuePorts) -> C0ValuePorts:
@@ -704,6 +705,14 @@ def _check_ports(ports: C0ValuePorts) -> C0ValuePorts:
         for carrier, names in ports.writable_fields.items()
     ):
         raise C0LawError("value record write port is malformed")
+    if type(ports.writable_paths) is not frozenset:
+        raise C0LawError("value owner write paths are not closed")
+    from .endpoint_signature_v1 import endpoint_field
+
+    for path in ports.writable_paths:
+        carrier, field, _ = endpoint_field(ports.roots, path)
+        if field not in ports.writable_fields.get(carrier, frozenset()):
+            raise C0LawError("value owner write path lacks its record field port")
     if any(
         type(name) is not str or not name or not _frozen_record(carrier)
         for name, carrier in ports.record_types.items()
@@ -788,6 +797,7 @@ def _check_ports(ports: C0ValuePorts) -> C0ValuePorts:
         ports.pure_definitions,
         ports.source_context,
         participant_groups=groups,
+        writable_paths=frozenset(ports.writable_paths),
     )
     for path, key in snapshot.collection_keys.items():
         if type(path) is not str or path not in snapshot.readable_paths or type(key) is not str:
@@ -2601,6 +2611,7 @@ class C0ClosedValuePorts:
                 record_types=MappingProxyType({}),
                 readable_paths=frozenset(ports.readable_paths),
                 admission_readable_paths=frozenset(ports.admission_readable_paths),
+                writable_paths=frozenset(ports.writable_paths),
                 collection_keys=MappingProxyType(dict(ports.collection_keys)),
                 pure_definitions=tuple(ports.pure_definitions),
                 participant_groups=tuple(
@@ -2990,6 +3001,7 @@ def compile_value_program(
                 len(parts) != 2
                 or parts[0] not in checked.roots
                 or parts[1] not in checked.writable_fields.get(carrier, frozenset())
+                or path not in checked.writable_paths
                 or type(output) is not str
                 or output not in checked.outputs
                 or not _assignable(checked.outputs[output], _resolved_fields(carrier)[parts[1]])

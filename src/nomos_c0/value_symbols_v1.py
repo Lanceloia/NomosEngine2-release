@@ -71,6 +71,7 @@ class C0SymbolicValuePorts:
     collection_keys: tuple[tuple[str, str], ...]
     outputs: tuple[tuple[str, C0SymbolicType], ...]
     pure_definitions: tuple[C0SymbolicPureDefinition, ...]
+    writable_paths: frozenset[str]
 
 
 @dataclass(frozen=True)
@@ -244,6 +245,7 @@ class _ValueSymbolTranslation:
                 MappingProxyType(dict(ports.collection_keys)),
                 MappingProxyType({name: annotation(t) for name, t in ports.outputs}),
                 tuple(self.tree(item) for item in ports.pure_definitions),
+                writable_paths=ports.writable_paths,
             )
 
         def fields(rows):
@@ -267,6 +269,7 @@ class _ValueSymbolTranslation:
             tuple(ports.collection_keys.items()),
             tuple((name, self.symbolize_type(t)) for name, t in ports.outputs.items()),
             tuple(self.tree(item) for item in ports.pure_definitions),
+            ports.writable_paths,
         )
 
 

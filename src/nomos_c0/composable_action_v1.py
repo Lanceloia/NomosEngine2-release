@@ -494,6 +494,7 @@ def _checked_bindings(
                 or type(field) is not str
                 or field not in annotations
                 or field not in ports.value_ports.writable_fields.get(carrier, frozenset())
+                or f"{root}.{field}" not in ports.value_ports.writable_paths
                 or type(output) is not str
                 or not _assignable(ports.value_ports.outputs.get(output), annotations[field])
             ):

@@ -47,6 +47,7 @@ def _ports():
         readable_fields={Person: fields},
         admission_readable_fields={Person: fields},
         writable_fields={Person: frozenset({"amount"})},
+        writable_paths=frozenset({"one.amount", "two.amount"}),
         record_types={"Person": Person},
         tuple_fields={},
         admission_tuple_fields={},
@@ -212,7 +213,11 @@ def test_assignment_effect_cannot_escape_a_member_binding():
     source = _source("sample")
     source["output_families"][0]["bindings"] = {"sample": "person.amount + 1"}
     source["effects"] = [{"outside": {"assign": {"three.amount": "balances_one_sample"}}}]
-    selected = replace(_ports(), outputs={**_ports().outputs, "third_slot": int})
+    selected = replace(
+        _ports(),
+        outputs={**_ports().outputs, "third_slot": int},
+        writable_paths=_ports().writable_paths | {"three.amount"},
+    )
     mapping = {
         "one.amount": "first_slot",
         "two.amount": "second_slot",
@@ -253,6 +258,7 @@ def test_constants_and_record_field_names_are_not_alias_references():
         readable_paths=frozenset(),
         admission_readable_paths=frozenset(),
         writable_fields={Holder: frozenset({"item"}), Wrapper: frozenset({"ref"})},
+        writable_paths=frozenset({"one.item", "two.item"}),
         record_types={"Wrapper": Wrapper},
         outputs={"first_slot": Wrapper, "second_slot": Wrapper, "stamp": K0OccurrenceRef},
     )
@@ -367,6 +373,7 @@ def test_admission_projection_cannot_capture_effect_occurrence_or_narrow_read():
             "stamp": K0OccurrenceRef,
         },
         writable_fields={Person: frozenset({"stamp"})},
+        writable_paths=frozenset({"one.stamp", "two.stamp"}),
     )
     source = _source()
     source["output_families"][0]["fields"] = {"stamp": {"ref": "occurrence"}}
@@ -381,6 +388,7 @@ def test_admission_projection_cannot_capture_effect_occurrence_or_narrow_read():
         _ports(),
         outputs={"first_slot": str, "second_slot": str, "stamp": K0OccurrenceRef},
         writable_fields={Person: frozenset({"name"})},
+        writable_paths=frozenset({"one.name", "two.name"}),
     )
     source = _source()
     source["output_families"][0]["fields"] = {"name": {"ref": "person.name"}}

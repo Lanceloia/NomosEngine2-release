@@ -625,6 +625,7 @@ def _check_graph_declarations(
                 port.object_root: kind.k0_kind.state_type,
             }
             or port.value_ports.writable_fields
+            or port.value_ports.writable_paths
             or port.value_ports.record_types
             or any(output not in (str, int, bool) for output in port.value_ports.outputs.values())
         ):
@@ -674,6 +675,7 @@ def _check_graph_declarations(
                 port.object_root: kind.k0_kind.state_type,
             }
             or port.value_ports.writable_fields
+            or port.value_ports.writable_paths
             or port.value_ports.record_types
             or any(output not in (str, int, bool) for output in port.value_ports.outputs.values())
         ):

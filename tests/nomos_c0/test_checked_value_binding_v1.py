@@ -194,6 +194,7 @@ def _value(checked):
         readable_fields={state: names, row: frozenset({"key", "score"})},
         admission_readable_fields={state: public, row: frozenset({"key", "score"})},
         writable_fields={state: frozenset({"stock", "received"}), row: frozenset({"key", "score"})},
+        writable_paths=frozenset({"state.stock", "state.received"}),
         record_types={"Row": row},
         tuple_fields={},
         admission_tuple_fields={},

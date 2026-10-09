@@ -426,6 +426,7 @@ def compile_direct_scene_event(
             type(field) is not str
             or field
             not in ports.value_ports.writable_fields.get(ports.scene_owner.state_type, frozenset())
+            or f"scene.{field}" not in ports.value_ports.writable_paths
             or type(output) is not str
             or output not in outputs
             or not _assignable(outputs[output], scene_fields.get(field))

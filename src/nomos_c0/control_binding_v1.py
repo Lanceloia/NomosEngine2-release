@@ -274,6 +274,7 @@ def bind_control(ir: C0ControlIR, world: C0BoundWorld) -> C0BoundControl:
             or predicate._admission_outputs
             or predicate._ports.admission_readable_paths != predicate._ports.readable_paths
             or predicate._ports.writable_fields
+            or predicate._ports.writable_paths
             or predicate.effects
             or predicate._tree["bindings"]
             or predicate._tree["outputs"]["valid"].operation != "const"

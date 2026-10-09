@@ -27,6 +27,7 @@ def check_candidate_input(action: C0ValueActionPorts, ports: C0ValuePorts) -> No
     if (
         dict(ports.roots) != dict(authority.roots)
         or ports.writable_fields
+        or ports.writable_paths
         or ports.record_types
         or dict(ports.outputs) != {"allowed": bool}
         or ports.readable_paths != ports.admission_readable_paths

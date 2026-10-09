@@ -513,6 +513,7 @@ def _bind_projection(ir, backend, world, translation):
             ir.object_root: kinds[ir.object_kind].k0_kind.state_type,
         }
         or ports.writable_fields
+        or ports.writable_paths
         or ports.record_types
         or value._admission_outputs != frozenset(ports.outputs)
         or any(carrier not in (str, int, bool) for carrier in ports.outputs.values())

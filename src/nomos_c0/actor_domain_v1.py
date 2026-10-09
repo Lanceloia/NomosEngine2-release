@@ -55,6 +55,7 @@ class C0ActorDomainEffect:
         writes = self.value._ports.writable_fields
         if set(writes) - {self.ports.kind.factory.state_type} or any(
             field not in writes.get(self.ports.kind.factory.state_type, frozenset())
+            or f"actor.{field}" not in self.value._ports.writable_paths
             or not _assignable(self.value._ports.outputs[output], fields.get(field))
             for field, output in self.effects
         ):

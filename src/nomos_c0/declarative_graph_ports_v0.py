@@ -272,6 +272,7 @@ def _value_ports(
             carrier: frozenset(names) for carrier, names in readable.items()
         },
         writable_fields=writable,
+        writable_paths=frozenset(selected),
         record_types={name: records[name] for name in constructors},
         tuple_fields={},
         admission_tuple_fields={},
@@ -958,6 +959,7 @@ def check_graph_ports(
                 object_root: kind.k0_kind.state_type,
             }
             or value.writable_fields
+            or value.writable_paths
             or value.record_types
             or any(output not in (str, int, bool) for output in value.outputs.values())
         ):
@@ -1056,6 +1058,7 @@ def check_graph_ports(
                 object_root: kind.k0_kind.state_type,
             }
             or value.writable_fields
+            or value.writable_paths
             or value.record_types
             or any(output not in (str, int, bool) for output in value.outputs.values())
         ):

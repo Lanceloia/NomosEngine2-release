@@ -317,6 +317,7 @@ def _ports() -> C0ValueActionPorts:
             Actor: frozenset({"receipts"}),
             Parcel: frozenset({"status", "recipient", "dispatch"}),
         },
+        writable_paths=frozenset({"scene.parcels", "actor.receipts"}),
         record_types={"Receipt": Receipt},
         tuple_fields={},
         admission_tuple_fields={},

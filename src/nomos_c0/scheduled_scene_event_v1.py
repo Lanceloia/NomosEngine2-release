@@ -271,6 +271,7 @@ def _check_due_effects(
             type(field) is not str
             or field
             not in ports.value_ports.writable_fields.get(roots[root].state_type, frozenset())
+            or f"{root}.{field}" not in ports.value_ports.writable_paths
             or type(output) is not str
             or not _assignable(
                 outputs.get(output), get_type_hints(roots[root].state_type).get(field)

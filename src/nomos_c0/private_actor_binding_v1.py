@@ -56,6 +56,7 @@ def _condition_ports(action):
         admission_readable_paths=paths,
         readable_fields=authority.admission_readable_fields,
         writable_fields={},
+        writable_paths=frozenset(),
         record_types={},
         tuple_fields=authority.admission_tuple_fields,
         source_context=None,

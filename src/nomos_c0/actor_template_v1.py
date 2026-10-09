@@ -441,6 +441,7 @@ def bind_actor_templates(irs, world):
                         or value._admission_outputs != frozenset({"score"})
                         or value._ports.admission_readable_paths != value._ports.readable_paths
                         or value._ports.writable_fields
+                        or value._ports.writable_paths
                         or value.effects
                     ):
                         raise C0LawError("Actor appraisal score exceeds its local basis")
