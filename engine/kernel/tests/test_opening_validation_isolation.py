@@ -62,3 +62,10 @@ def test_dynamic_opening_validation_is_disposable_and_nonmutating(monkeypatch, k
         with pytest.raises(K0ProfileError, match="changed|rejected"):
             _start(kind, value)
     assert value.value == 1
+
+
+@pytest.mark.parametrize("invalid", [None, 3])
+def test_declared_noncallable_opening_validator_is_not_absence(monkeypatch, invalid):
+    monkeypatch.setattr(objects._Owner, "validate_opening_state", invalid, raising=False)
+    with pytest.raises(K0ProfileError, match="not callable"):
+        _start("object", objects._State(1))

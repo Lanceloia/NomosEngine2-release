@@ -17,7 +17,7 @@
 ## 验证
 
 原提取基线上两组新反例9 failed、1 passed，确实复现原缺陷。
-最终短门增加静态opening覆盖，共87 passed（1.68秒）：
+最终短门增加静态opening和显式不可调用hook覆盖，共89项：
 
 ```bash
 python -m pytest -q \
@@ -31,3 +31,7 @@ python -m pytest -q \
 
 修改的两个实现和两个新测试Ruff通过。未运行长M1路线；B06再作必要集成/性能门。
 本片仅关闭F04/F05，不宣称其余审计缺陷或整体发行返回门已通过。
+
+Gauss在初次exact `2354da24b29d4a83a867daebabded3cd1706f656`独立跑87项（1.57秒），
+发现显式`None`被误认为缺失。现使用独立缺失sentinel，显式None/int均拒绝；
+新增两个短反例。最终接受须以修正后的exact独立复核为准。
