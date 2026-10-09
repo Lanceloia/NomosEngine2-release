@@ -1,6 +1,6 @@
 # K0开局与pre-due边界修复
 
-状态：B01 technically_reviewed；后续整体发行门仍未通过。
+状态：B01 technically_reviewed；本地有限发行返回见[收束](RELEASE_BASELINE_CLOSURE.md)。
 
 ## 合同与实现
 

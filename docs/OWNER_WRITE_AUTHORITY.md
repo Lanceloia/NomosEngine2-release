@@ -1,6 +1,6 @@
 # 精确owner写权限
 
-状态：B02 technically_reviewed；整体发行门仍未通过。
+状态：B02 technically_reviewed；本地有限发行返回见[收束](RELEASE_BASELINE_CLOSURE.md)。
 
 ## 唯一合同
 

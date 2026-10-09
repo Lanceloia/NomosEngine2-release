@@ -41,6 +41,7 @@ jobs:
           tests/nomos_c0/test_validation_contract_execution_v1.py
           tests/nomos_c0/test_bundled_examples_v1.py
           tests/nomos_c0/test_release_runtime_gate_v1.py
+          tests/nomos_c0/test_release_runtime_gate_lifetime_v1.py
           tests/nomos_t0/test_witness_v0.py
       - name: Clean wheel
         run: |

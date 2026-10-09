@@ -1,6 +1,6 @@
 # C0 语义修复
 
-状态：B02–B04 technically_reviewed；整体发行门仍未通过。
+状态：B02–B04 technically_reviewed；本地有限发行返回见[收束](RELEASE_BASELINE_CLOSURE.md)。
 本轮不修改冻结运行时，也不增加兼容分支。
 
 ## 名称与纯定义
