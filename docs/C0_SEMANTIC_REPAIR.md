@@ -1,6 +1,6 @@
 # C0 语义修复
 
-状态：writer 短门通过，等待 B02–B04 的一次成组独立复核。
+状态：B02–B04 technically_reviewed；整体发行门仍未通过。
 本轮不修改冻结运行时，也不增加兼容分支。
 
 ## 名称与纯定义
@@ -78,4 +78,25 @@ python -m pytest -q \
   tests/nomos_c0/test_appraisal_definition_v1.py \
   tests/nomos_c0/test_authored_graph_boundaries_v1.py \
   tests/nomos_t0/test_witness_v0.py
+```
+
+## 独立返回
+
+Gauss对exact `cd0038ffd5e6c1c1d733422285002e2603adad6f`只读复核，
+无material finding，独立22项新反例+3项相邻反例，show-check通过。
+未跑整局、安装或性能，不将其余writer门计为独立通过。
+
+```bash
+python -m pytest -q \
+  tests/nomos_c0/test_owner_write_authority_v1.py \
+  tests/nomos_c0/test_formation_namespace_v1.py \
+  tests/nomos_c0/test_pure_keyed_update_scope_v1.py \
+  tests/nomos_c0/test_admission_output_order_v1.py \
+  tests/nomos_c0/test_formation_effect_cardinality_v1.py \
+  tests/nomos_c0/test_dynamic_offer_fault_isolation_v1.py \
+  tests/nomos_c0/test_control_budget_v1.py
+python -m pytest -q \
+  tests/nomos_c0/test_due_output_destination_v1.py::test_shared_state_type_does_not_grant_another_root_write_permission \
+  tests/nomos_c0/test_composable_action_v1.py::test_authored_law_publishes_both_owner_effects_with_one_k0_ref \
+  tests/nomos_c0/test_event_formation_binding_v2.py::test_shared_result_source_preserves_distinct_formation_edges
 ```

@@ -1,6 +1,6 @@
 # 精确owner写权限
 
-状态：B02 writer短门通过；与下一批C0正确性修复一起做最终独立复核。
+状态：B02 technically_reviewed；整体发行门仍未通过。
 
 ## 唯一合同
 
@@ -22,3 +22,7 @@ Actor domain、effects/output families消费同一集合，不从Source效果反
 14个具名相邻模块301 passed（18.24秒）；修改实现及测试Ruff通过。
 未跑长M1，不以此宣称所有真实作者资产已重新Compile。
 独立Bind只核效果与封存许可一致，不声称能抵抗同时篡改完整IR与许可的受信进程。
+
+Gauss对成组exact `cd0038ffd5e6c1c1d733422285002e2603adad6f`独立复核，
+无material finding；七个新模块22 passed（6.69秒），三个相邻nodeid3 passed（1.50秒）。
+完整命令见[C0语义修复](C0_SEMANTIC_REPAIR.md)；301项为writer证据，未冒称独立复跑。
