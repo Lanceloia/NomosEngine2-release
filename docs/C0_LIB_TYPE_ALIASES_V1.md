@@ -23,6 +23,19 @@ records:
 
 这是类型片段，不是独立可运行的完整 Lib；`Vote`、owner 和其他声明仍须提供。
 
+## 样例书写规范
+
+具名声明是帮助理解领域含义的规范，不只是一项去重优化。
+现行狼人杀样例的 record 字段只使用内建类型名、已声明 record 名或 `type_aliases` 名：
+
+- 范围、枚举、可选类型和集合类型集中声明，即使只用一次也不在字段内展开定义。
+- 按用途命名：`GamePhase`、`WinningSide`、`PlayerRoster`、`InspectionHistory`、`OptionalWitchNotice`。
+  读字段时不必先解码一棵类型表达式才能知道含义。
+- `bool`、`occurrence_ref` 等内建类型已有明确名字，直接引用；不为了凑数量再套一层别名。
+- 类型别名与 record 可以相互引用已有的具名类型；文本顺序不是解析依赖，未知类型与递归仍拒绝。
+- 这是一条现行样例规范，有测试防止重新引入内联字段定义；不把其他消费者的合法内联语法
+  突然变成编译错误。纯函数签名仍遵守下述独立合同。
+
 ## 编译含义
 
 - 别名只复用已有字段类型表达式。C0 在生成名义签名、类型指纹与字段校验前展开它们。
@@ -43,7 +56,8 @@ records:
 
 [共享 Lib](../src/nomos_c0/examples/three_seat_werewolf_v0.lib.yaml)同时使用：
 
-- 命名类型：同一字段范围、职业枚举与票表类型只声明一次；内建 `bool` 和来源引用仍直接使用。
+- 命名类型：所有领域字段类型集中声明，包括单次使用的阵营、阶段、名单与个人历史类型；
+  内建 `bool` 和来源引用仍直接使用。
 - 可读条件：`candidate.id == payload.target`，不手写 `eq/ref/const` 树。
 - 布尔集合谓词：存在、无匹配、唯一匹配分别使用 `exists`、`none_matching`、`exactly_one`。
 - 多数票：用 `let support` 只计算一次支持票，比较 `support * 2` 与有效人数／票数。

@@ -1,12 +1,12 @@
 """Author examples use boolean predicates without replacing real vote arithmetic."""
 
-import json
 from pathlib import Path
 
 import pytest
 
 from nomos_c0.author_document_v1 import read_author_document
 from nomos_c0.condition_source_v0 import lower_author_expression
+from nomos_c0.nominal_type_aliases_v1 import BUILTIN_TYPE_NAMES, expand_type_aliases
 from tools import release_rule_edit_demo
 
 EXAMPLES = Path(__file__).resolve().parents[2] / "src/nomos_c0/examples"
@@ -86,13 +86,38 @@ def test_rule_capture_rejects_existing_destination_before_compile(tmp_path, monk
     assert failure.value.code == 2
 
 
-def test_shared_lib_has_no_repeated_inline_composite_field_type():
+def test_shared_lib_field_types_are_declared_even_when_used_once():
     lib = read_author_document(EXAMPLES / "three_seat_werewolf_v0.lib.yaml").to_data()
-    seen = set()
+    declared = BUILTIN_TYPE_NAMES | set(lib["type_aliases"]) | {
+        record["name"] for record in lib["records"]
+    }
+    used = set()
     for record in lib["records"]:
         for field in record["fields"]:
-            if isinstance(field["type"], dict):
-                spelling = json.dumps(field["type"], sort_keys=True)
-                assert spelling not in seen, "declare a repeated composite field type once"
-                seen.add(spelling)
+            assert isinstance(field["type"], str), "declare domain field types before use"
+            assert field["type"] in declared
+            used.add(field["type"])
+    assert set(lib["type_aliases"]) <= used
     assert lib["type_aliases"]["OptionalParticipant"] == {"optional": "ParticipantName"}
+
+
+def test_single_use_domain_type_names_preserve_their_exact_constraints():
+    lib = read_author_document(EXAMPLES / "three_seat_werewolf_v0.lib.yaml").to_data()
+    expanded = expand_type_aliases(lib)
+    fields = {(record["name"], field["name"]): field["type"]
+              for record in expanded["records"] for field in record["fields"]}
+    assert fields["Observation", "faction"] == {"enum": ["wolf", "town"]}
+    assert fields["Scene", "phase"] == {"enum": ["day", "night", "finished"]}
+    assert fields["Scene", "winner"] == {"enum": ["none", "wolf", "town"]}
+    assert fields["NightChoice", "kind"] == {"enum": ["inspect", "pass"]}
+    assert fields["Actor", "witch_notice"] == {"optional": "WitchNotice"}
+    for record, field, item, limit in (
+        ("Scene", "players", "Player", 64),
+        ("Scene", "roles", "Assignment", 64),
+        ("Actor", "votes", "OwnVote", 128),
+        ("Actor", "observations", "Observation", 128),
+        ("Actor", "choices", "NightChoice", 128),
+        ("Actor", "attacks", "AttackChoice", 128),
+        ("Actor", "witch_choices", "WitchChoice", 128),
+    ):
+        assert fields[record, field] == {"tuple": {"item": item, "max": limit}}

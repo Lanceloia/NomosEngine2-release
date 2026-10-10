@@ -4,8 +4,20 @@ type_aliases:
   ParticipantName: {str: [1, 64]}
   RoundNumber: {int: [1, 1000000]}
   Role: {enum: [wolf, seer, witch, villager]}
+  Faction: {enum: [wolf, town]}
+  GamePhase: {enum: [day, night, finished]}
+  WinningSide: {enum: [none, wolf, town]}
+  SeerNightChoice: {enum: [inspect, pass]}
   OptionalParticipant: {optional: ParticipantName}
+  OptionalWitchNotice: {optional: WitchNotice}
+  PlayerRoster: {tuple: {item: Player, max: 64}}
+  RoleAssignments: {tuple: {item: Assignment, max: 64}}
   BallotHistory: {tuple: {item: Vote, max: 128}}
+  PersonalBallotHistory: {tuple: {item: OwnVote, max: 128}}
+  InspectionHistory: {tuple: {item: Observation, max: 128}}
+  SeerChoiceHistory: {tuple: {item: NightChoice, max: 128}}
+  AttackHistory: {tuple: {item: AttackChoice, max: 128}}
+  WitchChoiceHistory: {tuple: {item: WitchChoice, max: 128}}
 pure_definitions:
   - name: town.remaining_count
     parameters:
@@ -105,26 +117,26 @@ records:
       - name: target
         type: ParticipantName
       - name: faction
-        type: {enum: [wolf, town]}
+        type: Faction
       - name: action
         type: occurrence_ref
     invariant: null
   - name: Scene
     fields:
       - name: phase
-        type: {enum: [day, night, finished]}
+        type: GamePhase
       - name: round
         type: RoundNumber
       - name: players
-        type: {tuple: {item: Player, max: 64}}
+        type: PlayerRoster
       - name: roles
-        type: {tuple: {item: Assignment, max: 64}}
+        type: RoleAssignments
       - name: ballots
         type: BallotHistory
       - name: wolf_ballots
         type: BallotHistory
       - name: winner
-        type: {enum: [none, wolf, town]}
+        type: WinningSide
       - name: pending_attack
         type: OptionalParticipant
       - name: selection_done
@@ -152,7 +164,7 @@ records:
       - name: round
         type: RoundNumber
       - name: kind
-        type: {enum: [inspect, pass]}
+        type: SeerNightChoice
       - name: action
         type: occurrence_ref
     invariant: null
@@ -189,18 +201,17 @@ records:
       - name: own_role
         type: Role
       - name: votes
-        type: {tuple: {item: OwnVote, max: 128}}
+        type: PersonalBallotHistory
       - name: observations
-        type: {tuple: {item: Observation, max: 128}}
+        type: InspectionHistory
       - name: choices
-        type: {tuple: {item: NightChoice, max: 128}}
+        type: SeerChoiceHistory
       - name: attacks
-        type: {tuple: {item: AttackChoice, max: 128}}
+        type: AttackHistory
       - name: witch_notice
-        type:
-          optional: WitchNotice
+        type: OptionalWitchNotice
       - name: witch_choices
-        type: {tuple: {item: WitchChoice, max: 128}}
+        type: WitchChoiceHistory
       - name: healing_available
         type: bool
     invariant: null

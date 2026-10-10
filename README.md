@@ -59,7 +59,7 @@ python3 -m venv .venv
 编辑版 `stop_reason: k0_not_admitted`、`requested_step: 10`。
 `--json` 显示完整发生来源；[规则编辑实验](docs/SHOWCASE.md)提供演示顺序和本次原始证据。
 要亲手编辑文件，按[作者指南](docs/AUTHORING.md)操作。
-重复字段类型可在 Lib 中[定义一次、按名引用](docs/C0_LIB_TYPE_ALIASES_V1.md)，范围仍由编译与运行检查。
+领域字段类型在 Lib 中[提前声明、按名引用](docs/C0_LIB_TYPE_ALIASES_V1.md)，包括单次使用的类型；范围仍由编译与运行检查。
 演示开局 B 是女巫；下列普通交互开局 B 是村民，不混为同一个开局。
 
 ```bash
