@@ -9338,68 +9338,38 @@ seat_read_projections:
         status: str
         after_spend_one: str
         surface_available: bool
-        nearby_person_emma: {optional: str}
-        nearby_person_alpha: {optional: str}
-        nearby_person_tower_bear_one: {optional: str}
-        nearby_person_tower_bear_two: {optional: str}
-        nearby_person_ritual_resident: {optional: str}
-        nearby_person_huddled_one: {optional: str}
-        nearby_person_huddled_two: {optional: str}
-        nearby_person_wall_resident: {optional: str}
-        nearby_person_bokold_one: {optional: str}
-        nearby_person_bokold_two: {optional: str}
-        nearby_person_icebar_bear_one: {optional: str}
-        nearby_person_icebar_bear_two: {optional: str}
-        nearby_person_prison_guard: {optional: str}
-        nearby_person_prison_resident_one: {optional: str}
-        nearby_person_prison_resident_two: {optional: str}
-        nearby_person_captive_bear: {optional: str}
-        nearby_person_prison_bokold: {optional: str}
-        nearby_person_arctic_fox_one: {optional: str}
-        nearby_person_arctic_fox_two: {optional: str}
-        nearby_person_arctic_fox_three: {optional: str}
-        nearby_person_arctic_fox_four: {optional: str}
-        nearby_person_hall_bokold_one: {optional: str}
-        nearby_person_hall_bokold_two: {optional: str}
-        nearby_person_hall_bokold_three: {optional: str}
-        nearby_person_hall_bokold_four: {optional: str}
-        nearby_person_hall_bokold_five: {optional: str}
-        nearby_person_stable_bokold_one: {optional: str}
-        nearby_person_stable_bokold_two: {optional: str}
-        nearby_person_stable_bokold_three: {optional: str}
-        nearby_person_stable_bokold_four: {optional: str}
-        description_person_bokold_one: {optional: str}
-        description_person_bokold_two: {optional: str}
-        presence_person_emma: bool
-        presence_person_alpha: bool
-        presence_person_tower_bear_one: bool
-        presence_person_tower_bear_two: bool
-        presence_person_ritual_resident: bool
-        presence_person_huddled_one: bool
-        presence_person_huddled_two: bool
-        presence_person_wall_resident: bool
-        presence_person_bokold_one: bool
-        presence_person_bokold_two: bool
-        presence_person_icebar_bear_one: bool
-        presence_person_icebar_bear_two: bool
-        presence_person_prison_guard: bool
-        presence_person_prison_resident_one: bool
-        presence_person_prison_resident_two: bool
-        presence_person_captive_bear: bool
-        presence_person_prison_bokold: bool
-        presence_person_arctic_fox_one: bool
-        presence_person_arctic_fox_two: bool
-        presence_person_arctic_fox_three: bool
-        presence_person_arctic_fox_four: bool
-        presence_person_hall_bokold_one: bool
-        presence_person_hall_bokold_two: bool
-        presence_person_hall_bokold_three: bool
-        presence_person_hall_bokold_four: bool
-        presence_person_hall_bokold_five: bool
-        presence_person_stable_bokold_one: bool
-        presence_person_stable_bokold_two: bool
-        presence_person_stable_bokold_three: bool
-        presence_person_stable_bokold_four: bool
+        visible_person_emma: str
+        visible_person_alpha: str
+        visible_person_tower_bear_one: str
+        visible_person_tower_bear_two: str
+        visible_person_ritual_resident: str
+        visible_person_huddled_one: str
+        visible_person_huddled_two: str
+        visible_person_wall_resident: str
+        visible_person_bokold_one: str
+        visible_person_bokold_two: str
+        visible_person_icebar_bear_one: str
+        visible_person_icebar_bear_two: str
+        visible_person_prison_guard: str
+        visible_person_prison_resident_one: str
+        visible_person_prison_resident_two: str
+        visible_person_captive_bear: str
+        visible_person_prison_bokold: str
+        visible_person_arctic_fox_one: str
+        visible_person_arctic_fox_two: str
+        visible_person_arctic_fox_three: str
+        visible_person_arctic_fox_four: str
+        visible_person_hall_bokold_one: str
+        visible_person_hall_bokold_two: str
+        visible_person_hall_bokold_three: str
+        visible_person_hall_bokold_four: str
+        visible_person_hall_bokold_five: str
+        visible_person_stable_bokold_one: str
+        visible_person_stable_bokold_two: str
+        visible_person_stable_bokold_three: str
+        visible_person_stable_bokold_four: str
+        description_person_bokold_one: str
+        description_person_bokold_two: str
         presence_object_chandelier: bool
         presence_object_reservoir: bool
         presence_object_torch: bool

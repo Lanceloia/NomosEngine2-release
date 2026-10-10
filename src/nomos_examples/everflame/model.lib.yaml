@@ -1,6 +1,14 @@
 # Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
 schema: c0.nominal_lib.v1
 pure_definitions:
+  - name: perception.visible_site
+    parameters: {observer_site: str, subject_site: str}
+    result: bool
+    stage: admission
+    body:
+      any:
+        - observer_site == subject_site
+        - {call: {ref: perception.open_neighbor, args: {observer_site: {ref: observer_site}, subject_site: {ref: subject_site}}}}
   - name: perception.open_neighbor
     parameters: {observer_site: str, subject_site: str}
     result: bool

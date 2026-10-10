@@ -299,69 +299,38 @@ lawdefs:
             let: surface_enabled and ((reservoir.mounted and reservoir.site == actor.site) or (not reservoir.mounted and reservoir.holder == actor.name))
         guard: {const: true}
         outputs:
-          presence_person_emma: surface_enabled and emma.site == actor.site
-          surface_available: {ref: surface_enabled}
-          presence_person_alpha: surface_enabled and alpha.site == actor.site
-          presence_person_tower_bear_one: surface_enabled and tower_bear_one.site == actor.site
-          presence_person_tower_bear_two: surface_enabled and tower_bear_two.site == actor.site
-          presence_person_ritual_resident: surface_enabled and ritual_resident.site == actor.site
-          presence_person_huddled_one: surface_enabled and huddled_one.site == actor.site
-          presence_person_huddled_two: surface_enabled and huddled_two.site == actor.site
-          presence_person_wall_resident: surface_enabled and wall_resident.site == actor.site
-          presence_person_bokold_one: surface_enabled and bokold_one.site == actor.site
-          presence_person_bokold_two: surface_enabled and bokold_two.site == actor.site
-          presence_person_icebar_bear_one: surface_enabled and icebar_bear_one.site == actor.site
-          presence_person_icebar_bear_two: surface_enabled and icebar_bear_two.site == actor.site
-          presence_person_prison_guard: surface_enabled and prison_guard.site == actor.site
-          presence_person_prison_resident_one: surface_enabled and prison_resident_one.site == actor.site
-          presence_person_prison_resident_two: surface_enabled and prison_resident_two.site == actor.site
-          presence_person_captive_bear: surface_enabled and captive_bear.site == actor.site
-          presence_person_prison_bokold: surface_enabled and prison_bokold.site == actor.site
-          presence_person_arctic_fox_one: surface_enabled and arctic_fox_one.site == actor.site
-          presence_person_arctic_fox_two: surface_enabled and arctic_fox_two.site == actor.site
-          presence_person_arctic_fox_three: surface_enabled and arctic_fox_three.site == actor.site
-          presence_person_arctic_fox_four: surface_enabled and arctic_fox_four.site == actor.site
-          presence_person_hall_bokold_one: surface_enabled and hall_bokold_one.site == actor.site
-          presence_person_hall_bokold_two: surface_enabled and hall_bokold_two.site == actor.site
-          presence_person_hall_bokold_three: surface_enabled and hall_bokold_three.site == actor.site
-          presence_person_hall_bokold_four: surface_enabled and hall_bokold_four.site == actor.site
-          presence_person_hall_bokold_five: surface_enabled and hall_bokold_five.site == actor.site
-          presence_person_stable_bokold_one: surface_enabled and stable_bokold_one.site == actor.site
-          presence_person_stable_bokold_two: surface_enabled and stable_bokold_two.site == actor.site
-          presence_person_stable_bokold_three: surface_enabled and stable_bokold_three.site == actor.site
-          presence_person_stable_bokold_four: surface_enabled and stable_bokold_four.site == actor.site
-          nearby_person_emma: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: emma.site}}}}]}, then: {ref: emma.site}, else: null}}
-          nearby_person_alpha: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: alpha.site}}}}]}, then: {ref: alpha.site}, else: null}}
-          nearby_person_tower_bear_one: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: tower_bear_one.site}}}}]}, then: {ref: tower_bear_one.site}, else: null}}
-          nearby_person_tower_bear_two: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: tower_bear_two.site}}}}]}, then: {ref: tower_bear_two.site}, else: null}}
-          nearby_person_ritual_resident: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: ritual_resident.site}}}}]}, then: {ref: ritual_resident.site}, else: null}}
-          nearby_person_huddled_one: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: huddled_one.site}}}}]}, then: {ref: huddled_one.site}, else: null}}
-          nearby_person_huddled_two: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: huddled_two.site}}}}]}, then: {ref: huddled_two.site}, else: null}}
-          nearby_person_wall_resident: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: wall_resident.site}}}}]}, then: {ref: wall_resident.site}, else: null}}
-          nearby_person_bokold_one: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: bokold_one.site}}}}]}, then: {ref: bokold_one.site}, else: null}}
-          nearby_person_bokold_two: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: bokold_two.site}}}}]}, then: {ref: bokold_two.site}, else: null}}
-          nearby_person_icebar_bear_one: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: icebar_bear_one.site}}}}]}, then: {ref: icebar_bear_one.site}, else: null}}
-          nearby_person_icebar_bear_two: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: icebar_bear_two.site}}}}]}, then: {ref: icebar_bear_two.site}, else: null}}
-          nearby_person_prison_guard: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: prison_guard.site}}}}]}, then: {ref: prison_guard.site}, else: null}}
-          nearby_person_prison_resident_one: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: prison_resident_one.site}}}}]}, then: {ref: prison_resident_one.site}, else: null}}
-          nearby_person_prison_resident_two: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: prison_resident_two.site}}}}]}, then: {ref: prison_resident_two.site}, else: null}}
-          nearby_person_captive_bear: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: captive_bear.site}}}}]}, then: {ref: captive_bear.site}, else: null}}
-          nearby_person_prison_bokold: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: prison_bokold.site}}}}]}, then: {ref: prison_bokold.site}, else: null}}
-          nearby_person_arctic_fox_one: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: arctic_fox_one.site}}}}]}, then: {ref: arctic_fox_one.site}, else: null}}
-          nearby_person_arctic_fox_two: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: arctic_fox_two.site}}}}]}, then: {ref: arctic_fox_two.site}, else: null}}
-          nearby_person_arctic_fox_three: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: arctic_fox_three.site}}}}]}, then: {ref: arctic_fox_three.site}, else: null}}
-          nearby_person_arctic_fox_four: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: arctic_fox_four.site}}}}]}, then: {ref: arctic_fox_four.site}, else: null}}
-          nearby_person_hall_bokold_one: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: hall_bokold_one.site}}}}]}, then: {ref: hall_bokold_one.site}, else: null}}
-          nearby_person_hall_bokold_two: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: hall_bokold_two.site}}}}]}, then: {ref: hall_bokold_two.site}, else: null}}
-          nearby_person_hall_bokold_three: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: hall_bokold_three.site}}}}]}, then: {ref: hall_bokold_three.site}, else: null}}
-          nearby_person_hall_bokold_four: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: hall_bokold_four.site}}}}]}, then: {ref: hall_bokold_four.site}, else: null}}
-          nearby_person_hall_bokold_five: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: hall_bokold_five.site}}}}]}, then: {ref: hall_bokold_five.site}, else: null}}
-          nearby_person_stable_bokold_one: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: stable_bokold_one.site}}}}]}, then: {ref: stable_bokold_one.site}, else: null}}
-          nearby_person_stable_bokold_two: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: stable_bokold_two.site}}}}]}, then: {ref: stable_bokold_two.site}, else: null}}
-          nearby_person_stable_bokold_three: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: stable_bokold_three.site}}}}]}, then: {ref: stable_bokold_three.site}, else: null}}
-          nearby_person_stable_bokold_four: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: stable_bokold_four.site}}}}]}, then: {ref: stable_bokold_four.site}, else: null}}
-          description_person_bokold_one: {if: {when: {all: [{ref: surface_enabled}, {any: [bokold_one.site == actor.site, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: bokold_one.site}}}}]}]}, then: '博科尔德', else: null}}
-          description_person_bokold_two: {if: {when: {all: [{ref: surface_enabled}, {any: [bokold_two.site == actor.site, {call: {ref: perception.open_neighbor, args: {observer_site: {ref: actor.site}, subject_site: {ref: bokold_two.site}}}}]}]}, then: '博科尔德', else: null}}
+          visible_person_emma: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: emma.site}}}}]}, then: {ref: emma.site}, else: ''}}
+          visible_person_alpha: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: alpha.site}}}}]}, then: {ref: alpha.site}, else: ''}}
+          visible_person_tower_bear_one: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: tower_bear_one.site}}}}]}, then: {ref: tower_bear_one.site}, else: ''}}
+          visible_person_tower_bear_two: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: tower_bear_two.site}}}}]}, then: {ref: tower_bear_two.site}, else: ''}}
+          visible_person_ritual_resident: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: ritual_resident.site}}}}]}, then: {ref: ritual_resident.site}, else: ''}}
+          visible_person_huddled_one: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: huddled_one.site}}}}]}, then: {ref: huddled_one.site}, else: ''}}
+          visible_person_huddled_two: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: huddled_two.site}}}}]}, then: {ref: huddled_two.site}, else: ''}}
+          visible_person_wall_resident: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: wall_resident.site}}}}]}, then: {ref: wall_resident.site}, else: ''}}
+          visible_person_bokold_one: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: bokold_one.site}}}}]}, then: {ref: bokold_one.site}, else: ''}}
+          visible_person_bokold_two: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: bokold_two.site}}}}]}, then: {ref: bokold_two.site}, else: ''}}
+          visible_person_icebar_bear_one: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: icebar_bear_one.site}}}}]}, then: {ref: icebar_bear_one.site}, else: ''}}
+          visible_person_icebar_bear_two: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: icebar_bear_two.site}}}}]}, then: {ref: icebar_bear_two.site}, else: ''}}
+          visible_person_prison_guard: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: prison_guard.site}}}}]}, then: {ref: prison_guard.site}, else: ''}}
+          visible_person_prison_resident_one: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: prison_resident_one.site}}}}]}, then: {ref: prison_resident_one.site}, else: ''}}
+          visible_person_prison_resident_two: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: prison_resident_two.site}}}}]}, then: {ref: prison_resident_two.site}, else: ''}}
+          visible_person_captive_bear: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: captive_bear.site}}}}]}, then: {ref: captive_bear.site}, else: ''}}
+          visible_person_prison_bokold: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: prison_bokold.site}}}}]}, then: {ref: prison_bokold.site}, else: ''}}
+          visible_person_arctic_fox_one: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: arctic_fox_one.site}}}}]}, then: {ref: arctic_fox_one.site}, else: ''}}
+          visible_person_arctic_fox_two: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: arctic_fox_two.site}}}}]}, then: {ref: arctic_fox_two.site}, else: ''}}
+          visible_person_arctic_fox_three: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: arctic_fox_three.site}}}}]}, then: {ref: arctic_fox_three.site}, else: ''}}
+          visible_person_arctic_fox_four: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: arctic_fox_four.site}}}}]}, then: {ref: arctic_fox_four.site}, else: ''}}
+          visible_person_hall_bokold_one: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: hall_bokold_one.site}}}}]}, then: {ref: hall_bokold_one.site}, else: ''}}
+          visible_person_hall_bokold_two: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: hall_bokold_two.site}}}}]}, then: {ref: hall_bokold_two.site}, else: ''}}
+          visible_person_hall_bokold_three: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: hall_bokold_three.site}}}}]}, then: {ref: hall_bokold_three.site}, else: ''}}
+          visible_person_hall_bokold_four: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: hall_bokold_four.site}}}}]}, then: {ref: hall_bokold_four.site}, else: ''}}
+          visible_person_hall_bokold_five: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: hall_bokold_five.site}}}}]}, then: {ref: hall_bokold_five.site}, else: ''}}
+          visible_person_stable_bokold_one: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: stable_bokold_one.site}}}}]}, then: {ref: stable_bokold_one.site}, else: ''}}
+          visible_person_stable_bokold_two: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: stable_bokold_two.site}}}}]}, then: {ref: stable_bokold_two.site}, else: ''}}
+          visible_person_stable_bokold_three: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: stable_bokold_three.site}}}}]}, then: {ref: stable_bokold_three.site}, else: ''}}
+          visible_person_stable_bokold_four: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: stable_bokold_four.site}}}}]}, then: {ref: stable_bokold_four.site}, else: ''}}
+          description_person_bokold_one: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: bokold_one.site}}}}]}, then: '博科尔德', else: ''}}
+          description_person_bokold_two: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: bokold_two.site}}}}]}, then: '博科尔德', else: ''}}
           presence_object_chandelier: surface_enabled and chandelier.site == actor.site
           presence_object_reservoir: {ref: reservoir_here}
           presence_object_torch: {ref: torch_here}
