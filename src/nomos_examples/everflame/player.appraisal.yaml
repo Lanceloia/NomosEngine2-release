@@ -19,36 +19,36 @@ appraisal:
     invite: 邀请身边居民同行
     depart: 结束旅程
     goal_route: 返回已知目标方向
-  defaults: {torch_gain: 0, torch_spend: 0, reservoir_spend: 0, reveals_reservoir: false, movement: false, interruption: false, invitation: false, departure: false}
+  defaults: {torch_gain: 0, torch_spend: 0, reservoir_spend: 0, reveals_reservoir: false, movement: false, interruption: false, invitation: false, departure: false, inspection: false}
   definitions:
     inspect_floor:
       when: not candidate.was_tried and (not local.floor_known or candidate.evidence_changed)
       features: {floor: 1}
-      values: {}
+      values: {inspection: true}
     inspect_routes:
       when: not candidate.was_tried
       features: {routes: 1}
-      values: {}
+      values: {inspection: true}
     inspect_person:
       when: candidate.has_targets and not candidate.was_tried and (not candidate.targets_detailed or candidate.evidence_changed)
       features: {person: 1}
-      values: {}
+      values: {inspection: true}
     inspect_last_known_person:
       when: candidate.has_targets and not candidate.was_tried and (not candidate.targets_detailed or candidate.evidence_changed)
       features: {person: 1, memory_risk: 1}
-      values: {}
+      values: {inspection: true}
     inspect_people:
       when: not candidate.was_tried
       features: {person: 1, surroundings: 1}
-      values: {}
+      values: {inspection: true}
     inspect_surroundings:
       when: not candidate.was_tried
       features: {surroundings: 1}
-      values: {}
+      values: {inspection: true}
     inspect_connections:
       when: not candidate.was_tried
       features: {routes: 1}
-      values: {}
+      values: {inspection: true}
     replenish:
       when: local.charge is not None and local.reservoir is not None and local.charge < 5 and local.reservoir > 0
       features: {refill: 1}

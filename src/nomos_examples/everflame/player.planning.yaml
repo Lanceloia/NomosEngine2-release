@@ -25,7 +25,7 @@ goals:
   explore:
     label: 探查尚未抵达的区域
     selector: {frontier: {exclude_sites: [bridge_palace_landing, bridge_midspan, palace_exit]}}
-    when: progress.visitedPlaces < 8
+    when: progress.visitedPlaces < 8 and not knowledge.ritual_dangerous
     gains: {visitedPlaces: 1}
     feature: explore
     preferences: {cautious_investigator: 50, helpful_rescuer: 0, decisive_explorer: 0}
