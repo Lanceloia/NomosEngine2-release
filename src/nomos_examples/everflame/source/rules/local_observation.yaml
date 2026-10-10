@@ -269,7 +269,7 @@ lawdefs:
           known_bridge_paths: {collect_matching: {collection: {ref: scene.bridge_paths}, as: path, where: {any: [path.start == actor.site, {exists: {collection: {ref: actor.known_bridge_paths}, as: known, where: known.start == path.start and known.end == path.end and known.base_move_cost == path.base_move_cost}}]}, value: {ref: path}}}
           known_paths: {collect_matching: {collection: {ref: scene.paths}, as: path, where: {any: [path.start == actor.site, {exists: {collection: {ref: actor.known_paths}, as: known, where: known.start == path.start and known.end == path.end and known.base_move_cost == path.base_move_cost}}]}, value: {ref: path}}}
           known_crossings: {collect_matching: {collection: {ref: scene.crossings}, as: crossing, where: {any: [crossing.start == actor.site, {exists: {collection: {ref: actor.known_crossings}, as: known, where: known.key == crossing.key}}]}, value: {record: {type: KnownCrossing, fields: {key: {ref: crossing.key}, start: {ref: crossing.start}, intended: {ref: crossing.intended}, base_move_cost: {ref: crossing.base_move_cost}}}}}}
-  - name: view.known_site_protection
+  - name: view.current_site_information
     family: seat_view
     formals: {}
     body:
@@ -339,6 +339,59 @@ lawdefs:
             if: {when: {ref: reservoir_here}, then: {ref: reservoir_ref}, else: null}
           target_torch:
             if: {when: {ref: torch_here}, then: {ref: torch_ref}, else: null}
+          status:
+            if:
+              when: {eq: [{ref: torch.holder}, {ref: actor.name}]}
+              then:
+                if:
+                  when:
+                    lt:
+                      - {const: 0}
+                      - call:
+                          ref: everflame.covered_count
+                          args:
+                            coverage: {ref: scene.coverage}
+                            origin: {ref: actor.site}
+                            destination: {ref: candidate.site}
+                            charges: {ref: torch.charges}
+                  then: {const: protected}
+                  else: {const: exposed}
+              else: {const: unknown}
+          after_spend_one:
+            if:
+              when:
+                all:
+                  - {eq: [{ref: torch.holder}, {ref: actor.name}]}
+                  - {not_none: {ref: actor.known_everflame_charges}}
+                  - {exists: {collection: {ref: actor.known_coverage}, as: known_area, where: {eq: [{ref: known_area.origin}, {ref: actor.site}]}}}
+              then:
+                if:
+                  when: {lt: [{const: 0}, {ref: actor.known_everflame_charges}]}
+                  then:
+                    if:
+                      when:
+                        lt:
+                          - {const: 0}
+                          - call:
+                              ref: everflame.covered_count
+                              args:
+                                coverage: {ref: actor.known_coverage}
+                                origin: {ref: actor.site}
+                                destination: {ref: candidate.site}
+                                charges: {sub: [{ref: actor.known_everflame_charges}, {const: 1}]}
+                      then: {const: protected}
+                      else: {const: exposed}
+                  else: {const: unavailable}
+              else: {const: unknown}
+  - name: view.known_site_protection
+    family: seat_view
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings: []
+        guard: {const: true}
+        outputs:
           status:
             if:
               when: {eq: [{ref: torch.holder}, {ref: actor.name}]}

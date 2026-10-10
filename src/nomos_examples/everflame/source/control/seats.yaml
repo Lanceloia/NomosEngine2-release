@@ -1301,7 +1301,7 @@ seats:
     read_projection:
       template: known_site_protection
       law:
-        ref: view.known_site_protection
+        ref: view.current_site_information
         args: {}
     offer_previews:
     - template: cross_success_protection
