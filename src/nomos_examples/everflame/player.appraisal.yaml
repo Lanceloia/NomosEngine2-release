@@ -18,6 +18,7 @@ appraisal:
     interrupt: 中断眼前仪式
     invite: 邀请身边居民同行
     depart: 结束旅程
+    goal_route: 返回已知目标方向
   defaults: {torch_gain: 0, torch_spend: 0, reservoir_spend: 0, reveals_reservoir: false, movement: false, interruption: false, invitation: false, departure: false}
   definitions:
     inspect_floor:
@@ -78,6 +79,7 @@ appraisal:
         unknown: 1 if candidate.destination_unknown else 0
         ice: 1 if candidate.icy else 0
         approach: 1 if candidate.approaching_need else 0
+        goal_route: 1 if candidate.approaching_goal and not candidate.destination_new else 0
       values: {movement: true}
     interrupt_observed_ritual:
       when: local.ritual_active and candidate.has_targets and candidate.frozen_count > 0 and not candidate.was_tried
