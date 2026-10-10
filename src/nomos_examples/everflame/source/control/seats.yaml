@@ -1170,6 +1170,8 @@ seats:
         thaw_ritual_resident: You spent one charge thawing the person at the ritual and interrupted
           the chant. They still have to leave by their own actions; meet and observe them again.
       rejected_actions:
+        offer_torch_adventurer: The conversation could not start. Check that you still carry the Everflame
+          and that the resident is nearby, alive and able to hear you. No handover took place.
         carry_from_ritual_adventurer: The carry could not start. This intervention is for the frozen
           resident in an ongoing ritual. Check your nearby observation and the ritual signs before
           trying again.
@@ -4263,18 +4265,18 @@ seats:
           read:
           - torch.holder
         recipient:
-          collection:
-            ref: actor.known_residents
+          selected_members: true
           as: candidate
       label:
       - const: 'Offer Everflame and mention the threshold to '
-      - ref: candidate.name
+      - ref: candidate
       visible_when:
         eq:
         - ref: torch.holder
         - ref: actor.name
       when:
         all:
+        - actor.vital.life == 'alive' and actor.cold_state != 'frozen'
         - exists:
             collection:
               ref: actor.known_residents
@@ -4283,7 +4285,7 @@ seats:
               all:
               - eq:
                 - ref: known_person.name
-                - ref: candidate.name
+                - ref: candidate
               - eq:
                 - ref: known_person.site
                 - ref: actor.site
@@ -4299,11 +4301,14 @@ seats:
               - eq:
                 - ref: path.end
                 - const: ritual_threshold
+      availability:
+        ref: torch_conversation_current
+        when: recipient.site == actor.site and recipient.vital.life == 'alive' and recipient.cold_state != 'frozen'
       payload:
         torch:
           ref: torch_ref
         recipient:
-          ref: candidate.name
+          ref: candidate
         destination:
           const: ritual_threshold
     - entry: observe_wall_adventurer

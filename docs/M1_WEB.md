@@ -1,0 +1,25 @@
+# M1 桌面试玩
+
+当前独立应用目录为 `m1-tabletop-prototype`，它自持 React 前端和 Python 会话服务。
+将它与本引擎仓库放在同一父目录，然后在应用目录执行：
+
+```bash
+python3 -m venv .venv
+.venv/bin/python -m pip install -e ../nomosengine2-release
+npm ci
+npm run build
+npm start
+```
+
+Windows 使用 `.venv\Scripts\python.exe`。需要 Node.js 20.3+。
+打开 <http://127.0.0.1:5173/>；等待首次世界编译完成后即可开始。
+后端与页面由同一个进程提供，新游戏复用 Program，不共用局内状态。
+开发模式 `npm run dev` 同时启动本目录 API 和 Vite；旧 Web 目录不是依赖。
+
+人物、物件、寒冷与营救后果由本仓库 `src/nomos_examples/everflame/world.bundle.yaml`
+加载并交给同一 C0/K0 Session。页面不修改世界状态或藏入必胜路线。
+三种人格引导在当前公开选项上评分，可以设置步数、暂停或手动接管。
+该演示只面向单机桌面，不提供多人登录或通用恢复。
+
+`/api/health` 可核对实际引擎路径、Git 版本、全部作者文件摘要及编译次数。
+应用 README 提供操作说明与具名短测试命令；旧候选快照保留供研究，不自动切回。

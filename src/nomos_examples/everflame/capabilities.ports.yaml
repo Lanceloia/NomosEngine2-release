@@ -81,6 +81,10 @@ candidate_inputs:
     action: observe_resident
     read: [actor.site, victim.site]
     fields: {}
+  - symbol: torch_conversation_current
+    action: offer_torch
+    read: [actor.site, recipient.site, recipient.vital.life, recipient.cold_state]
+    fields: {}
   - symbol: queen_unpaid_survivors
     action: queen_pay_reward
     read: [actor.name, actor.site, actor.reward_account.verified, recipient.site, recipient.vital.life, recipient.cold_state, box.holder, box.locked, ritual.name, ritual.site, ritual.vital.life, ritual.rescue_state, ritual.rescue_ref, first.name, first.site, first.vital.life, first.rescue_state, first.rescue_ref, second.name, second.site, second.vital.life, second.rescue_state, second.rescue_ref, wall.name, wall.site, wall.vital.life, wall.rescue_state, wall.rescue_ref, prison_one.name, prison_one.site, prison_one.vital.life, prison_one.rescue_state, prison_one.rescue_ref, prison_two.name, prison_two.site, prison_two.vital.life, prison_two.rescue_state, prison_two.rescue_ref]
