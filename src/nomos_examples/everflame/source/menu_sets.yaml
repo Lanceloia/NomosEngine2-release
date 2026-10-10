@@ -3,10 +3,15 @@ offer_sets:
 - name: resident_care
   offers:
   - entry_family: care_person
-    label: Care for the observed incapacitated person
+    for_each_participants:
+      victim: {selected_members: true, as: patient}
+    label: [{const: Care for the observed incapacitated person}]
+    visible_when: true
     when:
       all:
+      - actor.vital.life == 'alive' and actor.cold_state != 'frozen'
       - not_none: {ref: actor.person_sighting}
+      - actor.person_sighting.subject == patient
       - not:
           eq:
           - {ref: actor.person_sighting.subject}
@@ -22,7 +27,7 @@ offer_sets:
           - {ref: actor.person_sighting.cold_state}
           - {const: frozen}
     payload:
-      victim: {ref: actor.person_sighting.subject}
+      victim: {ref: patient}
 - name: resident_mobility_and_rescue
   offers:
   - entry_family: bridge_slow
@@ -194,101 +199,67 @@ offer_sets:
     when: {const: true}
     payload: {}
   - entry_family: carry_move
+    for_each_participants:
+      victim: {selected_members: true, as: patient}
+      ritual: {fixed_actor: ritual}
     for_each:
       collection: {ref: actor.known_paths}
       as: path
-    label:
-      prefix: 'Carry observed patient toward '
-      value: {ref: path.end}
+    label: [{const: 'Carry observed patient toward '}, {ref: path.end}]
+    visible_when: true
     when:
       all:
-      - all:
-        - not_none: {ref: actor.person_sighting}
-        - eq:
-          - {ref: actor.person_sighting.site}
-          - {ref: actor.site}
-        - not:
-            eq:
-            - {ref: actor.person_sighting.subject}
-            - {ref: actor.name}
-        - any:
-          - eq:
-            - {ref: actor.person_sighting.cold_state}
-            - {const: frozen}
-          - eq:
-            - {ref: actor.person_sighting.life}
-            - {const: incapacitated}
+      - &resident_carry_observed_patient >-
+        actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+        and actor.current_movement_speed > 0 and actor.person_sighting is not None
+        and actor.person_sighting.subject == patient and patient != actor.name
+        and actor.person_sighting.site == actor.site and actor.person_sighting.life != 'dead'
+        and (actor.person_sighting.cold_state == 'frozen' or actor.person_sighting.life == 'incapacitated')
       - eq:
         - {ref: path.start}
         - {ref: actor.site}
     payload:
-      victim: {ref: actor.person_sighting.subject}
+      victim: {ref: patient}
       ritual: {const: ritual}
       base_move_cost: {ref: path.base_move_cost}
       destination: {ref: path.end}
   - entry_family: carry_bridge_slow
+    for_each_participants:
+      victim: {selected_members: true, as: patient}
+      ritual: {fixed_actor: ritual}
     for_each:
       collection: {ref: actor.known_bridge_paths}
       as: path
-    label:
-      prefix: 'Carry observed patient toward '
-      value: {ref: path.end}
+    label: [{const: 'Carry observed patient toward '}, {ref: path.end}]
+    visible_when: true
     when:
       all:
-      - all:
-        - not_none: {ref: actor.person_sighting}
-        - eq:
-          - {ref: actor.person_sighting.site}
-          - {ref: actor.site}
-        - not:
-            eq:
-            - {ref: actor.person_sighting.subject}
-            - {ref: actor.name}
-        - any:
-          - eq:
-            - {ref: actor.person_sighting.cold_state}
-            - {const: frozen}
-          - eq:
-            - {ref: actor.person_sighting.life}
-            - {const: incapacitated}
+      - *resident_carry_observed_patient
       - eq:
         - {ref: path.start}
         - {ref: actor.site}
     payload:
-      victim: {ref: actor.person_sighting.subject}
+      victim: {ref: patient}
       ritual: {const: ritual}
       base_move_cost: {ref: path.base_move_cost}
       destination: {ref: path.end}
   - entry_family: carry_cross_ice
+    for_each_participants:
+      victim: {selected_members: true, as: patient}
+      ritual: {fixed_actor: ritual}
     for_each:
       collection: {ref: actor.known_crossings}
       as: path
-    label:
-      prefix: 'Carry observed patient toward '
-      value: {ref: path.intended}
+    label: [{const: 'Carry observed patient toward '}, {ref: path.intended}]
+    visible_when: true
     when:
       all:
-      - all:
-        - not_none: {ref: actor.person_sighting}
-        - eq:
-          - {ref: actor.person_sighting.site}
-          - {ref: actor.site}
-        - not:
-            eq:
-            - {ref: actor.person_sighting.subject}
-            - {ref: actor.name}
-        - any:
-          - eq:
-            - {ref: actor.person_sighting.cold_state}
-            - {const: frozen}
-          - eq:
-            - {ref: actor.person_sighting.life}
-            - {const: incapacitated}
+      - *resident_carry_observed_patient
       - eq:
         - {ref: path.start}
         - {ref: actor.site}
     payload:
-      victim: {ref: actor.person_sighting.subject}
+      victim: {ref: patient}
       ritual: {const: ritual}
       base_move_cost: {ref: path.base_move_cost}
       crossing: {ref: path.key}
@@ -297,33 +268,11 @@ offer_sets:
       door:
         kind: passage_door
         read: [door.front, door.back, door.base_move_cost]
-      victim:
-        collection: {ref: actor.known_residents}
-        as: patient
+      victim: {selected_members: true, as: patient}
       ritual: {fixed_actor: ritual}
     label:
     - {const: Carry observed patient through this door}
-    visible_when:
-      all:
-      - all:
-        - not_none: {ref: actor.person_sighting}
-        - eq:
-          - {ref: actor.person_sighting.site}
-          - {ref: actor.site}
-        - not:
-            eq:
-            - {ref: actor.person_sighting.subject}
-            - {ref: actor.name}
-        - any:
-          - eq:
-            - {ref: actor.person_sighting.cold_state}
-            - {const: frozen}
-          - eq:
-            - {ref: actor.person_sighting.life}
-            - {const: incapacitated}
-      - eq:
-        - {ref: patient.name}
-        - {ref: actor.person_sighting.subject}
+    visible_when: *resident_carry_observed_patient
     when:
       any:
       - eq:
@@ -333,7 +282,7 @@ offer_sets:
         - {ref: actor.site}
         - {ref: door.back}
     payload:
-      victim: {ref: patient.name}
+      victim: {ref: patient}
       ritual: {const: ritual}
       door: {ref: door_ref}
       base_move_cost: {ref: door.base_move_cost}
@@ -378,20 +327,16 @@ offer_sets:
       destination: {ref: path.end}
       base_move_cost: {ref: path.base_move_cost}
   - entry_family: inspect_patient
-    for_each:
-      collection: {ref: actor.known_residents}
-      as: person
-    label:
-      prefix: 'Inspect the known local patient: '
-      value: {ref: person.name}
+    for_each_participants:
+      victim: {selected_members: true, as: person}
+    label: [{const: 'Inspect the known local patient: '}, {ref: person}]
+    visible_when: true
     when:
       all:
-      - eq:
-        - {ref: person.site}
-        - {ref: actor.site}
-      - not:
-          eq:
-          - {ref: person.name}
-          - {ref: actor.name}
+      - actor.vital.life == 'alive' and actor.cold_state != 'frozen' and person != actor.name
+      - exists:
+          collection: {ref: actor.known_residents}
+          as: known
+          where: known.name == person and known.site == actor.site
     payload:
-      victim: {ref: person.name}
+      victim: {ref: person}
