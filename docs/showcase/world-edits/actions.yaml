@@ -1,0 +1,16 @@
+# External controller requests, not a world Source or an NPC script.
+role_prefix:
+  - {seat: A, label: Vote for C}
+  - {seat: B, label: Vote for C}
+  - {seat: C, label: Vote for C}
+  - {seat: D, label: Vote for A}
+  - {seat: E, label: Vote for A}
+  - {seat: F, label: Vote for A}
+  - {seat: A, label: Skip inspection}
+  - {seat: C, label: Attack B}
+  - {seat: D, label: Attack B}
+six_votes:
+  - {seat: A, label: Vote for F}
+eight_votes:
+  - {seat: A, label: Vote for H}
+  - {seat: G, label: Vote for A}

@@ -10,7 +10,7 @@ RPG/TRPG 沙盒中，玩家可能做出剧本没有预料的选择。我们的�
 
 | 你可以检查什么 | 代表例子 | 当前证据 |
 | --- | --- | --- |
-| 作者能否编辑世界 | 扩人数、换女巫 | 现行测试与已完成的试玩，尚缺统一编辑对照 |
+| 作者能否编辑世界 | [扩人数、换女巫](docs/showcase/world-edits/README.md) | 已保存声明差异、本地选项与真实行动来源 |
 | 作者能否编辑规则 | 禁止自救、全票一致换多数票 | 两种实验均有保存报告：准入变化与后态变化 |
 | 规则如何共同产生故事 | M1 的永焰、寒冷、观察与营救 | 已有真实整局，局部因果对照待整理 |
 
@@ -39,6 +39,10 @@ RPG/TRPG 沙盒中，玩家可能做出剧本没有预料的选择。我们的�
 只把全票一致换为多数票：两版所有行动都获准，前者无人死亡，后者 F 死亡。
 它说明的是世界后果变化，而不只是请求被拒绝。
 
+[编辑人物实验](docs/showcase/world-edits/README.md)保持规则不变：女巫 B → E 后，通知、
+选项和救人来源一起转到 E；六席扩到八席后，新增 G/H 各有独立视图，G 能真实投票。
+实验页明确列出参与者、职业与药水开局需要怎样同步编辑，不把它假装成一个人数开关。
+
 ## 五分钟复现
 
 从仓库根执行（Windows 可将 `.venv/bin/python` 换成 `.venv\Scripts\python.exe`）：
@@ -48,6 +52,7 @@ python3 -m venv .venv
 .venv/bin/python -m pip install -e '.[dev]'
 .venv/bin/python tools/release_rule_edit_demo.py
 .venv/bin/python tools/release_wolf_vote_demo.py
+.venv/bin/python tools/release_world_edit_demo.py
 ```
 
 输出应包括 `unchanged_published_prefix: 12`，原版 `goal_status: met`，
