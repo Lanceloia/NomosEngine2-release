@@ -410,16 +410,30 @@ class C0OwnerGraphSession:
             actor = views.get(selected.actor)
             if actor is None:
                 actor = reads.owner(owners[selected.actor].owner.key)
-            bindings = tuple(
-                item.individual
-                for item in self._runtime.individuals()
-                if item.individual.family == projection.ports.object_kind
-            )
-            if len(bindings) != 1:
-                raise C0BindingError("seat read Object is no longer unique")
-            selected_object = reads.individual(bindings[0])
+            fixed_roots = {
+                name: reads.owner(owners[symbol].owner.key)
+                for name, symbol in projection.ports.fixed_actor_roots
+            }
+            # Resolve only declared kinds from the binding directory, never owner state.
+            directory = self._runtime.individuals()
+            individual_refs = {}
+            for root, kind in (
+                (projection.ports.object_root, projection.ports.object_kind),
+                *projection.ports.additional_fixed_individual_roots,
+            ):
+                bindings = tuple(
+                    item.individual for item in directory if item.individual.family == kind
+                )
+                if len(bindings) != 1:
+                    raise C0BindingError("seat read Object is no longer unique")
+                fixed_roots[root] = reads.individual(bindings[0])
+                individual_refs[f"{root}_ref"] = bindings[0]
+            selected_object = fixed_roots.pop(projection.ports.object_root)
             try:
-                result = projection.project(scene, actor, selected_object)
+                result = projection.project(
+                    scene, actor, selected_object,
+                    fixed_roots=fixed_roots, individual_refs=individual_refs,
+                )
             except C0ValueStateError as error:
                 raise C0BindingError(
                     "seat read projection cannot evaluate current state"

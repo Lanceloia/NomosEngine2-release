@@ -50,7 +50,7 @@ lawdefs:
       law:
         schema: c0.value.v1
         bindings: []
-        guard: "actor.site == scene.ritual_cue_site and actor.vital.life == 'alive' and actor.cold_state != 'frozen'"
+        guard: "scene.ritual_cue_site == 'ritual_ring' and (actor.site == 'ritual_ring' or actor.site == 'ritual_threshold' or actor.site == 'ritual_passage_entry') and actor.vital.life == 'alive' and actor.cold_state != 'frozen'"
         outputs:
           ritual_notice: {ref: scene.ritual_cue_stage}
           ritual_notice_ref: {ref: occurrence}

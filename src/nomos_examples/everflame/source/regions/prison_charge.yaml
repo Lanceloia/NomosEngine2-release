@@ -51,6 +51,7 @@ lawdefs:
             record:
               type: PersonConversations
               fields:
+                visible_motions: {ref: actor.conversations.visible_motions}
                 tower: {ref: actor.conversations.tower}
                 prison:
                   record:
@@ -89,6 +90,7 @@ lawdefs:
             record:
               type: PersonConversations
               fields:
+                visible_motions: {ref: actor.conversations.visible_motions}
                 tower: {ref: actor.conversations.tower}
                 prison:
                   record:

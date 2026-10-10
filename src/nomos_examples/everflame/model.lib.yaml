@@ -2285,6 +2285,7 @@ records:
     invariant: null
   - name: PersonConversations
     fields:
+      - {name: visible_motions, type: {optional: VisibleMotionLog}}
       - {name: prison, type: PrisonConversation}
       - {name: tower, type: {optional: TowerConversation}}
     invariant: null
@@ -3113,6 +3114,15 @@ records:
       - {name: start, type: {str: [1, 48]}}
       - {name: end, type: {str: [1, 48]}}
       - {name: action, type: occurrence_ref}
+    invariant: null
+  - name: VisibleMotion
+    fields:
+      - {name: motion, type: ActorMotion}
+      - {name: observation, type: occurrence_ref}
+    invariant: null
+  - name: VisibleMotionLog
+    fields:
+      - {name: entries, type: {tuple: {item: VisibleMotion, max: 32}}}
     invariant: null
   - name: ScentStep
     fields:
@@ -4937,6 +4947,7 @@ owners:
     identity_field: name
     write: replace_one
     seat_read:
+    - conversations.visible_motions
     - conversations.tower
     - conversations.tower.offer
     - conversations.tower.offer.site

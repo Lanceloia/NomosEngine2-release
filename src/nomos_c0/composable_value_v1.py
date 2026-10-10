@@ -681,7 +681,9 @@ def _check_ports(ports: C0ValuePorts) -> C0ValuePorts:
         stage="Value admission readable paths",
     )
     if any(
-        type(name) is not str or not name or not _frozen_record(_nonnull(carrier) or carrier)
+        type(name) is not str
+        or not name
+        or (carrier is not _K0IndividualRef and not _frozen_record(_nonnull(carrier) or carrier))
         for name, carrier in ports.roots.items()
     ):
         raise C0LawError("value root is not a frozen nominal record")

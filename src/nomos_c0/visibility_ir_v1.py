@@ -8,7 +8,13 @@ from .author_contract_v1 import C0LawError
 from .checked_value_binding_v1 import C0CheckedValueIR
 from .compile_budget_v1 import COMPILE_BUDGET
 from .nominal_signatures_v1 import C0NominalFieldType, C0NominalSignatures
-from .value_symbols_v1 import C0SymbolicExpression, C0SymbolicType, C0SymbolicValuePorts
+from .seat_read_projection_v0 import check_fixed_projection_roots
+from .value_symbols_v1 import (
+    C0SymbolicExpression,
+    C0SymbolicType,
+    C0SymbolicValuePorts,
+    C0SymbolicValueProgram,
+)
 from .world_ir_v1 import C0WorldIR
 
 
@@ -165,6 +171,8 @@ class C0SeatProjectionIR:
     max_candidates: int
     body: C0CheckedValueIR
     preview: C0PreviewTargetIR | None = None
+    fixed_actor_roots: tuple[tuple[str, str], ...] = ()
+    additional_fixed_individual_roots: tuple[tuple[str, str], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -267,6 +275,8 @@ class C0VisibilityIR:
                     or projection.object_kind not in self.world.selected_kinds
                     or type(projection.body) is not C0CheckedValueIR
                     or projection.body.signatures is not self.world.signatures
+                    or type(projection.body.value) is not C0SymbolicValueProgram
+                    or type(projection.body.value.ports) is not C0SymbolicValuePorts
                     or type(projection.max_candidates) is not int
                     or not 1 <= projection.max_candidates <= 32
                     or (
@@ -275,6 +285,38 @@ class C0VisibilityIR:
                     )
                 ):
                     raise C0LawError("visibility projection has a foreign owner/value port")
+                check_fixed_projection_roots(
+                    projection.object_root, projection.object_kind, projection.actor,
+                    projection.fixed_actor_roots, projection.additional_fixed_individual_roots,
+                    frozenset(symbol for symbol, owner in owners.items()
+                              if owner.identity_field is not None),
+                    frozenset(self.world.selected_kinds),
+                )
+                if projection.preview is not None and (
+                    projection.fixed_actor_roots or projection.additional_fixed_individual_roots
+                ):
+                    raise C0LawError("visibility preview cannot bind seat read fixed roots")
+                roots = projection.body.value.ports.roots
+                names = {
+                    "scene", "actor", "candidate", projection.object_root,
+                    *(name for name, _ in projection.fixed_actor_roots),
+                    *(name for name, _ in projection.additional_fixed_individual_roots),
+                }
+                if projection.preview is None:
+                    names.update(
+                        f"{name}_ref" for name in (
+                            projection.object_root,
+                            *(name for name, _ in projection.additional_fixed_individual_roots),
+                        )
+                    )
+                if (
+                    type(roots) is not tuple
+                    or any(type(row) is not tuple or len(row) != 2
+                           or type(row[0]) is not str for row in roots)
+                    or len(roots) != len(names)
+                    or {name for name, _ in roots} != names
+                ):
+                    raise C0LawError("visibility projection inputs alias or omit a fixed root")
             if (
                 (seat.derived_read is not None and seat.derived_read.preview is not None)
                 or any(item.preview is None for item in seat.previews)

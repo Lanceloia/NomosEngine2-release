@@ -45,7 +45,11 @@ from .participant_group_v1 import expand_participant_groups
 from .scheduled_scene_event_v1 import C0DueValue, C0ScheduledScenePorts, C0TimeValue
 from .seat_offer_preview_v0 import C0SeatOfferPreviewPorts
 from .seat_offers_v0 import C0FiniteOfferProvider
-from .seat_read_projection_v0 import C0SeatReadPorts
+from .seat_read_projection_v0 import (
+    SEAT_READ_OUTPUT_TYPES,
+    C0SeatReadPorts,
+    check_fixed_projection_roots,
+)
 
 
 def _items(value: object, label: str, *, minimum: int = 0) -> list[object]:
@@ -208,6 +212,8 @@ def _value_ports(
 
     for path in paths:
         if type(path) is str and path in roots:
+            if roots[path] is _K0IndividualRef:
+                continue
             variants = get_args(roots[path])
             if len(variants) == 2 and type(None) in variants:
                 continue
@@ -217,6 +223,8 @@ def _value_ports(
         current = roots.get(parts[0])
         if current is None:
             raise C0LawError("Lib readable path has an unknown root")
+        if current is _K0IndividualRef:
+            raise C0LawError("Lib individual input is opaque and has no readable fields")
         for field in parts[1:]:
             variants = get_args(current)
             if len(variants) == 2 and type(None) in variants:
@@ -907,7 +915,11 @@ def check_graph_ports(
                 "fixed_individual_root",
                 "max_candidates",
                 "value",
-            },
+            }
+            | (
+                set(raw) & {"fixed_actor_roots", "additional_fixed_individual_roots"}
+                if type(raw) is dict else set()
+            ),
             "Lib seat read projection",
         )
         symbol = _symbol(item["symbol"], "Lib seat read symbol")
@@ -920,6 +932,42 @@ def check_graph_ports(
         )
         object_root = _symbol(fixed["name"], "Lib seat read Object root")
         kind = kinds.get(fixed["kind"]) if type(fixed["kind"]) is str else None
+        fixed_actors = []
+        for raw_root in _items(item.get("fixed_actor_roots", []), "Lib seat read fixed Actors"):
+            root = _row(raw_root, {"name", "actor"}, "Lib seat read fixed Actor")
+            fixed_actors.append((
+                _symbol(root["name"], "Lib seat read fixed Actor root"),
+                _symbol(root["actor"], "Lib seat read fixed Actor symbol"),
+            ))
+        fixed_objects = []
+        for raw_root in _items(
+            item.get("additional_fixed_individual_roots", []), "Lib seat read fixed Objects"
+        ):
+            root = _row(raw_root, {"name", "kind", "binding"}, "Lib seat read fixed Object")
+            if root["binding"] != "fixed_unique_opening":
+                raise C0LawError("Lib seat read fixed Object binding is malformed")
+            fixed_objects.append((
+                _symbol(root["name"], "Lib seat read fixed Object root"),
+                _symbol(root["kind"], "Lib seat read fixed Object kind"),
+            ))
+        fixed_actors = tuple(fixed_actors)
+        fixed_objects = tuple(fixed_objects)
+        check_fixed_projection_roots(
+            object_root, fixed["kind"], actor_symbol, fixed_actors, fixed_objects,
+            frozenset(owner.symbol for owner in checked.owners if owner.identity_field is not None),
+            frozenset(kinds),
+        )
+        endpoint_roots = {
+            "scene": scene_owner.view_type,
+            "actor": actor_owner.view_type,
+            object_root: kind.k0_kind.state_type if kind else None,
+            **{name: owners[symbol].view_type for name, symbol in fixed_actors},
+            **{name: kinds[symbol].k0_kind.state_type for name, symbol in fixed_objects},
+            **{
+                f"{name}_ref": _K0IndividualRef
+                for name in (object_root, *(name for name, _ in fixed_objects))
+            },
+        }
         collection_field = _symbol(item["collection_field"], "Lib seat read collection")
         current_field = _symbol(item["current_field"], "Lib seat read current field")
         candidate_key = _symbol(item["candidate_key"], "Lib seat read candidate key")
@@ -928,15 +976,11 @@ def check_graph_ports(
         candidate_args = get_args(collection_type)
         candidate_type = candidate_args[0] if len(candidate_args) == 2 else None
         limit = item["max_candidates"]
+        endpoint_roots["candidate"] = candidate_type
         value = _value_ports(
             item["value"],
             checked,
-            endpoint_roots={
-                "scene": scene_owner.view_type,
-                "actor": actor_owner.view_type,
-                "candidate": candidate_type,
-                object_root: kind.k0_kind.state_type if kind else None,
-            },
+            endpoint_roots=endpoint_roots,
         )
         if (
             any(previous.symbol == symbol for previous in seat_reads)
@@ -952,16 +996,12 @@ def check_graph_ports(
             or type(limit) is not int
             or not 1 <= limit <= 32
             or dict(value.roots)
-            != {
-                "scene": scene_owner.view_type,
-                "actor": actor_owner.view_type,
-                "candidate": candidate_type,
-                object_root: kind.k0_kind.state_type,
-            }
+            != endpoint_roots
             or value.writable_fields
             or value.writable_paths
             or value.record_types
-            or any(output not in (str, int, bool) for output in value.outputs.values())
+            or value.readable_fields.get(_K0IndividualRef)
+            or any(output not in SEAT_READ_OUTPUT_TYPES for output in value.outputs.values())
         ):
             raise C0LawError("Lib seat read projection exceeds its closed port")
         seat_reads.append(
@@ -977,6 +1017,8 @@ def check_graph_ports(
                 kind.symbol,
                 value,
                 limit,
+                fixed_actors,
+                fixed_objects,
             )
         )
     previews = []

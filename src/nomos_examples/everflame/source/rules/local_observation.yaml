@@ -1,6 +1,40 @@
 # Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
 # Local observations are finite evidence, not hidden truth or shared knowledge.
 lawdefs:
+  - name: event.player_motion_seen
+    family: direct_actor_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings: []
+        guard:
+          require:
+            - actual_movement: scene.actor_motion is not None and scene.actor_motion.action == trigger.occurrence
+            - another_person: scene.actor_motion.name != actor.name
+            - awake: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+            - local: scene.actor_motion.start == actor.site or scene.actor_motion.end == actor.site
+        outputs:
+          conversations:
+            record:
+              type: PersonConversations
+              fields:
+                tower: {ref: actor.conversations.tower}
+                prison: {ref: actor.conversations.prison}
+                visible_motions:
+                  record:
+                    type: VisibleMotionLog
+                    fields:
+                      entries:
+                        append:
+                          - collect_matching:
+                              collection: {if: {when: "actor.conversations.visible_motions is not None", then: {ref: actor.conversations.visible_motions.entries}, else: {empty_like: actor.conversations.visible_motions.entries}}}
+                              as: previous
+                              where: previous.motion.name != scene.actor_motion.name
+                              value: {ref: previous}
+                          - record:
+                              type: VisibleMotion
+                              fields: {motion: {ref: scene.actor_motion}, observation: {ref: occurrence}}
   - name: action.look_tower_top
     family: action
     formals: {}
@@ -241,9 +275,70 @@ lawdefs:
     body:
       value:
         schema: c0.value.v1
-        bindings: []
+        bindings:
+          - name: surface_enabled
+            stage: admission
+            let: candidate.site == actor.site and actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - name: torch_here
+            stage: admission
+            let:
+              all:
+                - {ref: surface_enabled}
+                - any:
+                    - torch.holder == actor.name
+                    - torch.holder == 'ritual_resident' and ritual_resident.site == actor.site
+                    - torch.holder == 'huddled_one' and huddled_one.site == actor.site
+                    - torch.holder == 'huddled_two' and huddled_two.site == actor.site
+                    - torch.holder == 'wall_resident' and wall_resident.site == actor.site
+                    - torch.holder == 'bokold_one' and bokold_one.site == actor.site
+                    - torch.holder == 'bokold_two' and bokold_two.site == actor.site
+                    - torch.holder == 'prison_resident_one' and prison_resident_one.site == actor.site
+                    - torch.holder == 'prison_resident_two' and prison_resident_two.site == actor.site
+          - name: reservoir_here
+            stage: admission
+            let: surface_enabled and ((reservoir.mounted and reservoir.site == actor.site) or (not reservoir.mounted and reservoir.holder == actor.name))
         guard: {const: true}
         outputs:
+          presence_person_emma: surface_enabled and emma.site == actor.site
+          surface_available: {ref: surface_enabled}
+          presence_person_alpha: surface_enabled and alpha.site == actor.site
+          presence_person_tower_bear_one: surface_enabled and tower_bear_one.site == actor.site
+          presence_person_tower_bear_two: surface_enabled and tower_bear_two.site == actor.site
+          presence_person_ritual_resident: surface_enabled and ritual_resident.site == actor.site
+          presence_person_huddled_one: surface_enabled and huddled_one.site == actor.site
+          presence_person_huddled_two: surface_enabled and huddled_two.site == actor.site
+          presence_person_wall_resident: surface_enabled and wall_resident.site == actor.site
+          presence_person_bokold_one: surface_enabled and bokold_one.site == actor.site
+          presence_person_bokold_two: surface_enabled and bokold_two.site == actor.site
+          presence_person_icebar_bear_one: surface_enabled and icebar_bear_one.site == actor.site
+          presence_person_icebar_bear_two: surface_enabled and icebar_bear_two.site == actor.site
+          presence_person_prison_guard: surface_enabled and prison_guard.site == actor.site
+          presence_person_prison_resident_one: surface_enabled and prison_resident_one.site == actor.site
+          presence_person_prison_resident_two: surface_enabled and prison_resident_two.site == actor.site
+          presence_person_captive_bear: surface_enabled and captive_bear.site == actor.site
+          presence_person_prison_bokold: surface_enabled and prison_bokold.site == actor.site
+          presence_person_arctic_fox_one: surface_enabled and arctic_fox_one.site == actor.site
+          presence_person_arctic_fox_two: surface_enabled and arctic_fox_two.site == actor.site
+          presence_person_arctic_fox_three: surface_enabled and arctic_fox_three.site == actor.site
+          presence_person_arctic_fox_four: surface_enabled and arctic_fox_four.site == actor.site
+          presence_person_hall_bokold_one: surface_enabled and hall_bokold_one.site == actor.site
+          presence_person_hall_bokold_two: surface_enabled and hall_bokold_two.site == actor.site
+          presence_person_hall_bokold_three: surface_enabled and hall_bokold_three.site == actor.site
+          presence_person_hall_bokold_four: surface_enabled and hall_bokold_four.site == actor.site
+          presence_person_hall_bokold_five: surface_enabled and hall_bokold_five.site == actor.site
+          presence_person_stable_bokold_one: surface_enabled and stable_bokold_one.site == actor.site
+          presence_person_stable_bokold_two: surface_enabled and stable_bokold_two.site == actor.site
+          presence_person_stable_bokold_three: surface_enabled and stable_bokold_three.site == actor.site
+          presence_person_stable_bokold_four: surface_enabled and stable_bokold_four.site == actor.site
+          presence_object_chandelier: surface_enabled and chandelier.site == actor.site
+          presence_object_reservoir: {ref: reservoir_here}
+          presence_object_torch: {ref: torch_here}
+          target_chandelier:
+            if: {when: "surface_enabled and chandelier.site == actor.site", then: {ref: chandelier_ref}, else: null}
+          target_reservoir:
+            if: {when: {ref: reservoir_here}, then: {ref: reservoir_ref}, else: null}
+          target_torch:
+            if: {when: {ref: torch_here}, then: {ref: torch_ref}, else: null}
           status:
             if:
               when: {eq: [{ref: torch.holder}, {ref: actor.name}]}

@@ -980,6 +980,7 @@ seats:
     - adventurer.known_exit_steps
     - adventurer.known_crossings
     - adventurer.known_residents
+    - adventurer.conversations.visible_motions
     - adventurer.sighting_ref
     - adventurer.sighting_site
     - adventurer.ritual_notice
@@ -1266,6 +1267,7 @@ seats:
         adventurer.known_exit_steps: null
         adventurer.known_crossings: null
         adventurer.known_residents: null
+        adventurer.conversations.visible_motions: Locally witnessed movements (not escort acceptance or rescue)
         adventurer.sighting_ref: null
         adventurer.sighting_site: null
         adventurer.ritual_notice: Last ritual signs I saw

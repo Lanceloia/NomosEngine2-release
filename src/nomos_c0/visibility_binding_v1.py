@@ -41,7 +41,11 @@ from .seat_offers_v0 import (
     _local_value_read_paths,
     _public_ports,
 )
-from .seat_read_projection_v0 import C0SeatReadPorts, C0SeatReadProjection
+from .seat_read_projection_v0 import (
+    SEAT_READ_OUTPUT_TYPES,
+    C0SeatReadPorts,
+    C0SeatReadProjection,
+)
 from .value_symbols_v1 import _ValueSymbolTranslation
 from .visibility_ir_v1 import (
     OFFER_FIELDS,
@@ -196,6 +200,8 @@ def capture_visibility(
             port.max_candidates,
             backend.capture(projection.value),
             preview,
+            port.fixed_actor_roots if preview is None else (),
+            port.additional_fixed_individual_roots if preview is None else (),
         )
 
     return C0VisibilityIR(
@@ -511,12 +517,39 @@ def _bind_projection(ir, backend, world, translation):
             "actor": owners[ir.actor].state_type,
             "candidate": candidate,
             ir.object_root: kinds[ir.object_kind].k0_kind.state_type,
+            **{name: owners[symbol].state_type for name, symbol in ir.fixed_actor_roots},
+            **{
+                name: kinds[symbol].k0_kind.state_type
+                for name, symbol in ir.additional_fixed_individual_roots
+            },
+            **(
+                {
+                    f"{name}_ref": _K0IndividualRef
+                    for name in (
+                        ir.object_root,
+                        *(name for name, _ in ir.additional_fixed_individual_roots),
+                    )
+                } if ir.preview is None else {}
+            ),
         }
         or ports.writable_fields
         or ports.writable_paths
         or ports.record_types
         or value._admission_outputs != frozenset(ports.outputs)
-        or any(carrier not in (str, int, bool) for carrier in ports.outputs.values())
+        or any(
+            carrier not in (SEAT_READ_OUTPUT_TYPES if ir.preview is None else (str, int, bool))
+            for carrier in ports.outputs.values()
+        )
+        or (
+            ir.preview is None
+            and (
+                ports.readable_fields.get(_K0IndividualRef)
+                or any(
+                    "." in path and ports.roots.get(path.split(".", 1)[0]) is _K0IndividualRef
+                    for path in ports.readable_paths
+                )
+            )
+        )
         or actor_fields.get(ir.current_field) is not str
         or get_args(actor_fields.get(ir.collection_field)) != (candidate, Ellipsis)
         or candidate_fields.get(ir.candidate_key) is not str
@@ -540,7 +573,14 @@ def _bind_projection(ir, backend, world, translation):
         max_candidates=ir.max_candidates,
     )
     if ir.preview is None:
-        return C0SeatReadProjection(C0SeatReadPorts(**common), value)
+        return C0SeatReadProjection(
+            C0SeatReadPorts(
+                **common,
+                fixed_actor_roots=ir.fixed_actor_roots,
+                additional_fixed_individual_roots=ir.additional_fixed_individual_roots,
+            ),
+            value,
+        )
     return C0SeatOfferPreview(
         ir.preview.entry,
         C0SeatOfferPreviewPorts(

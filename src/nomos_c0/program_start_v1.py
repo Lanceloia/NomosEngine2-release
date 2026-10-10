@@ -299,14 +299,14 @@ def check_assets(program: C0OwnerGraphProgram, assets: str | dict[str, object]) 
             ):
                 raise C0BindingError("constructed opening exceeds Object capacity")
         for seat in program.seats:
-            if (
-                seat.derived_read is not None
-                and sum(
-                    item.family == seat.derived_read.ports.object_kind for item in opening_objects
-                )
-                != 1
-            ):
-                raise C0BindingError("seat read Object needs one opening individual")
+            if seat.derived_read is not None:
+                ports = seat.derived_read.ports
+                for _, kind in (
+                    (ports.object_root, ports.object_kind),
+                    *ports.additional_fixed_individual_roots,
+                ):
+                    if sum(item.family == kind for item in opening_objects) != 1:
+                        raise C0BindingError("seat read Object needs one opening individual")
             for preview in seat.offer_previews:
                 if sum(item.family == preview.ports.object_kind for item in opening_objects) != 1:
                     raise C0BindingError("offer preview Object needs one opening individual")

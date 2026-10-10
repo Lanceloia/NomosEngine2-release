@@ -2303,8 +2303,8 @@ actions:
     envelope_fields: [action]
     schedule: null
     value:
-      read: [actor.name, actor.site, actor.vital.life, actor.cold_state, actor.known_residents, actor.conversations.prison, actor.conversations.tower, actor.conversations.tower.acceptance, payload.actor, payload.recipient, recipient.name, recipient.site]
-      fields: {PersonConversations: [prison, tower], TowerConversation: [request, offer, hearing, acceptance], TowerRequest: [speaker, recipient, site, utterance], PrisonConversation: [contacts, questions, answers, charge_receipt, charge_load_ref], PrisonContact: [name, site, observation], PrisonQuestion: [speaker, recipient, site, topic, utterance], PrisonHeardAnswer: [answer, hearing], PrisonAnswer: [speaker, recipient, site, question, statement, packet, utterance], ChargeReceipt: [packet, giver, request, permission, transfer], KnownResident: [name, site, observation]}
+      read: [actor.name, actor.site, actor.vital.life, actor.cold_state, actor.known_residents, actor.conversations.prison, actor.conversations.tower, actor.conversations.tower.acceptance, payload.actor, payload.recipient, recipient.name, recipient.site, actor.conversations.visible_motions]
+      fields: {PersonConversations: [prison, tower, visible_motions], TowerConversation: [request, offer, hearing, acceptance], TowerRequest: [speaker, recipient, site, utterance], PrisonConversation: [contacts, questions, answers, charge_receipt, charge_load_ref], PrisonContact: [name, site, observation], PrisonQuestion: [speaker, recipient, site, topic, utterance], PrisonHeardAnswer: [answer, hearing], PrisonAnswer: [speaker, recipient, site, question, statement, packet, utterance], ChargeReceipt: [packet, giver, request, permission, transfer], KnownResident: [name, site, observation]}
       write_paths: [scene.tower_request, actor.conversations, actor.last_action_ref]
       construct: [PersonConversations, TowerConversation, TowerRequest]
       collections: {}
@@ -2320,8 +2320,8 @@ actions:
     envelope_fields: [action]
     schedule: null
     value:
-      read: [actor.name, actor.site, actor.vital.life, actor.cold_state, actor.conversations.prison, actor.conversations.tower, actor.conversations.tower.request, actor.conversations.tower.offer, actor.conversations.tower.offer.utterance, actor.conversations.tower.offer.speaker, actor.conversations.tower.offer.recipient, actor.conversations.tower.hearing, actor.conversations.tower.acceptance, payload.actor, payload.recipient, payload.offer, recipient.name, recipient.site, recipient.tower_proposal, recipient.tower_proposal.utterance]
-      fields: {PersonConversations: [prison, tower], TowerConversation: [request, offer, hearing, acceptance], TowerRequest: [speaker, recipient, site, utterance], TowerOffer: [speaker, recipient, site, request, item, condition, utterance], TowerAcceptance: [speaker, recipient, site, offer, utterance], PrisonConversation: [contacts, questions, answers, charge_receipt, charge_load_ref], PrisonContact: [name, site, observation], PrisonQuestion: [speaker, recipient, site, topic, utterance], PrisonHeardAnswer: [answer, hearing], PrisonAnswer: [speaker, recipient, site, question, statement, packet, utterance], ChargeReceipt: [packet, giver, request, permission, transfer]}
+      read: [actor.name, actor.site, actor.vital.life, actor.cold_state, actor.conversations.prison, actor.conversations.tower, actor.conversations.tower.request, actor.conversations.tower.offer, actor.conversations.tower.offer.utterance, actor.conversations.tower.offer.speaker, actor.conversations.tower.offer.recipient, actor.conversations.tower.hearing, actor.conversations.tower.acceptance, payload.actor, payload.recipient, payload.offer, recipient.name, recipient.site, recipient.tower_proposal, recipient.tower_proposal.utterance, actor.conversations.visible_motions]
+      fields: {PersonConversations: [prison, tower, visible_motions], TowerConversation: [request, offer, hearing, acceptance], TowerRequest: [speaker, recipient, site, utterance], TowerOffer: [speaker, recipient, site, request, item, condition, utterance], TowerAcceptance: [speaker, recipient, site, offer, utterance], PrisonConversation: [contacts, questions, answers, charge_receipt, charge_load_ref], PrisonContact: [name, site, observation], PrisonQuestion: [speaker, recipient, site, topic, utterance], PrisonHeardAnswer: [answer, hearing], PrisonAnswer: [speaker, recipient, site, question, statement, packet, utterance], ChargeReceipt: [packet, giver, request, permission, transfer]}
       write_paths: [scene.tower_acceptance, actor.conversations, actor.last_action_ref]
       construct: [PersonConversations, TowerConversation, TowerAcceptance]
       collections: {}
@@ -4138,8 +4138,8 @@ actions:
     envelope_fields: [action]
     schedule: null
     value:
-      read: [actor.conversations.tower, actor.name, actor.site, actor.vital.life, actor.cold_state, actor.conversations.prison.contacts, actor.conversations.prison.questions, actor.conversations.prison.answers, actor.conversations.prison.charge_load_ref, giver.name, giver.site, giver.awake, giver.answer, giver.answer.speaker, giver.answer.recipient, giver.answer.question, giver.answer.statement, giver.answer.packet, giver.answer.utterance, giver.heard_question, giver.heard_question.utterance, giver.charge_used_ref, packet.holder, packet.charges, payload.actor, payload.giver, payload.packet]
-      fields: {PersonConversations: [prison, tower], TowerConversation: [request, offer, hearing, acceptance], TowerRequest: [speaker, recipient, site, utterance], TowerOffer: [speaker, recipient, site, request, item, condition, utterance], TowerAcceptance: [speaker, recipient, site, offer, utterance], PrisonConversation: [contacts, questions, answers, charge_load_ref], PrisonContact: [name, site, observation], PrisonQuestion: [speaker, recipient, site, topic, utterance], PrisonHeardAnswer: [answer, hearing], PrisonAnswer: [speaker, recipient, site, question, statement, packet, utterance]}
+      read: [actor.conversations.tower, actor.name, actor.site, actor.vital.life, actor.cold_state, actor.conversations.prison.contacts, actor.conversations.prison.questions, actor.conversations.prison.answers, actor.conversations.prison.charge_load_ref, giver.name, giver.site, giver.awake, giver.answer, giver.answer.speaker, giver.answer.recipient, giver.answer.question, giver.answer.statement, giver.answer.packet, giver.answer.utterance, giver.heard_question, giver.heard_question.utterance, giver.charge_used_ref, packet.holder, packet.charges, payload.actor, payload.giver, payload.packet, actor.conversations.visible_motions]
+      fields: {PersonConversations: [prison, tower, visible_motions], TowerConversation: [request, offer, hearing, acceptance], TowerRequest: [speaker, recipient, site, utterance], TowerOffer: [speaker, recipient, site, request, item, condition, utterance], TowerAcceptance: [speaker, recipient, site, offer, utterance], PrisonConversation: [contacts, questions, answers, charge_load_ref], PrisonContact: [name, site, observation], PrisonQuestion: [speaker, recipient, site, topic, utterance], PrisonHeardAnswer: [answer, hearing], PrisonAnswer: [speaker, recipient, site, question, statement, packet, utterance]}
       write_paths: [actor.conversations, actor.last_action_ref, giver.charge_used_ref, packet.holder, packet.change_ref]
       construct: [PersonConversations, PrisonConversation, ChargeReceipt]
       collections: {}
@@ -4156,8 +4156,8 @@ actions:
     envelope_fields: [action]
     schedule: null
     value:
-      read: [actor.conversations.tower, actor.name, actor.vital.life, actor.cold_state, actor.conversations.prison.contacts, actor.conversations.prison.questions, actor.conversations.prison.answers, actor.conversations.prison.charge_receipt, actor.conversations.prison.charge_receipt.packet, packet.holder, packet.charges, torch.holder, torch.charges, payload.actor, payload.packet, payload.torch]
-      fields: {PersonConversations: [prison, tower], TowerConversation: [request, offer, hearing, acceptance], TowerRequest: [speaker, recipient, site, utterance], TowerOffer: [speaker, recipient, site, request, item, condition, utterance], TowerAcceptance: [speaker, recipient, site, offer, utterance], PrisonConversation: [contacts, questions, answers, charge_receipt], PrisonContact: [name, site, observation], PrisonQuestion: [speaker, recipient, site, topic, utterance], PrisonHeardAnswer: [answer, hearing], PrisonAnswer: [speaker, recipient, site, question, statement, packet, utterance], ChargeReceipt: [packet, giver, request, permission, transfer]}
+      read: [actor.conversations.tower, actor.name, actor.vital.life, actor.cold_state, actor.conversations.prison.contacts, actor.conversations.prison.questions, actor.conversations.prison.answers, actor.conversations.prison.charge_receipt, actor.conversations.prison.charge_receipt.packet, packet.holder, packet.charges, torch.holder, torch.charges, payload.actor, payload.packet, payload.torch, actor.conversations.visible_motions]
+      fields: {PersonConversations: [prison, tower, visible_motions], TowerConversation: [request, offer, hearing, acceptance], TowerRequest: [speaker, recipient, site, utterance], TowerOffer: [speaker, recipient, site, request, item, condition, utterance], TowerAcceptance: [speaker, recipient, site, offer, utterance], PrisonConversation: [contacts, questions, answers, charge_receipt], PrisonContact: [name, site, observation], PrisonQuestion: [speaker, recipient, site, topic, utterance], PrisonHeardAnswer: [answer, hearing], PrisonAnswer: [speaker, recipient, site, question, statement, packet, utterance], ChargeReceipt: [packet, giver, request, permission, transfer]}
       write_paths: [actor.conversations, actor.known_everflame_charges, actor.last_action_ref, packet.charges, packet.change_ref, torch.charges]
       construct: [PersonConversations, PrisonConversation]
       collections: {}
@@ -4174,8 +4174,8 @@ actions:
     envelope_fields: [action]
     schedule: null
     value:
-      read: [actor.conversations.tower, actor.name, actor.site, actor.vital.life, actor.cold_state, actor.conversations.prison.charge_receipt, actor.conversations.prison.charge_load_ref, actor.conversations.prison.contacts, actor.conversations.prison.questions, actor.conversations.prison.answers, payload.actor, payload.bokold, payload.captive, bokold.name, bokold.site, captive.name, captive.site]
-      fields: {PersonConversations: [prison, tower], TowerConversation: [request, offer, hearing, acceptance], TowerRequest: [speaker, recipient, site, utterance], TowerOffer: [speaker, recipient, site, request, item, condition, utterance], TowerAcceptance: [speaker, recipient, site, offer, utterance], PrisonConversation: [contacts, questions, answers, charge_receipt, charge_load_ref], ChargeReceipt: [packet, giver, request, permission, transfer], PrisonContact: [name, site, observation], PrisonQuestion: [speaker, recipient, site, topic, utterance], PrisonHeardAnswer: [answer, hearing], PrisonAnswer: [speaker, recipient, site, question, statement, packet, utterance]}
+      read: [actor.conversations.tower, actor.name, actor.site, actor.vital.life, actor.cold_state, actor.conversations.prison.charge_receipt, actor.conversations.prison.charge_load_ref, actor.conversations.prison.contacts, actor.conversations.prison.questions, actor.conversations.prison.answers, payload.actor, payload.bokold, payload.captive, bokold.name, bokold.site, captive.name, captive.site, actor.conversations.visible_motions]
+      fields: {PersonConversations: [prison, tower, visible_motions], TowerConversation: [request, offer, hearing, acceptance], TowerRequest: [speaker, recipient, site, utterance], TowerOffer: [speaker, recipient, site, request, item, condition, utterance], TowerAcceptance: [speaker, recipient, site, offer, utterance], PrisonConversation: [contacts, questions, answers, charge_receipt, charge_load_ref], ChargeReceipt: [packet, giver, request, permission, transfer], PrisonContact: [name, site, observation], PrisonQuestion: [speaker, recipient, site, topic, utterance], PrisonHeardAnswer: [answer, hearing], PrisonAnswer: [speaker, recipient, site, question, statement, packet, utterance]}
       write_paths: [actor.conversations, actor.last_action_ref]
       construct: [PersonConversations, PrisonConversation, PrisonContact]
       collections: {}
@@ -4191,8 +4191,8 @@ actions:
     envelope_fields: [action]
     schedule: null
     value:
-      read: [actor.conversations.tower, actor.name, actor.site, actor.vital.life, actor.cold_state, actor.conversations.prison.charge_receipt, actor.conversations.prison.charge_load_ref, actor.conversations.prison.contacts, actor.conversations.prison.questions, actor.conversations.prison.answers, payload.actor, payload.recipient, payload.topic, recipient.name, recipient.site]
-      fields: {PersonConversations: [prison, tower], TowerConversation: [request, offer, hearing, acceptance], TowerRequest: [speaker, recipient, site, utterance], TowerOffer: [speaker, recipient, site, request, item, condition, utterance], TowerAcceptance: [speaker, recipient, site, offer, utterance], PrisonConversation: [contacts, questions, answers, charge_receipt, charge_load_ref], ChargeReceipt: [packet, giver, request, permission, transfer], PrisonContact: [name, site, observation], PrisonQuestion: [speaker, recipient, site, topic, utterance], PrisonHeardAnswer: [answer, hearing], PrisonAnswer: [speaker, recipient, site, question, statement, packet, utterance]}
+      read: [actor.conversations.tower, actor.name, actor.site, actor.vital.life, actor.cold_state, actor.conversations.prison.charge_receipt, actor.conversations.prison.charge_load_ref, actor.conversations.prison.contacts, actor.conversations.prison.questions, actor.conversations.prison.answers, payload.actor, payload.recipient, payload.topic, recipient.name, recipient.site, actor.conversations.visible_motions]
+      fields: {PersonConversations: [prison, tower, visible_motions], TowerConversation: [request, offer, hearing, acceptance], TowerRequest: [speaker, recipient, site, utterance], TowerOffer: [speaker, recipient, site, request, item, condition, utterance], TowerAcceptance: [speaker, recipient, site, offer, utterance], PrisonConversation: [contacts, questions, answers, charge_receipt, charge_load_ref], ChargeReceipt: [packet, giver, request, permission, transfer], PrisonContact: [name, site, observation], PrisonQuestion: [speaker, recipient, site, topic, utterance], PrisonHeardAnswer: [answer, hearing], PrisonAnswer: [speaker, recipient, site, question, statement, packet, utterance]}
       write_paths: [scene.prison_question, actor.conversations, actor.last_action_ref]
       construct: [PersonConversations, PrisonQuestion, PrisonConversation]
       collections: {}
@@ -8523,8 +8523,8 @@ events:
     actor: adventurer
     actor_identity_field: name
     value:
-      read: [scene.tower_offer, scene.tower_offer.utterance, scene.tower_offer.recipient, scene.tower_offer.site, scene.tower_offer.request, scene.tower_offer.speaker, actor.name, actor.site, actor.vital.life, actor.cold_state, actor.conversations.tower, actor.conversations.tower.request, actor.conversations.tower.request.utterance, actor.conversations.tower.request.recipient, actor.conversations.prison, trigger.occurrence]
-      fields: {PersonConversations: [prison, tower], TowerConversation: [request, offer, hearing, acceptance], TowerRequest: [speaker, recipient, site, utterance], TowerOffer: [speaker, recipient, site, request, item, condition, utterance], TowerAcceptance: [speaker, recipient, site, offer, utterance], PrisonConversation: [contacts, questions, answers, charge_receipt, charge_load_ref], PrisonContact: [name, site, observation], PrisonQuestion: [speaker, recipient, site, topic, utterance], PrisonHeardAnswer: [answer, hearing], PrisonAnswer: [speaker, recipient, site, question, statement, packet, utterance], ChargeReceipt: [packet, giver, request, permission, transfer]}
+      read: [scene.tower_offer, scene.tower_offer.utterance, scene.tower_offer.recipient, scene.tower_offer.site, scene.tower_offer.request, scene.tower_offer.speaker, actor.name, actor.site, actor.vital.life, actor.cold_state, actor.conversations.tower, actor.conversations.tower.request, actor.conversations.tower.request.utterance, actor.conversations.tower.request.recipient, actor.conversations.prison, trigger.occurrence, actor.conversations.visible_motions]
+      fields: {PersonConversations: [prison, tower, visible_motions], TowerConversation: [request, offer, hearing, acceptance], TowerRequest: [speaker, recipient, site, utterance], TowerOffer: [speaker, recipient, site, request, item, condition, utterance], TowerAcceptance: [speaker, recipient, site, offer, utterance], PrisonConversation: [contacts, questions, answers, charge_receipt, charge_load_ref], PrisonContact: [name, site, observation], PrisonQuestion: [speaker, recipient, site, topic, utterance], PrisonHeardAnswer: [answer, hearing], PrisonAnswer: [speaker, recipient, site, question, statement, packet, utterance], ChargeReceipt: [packet, giver, request, permission, transfer]}
       write_paths: [actor.conversations]
       outputs: {conversation: actor.conversations}
       construct: [PersonConversations, TowerConversation]
@@ -8545,8 +8545,8 @@ events:
     actor: adventurer
     actor_identity_field: name
     value:
-      read: [actor.conversations.tower, scene.prison_answer, scene.prison_answer.speaker, scene.prison_answer.recipient, scene.prison_answer.site, scene.prison_answer.utterance, scene.prison_answer.question, actor.name, actor.site, actor.vital.life, actor.cold_state, actor.conversations.prison.charge_receipt, actor.conversations.prison.charge_load_ref, actor.conversations.prison.contacts, actor.conversations.prison.questions, actor.conversations.prison.answers, trigger.occurrence]
-      fields: {PersonConversations: [prison, tower], TowerConversation: [request, offer, hearing, acceptance], TowerRequest: [speaker, recipient, site, utterance], TowerOffer: [speaker, recipient, site, request, item, condition, utterance], TowerAcceptance: [speaker, recipient, site, offer, utterance], PrisonConversation: [contacts, questions, answers, charge_receipt, charge_load_ref], ChargeReceipt: [packet, giver, request, permission, transfer], PrisonContact: [name, site, observation], PrisonQuestion: [speaker, recipient, site, topic, utterance], PrisonHeardAnswer: [answer, hearing], PrisonAnswer: [speaker, recipient, site, question, statement, packet, utterance]}
+      read: [actor.conversations.tower, scene.prison_answer, scene.prison_answer.speaker, scene.prison_answer.recipient, scene.prison_answer.site, scene.prison_answer.utterance, scene.prison_answer.question, actor.name, actor.site, actor.vital.life, actor.cold_state, actor.conversations.prison.charge_receipt, actor.conversations.prison.charge_load_ref, actor.conversations.prison.contacts, actor.conversations.prison.questions, actor.conversations.prison.answers, trigger.occurrence, actor.conversations.visible_motions]
+      fields: {PersonConversations: [prison, tower, visible_motions], TowerConversation: [request, offer, hearing, acceptance], TowerRequest: [speaker, recipient, site, utterance], TowerOffer: [speaker, recipient, site, request, item, condition, utterance], TowerAcceptance: [speaker, recipient, site, offer, utterance], PrisonConversation: [contacts, questions, answers, charge_receipt, charge_load_ref], ChargeReceipt: [packet, giver, request, permission, transfer], PrisonContact: [name, site, observation], PrisonQuestion: [speaker, recipient, site, topic, utterance], PrisonHeardAnswer: [answer, hearing], PrisonAnswer: [speaker, recipient, site, question, statement, packet, utterance]}
       write_paths: [actor.conversations]
       outputs: {conversation: actor.conversations}
       construct: [PersonConversations, PrisonConversation, PrisonHeardAnswer]
@@ -8804,6 +8804,17 @@ events:
       write_paths: [actor.ritual_notice, actor.ritual_notice_ref]
       outputs: {ritual_notice: actor.ritual_notice, ritual_notice_ref: actor.ritual_notice_ref}
       construct: []
+      collections: {}
+  - symbol: player_motion_seen
+    form: direct_actor
+    actor: adventurer
+    actor_identity_field: name
+    value:
+      read: [scene.actor_motion, scene.actor_motion.name, scene.actor_motion.start, scene.actor_motion.end, scene.actor_motion.action, actor.name, actor.site, actor.cold_state, actor.vital.life, actor.conversations, actor.conversations.tower, actor.conversations.prison, actor.conversations.visible_motions, actor.conversations.visible_motions.entries, trigger.occurrence]
+      fields: {ActorMotion: [name, start, end, action], VisibleMotion: [motion, observation], VisibleMotionLog: [entries], PersonConversations: [tower, prison, visible_motions]}
+      write_paths: [actor.conversations]
+      outputs: {conversations: actor.conversations}
+      construct: [VisibleMotion, VisibleMotionLog, PersonConversations]
       collections: {}
   - symbol: ice_elemental_summoned
     form: direct_scene
@@ -9284,12 +9295,85 @@ seat_read_projections:
     current_field: site
     candidate_key: site
     fixed_individual_root: {name: torch, kind: everflame, binding: fixed_unique_opening}
+    fixed_actor_roots:
+    - {name: emma, actor: emma}
+    - {name: alpha, actor: alpha}
+    - {name: tower_bear_one, actor: tower_bear_one}
+    - {name: tower_bear_two, actor: tower_bear_two}
+    - {name: ritual_resident, actor: ritual_resident}
+    - {name: huddled_one, actor: huddled_one}
+    - {name: huddled_two, actor: huddled_two}
+    - {name: wall_resident, actor: wall_resident}
+    - {name: bokold_one, actor: bokold_one}
+    - {name: bokold_two, actor: bokold_two}
+    - {name: icebar_bear_one, actor: icebar_bear_one}
+    - {name: icebar_bear_two, actor: icebar_bear_two}
+    - {name: prison_guard, actor: prison_guard}
+    - {name: prison_resident_one, actor: prison_resident_one}
+    - {name: prison_resident_two, actor: prison_resident_two}
+    - {name: captive_bear, actor: captive_bear}
+    - {name: prison_bokold, actor: prison_bokold}
+    - {name: arctic_fox_one, actor: arctic_fox_one}
+    - {name: arctic_fox_two, actor: arctic_fox_two}
+    - {name: arctic_fox_three, actor: arctic_fox_three}
+    - {name: arctic_fox_four, actor: arctic_fox_four}
+    - {name: hall_bokold_one, actor: hall_bokold_one}
+    - {name: hall_bokold_two, actor: hall_bokold_two}
+    - {name: hall_bokold_three, actor: hall_bokold_three}
+    - {name: hall_bokold_four, actor: hall_bokold_four}
+    - {name: hall_bokold_five, actor: hall_bokold_five}
+    - {name: stable_bokold_one, actor: stable_bokold_one}
+    - {name: stable_bokold_two, actor: stable_bokold_two}
+    - {name: stable_bokold_three, actor: stable_bokold_three}
+    - {name: stable_bokold_four, actor: stable_bokold_four}
+    additional_fixed_individual_roots:
+    - {name: chandelier, kind: chandelier, binding: fixed_unique_opening}
+    - {name: reservoir, kind: reservoir, binding: fixed_unique_opening}
     max_candidates: 32
     value:
-      read: [scene.coverage, actor.name, actor.site, actor.known_coverage, actor.known_everflame_charges, candidate.site, torch.holder, torch.charges]
+      read: [scene.coverage, actor.name, actor.site, actor.vital.life, actor.cold_state, actor.known_coverage, actor.known_everflame_charges, candidate.site, torch.holder, torch.charges, torch_ref, chandelier.site, chandelier_ref, reservoir.site, reservoir.holder, reservoir.mounted, reservoir_ref, emma.site, alpha.site, tower_bear_one.site, tower_bear_two.site, ritual_resident.site, huddled_one.site, huddled_two.site, wall_resident.site, bokold_one.site, bokold_two.site, icebar_bear_one.site, icebar_bear_two.site, prison_guard.site, prison_resident_one.site, prison_resident_two.site, captive_bear.site, prison_bokold.site, arctic_fox_one.site, arctic_fox_two.site, arctic_fox_three.site, arctic_fox_four.site, hall_bokold_one.site, hall_bokold_two.site, hall_bokold_three.site, hall_bokold_four.site, hall_bokold_five.site, stable_bokold_one.site, stable_bokold_two.site, stable_bokold_three.site, stable_bokold_four.site]
       fields: {Coverage: [origin, near_sites, mid_sites, far_sites], KnownSite: [site]}
       write_paths: []
-      outputs: {status: str, after_spend_one: str}
+      outputs:
+        status: str
+        after_spend_one: str
+        surface_available: bool
+        presence_person_emma: bool
+        presence_person_alpha: bool
+        presence_person_tower_bear_one: bool
+        presence_person_tower_bear_two: bool
+        presence_person_ritual_resident: bool
+        presence_person_huddled_one: bool
+        presence_person_huddled_two: bool
+        presence_person_wall_resident: bool
+        presence_person_bokold_one: bool
+        presence_person_bokold_two: bool
+        presence_person_icebar_bear_one: bool
+        presence_person_icebar_bear_two: bool
+        presence_person_prison_guard: bool
+        presence_person_prison_resident_one: bool
+        presence_person_prison_resident_two: bool
+        presence_person_captive_bear: bool
+        presence_person_prison_bokold: bool
+        presence_person_arctic_fox_one: bool
+        presence_person_arctic_fox_two: bool
+        presence_person_arctic_fox_three: bool
+        presence_person_arctic_fox_four: bool
+        presence_person_hall_bokold_one: bool
+        presence_person_hall_bokold_two: bool
+        presence_person_hall_bokold_three: bool
+        presence_person_hall_bokold_four: bool
+        presence_person_hall_bokold_five: bool
+        presence_person_stable_bokold_one: bool
+        presence_person_stable_bokold_two: bool
+        presence_person_stable_bokold_three: bool
+        presence_person_stable_bokold_four: bool
+        presence_object_chandelier: bool
+        presence_object_reservoir: bool
+        presence_object_torch: bool
+        target_chandelier: {optional: individual_ref}
+        target_reservoir: {optional: individual_ref}
+        target_torch: {optional: individual_ref}
       construct: []
       collections: {}
 seat_offer_previews:

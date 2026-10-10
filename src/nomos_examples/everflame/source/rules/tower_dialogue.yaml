@@ -26,6 +26,7 @@ lawdefs:
             record:
               type: PersonConversations
               fields:
+                visible_motions: {ref: actor.conversations.visible_motions}
                 prison: {ref: actor.conversations.prison}
                 tower: {record: {type: TowerConversation, fields: {request: {ref: said}, offer: null, hearing: null, acceptance: null}}}
   - name: event.alpha_request_heard
@@ -154,6 +155,7 @@ lawdefs:
             record:
               type: PersonConversations
               fields:
+                visible_motions: {ref: actor.conversations.visible_motions}
                 prison: {ref: actor.conversations.prison}
                 tower: {record: {type: TowerConversation, fields: {request: {ref: actor.conversations.tower.request}, offer: {ref: scene.tower_offer}, hearing: {ref: occurrence}, acceptance: null}}}
   - name: action.accept_alpha
@@ -183,6 +185,7 @@ lawdefs:
             record:
               type: PersonConversations
               fields:
+                visible_motions: {ref: actor.conversations.visible_motions}
                 prison: {ref: actor.conversations.prison}
                 tower: {record: {type: TowerConversation, fields: {request: {ref: actor.conversations.tower.request}, offer: {ref: actor.conversations.tower.offer}, hearing: {ref: actor.conversations.tower.hearing}, acceptance: {ref: accepted}}}}
   - name: event.alpha_acceptance_heard

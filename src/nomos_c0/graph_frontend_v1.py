@@ -21,6 +21,7 @@ from nomos_kernel._action_value_abi import (
 from nomos_kernel._coordinates import _K0FixedTime
 from nomos_kernel._dynamic_owner_abi import (
     _K0DynamicOwnerKind,
+    _K0IndividualRef,
 )
 from nomos_kernel._owner_abi import (
     _K0CapabilityRef,
@@ -109,7 +110,12 @@ from .seat_offers_v0 import (
     C0FiniteOfferProvider,
     compile_seat_offers,
 )
-from .seat_read_projection_v0 import C0SeatReadPorts, C0SeatReadProjection
+from .seat_read_projection_v0 import (
+    SEAT_READ_OUTPUT_TYPES,
+    C0SeatReadPorts,
+    C0SeatReadProjection,
+    check_fixed_projection_roots,
+)
 from .semantic_ir_v0 import C0PeriodicFormationIR, C0TemporalProgramIR
 from .source_schema_v1 import SOURCE_REQUIRED, SOURCE_SECTIONS
 from .temporal_lowering_v0 import lower_temporal_program
@@ -610,6 +616,12 @@ def _check_graph_declarations(
             or type(port.value_ports) is not C0ValuePorts
         ):
             raise C0LawError("Lib seat read projection is malformed")
+        check_fixed_projection_roots(
+            port.object_root, port.object_kind, port.actor,
+            port.fixed_actor_roots, port.additional_fixed_individual_roots,
+            frozenset(item.symbol for item in library.owners if item.identity_field is not None),
+            frozenset(object_kinds),
+        )
         actor_hints = get_type_hints(actor.owner.view_type)
         candidate_args = get_args(actor_hints.get(port.collection_field))
         if (
@@ -623,11 +635,33 @@ def _check_graph_declarations(
                 "actor": actor.owner.view_type,
                 "candidate": port.candidate_type,
                 port.object_root: kind.k0_kind.state_type,
+                **{
+                    name: owner_map[symbol].owner.view_type
+                    for name, symbol in port.fixed_actor_roots
+                },
+                **{
+                    name: object_kinds[symbol].k0_kind.state_type
+                    for name, symbol in port.additional_fixed_individual_roots
+                },
+                **{
+                    f"{name}_ref": _K0IndividualRef
+                    for name in (
+                        port.object_root,
+                        *(name for name, _ in port.additional_fixed_individual_roots),
+                    )
+                },
             }
             or port.value_ports.writable_fields
             or port.value_ports.writable_paths
             or port.value_ports.record_types
-            or any(output not in (str, int, bool) for output in port.value_ports.outputs.values())
+            or port.value_ports.readable_fields.get(_K0IndividualRef)
+            or any(
+                "." in path
+                and port.value_ports.roots.get(path.split(".", 1)[0]) is _K0IndividualRef
+                for path in port.value_ports.readable_paths
+            )
+            or any(output not in SEAT_READ_OUTPUT_TYPES
+                   for output in port.value_ports.outputs.values())
         ):
             raise C0LawError("Lib seat read projection exceeds its closed port")
     for port in library.seat_offer_preview_ports:
@@ -1626,7 +1660,12 @@ def _check_graph_declarations(
                 (item for item in library.seat_read_ports if item.symbol == requested["template"]),
                 None,
             )
-            if port is None or port.actor != actor or port.object_kind not in selected:
+            if (
+                port is None
+                or port.actor != actor
+                or port.object_kind not in selected
+                or any(kind not in selected for _, kind in port.additional_fixed_individual_roots)
+            ):
                 raise C0LawError("Source seat read projection is not bound to this Actor/Object")
             bound = bind_law(
                 "seat_view",
