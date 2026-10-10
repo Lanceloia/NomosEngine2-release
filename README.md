@@ -10,6 +10,9 @@ RPG/TRPG 沙盒中，玩家可能做出剧本没有预料的选择。我们的�
 [代码地图](docs/CODE_MAP.md)用于继续检查实现。
 全部使用与维护文档见[文档导航](docs/README.md)。
 
+先看[约三分钟中文项目介绍](docs/showcase/introduction/film-v1/introduction.mp4)：
+有旁白和字幕，讲清动机、方法、当前成果与未来愿景；[讲解页面与讲稿](docs/showcase/introduction/README.md)可选章核对。
+
 ## 用一组实验理解项目
 
 | 你可以检查什么 | 代表例子 | 当前证据 |
@@ -24,6 +27,7 @@ RPG/TRPG 沙盒中，玩家可能做出剧本没有预料的选择。我们的�
 [观看约 90 秒执行回放](docs/showcase/recording/capture-v1/demo.webm)：真实临时文件编辑与重跑结果，
 不是 GUI 编辑器录屏；新增条件与第十步拒绝高亮，最后展示换职业、扩人数。
 [分章回放及原始证据](docs/showcase/recording/README.md)可暂停核对；视频中的阅读停留不计为运行耗时。
+[中文旁白与字幕版](docs/showcase/recording/narrated-v1/experiment.mp4)保留同一录像，不另跑世界。
 
 ### 已保存的规则编辑实验
 

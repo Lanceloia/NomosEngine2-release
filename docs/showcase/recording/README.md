@@ -5,6 +5,9 @@
 
 ## 当前示例
 
+- 先看[中文项目介绍](../introduction/README.md)，了解为什么做这些实验。
+- [中文讲解版](narrated-v1/experiment.mp4)：在同一原始视频上增加合成旁白与画内字幕，不重跑世界。
+- [讲解版播放页面](narrated-v1/index.html)：直接浏览器打开，点击视频播放。
 - [86 秒视频](capture-v1/demo.webm)：无声音，新增条件与拒绝位置高亮。
 - [可暂停、拖动、选章的本地回放](capture-v1/replay.html)：下载仓库后直接用浏览器打开；GitHub 不执行仓库中的 HTML。
 - [真实文件差异](capture-v1/law.diff)、[原版](capture-v1/original.json)、[改后](capture-v1/changed.json)与[拒绝核对](capture-v1/comparison.json)。
@@ -56,3 +59,15 @@ node tools/render_showcase_recording.cjs /tmp/ne2-recording-new \
 
 第三个可选参数是本机字体文件，仅用于输出图片/视频，不复制或分发字体。
 浏览器导出录制的是这份既有输出回放，默认无声音；播放器可暂停、拖动或直接选章。
+
+讲解版不覆盖原记录。修改 `narration.json` 后，在 Windows/WSL 中生成到不存在的新目录：
+
+```bash
+python -m tools.narrate_showcase_recording /mnt/d/ne2-commentary-new \
+  /path/to/full-ffmpeg /mnt/c/Windows/Fonts
+```
+
+需要本机 `Microsoft Huihui Desktop`、`wslpath`，以及支持 H.264、AAC、libass 的完整 FFmpeg。
+工具为原视频增加独立字幕带，旁白从各章命令输出出现后开始；讲稿超出章节窗口会拒绝构建，
+不加速或删改原始输出。`narrated-v1/manifest.json` 记录原视频摘要、旁白区间和合成偏移，
+对齐使用原导出时间近似估计，不冒称逐帧同期录音。字体只在本机渲染使用。

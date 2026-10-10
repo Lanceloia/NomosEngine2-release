@@ -1,0 +1,47 @@
+{
+  "kind": "commentary derivative of an immutable execution recording",
+  "duration_seconds": 87.48,
+  "estimated_setup_seconds": 0.8089999999999975,
+  "voice": "Microsoft Huihui Desktop",
+  "synthesis": "local Windows System.Speech",
+  "chapter_intervals": [
+    [
+      1.1103854875283448,
+      7.2372335600907025
+    ],
+    [
+      11.01392290249433,
+      17.40204081632653
+    ],
+    [
+      23.204580498866214,
+      28.961814058956914
+    ],
+    [
+      37.03777777777778,
+      43.67487528344671
+    ],
+    [
+      52.83646258503401,
+      60.761043083900226
+    ],
+    [
+      72.2574149659864,
+      84.11646258503401
+    ]
+  ],
+  "inputs_sha256": {
+    "docs/showcase/recording/capture-v1/demo.webm": "935309d5f8631753f92f15a954e8b8d3e931d30a98711599f2ee96a02d00ff1e",
+    "docs/showcase/recording/capture-v1/recording.json": "72aedce60b9c79116df68df728c9321b35a7a3cb5d3c268a6be164a5ba6398c7",
+    "docs/showcase/recording/capture-v1/video-export.json": "02364f127d45534b057dcc3c5dcff87ea2209c8de44fc6f0b17f465677efb68c",
+    "docs/showcase/recording/narration.json": "29bab7aa77ad3cf65dfb806dee2b07e208bc4d2028a3073ecc1f750a65dff794",
+    "tools/narrate_showcase_recording.py": "9a9ae5da96cd9578f4b3146eca990d2cee4040723e55f6197d137d5e7f085ea9"
+  },
+  "outputs_sha256": {
+    "experiment.mp4": "515a8445123f3c161a8eaa9bf70500a3812df52d4e6c3272bfde5e81b74b28a8",
+    "index.html": "3f4417aebf64384212e7542fdd563c54fb864043740ff95ab4c318c2404aaef3",
+    "narration.wav": "794216efb4cfe366bf878025b1941846f12753b79623b29fb71a116f257013ad",
+    "subtitles.srt": "953362739fd8a96f6196ab0150c1966d34b2a4c6b5cfeaf5cf1ce0c0d602c8ad"
+  },
+  "note": "Original capture unchanged. Alignment estimated from its export timing; no new engine run. Font used locally, not redistributed."
+}

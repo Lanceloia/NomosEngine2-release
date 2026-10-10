@@ -1,0 +1,270 @@
+{
+  "kind": "Narrated educational summary, not a game execution recording",
+  "viewport": {
+    "width": 1440,
+    "height": 810
+  },
+  "video_seconds": 175.56,
+  "timeline_seconds": 173.76956916099775,
+  "measured_video_lead_seconds": 1.2290000000000134,
+  "sync_note": "Video includes browser setup before playback; PCM is delayed by measured setup duration. Alignment is approximate at video-frame precision.",
+  "voice": "Local synthetic Mandarin narration, not the project owner speaking",
+  "page_errors": [],
+  "audio_max_volume_db": -0.6,
+  "controls": {
+    "started": true,
+    "paused": true,
+    "restarted": true,
+    "chapter_navigation": true
+  },
+  "samples": [
+    {
+      "scene": "purpose",
+      "line": 0,
+      "image": "scene-01-1.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "如果玩家做了作者没有预料到的事，游戏世界还能给出可信的后果吗？",
+      "active": true
+    },
+    {
+      "scene": "purpose",
+      "line": 1,
+      "image": "scene-01-2.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "Nomos 希望用世界规则构建角色扮演沙盒，而不是为每种选择手写剧情分支。",
+      "active": true
+    },
+    {
+      "scene": "story",
+      "line": 0,
+      "image": "scene-02-1.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "作者定义人物、物件和规律。玩家选择行动，角色也可以按有限策略选择。",
+      "active": true
+    },
+    {
+      "scene": "story",
+      "line": 1,
+      "image": "scene-02-2.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "剧情不是源码中的行动清单，而是实际选择与规则结算留下的历史。",
+      "active": true
+    },
+    {
+      "scene": "assets",
+      "line": 0,
+      "image": "scene-03-1.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "规则库定义类型和规律。端口不是网络端口，它声明规则能读取谁的状态、修改哪些字段。",
+      "active": true
+    },
+    {
+      "scene": "assets",
+      "line": 1,
+      "image": "scene-03-2.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "世界声明选择规则、绑定参与者；开局资产提供角色、资源和位置。",
+      "active": true
+    },
+    {
+      "scene": "compiler",
+      "line": 0,
+      "image": "scene-04-1.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "C 零编译作者声明，构建规则程序；程序绑定开局，创建会话。",
+      "active": true
+    },
+    {
+      "scene": "compiler",
+      "line": 1,
+      "image": "scene-04-2.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "K 零重核提交的行动。状态变化与记录一起提交，保留行动者和规则来源。菜单候选不等于行动必定获准。",
+      "active": true
+    },
+    {
+      "scene": "verify",
+      "line": 0,
+      "image": "scene-05-1.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "T 零检查源码之外的测试路线：希望尝试哪些行动、检查什么目标。它使用同一编译产物，真实运行。",
+      "active": true
+    },
+    {
+      "scene": "verify",
+      "line": 1,
+      "image": "scene-05-2.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "一条路线失败，不等于所有玩法都不可达。",
+      "active": true
+    },
+    {
+      "scene": "admission",
+      "line": 0,
+      "image": "scene-06-1.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "只给女巫规则增加不能自救。开局和请求不变，前九步行动、事件及规则来源相同。",
+      "active": true
+    },
+    {
+      "scene": "admission",
+      "line": 1,
+      "image": "scene-06-2.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "第十步从成功变为拒绝，本步无写入。救人候选仍然存在，这不是菜单自动过滤。",
+      "active": true
+    },
+    {
+      "scene": "consequence",
+      "line": 0,
+      "image": "scene-07-1.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "三名狼人分别选择 F、F、E。只把共同袭击规则从全票一致换成多数票。",
+      "active": true
+    },
+    {
+      "scene": "consequence",
+      "line": 1,
+      "image": "scene-07-2.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "十次行动全部获准，但全票版无人死亡，多数票版 F 清晨死亡。规则也决定真实后果。",
+      "active": true
+    },
+    {
+      "scene": "configuration",
+      "line": 0,
+      "image": "scene-08-1.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "保持规则不变，把女巫从 B 换到 E，通知、选项和行动来源一起转到 E。",
+      "active": true
+    },
+    {
+      "scene": "configuration",
+      "line": 1,
+      "image": "scene-08-2.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "增加 G、H 后，有独立视图，G 能真实投票。仍须同步人物声明与开局，不是只改人数开关。",
+      "active": true
+    },
+    {
+      "scene": "adventure",
+      "line": 0,
+      "image": "scene-09-1.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "冰宫冒险 M 一，把充能、寒冷、观察、角色有限选择和营救组合起来。",
+      "active": true
+    },
+    {
+      "scene": "adventure",
+      "line": 1,
+      "image": "scene-09-2.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "世界真相与角色知识分开。解冻不等于营救，邀请不等于接受。样例不代表完整桌游。",
+      "active": true
+    },
+    {
+      "scene": "future",
+      "line": 0,
+      "image": "scene-10-1.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "未来，语言模型可以草拟内容，读取授权信息，提出行动，讲述已发生的故事。",
+      "active": true
+    },
+    {
+      "scene": "future",
+      "line": 1,
+      "image": "scene-10-2.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "但不能绕过规则写入结局。想象力与确定性结算，在这里连接。",
+      "active": true
+    },
+    {
+      "scene": "status",
+      "line": 0,
+      "image": "scene-11-1.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "当前已有有限编译链、结算内核、见证检查与真实编辑实验。尚不是通用 TRPG、多人服务或语言模型主持人。",
+      "active": true
+    },
+    {
+      "scene": "status",
+      "line": 1,
+      "image": "scene-11-2.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "发起者负责问题、方向、语义决策与验收。后期主要代码由 Codex 和协作者实现或审阅。",
+      "active": true
+    },
+    {
+      "scene": "close",
+      "line": 0,
+      "image": "scene-12-1.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "从中文导览开始，再看真实命令回放，或亲手改一条规则。",
+      "active": true
+    },
+    {
+      "scene": "close",
+      "line": 1,
+      "image": "scene-12-2.png",
+      "overflow": false,
+      "diagramOverlap": false,
+      "subtitle": "作者定义世界允许发生什么，玩家决定故事如何发生。",
+      "active": true
+    }
+  ],
+  "artifacts_sha256": {
+    "index.html": "3b0b203b9bd81ac186ff92acd6041235795ebf0b217d3232399fcf486d56ad28",
+    "narration.wav": "2755fbcc7f75233430286f61ee40b11e93d06b298974cf8ce93158035d58c627",
+    "subtitles.srt": "b8debac260a59989aaa2462bff7f290a07a28b6b9dd59dd4fd2e3b288afe09cf",
+    "timeline.json": "06f09cf82f912417226081e89bd077619324c94539dca0b77cacb0a7fe1e3164",
+    "introduction.mp4": "4f171906d9152fb7108c450fc13ffaa5469710207b4e6af789284a7e13f3966a",
+    "poster.png": "aabbd8f9c768f5d08c0ecd8ca6bd4a709f98921ebfbc92a602614a49cef836a4",
+    "scene-01-1.png": "aabbd8f9c768f5d08c0ecd8ca6bd4a709f98921ebfbc92a602614a49cef836a4",
+    "scene-01-2.png": "713908ad0c32bcae8e4c11591fce801f655909bd650f85c0684186334b0fd43e",
+    "scene-02-1.png": "5f3aa0c5fb7712ff1d79943221a4d1f765f146f8968dee4988291409a63aec45",
+    "scene-02-2.png": "84fb7bc4cb74fae38258c5ff857930b3999237f07f924e435356aab76aca6e85",
+    "scene-03-1.png": "cdf640e6b78598de29c25aaf62c794ddc2170da7508417d15f281257798178c3",
+    "scene-03-2.png": "541e3361c88c72e5fff98db0cba97be15817007c7a08c16f6e4aaf940aabdc09",
+    "scene-04-1.png": "d81951c49b2b41c7e7a3069d59ec32e26de5b236385e64710851a30c8ef7e69d",
+    "scene-04-2.png": "2d78b7a325b3f5d0fe2d0e0b73699e1169fbbd1e2f52f01ffc68fc1e03e9755d",
+    "scene-05-1.png": "483681cf61a404f6e9175aff8dbae9ff338167440bd462e0e4789bd1a86d91a4",
+    "scene-05-2.png": "ca14fca7a2bbf22699cdc73ead22ee1f6cd3c559a80d10328b8df727661b67f8",
+    "scene-06-1.png": "e8b2b25206945d7b04b408af196cf63a3ef4a62c0dbf01827ff6892df6494886",
+    "scene-06-2.png": "7630520f236b6710ad5cc53d0d8a32ef7e878fb99035c2a674f1f01ec1475dd0",
+    "scene-07-1.png": "ce722950feb4345bef6db5fc92f0fac872ff7cd5528c4edab3bff75cfd9d4c2e",
+    "scene-07-2.png": "e39c9a17550406176e605dfb0a27fd69ccd872d8f8253d74f44c1c338370acaf",
+    "scene-08-1.png": "f7256b838506323af8730400f3c5ab427d84e23fc92d5397a529b8a1faa4266c",
+    "scene-08-2.png": "64531ddcf42905d65711f1d6bbe817b2eeef1307caa969d5a3606f8c1ccd09c9",
+    "scene-09-1.png": "758c31f5f22b776110f150db6a4f915f495ee14669e88eac51d88c05089b7140",
+    "scene-09-2.png": "ba6d1f9f6011cade9ac9fcc49456d8c0c45466cc40baed169facd0c396fbca0f",
+    "scene-10-1.png": "86abc17a015abc059a9359f5a37e7d918e57a7cd0acd2705d226817d4e62ea4a",
+    "scene-10-2.png": "5dad8b9b1a2100f8dc668d87752f5a27225fb799684b65ebe44fe27e16ee3b2f",
+    "scene-11-1.png": "b1a0793f6fb7aa1544bb2bd3e8a02d8c6ac948adde81c6928937c2c63ca0d152",
+    "scene-11-2.png": "880bddca9bea6eff48f48e5c88a016d0abe5ac4540c80aed77bf6a813a4c4361",
+    "scene-12-1.png": "38b32e3a5156a06e48185809837fcf36aeec0d8849a64193f78f97600c0a1c4f",
+    "scene-12-2.png": "b1635cf48069e443433066a1ce0612feadfe3abd36d86a85e05af18b0b2fe4b2"
+  }
+}

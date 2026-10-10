@@ -1,0 +1,23 @@
+{
+  "kind": "educational summary, not an execution capture",
+  "voice": "Microsoft Huihui Desktop",
+  "rate": 3,
+  "synthesis": "local Windows System.Speech",
+  "duration_seconds": 173.76956916099775,
+  "inputs_sha256": {
+    "docs/showcase/introduction/storyboard.json": "9d47c8411f93920cd134404daea9277726c06dcb9379aaf99c737463a38c6073",
+    "docs/showcase/introduction/player.html": "e5c117e6933d1074abbb54784bc8bf923e29b09b77715e3f0d9371e5d75e3955",
+    "tools/build_project_introduction.py": "eb31ad7ff47a7f013bd418f73b33cb3de491bf66242fb2286d15613d5de131d2",
+    "docs/showcase/recording/capture-v1/comparison.json": "836a2fd80b00065ddab3d68bb89ab2889f876be888237a0763b47e0ecc2c50aa",
+    "docs/showcase/wolf-vote/evidence-predicates-v1/result.json": "4bc1ac3d82a07c7175c5ea6c8cbf1ae39d96231b85c43ad145696aec6410db11",
+    "docs/showcase/world-edits/evidence-predicates-v1/result.json": "d420c0ea781c01354cd27579270003999a47ca47c330e35c963904d9ee956fd6"
+  },
+  "outputs_sha256": {
+    "index.html": "3b0b203b9bd81ac186ff92acd6041235795ebf0b217d3232399fcf486d56ad28",
+    "narration.wav": "2755fbcc7f75233430286f61ee40b11e93d06b298974cf8ce93158035d58c627",
+    "subtitles.srt": "b8debac260a59989aaa2462bff7f290a07a28b6b9dd59dd4fd2e3b288afe09cf",
+    "timeline.json": "06f09cf82f912417226081e89bd077619324c94539dca0b77cacb0a7fe1e3164",
+    "TRANSCRIPT.md": "eab26f4d2874ddb713084d4172a15b645c977d9d5de2732e3c2912595a670895"
+  },
+  "note": "Saved evidence is summarized, not rerun. SHA256 identifies bytes; it is not a signature. No engine or world changes. Transcript EOF normalized using the final builder; audio, timeline and movie unchanged."
+}

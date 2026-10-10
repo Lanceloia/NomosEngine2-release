@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NomosEngine2 · 让规则产生故事</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#171b1e;color:#f2f4f5;font-family:"Microsoft YaHei","Noto Sans SC",sans-serif;letter-spacing:0}
+button{font:inherit;cursor:pointer}select{font-family:inherit}#stage{height:100vh;min-height:660px;display:grid;grid-template-rows:80px 100px 1fr 116px 62px;padding:0 64px;overflow:hidden}
+header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #374247;font-size:18px;color:#a8b6bc}header strong{color:#f2f4f5;font-size:23px;font-weight:600}#tag{color:#b8c5cb;font-size:16px}
+h1{font-size:44px;font-weight:600;margin:27px 0 0;line-height:1.3}#diagram{position:relative;display:flex;flex-direction:column;justify-content:center;gap:28px}#diagram .row{display:flex;align-items:center;justify-content:center;gap:22px;width:100%}.node{min-width:150px;max-width:400px;padding:20px 26px;border:1px solid #53646c;border-radius:6px;color:#e2e8eb;background:#20282d;text-align:center;transition:opacity .5s,border-color .5s,background .5s,transform .5s;line-height:1.6;font-size:25px}.node small{display:block;color:#b3c1c7;font-size:17px;margin-top:6px}.arrow{font-size:30px;color:#83969e}.active{border-color:#77e0c1!important;background:#214438!important;transform:translateY(-4px)}.danger.active{border-color:#ff9d98!important;background:#4c2929!important}.dim{opacity:.38}.note{color:#acbec6;text-align:center;font-size:21px;line-height:1.7}.formula{font-size:34px;text-align:center;line-height:1.8;color:#e5ecef}.accent{color:#77e0c1}.coral{color:#ffa39d}.mono{font-family:Consolas,"DejaVu Sans Mono",monospace;font-size:23px}.chip{border-bottom:3px solid #77e0c1;padding:8px 14px;font-size:26px}.panel{flex:1;max-width:580px;min-height:158px;display:flex;flex-direction:column;justify-content:center;gap:15px}.boundary{border-left:2px dashed #ffa39d;padding-left:32px}.seats{display:flex;gap:14px;justify-content:center}.seat{width:75px;height:75px;border:1px solid #586b75;border-radius:50%;display:grid;place-items:center;font-size:26px}.result{font-size:31px}.source{font-size:16px;color:#8ea4af;text-align:center}#subtitle{font-size:28px;line-height:1.65;align-self:center;text-align:center;max-width:1250px;margin:auto;color:#f2f4f5;min-height:92px;display:flex;align-items:center;justify-content:center}
+footer{display:flex;align-items:center;gap:16px;border-top:1px solid #374247;font-size:14px;color:#b4c4cb}footer button{border:0;background:transparent;color:#ecf3f5;font-size:22px;width:40px;height:40px;border-radius:4px}button:hover,button:focus-visible{background:#34474f;outline:2px solid #77e0c1}#seek{flex:1;accent-color:#77e0c1}#time{font-variant-numeric:tabular-nums;width:100px}#start{position:absolute;inset:0;background:#171b1ef0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;z-index:4}#start h2{font-size:46px;margin:0}#start p{font-size:22px;color:#bfced5;margin:0}#begin{background:#77e0c1;color:#152b25;border:0;padding:15px 32px;border-radius:5px;font-size:24px}#error{color:#ffaaa3}#chapter{max-width:215px;color:#e6eef2;background:#202b31;border:1px solid #53646c;padding:8px;font-size:14px}
+@media(max-width:1280px){#stage{padding:0 40px;grid-template-rows:70px 95px 1fr 120px 58px}h1{font-size:40px}.node{font-size:22px;padding:16px 20px;min-width:130px}#subtitle{font-size:26px}.formula{font-size:30px}}
+</style>
+<main id="stage">
+  <header><strong>NomosEngine2</strong><span id="tag"></span></header>
+  <h1 id="title"></h1><section id="diagram" aria-label="讲解示意"></section>
+  <div id="subtitle" aria-live="off"></div>
+  <footer><button id="play" aria-label="播放" title="播放 / 暂停">▶</button><button id="restart" title="重新播放" aria-label="重新播放">↻</button><input id="seek" type="range" min="0" step="0.01" value="0" aria-label="播放进度"><span id="time"></span><select id="chapter" aria-label="选择章节"></select></footer>
+</main>
+<div id="start"><h2>让规则产生故事</h2><p>中文旁白 · 同步字幕 · 项目动机、方法与真实实验</p><button id="begin">▶ 开始观看</button><p id="error"></p></div>
+<audio id="audio" src="narration.wav" preload="auto"></audio>
+<script>
+const film = __INTRODUCTION__;
+const audio = document.querySelector('#audio');
+const diagram = document.querySelector('#diagram');
+const node = (id, title, detail='', extra='') => `<div data-focus="${id}" class="node ${extra}">${title}${detail ? `<small>${detail}</small>` : ''}</div>`;
+const arrow = '<span class="arrow">→</span>';
+const row = (...parts) => `<div class="row">${parts.join('')}</div>`;
+const note = value => `<div class="note">${value}</div>`;
+const views = {
+  world: () => row(node('choice','玩家的选择','作者未必预先想到'),arrow,node('world','共同世界','按规则给出后果')) + note('RPG / TRPG 沙盒 · 不依赖预写每个结局'),
+  story: () => row(node('rules','世界规律','人物 · 物件 · 能力'),arrow,node('choice','实际选择','玩家 / NPC'),arrow,node('history','故事历史','真实发生与来源')) + note('世界源码 ≠ 行动剧本'),
+  assets: () => row(node('library','Lib · 规则库','类型与可复用 Law'),node('library','Ports · 端口','读取与写入范围')) + row(node('opening','Source · 世界声明','实例、绑定与控制'),node('opening','Assets · 开局','职业、资源与位置')),
+  pipeline: () => row(node('compile','作者声明','Lib / Ports / Source'),arrow,node('compile','C0 · 编译器','检查并构建 Program'),arrow,node('runtime','K0 · 结算内核','Program + Assets → Session')) + row(node('runtime','行动提议','候选不等于许可'),arrow,node('runtime','当前态重核','状态变化与来源原子发布')),
+  witness: () => row(node('witness','独立行动见证','希望尝试的有限序列'),arrow,node('witness','T0 · 见证检查','调用同一 Program / Session'),arrow,node('limit','运行结果','通过 / 拒绝 / 未达目标')) + note('一条路线失败 ≠ 所有路线不可达'),
+  admission: () => row(node('prefix','前九步相同','同一开局 · 同一见证'),arrow,node('reject','第十步：B 救自己','只增加 actor.name != scene.pending_attack','danger')) + row(node('reject','原规则：发布','行动成功'),node('reject','新规则：拒绝','本步无状态 / 来源写入','danger')) + note('救人候选仍在 · 不是菜单自动过滤') + '<div class="source">依据：recording/capture-v1/comparison.json 与同目录原版、改后报告</div>',
+  vote: () => '<div class="formula" data-focus="votes"><span class="chip">C → F</span>　<span class="chip">D → F</span>　<span class="chip">F → E</span></div>' + row(node('result','全票一致','无人死亡'),node('result','多数票','F 清晨死亡','danger')) + note('同十次行动全部发布 · 只替换一条规则引用') + '<div class="source">依据：wolf-vote/evidence-predicates-v1/result.json</div>',
+  seats: () => row(node('role','女巫 B → E','通知 · 选项 · 行动来源一起变化')) + '<div class="seats" data-focus="seats">' + 'ABCDEFGH'.split('').map((seat,index) => `<div class="seat" style="${index>5?'border-color:#77e0c1;color:#77e0c1':''}">${seat}</div>`).join('') + '</div>' + note('G / H 独立视图 · G 真实投票 · 声明与开局仍需同步') + '<div class="source">依据：world-edits/evidence-predicates-v1/result.json</div>',
+  adventure: () => row(node('flame','永焰与充能','持有 · 转移 · 消耗'),arrow,node('flame','寒冷与保护','按当前规则结算')) + row(node('knowledge','本地观察','世界真相 ≠ 角色知识'),arrow,node('knowledge','营救与离开','解冻 ≠ 营救 · 邀请 ≠ 接受')),
+  future: () => row(node('model','LLM · 想象与提议','草拟资产 / 提出行动'),arrow,node('boundary','受检入口','编译检查 · K0 准入','boundary'),arrow,node('boundary','真实结算','状态与来源')) + note('模型可以讲述已发生的故事 · 不直接写入结局'),
+  status: () => row('<div class="panel" data-focus="scope"><div class="result accent">当前已实现</div><div class="note">有限编译链 · 原子结算 · 行动见证<br>规则 / 职业 / 人数编辑实验</div></div>','<div class="panel boundary" data-focus="scope"><div class="result coral">尚未实现</div><div class="note">通用 TRPG · 多人身份服务<br>LLM 主持人管线</div></div>') + note('<span data-focus="credit">发起者：问题、方向、语义决策、验收<br>Codex / 协作者：后期主要代码实现与审阅</span>'),
+  close: () => '<div class="formula" data-focus="world">作者定义 <span class="accent">世界允许发生什么</span><br>玩家决定 <span class="accent">故事如何发生</span></div>' + note('<span data-focus="read">中文项目导览 → 真实命令回放 → 亲手改一条规则</span>'),
+};
+let current=-1, lastLine=-1;
+function clock(seconds){return `${Math.floor(seconds/60)}:${String(Math.floor(seconds%60)).padStart(2,'0')}`;}
+function paint(){
+  const t=audio.currentTime;
+  let index=0; film.scenes.forEach((scene,i)=>{if(t>=scene.start)index=i;});
+  const scene=film.scenes[index];
+  if(current!==index){current=index;lastLine=-1;document.querySelector('#title').textContent=scene.title;document.querySelector('#tag').textContent=scene.tag;diagram.innerHTML=views[scene.visual]();document.querySelector('#chapter').value=index;}
+  let lineIndex=0;scene.lines.forEach((line,i)=>{if(t>=line.start)lineIndex=i;});
+  if(lastLine!==lineIndex){lastLine=lineIndex;const line=scene.lines[lineIndex];document.querySelector('#subtitle').textContent=line.text;diagram.querySelectorAll('[data-focus]').forEach(el=>{el.classList.toggle('active',el.dataset.focus===line.focus);el.classList.toggle('dim',el.dataset.focus!==line.focus);});}
+  document.querySelector('#seek').value=t;
+  document.querySelector('#time').textContent=`${clock(t)} / ${clock(film.duration)}`;
+  document.querySelector('#play').textContent=audio.paused?'▶':'Ⅱ';
+  document.querySelector('#play').setAttribute('aria-label',audio.paused?'播放':'暂停');
+  requestAnimationFrame(paint);
+}
+async function play(){
+  try {if(audio.ended) audio.currentTime=0;await audio.play();document.querySelector('#start').style.display='none';document.querySelector('#error').textContent='';}
+  catch(error){document.querySelector('#start').style.display='flex';document.querySelector('#error').textContent=`旁白未能播放：${error.message}。请确认 narration.wav 与网页在同一目录，用浏览器打开。`;throw error;}
+}
+document.querySelector('#begin').onclick=()=>play().catch(()=>{});
+document.querySelector('#play').onclick=()=>audio.paused?play().catch(()=>{}):audio.pause();
+document.querySelector('#restart').onclick=()=>{audio.currentTime=0;play().catch(()=>{});};
+document.querySelector('#seek').max=film.duration;
+document.querySelector('#seek').oninput=event=>{audio.currentTime=Number(event.target.value);};
+film.scenes.forEach((scene,index)=>{const option=document.createElement('option');option.value=index;option.textContent=`${index+1}. ${scene.title}`;document.querySelector('#chapter').append(option);});
+document.querySelector('#chapter').onchange=event=>{audio.currentTime=film.scenes[Number(event.target.value)].start+0.05;};
+window.introduction={film,play,seek:t=>{audio.currentTime=t;},get ended(){return audio.ended;}};
+paint();
+</script>
+</html>
