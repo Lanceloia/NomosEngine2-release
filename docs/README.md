@@ -9,6 +9,7 @@
 | 理解问题、愿景和已经做成的部分 | [项目导览](PROJECT_TOUR.md) |
 | 安装并运行三个实验 | [仓库首页](../README.md) |
 | 核对每项展示到底证明了什么 | [实验地图](SHOWCASE_MATRIX.md) |
+| 先看一次实际规则编辑与重跑 | [短回放及证据](showcase/recording/README.md) |
 | 亲手修改规则、人数或职业 | [作者指南](AUTHORING.md) |
 
 ## 作者参考

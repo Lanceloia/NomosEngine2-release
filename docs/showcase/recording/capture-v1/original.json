@@ -1,0 +1,1219 @@
+{
+  "stage": "run",
+  "stop_reason": "scheduled_end",
+  "goal_status": "met",
+  "steps_completed": 10,
+  "requested_step": null,
+  "published": [
+    {
+      "occurrence": 1,
+      "family": "action",
+      "source": "c0.six-seat.vote-a",
+      "classification": "c0.six-seat.vote-a.action",
+      "formation_basis": [
+        "record",
+        "_K0InMemoryActionBasis",
+        [
+          [
+            "source",
+            [
+              "record",
+              "K0SourceSpecKey",
+              [
+                [
+                  "value",
+                  "c0.six-seat.vote-a"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "participants": [
+        "record",
+        "C0ValueActionParticipants",
+        [
+          [
+            "actor",
+            "A"
+          ],
+          [
+            "target",
+            null
+          ],
+          [
+            "selected",
+            []
+          ],
+          [
+            "actors",
+            []
+          ]
+        ]
+      ],
+      "coordinate": [
+        "record",
+        "_K0OccurrenceCoordinate",
+        [
+          [
+            "dependency_stage",
+            null
+          ],
+          [
+            "causal_wave_depth",
+            0
+          ]
+        ]
+      ],
+      "semantic_envelope": [
+        "record",
+        "Envelope",
+        [
+          [
+            "action",
+            [
+              "record",
+              "K0OccurrenceRef",
+              [
+                [
+                  "value",
+                  1
+                ]
+              ]
+            ]
+          ],
+          [
+            "target",
+            "C"
+          ]
+        ]
+      ]
+    },
+    {
+      "occurrence": 2,
+      "family": "action",
+      "source": "c0.six-seat.vote-b",
+      "classification": "c0.six-seat.vote-b.action",
+      "formation_basis": [
+        "record",
+        "_K0InMemoryActionBasis",
+        [
+          [
+            "source",
+            [
+              "record",
+              "K0SourceSpecKey",
+              [
+                [
+                  "value",
+                  "c0.six-seat.vote-b"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "participants": [
+        "record",
+        "C0ValueActionParticipants",
+        [
+          [
+            "actor",
+            "B"
+          ],
+          [
+            "target",
+            null
+          ],
+          [
+            "selected",
+            []
+          ],
+          [
+            "actors",
+            []
+          ]
+        ]
+      ],
+      "coordinate": [
+        "record",
+        "_K0OccurrenceCoordinate",
+        [
+          [
+            "dependency_stage",
+            null
+          ],
+          [
+            "causal_wave_depth",
+            0
+          ]
+        ]
+      ],
+      "semantic_envelope": [
+        "record",
+        "Envelope",
+        [
+          [
+            "action",
+            [
+              "record",
+              "K0OccurrenceRef",
+              [
+                [
+                  "value",
+                  2
+                ]
+              ]
+            ]
+          ],
+          [
+            "target",
+            "C"
+          ]
+        ]
+      ]
+    },
+    {
+      "occurrence": 3,
+      "family": "action",
+      "source": "c0.six-seat.vote-c",
+      "classification": "c0.six-seat.vote-c.action",
+      "formation_basis": [
+        "record",
+        "_K0InMemoryActionBasis",
+        [
+          [
+            "source",
+            [
+              "record",
+              "K0SourceSpecKey",
+              [
+                [
+                  "value",
+                  "c0.six-seat.vote-c"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "participants": [
+        "record",
+        "C0ValueActionParticipants",
+        [
+          [
+            "actor",
+            "C"
+          ],
+          [
+            "target",
+            null
+          ],
+          [
+            "selected",
+            []
+          ],
+          [
+            "actors",
+            []
+          ]
+        ]
+      ],
+      "coordinate": [
+        "record",
+        "_K0OccurrenceCoordinate",
+        [
+          [
+            "dependency_stage",
+            null
+          ],
+          [
+            "causal_wave_depth",
+            0
+          ]
+        ]
+      ],
+      "semantic_envelope": [
+        "record",
+        "Envelope",
+        [
+          [
+            "action",
+            [
+              "record",
+              "K0OccurrenceRef",
+              [
+                [
+                  "value",
+                  3
+                ]
+              ]
+            ]
+          ],
+          [
+            "target",
+            "C"
+          ]
+        ]
+      ]
+    },
+    {
+      "occurrence": 4,
+      "family": "action",
+      "source": "c0.six-seat.vote-d",
+      "classification": "c0.six-seat.vote-d.action",
+      "formation_basis": [
+        "record",
+        "_K0InMemoryActionBasis",
+        [
+          [
+            "source",
+            [
+              "record",
+              "K0SourceSpecKey",
+              [
+                [
+                  "value",
+                  "c0.six-seat.vote-d"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "participants": [
+        "record",
+        "C0ValueActionParticipants",
+        [
+          [
+            "actor",
+            "D"
+          ],
+          [
+            "target",
+            null
+          ],
+          [
+            "selected",
+            []
+          ],
+          [
+            "actors",
+            []
+          ]
+        ]
+      ],
+      "coordinate": [
+        "record",
+        "_K0OccurrenceCoordinate",
+        [
+          [
+            "dependency_stage",
+            null
+          ],
+          [
+            "causal_wave_depth",
+            0
+          ]
+        ]
+      ],
+      "semantic_envelope": [
+        "record",
+        "Envelope",
+        [
+          [
+            "action",
+            [
+              "record",
+              "K0OccurrenceRef",
+              [
+                [
+                  "value",
+                  4
+                ]
+              ]
+            ]
+          ],
+          [
+            "target",
+            "A"
+          ]
+        ]
+      ]
+    },
+    {
+      "occurrence": 5,
+      "family": "action",
+      "source": "c0.six-seat.vote-e",
+      "classification": "c0.six-seat.vote-e.action",
+      "formation_basis": [
+        "record",
+        "_K0InMemoryActionBasis",
+        [
+          [
+            "source",
+            [
+              "record",
+              "K0SourceSpecKey",
+              [
+                [
+                  "value",
+                  "c0.six-seat.vote-e"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "participants": [
+        "record",
+        "C0ValueActionParticipants",
+        [
+          [
+            "actor",
+            "E"
+          ],
+          [
+            "target",
+            null
+          ],
+          [
+            "selected",
+            []
+          ],
+          [
+            "actors",
+            []
+          ]
+        ]
+      ],
+      "coordinate": [
+        "record",
+        "_K0OccurrenceCoordinate",
+        [
+          [
+            "dependency_stage",
+            null
+          ],
+          [
+            "causal_wave_depth",
+            0
+          ]
+        ]
+      ],
+      "semantic_envelope": [
+        "record",
+        "Envelope",
+        [
+          [
+            "action",
+            [
+              "record",
+              "K0OccurrenceRef",
+              [
+                [
+                  "value",
+                  5
+                ]
+              ]
+            ]
+          ],
+          [
+            "target",
+            "A"
+          ]
+        ]
+      ]
+    },
+    {
+      "occurrence": 6,
+      "family": "action",
+      "source": "c0.six-seat.vote-f",
+      "classification": "c0.six-seat.vote-f.action",
+      "formation_basis": [
+        "record",
+        "_K0InMemoryActionBasis",
+        [
+          [
+            "source",
+            [
+              "record",
+              "K0SourceSpecKey",
+              [
+                [
+                  "value",
+                  "c0.six-seat.vote-f"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "participants": [
+        "record",
+        "C0ValueActionParticipants",
+        [
+          [
+            "actor",
+            "F"
+          ],
+          [
+            "target",
+            null
+          ],
+          [
+            "selected",
+            []
+          ],
+          [
+            "actors",
+            []
+          ]
+        ]
+      ],
+      "coordinate": [
+        "record",
+        "_K0OccurrenceCoordinate",
+        [
+          [
+            "dependency_stage",
+            null
+          ],
+          [
+            "causal_wave_depth",
+            0
+          ]
+        ]
+      ],
+      "semantic_envelope": [
+        "record",
+        "Envelope",
+        [
+          [
+            "action",
+            [
+              "record",
+              "K0OccurrenceRef",
+              [
+                [
+                  "value",
+                  6
+                ]
+              ]
+            ]
+          ],
+          [
+            "target",
+            "A"
+          ]
+        ]
+      ]
+    },
+    {
+      "occurrence": 7,
+      "family": "event",
+      "source": "c0.six-seat.resolve-f",
+      "classification": "c0.six-seat.resolve-f.event",
+      "formation_basis": [
+        "record",
+        "_K0CausalFormation",
+        [
+          [
+            "predecessor",
+            [
+              "record",
+              "K0OccurrenceRef",
+              [
+                [
+                  "value",
+                  6
+                ]
+              ]
+            ]
+          ],
+          [
+            "causal_law",
+            [
+              "record",
+              "K0CausalLawKey",
+              [
+                [
+                  "value",
+                  "c0.six-seat.resolve-f.causes"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "participants": [
+        "record",
+        "C0DirectSceneParticipants",
+        [
+          [
+            "actors",
+            []
+          ]
+        ]
+      ],
+      "coordinate": [
+        "record",
+        "_K0OccurrenceCoordinate",
+        [
+          [
+            "dependency_stage",
+            null
+          ],
+          [
+            "causal_wave_depth",
+            1
+          ]
+        ]
+      ],
+      "semantic_envelope": [
+        "record",
+        "C0DirectSceneEnvelope",
+        [
+          [
+            "trigger",
+            [
+              "record",
+              "K0OccurrenceRef",
+              [
+                [
+                  "value",
+                  6
+                ]
+              ]
+            ]
+          ],
+          [
+            "event",
+            [
+              "record",
+              "K0OccurrenceRef",
+              [
+                [
+                  "value",
+                  7
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    {
+      "occurrence": 8,
+      "family": "action",
+      "source": "c0.six-seat.pass-a",
+      "classification": "c0.six-seat.pass-a.action",
+      "formation_basis": [
+        "record",
+        "_K0InMemoryActionBasis",
+        [
+          [
+            "source",
+            [
+              "record",
+              "K0SourceSpecKey",
+              [
+                [
+                  "value",
+                  "c0.six-seat.pass-a"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "participants": [
+        "record",
+        "C0ValueActionParticipants",
+        [
+          [
+            "actor",
+            "A"
+          ],
+          [
+            "target",
+            null
+          ],
+          [
+            "selected",
+            []
+          ],
+          [
+            "actors",
+            []
+          ]
+        ]
+      ],
+      "coordinate": [
+        "record",
+        "_K0OccurrenceCoordinate",
+        [
+          [
+            "dependency_stage",
+            null
+          ],
+          [
+            "causal_wave_depth",
+            0
+          ]
+        ]
+      ],
+      "semantic_envelope": [
+        "record",
+        "PassEnvelope",
+        [
+          [
+            "action",
+            [
+              "record",
+              "K0OccurrenceRef",
+              [
+                [
+                  "value",
+                  8
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    {
+      "occurrence": 9,
+      "family": "action",
+      "source": "c0.six-seat.attack-c",
+      "classification": "c0.six-seat.attack-c.action",
+      "formation_basis": [
+        "record",
+        "_K0InMemoryActionBasis",
+        [
+          [
+            "source",
+            [
+              "record",
+              "K0SourceSpecKey",
+              [
+                [
+                  "value",
+                  "c0.six-seat.attack-c"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "participants": [
+        "record",
+        "C0ValueActionParticipants",
+        [
+          [
+            "actor",
+            "C"
+          ],
+          [
+            "target",
+            null
+          ],
+          [
+            "selected",
+            []
+          ],
+          [
+            "actors",
+            []
+          ]
+        ]
+      ],
+      "coordinate": [
+        "record",
+        "_K0OccurrenceCoordinate",
+        [
+          [
+            "dependency_stage",
+            null
+          ],
+          [
+            "causal_wave_depth",
+            0
+          ]
+        ]
+      ],
+      "semantic_envelope": [
+        "record",
+        "Envelope",
+        [
+          [
+            "action",
+            [
+              "record",
+              "K0OccurrenceRef",
+              [
+                [
+                  "value",
+                  9
+                ]
+              ]
+            ]
+          ],
+          [
+            "target",
+            "B"
+          ]
+        ]
+      ]
+    },
+    {
+      "occurrence": 10,
+      "family": "action",
+      "source": "c0.six-seat.attack-d",
+      "classification": "c0.six-seat.attack-d.action",
+      "formation_basis": [
+        "record",
+        "_K0InMemoryActionBasis",
+        [
+          [
+            "source",
+            [
+              "record",
+              "K0SourceSpecKey",
+              [
+                [
+                  "value",
+                  "c0.six-seat.attack-d"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "participants": [
+        "record",
+        "C0ValueActionParticipants",
+        [
+          [
+            "actor",
+            "D"
+          ],
+          [
+            "target",
+            null
+          ],
+          [
+            "selected",
+            []
+          ],
+          [
+            "actors",
+            []
+          ]
+        ]
+      ],
+      "coordinate": [
+        "record",
+        "_K0OccurrenceCoordinate",
+        [
+          [
+            "dependency_stage",
+            null
+          ],
+          [
+            "causal_wave_depth",
+            0
+          ]
+        ]
+      ],
+      "semantic_envelope": [
+        "record",
+        "Envelope",
+        [
+          [
+            "action",
+            [
+              "record",
+              "K0OccurrenceRef",
+              [
+                [
+                  "value",
+                  10
+                ]
+              ]
+            ]
+          ],
+          [
+            "target",
+            "B"
+          ]
+        ]
+      ]
+    },
+    {
+      "occurrence": 11,
+      "family": "event",
+      "source": "c0.six-seat.select-target",
+      "classification": "c0.six-seat.select-target.event",
+      "formation_basis": [
+        "record",
+        "_K0CausalFormation",
+        [
+          [
+            "predecessor",
+            [
+              "record",
+              "K0OccurrenceRef",
+              [
+                [
+                  "value",
+                  10
+                ]
+              ]
+            ]
+          ],
+          [
+            "causal_law",
+            [
+              "record",
+              "K0CausalLawKey",
+              [
+                [
+                  "value",
+                  "c0.six-seat.select-target-attack-d.causes"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "participants": [
+        "record",
+        "C0DirectSceneParticipants",
+        [
+          [
+            "actors",
+            []
+          ]
+        ]
+      ],
+      "coordinate": [
+        "record",
+        "_K0OccurrenceCoordinate",
+        [
+          [
+            "dependency_stage",
+            null
+          ],
+          [
+            "causal_wave_depth",
+            1
+          ]
+        ]
+      ],
+      "semantic_envelope": [
+        "record",
+        "C0DirectSceneEnvelope",
+        [
+          [
+            "trigger",
+            [
+              "record",
+              "K0OccurrenceRef",
+              [
+                [
+                  "value",
+                  10
+                ]
+              ]
+            ]
+          ],
+          [
+            "event",
+            [
+              "record",
+              "K0OccurrenceRef",
+              [
+                [
+                  "value",
+                  11
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    {
+      "occurrence": 12,
+      "family": "event",
+      "source": "c0.six-seat.witch-notice-select_target_attack_a-b",
+      "classification": "c0.six-seat.witch-notice-select_target_attack_a-b.event",
+      "formation_basis": [
+        "record",
+        "_K0CausalFormation",
+        [
+          [
+            "predecessor",
+            [
+              "record",
+              "K0OccurrenceRef",
+              [
+                [
+                  "value",
+                  11
+                ]
+              ]
+            ]
+          ],
+          [
+            "causal_law",
+            [
+              "record",
+              "K0CausalLawKey",
+              [
+                [
+                  "value",
+                  "c0.six-seat.witch-notice-select_target_attack_a-b.causes"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "participants": [
+        "record",
+        "C0DirectActorParticipants",
+        [
+          [
+            "actor",
+            "B"
+          ]
+        ]
+      ],
+      "coordinate": [
+        "record",
+        "_K0OccurrenceCoordinate",
+        [
+          [
+            "dependency_stage",
+            null
+          ],
+          [
+            "causal_wave_depth",
+            2
+          ]
+        ]
+      ],
+      "semantic_envelope": [
+        "record",
+        "C0DirectActorEnvelope",
+        [
+          [
+            "trigger",
+            [
+              "record",
+              "K0OccurrenceRef",
+              [
+                [
+                  "value",
+                  11
+                ]
+              ]
+            ]
+          ],
+          [
+            "event",
+            [
+              "record",
+              "K0OccurrenceRef",
+              [
+                [
+                  "value",
+                  12
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    {
+      "occurrence": 13,
+      "family": "action",
+      "source": "c0.six-seat.witch-b",
+      "classification": "c0.six-seat.witch-b.action",
+      "formation_basis": [
+        "record",
+        "_K0InMemoryActionBasis",
+        [
+          [
+            "source",
+            [
+              "record",
+              "K0SourceSpecKey",
+              [
+                [
+                  "value",
+                  "c0.six-seat.witch-b"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "participants": [
+        "record",
+        "C0ValueActionParticipants",
+        [
+          [
+            "actor",
+            "B"
+          ],
+          [
+            "target",
+            null
+          ],
+          [
+            "selected",
+            []
+          ],
+          [
+            "actors",
+            []
+          ]
+        ]
+      ],
+      "coordinate": [
+        "record",
+        "_K0OccurrenceCoordinate",
+        [
+          [
+            "dependency_stage",
+            null
+          ],
+          [
+            "causal_wave_depth",
+            0
+          ]
+        ]
+      ],
+      "semantic_envelope": [
+        "record",
+        "PassEnvelope",
+        [
+          [
+            "action",
+            [
+              "record",
+              "K0OccurrenceRef",
+              [
+                [
+                  "value",
+                  13
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    },
+    {
+      "occurrence": 14,
+      "family": "event",
+      "source": "c0.six-seat.resolve-after-witch-b",
+      "classification": "c0.six-seat.resolve-after-witch-b.event",
+      "formation_basis": [
+        "record",
+        "_K0CausalFormation",
+        [
+          [
+            "predecessor",
+            [
+              "record",
+              "K0OccurrenceRef",
+              [
+                [
+                  "value",
+                  13
+                ]
+              ]
+            ]
+          ],
+          [
+            "causal_law",
+            [
+              "record",
+              "K0CausalLawKey",
+              [
+                [
+                  "value",
+                  "c0.six-seat.resolve-after-witch-b.causes"
+                ]
+              ]
+            ]
+          ]
+        ]
+      ],
+      "participants": [
+        "record",
+        "C0DirectSceneParticipants",
+        [
+          [
+            "actors",
+            []
+          ]
+        ]
+      ],
+      "coordinate": [
+        "record",
+        "_K0OccurrenceCoordinate",
+        [
+          [
+            "dependency_stage",
+            null
+          ],
+          [
+            "causal_wave_depth",
+            1
+          ]
+        ]
+      ],
+      "semantic_envelope": [
+        "record",
+        "C0DirectSceneEnvelope",
+        [
+          [
+            "trigger",
+            [
+              "record",
+              "K0OccurrenceRef",
+              [
+                [
+                  "value",
+                  13
+                ]
+              ]
+            ]
+          ],
+          [
+            "event",
+            [
+              "record",
+              "K0OccurrenceRef",
+              [
+                [
+                  "value",
+                  14
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    }
+  ],
+  "form_choices": [],
+  "detail": ""
+}

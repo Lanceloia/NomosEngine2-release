@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NomosEngine2 · 规则编辑实录</title>
+<style>
+* { box-sizing: border-box; letter-spacing: 0; }
+body { margin: 0; background: #f6f7f8; color: #202426; font-family: "Microsoft YaHei", "Noto Sans SC", sans-serif; }
+main { max-width: 1440px; height: 100vh; min-height: 680px; margin: auto; padding: 28px 44px 24px; display: flex; flex-direction: column; gap: 16px; }
+header { display: flex; justify-content: space-between; align-items: end; gap: 24px; }
+h1 { font-size: 26px; font-weight: 650; margin: 0 0 8px; }
+header p { margin: 0; font-size: 15px; color: #515a60; }
+.tag { border-left: 3px solid #17865f; padding-left: 12px; line-height: 1.7; font-size: 13px; color: #515a60; white-space: nowrap; }
+section { flex: 1; min-height: 0; display: flex; flex-direction: column; background: #1c1e20; color: #e7e9eb; border-radius: 4px; overflow: hidden; }
+.bar { background: #303336; padding: 11px 20px; color: #bdc3c7; font-size: 14px; display: flex; justify-content: space-between; }
+pre { margin: 0; font: 17px/1.4 "Cascadia Mono", Consolas, "DejaVu Sans Mono", "Microsoft YaHei", monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+#command { padding: 15px 22px; color: #abb9c1; font-size: 15px; border-bottom: 1px solid #3b3f42; }
+#output { padding: 16px 22px; flex: 1; min-height: 0; overflow-y: auto; }
+.line { display: block; min-height: 1.4em; }
+.added, .success { color: #a8e5b4; }
+.changed, .refused { color: #ffcd90; }
+.focus { border-left: 3px solid #ffcd90; margin-left: -10px; padding-left: 7px; background: #3b3429; }
+.muted { color: #b5bdc2; }
+.waiting { color: #a1a8ad; }
+nav { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; cursor: pointer; border: 0; background: none; color: #515a60; padding: 7px 8px; border-radius: 3px; }
+nav button { font-size: 13px; border-bottom: 2px solid transparent; }
+nav button[aria-current="step"] { border-color: #17865f; color: #152d23; font-weight: 600; }
+button:hover { background: #e7ece9; }
+button:focus-visible, input:focus-visible { outline: 2px solid #17865f; outline-offset: 3px; }
+.controls { display: flex; align-items: center; gap: 12px; }
+.controls button { width: 34px; height: 34px; flex: 0 0 34px; }
+input { flex: 1; accent-color: #17865f; min-width: 80px; }
+time { font: 14px Consolas, monospace; min-width: 108px; }
+footer { font-size: 12px; color: #687279; }
+@media (max-width: 950px) { main { padding: 18px; } pre { font-size: 15px; } header { align-items: start; } .tag { white-space: normal; } }
+</style>
+<main>
+<header>
+  <div><h1>NomosEngine2：改规则，不改行动见证</h1><p id="chapter">规则编辑实录</p></div>
+  <div class="tag">真实命令输出 · 分章回放<br>临时副本 · 原仓库样例未改</div>
+</header>
+<section aria-label="已录制的终端输出">
+  <div class="bar"><span>作者终端 / C0 → K0 / T0 实际见证</span><span id="status"></span></div>
+  <pre id="command"></pre>
+  <pre id="output" aria-live="off"></pre>
+</section>
+<nav aria-label="演示章节"></nav>
+<div class="controls">
+  <button id="play" title="播放 / 暂停" aria-label="播放">&#9654;</button>
+  <button id="restart" title="从头播放" aria-label="从头播放">&#8634;</button>
+  <input id="seek" type="range" min="0" value="0" step="0.05" aria-label="播放位置">
+  <time></time>
+</div>
+<footer>画面是已执行命令的输出回放，不是交互编辑器；阅读停留另加，不代表运行耗时。仅证明本次有限见证。</footer>
+</main>
+<script>
+const recording = {"chapters": [{"title": "准备：真正的作者文件", "command": "python tools/showcase_recording.py prepare \"$WORK\"", "output": "临时副本已就绪；原仓库文件不会改写。当前救人分支：\n\n            - save_choice:\n                if:\n                  when: payload.save\n                  then:\n                    require:\n                      - victim_exists: scene.pending_attack is not None\n                  else: true\n        effects:\n          - use_healing:\n              when: payload.save\n              consume: actor.healing_available\n\n[exit 0]\n", "start": 0.00026132500170206185, "output_at": 0.10139088200048718, "process_seconds": 0.10112955699878512, "reading_seconds": 8}, {"title": "原规则：同一条十步行动见证", "command": "python tools/showcase_recording.py replay \"$WORK\" original", "output": "T0 实际退出码：0\n完成 10 步；发布 14 条发生\nstop: scheduled_end    goal: met\n\n  #01  c0.six-seat.vote-a\n  #02  c0.six-seat.vote-b\n  #03  c0.six-seat.vote-c\n  #04  c0.six-seat.vote-d\n  #05  c0.six-seat.vote-e\n  #06  c0.six-seat.vote-f\n  #07  c0.six-seat.resolve-f\n  #08  c0.six-seat.pass-a\n  #09  c0.six-seat.attack-c\n  #10  c0.six-seat.attack-d\n  #11  c0.six-seat.select-target\n  #12  c0.six-seat.witch-notice-select_target_attack_a-b\n  #13  c0.six-seat.witch-b\n  #14  c0.six-seat.resolve-after-witch-b\n\n[exit 0]\n", "start": 8.1017426970011, "output_at": 10.004935726999975, "process_seconds": 1.9031930299988744, "reading_seconds": 12}, {"title": "只加一条条件", "command": "python tools/showcase_recording.py edit \"$WORK\"", "output": "--- original.lib.yaml\n+++ lib.yaml\n@@ -674,6 +674,7 @@\n                   then:\n                     require:\n                       - victim_exists: scene.pending_attack is not None\n+                      - not_self: actor.name != scene.pending_attack\n                   else: true\n         effects:\n           - use_healing:\n仅新增一条 Law 条件；Assets、Source、Ports、case 未改。\n\n[exit 0]\n", "start": 22.005302912000843, "output_at": 22.195578722999926, "process_seconds": 0.19027581099908275, "reading_seconds": 12}, {"title": "重新编译与执行：第十步分叉", "command": "python tools/showcase_recording.py replay \"$WORK\" changed", "output": "T0 实际退出码：3\n完成 9 步；发布 12 条发生\nstop: k0_not_admitted    goal: not_met_within_bound\n\n  #01  c0.six-seat.vote-a\n  #02  c0.six-seat.vote-b\n  #03  c0.six-seat.vote-c\n  #04  c0.six-seat.vote-d\n  #05  c0.six-seat.vote-e\n  #06  c0.six-seat.vote-f\n  #07  c0.six-seat.resolve-f\n  #08  c0.six-seat.pass-a\n  #09  c0.six-seat.attack-c\n  #10  c0.six-seat.attack-d\n  #11  c0.six-seat.select-target\n  #12  c0.six-seat.witch-notice-select_target_attack_a-b\n\n停在第 10 步：B / Save victim\n\n[exit 3]\n", "start": 34.19591120500081, "output_at": 36.02875857100116, "process_seconds": 1.832847366000351, "reading_seconds": 14}, {"title": "核对：来源相同，拒绝没有写入", "command": "python tools/showcase_recording.py compare \"$WORK\"", "output": "同一开局 / 同一行动见证：\n  前九步的 12 条发生记录完全相同（含来源）\n  第十步：原规则发布；改后 K0NotAdmitted\n  Save victim 候选仍存在，不是菜单自动消失\n\n  save_choice/not_self = false\n  {\"not\":{\"eq\":[{\"ref\":\"actor.name\"},{\"ref\":\"scene.pending_attack\"}]}}\n\n拒绝前后完整作者状态与发生历史相同；本次没有写入。\n这是准入拒绝，不是测试准入后的故障回滚。\n\n[exit 0]\n", "start": 50.02905844500128, "output_at": 51.827484237001045, "process_seconds": 1.7984257919997617, "reading_seconds": 15}, {"title": "不只是条件判断：职业与人数", "command": "python tools/showcase_recording.py world \"$WORK\"", "output": "规则不变，改开局职业 B -> E：\n  B 的选项：Save victim / Do not heal\n  实际救人来源：c0.six-seat.witch-b\n  E 的选项：Save victim / Do not heal\n  实际救人来源：c0.six-seat.witch-e\n  改后 B 的 Save victim 候选：False\n\n同一份规则库，扩为八席：A, B, C, D, E, F, G, H\n  A / Vote for H -> c0.six-seat.vote-a\n  G / Vote for A -> c0.six-seat.vote-g\n新增 G/H 有独立本人视图；不是只增加两个按钮。\n此实验同步修改了角色 / 私有开局 / 参与者声明，不是一键配置。\n\n[exit 0]\n", "start": 66.82781810800043, "output_at": 71.24839728000006, "process_seconds": 4.420579171999634, "reading_seconds": 15}], "duration": 86.29879925400019};
+const output = document.querySelector('#output');
+const command = document.querySelector('#command');
+const slider = document.querySelector('#seek');
+const play = document.querySelector('#play');
+const nav = document.querySelector('nav');
+let position = 0, playing = false, previous = performance.now(), rendered = '';
+slider.max = recording.duration;
+const labels = ['作者文件', '原版运行', '只改 Law', '重跑见证', '核对拒绝', '职业 / 人数'];
+recording.chapters.forEach((chapter, index) => {
+  const button = document.createElement('button');
+  button.textContent = `${index + 1}. ${labels[index]}`;
+  button.onclick = () => seek(chapter.start);
+  nav.append(button);
+});
+function clock(value) {
+  return `${Math.floor(value / 60)}:${String(Math.floor(value % 60)).padStart(2, '0')}`;
+}
+function setPlaying(value) {
+  playing = value;
+  play.innerHTML = value ? '&#10074;&#10074;' : '&#9654;';
+  play.setAttribute('aria-label', value ? '暂停' : '播放');
+}
+function paint() {
+  let index = 0;
+  recording.chapters.forEach((chapter, number) => { if (position >= chapter.start) index = number; });
+  const chapter = recording.chapters[index];
+  const ready = position >= chapter.output_at;
+  const key = `${index}/${ready}`;
+  document.querySelector('#chapter').textContent = chapter.title;
+  document.querySelector('#status').textContent = ready ? `本次命令 ${chapter.process_seconds.toFixed(2)}s` : '实际执行等待';
+  command.textContent = `$ ${chapter.command}`;
+  if (rendered !== key) {
+    output.replaceChildren();
+    const content = ready ? chapter.output : '运行中…';
+    for (const line of content.trimEnd().split('\n')) {
+      const span = document.createElement('span');
+      span.className = 'line';
+      span.textContent = line || ' ';
+      if (line.startsWith('+') && !line.startsWith('+++')) span.classList.add('added', 'focus');
+      else if (/not_self|第十步|停在第|K0NotAdmitted|k0_not_admitted|\[exit 3\]/.test(line)) span.classList.add('refused', 'focus');
+      else if (/候选仍存在|没有写入|来源|八席|独立本人|前九步/.test(line)) span.classList.add('changed');
+      else if (/goal: met|witch-e|vote-g|\[exit 0\]/.test(line)) span.classList.add('success');
+      else if (/^  #|^@@|^---|^\+\+\+/.test(line)) span.classList.add('muted');
+      output.append(span);
+    }
+    output.scrollTop = 0;
+    rendered = key;
+  }
+  [...nav.children].forEach((button, number) => button.setAttribute('aria-current', number === index ? 'step' : 'false'));
+  slider.value = position;
+  document.querySelector('time').textContent = `${clock(position)} / ${clock(recording.duration)}`;
+}
+function seek(value) { position = Math.max(0, Math.min(recording.duration, value)); paint(); }
+play.onclick = () => { if (position >= recording.duration) seek(0); setPlaying(!playing); };
+document.querySelector('#restart').onclick = () => { seek(0); setPlaying(true); };
+slider.oninput = () => seek(Number(slider.value));
+function tick(now) {
+  if (playing) {
+    seek(position + Math.min(0.1, (now - previous) / 1000));
+    if (position >= recording.duration) setPlaying(false);
+  }
+  previous = now;
+  requestAnimationFrame(tick);
+}
+window.showcase = { seek, play: () => setPlaying(true), recording,
+  get ended() { return position >= recording.duration; } };
+paint();
+requestAnimationFrame(tick);
+</script>
+</html>

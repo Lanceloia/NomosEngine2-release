@@ -1,0 +1,21 @@
+{
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "playback_seconds": 86.671,
+  "recording_seconds": 86.29879925400019,
+  "page_errors": [],
+  "replay_html_sha256": "9fc6b656a1590b91d345ea90d9619a823a299d44f4b24ab5c9ec58dbe208035c",
+  "artifacts_sha256": {
+    "chapter-1.png": "4e2be3087790d6910f136e11fb53c1f5faf29257703eb3f83f86fd343c861923",
+    "chapter-2.png": "b6a4fcb9042fca93f82628b6700a7ee787894530da576113013c78eac709980d",
+    "chapter-3.png": "c8411feccb8d7efbdc88e5b4c806736e3cbee8d13c50a7fa53197ee3e26c6c83",
+    "chapter-4.png": "c277273ca94a461ff467785c9e214032cd74d156e720c2490c31239e8c1602dd",
+    "chapter-5.png": "f1b873743d955774d6accec92bf819bf7713fd6bb4241bc9be057403ddcd8cfb",
+    "chapter-6.png": "e9b1cc6d9638e9df00fdd339b52c9245f2530fa9d01f1bb3a6e13d4a9b5692d0",
+    "demo.webm": "935309d5f8631753f92f15a954e8b8d3e931d30a98711599f2ee96a02d00ff1e",
+    "poster.png": "c8411feccb8d7efbdc88e5b4c806736e3cbee8d13c50a7fa53197ee3e26c6c83"
+  },
+  "note": "Browser records previously captured command outputs; brief page/font setup precedes playback. No audio."
+}

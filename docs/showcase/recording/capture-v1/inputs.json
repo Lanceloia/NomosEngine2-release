@@ -1,0 +1,22 @@
+{
+  "lib.yaml": {
+    "source": "src/nomos_c0/examples/three_seat_werewolf_v0.lib.yaml",
+    "sha256": "4f396ac0a2933b84ae69b036ccbfc9a093567d3d490d2440785e8a7342c3073c"
+  },
+  "ports.yaml": {
+    "source": "src/nomos_c0/examples/three_seat_werewolf_v0.ports.yaml",
+    "sha256": "ce2ecbf2ffa02c95e5acbb701c53cbb686e8a04b5ee7bca1bee4fbf983242af0"
+  },
+  "source.yaml": {
+    "source": "src/nomos_c0/examples/six_seat_werewolf_v0.source.yaml",
+    "sha256": "5f0c6039d3a887f06898ace7cc30f15f25525179e478f0b206532057fa306025"
+  },
+  "assets.yaml": {
+    "source": "src/nomos_t0/examples/werewolf_witch_b.assets.yaml",
+    "sha256": "64b67be68b3cce80552e05690a1def801b3131d0b8a1ccecf2bf4e5658a6373e"
+  },
+  "case.yaml": {
+    "source": "src/nomos_t0/examples/werewolf_self_heal_b.case.yaml",
+    "sha256": "250057817ecca0e76daf92d91cd9f4fc649e1685b5b46c176dc22ed93eb1a04c"
+  }
+}

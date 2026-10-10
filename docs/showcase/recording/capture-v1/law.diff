@@ -1,0 +1,10 @@
+--- original.lib.yaml
++++ lib.yaml
+@@ -674,6 +674,7 @@
+                   then:
+                     require:
+                       - victim_exists: scene.pending_attack is not None
++                      - not_self: actor.name != scene.pending_attack
+                   else: true
+         effects:
+           - use_healing:
