@@ -111,8 +111,8 @@ OFFER_FIELDS = {
 class C0ActorOfferRangeIR:
     name: str
     alias: str
-    identity_field: str
-    collection: C0SymbolicExpression
+    identity_field: str | None
+    collection: C0SymbolicExpression | None
     domain: tuple[str, ...]
     family: str | None = None
 

@@ -83,7 +83,7 @@ def _translate_actor_range(value, translation, *, binding):
         value.name,
         value.alias,
         value.identity_field,
-        translation.tree(value.collection),
+        None if value.collection is None else translation.tree(value.collection),
         value.domain,
         value.family,
     )
@@ -325,19 +325,32 @@ def _check_offer(offer, seat, world):
                 != (selected.actor_kind.family if selected.selector == "actor" else None)
                 or (
                     selected.selector == "closed_domain"
+                    and actor_range.collection is not None
                     and actor_range.identity_field != selected.identity_field
                 )
                 or candidate is None
-                or get_args(actor_range.collection.value_type.annotation) != (candidate, Ellipsis)
-                or get_type_hints(candidate).get(actor_range.identity_field)
-                is not (_K0ActorRef if selected.selector == "actor" else str)
+                or (
+                    actor_range.collection is None
+                    and (selected.selector != "closed_domain" or candidate is not str)
+                )
+                or (
+                    actor_range.collection is not None
+                    and (
+                        get_args(actor_range.collection.value_type.annotation)
+                        != (candidate, Ellipsis)
+                        or get_type_hints(candidate).get(actor_range.identity_field)
+                        is not (_K0ActorRef if selected.selector == "actor" else str)
+                    )
+                )
             ):
                 raise C0LawError("visibility participant lacks its selected local Actor range")
             roots[actor_range.alias] = candidate
             paths.update(_local_value_read_paths(actor_range.alias, candidate))
             resolved[selected.payload_field] = (
                 "ref",
-                actor_range.alias + "." + actor_range.identity_field,
+                actor_range.alias
+                if actor_range.identity_field is None
+                else actor_range.alias + "." + actor_range.identity_field,
             )
         for port in actor_ports:
             if actor_range is not None and port.name == actor_range.name:
@@ -469,7 +482,7 @@ def _check_offer(offer, seat, world):
     ):
         raise C0LawError("visibility offer crosses its declared read/domain authority")
     if type(offer) is C0ParticipantOfferDeclaration:
-        if offer.actor_range is not None:
+        if offer.actor_range is not None and offer.actor_range.collection is not None:
             check_expression_reads(
                 offer.actor_range.collection,
                 public,
@@ -529,7 +542,9 @@ def _bind_projection(ir, backend, world, translation):
                         ir.object_root,
                         *(name for name, _ in ir.additional_fixed_individual_roots),
                     )
-                } if ir.preview is None else {}
+                }
+                if ir.preview is None
+                else {}
             ),
         }
         or ports.writable_fields

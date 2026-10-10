@@ -12,11 +12,7 @@ lawdefs:
         - actor_identity: actor.name == payload.actor
         - awake: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
         - actual_subject: victim.name == payload.victim and actor.site == victim.site
-        - known_subject:
-            exactly_one:
-              collection: actor.known_residents
-              as: known
-              where: known.name == victim.name
+        - another_person: victim.name != actor.name
       outputs:
         action:
           ref: occurrence

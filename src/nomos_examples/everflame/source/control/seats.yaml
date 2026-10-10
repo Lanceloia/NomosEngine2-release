@@ -1015,6 +1015,11 @@ seats:
         observe them again when you meet. They choose for themselves. Leaving ends your journey,
         not everyone else's danger.
       terms:
+        tower_base: At the foot of the tower
+        tower_wall_landing: Tower wall landing
+        tower_top: Top of the tower
+        alpha_box_interior: Inside the tower chest
+        queen_box_interior: Inside the carried reward box
         palace_exit: Outside shore beyond the bridge
         halls_ballroom_door: Halls beside the ballroom
         halls_bridge_door: Halls beside the bridge stair
@@ -1112,6 +1117,14 @@ seats:
         wait_adventurer: [adventurer.cold_state, adventurer.current_movement_speed, adventurer.vital.life]
         leave_palace_adventurer: [adventurer.site, adventurer.vital.life]
       published_actions:
+        thaw_floor_adventurer: You spent one charge thawing the inspected reachable floor.
+          This action does not certify distant ground or prevent later freezing.
+        thaw_door_adventurer: You spent one charge thawing the nearby stable door.
+          Opening it and passing through remain separate actions.
+        open_door_adventurer: You opened the nearby stable door in this action.
+          Passing through is separate; later changes can still affect the doorway.
+        close_door_adventurer: You closed the nearby stable door in this action.
+          This does not report what happened to people on the other side.
         bridge_slow_adventurer: You carefully crossed this bridge segment without a balance roll.
           Time still passes; cold can still affect people outside the light.
         bridge_rush_adventurer: Your risky bridge attempt resolved. Below are your actual landing
@@ -3582,7 +3595,7 @@ seats:
           - torch.holder
           - torch.charges
       label:
-      - const: Thaw the frozen stable door
+      - const: Spend one charge to thaw the frozen stable door
       visible_when:
         any:
         - eq:
@@ -4470,84 +4483,21 @@ seats:
         base_move_cost:
           ref: target.passage.base_move_cost
     - entry: observe_resident_adventurer
-      label:
-      - const: 'Observe the resident: '
-      - ref: person.name
+      label: [{const: 'Observe nearby person'}]
       when:
         all:
         - {eq: [{ref: actor.vital.life}, {const: alive}]}
         - {not: {eq: [{ref: actor.cold_state}, {const: frozen}]}}
+        - person != actor.name
       availability:
         ref: resident_current_presence
         when: victim.site == actor.site
       payload:
         victim:
-          ref: person.name
+          ref: person
       for_each_participants:
         victim:
-          collection:
-            collect_matching:
-              collection:
-                ref: actor.known_residents
-              as: known
-              where:
-                any:
-                - eq:
-                  - ref: known.name
-                  - const: adventurer
-                - eq:
-                  - ref: known.name
-                  - const: ritual_resident
-                - eq:
-                  - ref: known.name
-                  - const: huddled_one
-                - eq:
-                  - ref: known.name
-                  - const: huddled_two
-                - eq:
-                  - ref: known.name
-                  - const: wall_resident
-                - eq:
-                  - ref: known.name
-                  - const: bokold_one
-                - eq:
-                  - ref: known.name
-                  - const: bokold_two
-                - eq:
-                  - ref: known.name
-                  - const: prison_resident_one
-                - eq:
-                  - ref: known.name
-                  - const: prison_resident_two
-                - eq:
-                  - ref: known.name
-                  - const: hall_bokold_one
-                - eq:
-                  - ref: known.name
-                  - const: hall_bokold_two
-                - eq:
-                  - ref: known.name
-                  - const: hall_bokold_three
-                - eq:
-                  - ref: known.name
-                  - const: hall_bokold_four
-                - eq:
-                  - ref: known.name
-                  - const: hall_bokold_five
-                - eq:
-                  - ref: known.name
-                  - const: stable_bokold_one
-                - eq:
-                  - ref: known.name
-                  - const: stable_bokold_two
-                - eq:
-                  - ref: known.name
-                  - const: stable_bokold_three
-                - eq:
-                  - ref: known.name
-                  - const: stable_bokold_four
-              value:
-                ref: known
+          selected_members: true
           as: person
       visible_when:
         const: true

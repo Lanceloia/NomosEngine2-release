@@ -95,11 +95,14 @@ def compile_participant_offer(item, action, ports, provider, index):
         p
         for p in actors
         if type(bindings[p.name]) is dict
-        and set(bindings[p.name])
-        == (
-            {"collection", "as", "identity_field"}
-            if p.selector == "actor"
-            else {"collection", "as"}
+        and (
+            set(bindings[p.name]) == {"selected_members", "as"}
+            or set(bindings[p.name])
+            == (
+                {"collection", "as", "identity_field"}
+                if p.selector == "actor"
+                else {"collection", "as"}
+            )
         )
     )
     if len(ranged_actors) > 1:
@@ -108,22 +111,41 @@ def compile_participant_offer(item, action, ports, provider, index):
     actor_range = None
     if person is not None:
         row = bindings[person.name]
-        collection_type = _expr_type(row["collection"], ports.roots, ports, set())
-        candidate_type = _tuple_item(collection_type)
-        identity = row["identity_field"] if person.selector == "actor" else person.identity_field
+        selected_members = "selected_members" in row
+        if selected_members and (
+            row["selected_members"] is not True or person.selector != "closed_domain"
+        ):
+            raise C0LawError("selected Actor candidates need an explicit closed member domain")
+        candidate_type = (
+            str
+            if selected_members
+            else _tuple_item(_expr_type(row["collection"], ports.roots, ports, set()))
+        )
+        identity = (
+            None
+            if selected_members
+            else (row["identity_field"] if person.selector == "actor" else person.identity_field)
+        )
         identity_type = _K0ActorRef if person.selector == "actor" else str
         if (
             type(row["as"]) is not str
             or row["as"] in roots
-            or type(identity) is not str
-            or get_type_hints(candidate_type).get(identity) is not identity_type
+            or (
+                not selected_members
+                and (
+                    type(identity) is not str
+                    or get_type_hints(candidate_type).get(identity) is not identity_type
+                )
+            )
         ):
             raise C0LawError("participant Actor range needs an unaliased local identity record")
         actor_range = C0ActorOfferRange(
             person.name,
             row["as"],
             identity,
-            _compile_expression(
+            None
+            if selected_members
+            else _compile_expression(
                 row["collection"],
                 dict(ports.roots),
                 ports,
@@ -240,7 +262,11 @@ def compile_participant_offer(item, action, ports, provider, index):
         if role.payload_field in private_fields:
             continue
         expected[role.payload_field] = (
-            {"ref": f"{actor_range.alias}.{actor_range.identity_field}"}
+            {
+                "ref": actor_range.alias
+                if actor_range.identity_field is None
+                else f"{actor_range.alias}.{actor_range.identity_field}"
+            }
             if person is role
             else {"const": bindings[role.name]["fixed_actor"]}
         )

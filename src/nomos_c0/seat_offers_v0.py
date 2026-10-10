@@ -169,8 +169,8 @@ class C0ObjectOfferDeclaration:
 class C0ActorOfferRange:
     name: str
     alias: str
-    identity_field: str
-    collection: C0Expression
+    identity_field: str | None
+    collection: C0Expression | None
     domain: tuple[str, ...]
     family: str | None = None
 
@@ -178,7 +178,7 @@ class C0ActorOfferRange:
         if (
             any(
                 type(name) is not str or not name.isidentifier() or keyword.iskeyword(name)
-                for name in (self.name, self.alias, self.identity_field)
+                for name in (self.name, self.alias)
             )
             or type(self.domain) is not tuple
             or (self.family is None and not self.domain)
@@ -188,7 +188,21 @@ class C0ActorOfferRange:
             )
             or any(type(name) is not str for name in self.domain)
             or len(set(self.domain)) != len(self.domain)
-            or type(self.collection) is not C0Expression
+            or (
+                (self.identity_field is None or self.collection is None)
+                and not (
+                    self.identity_field is None and self.collection is None and self.family is None
+                )
+            )
+            or (
+                self.identity_field is not None
+                and (
+                    type(self.identity_field) is not str
+                    or not self.identity_field.isidentifier()
+                    or keyword.iskeyword(self.identity_field)
+                    or type(self.collection) is not C0Expression
+                )
+            )
         ):
             raise C0LawError("participant Actor range is malformed")
 
@@ -264,6 +278,8 @@ class C0ParticipantOfferDeclaration:
         collection = (
             (None,)
             if actor_range is None
+            else actor_range.domain
+            if actor_range.collection is None
             else _eval(actor_range.collection, {"scene": scene, "actor": actor}, roots, self.ports)
         )
         if type(collection) is not tuple or len(collection) > self.max_candidates:
@@ -296,7 +312,11 @@ class C0ParticipantOfferDeclaration:
             for candidate, local_value in product(collection, local_values):
                 candidate_context = {}
                 if actor_range is not None:
-                    person = getattr(candidate, actor_range.identity_field, None)
+                    person = (
+                        candidate
+                        if actor_range.identity_field is None
+                        else getattr(candidate, actor_range.identity_field, None)
+                    )
                     expected_type = str if actor_range.family is None else _K0ActorRef
                     if type(person) is not expected_type:
                         raise C0ValueStateError("participant offer Actor identity is malformed")
@@ -416,6 +436,8 @@ def _offer_count_upper_bound(declaration, scene, actor, family_counts):
     count = 1
     for role in declaration.objects:
         count *= sum(family_counts.get(kind, 0) for kind in role.kinds)
+    if declaration.actor_range is not None and declaration.actor_range.collection is None:
+        count *= len(declaration.actor_range.domain)
     for collection in (
         None if declaration.actor_range is None else declaration.actor_range.collection,
         None if declaration.local_range is None else declaration.local_range.collection,
