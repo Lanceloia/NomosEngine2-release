@@ -299,6 +299,7 @@ lawdefs:
             let: surface_enabled and ((reservoir.mounted and reservoir.site == actor.site) or (not reservoir.mounted and reservoir.holder == actor.name))
         guard: {const: true}
         outputs:
+          surface_available: {ref: surface_enabled}
           visible_person_emma: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: emma.site}}}}]}, then: {ref: emma.site}, else: ''}}
           visible_person_alpha: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: alpha.site}}}}]}, then: {ref: alpha.site}, else: ''}}
           visible_person_tower_bear_one: {if: {when: {all: [{ref: surface_enabled}, {call: {ref: perception.visible_site, args: {observer_site: {ref: actor.site}, subject_site: {ref: tower_bear_one.site}}}}]}, then: {ref: tower_bear_one.site}, else: ''}}
