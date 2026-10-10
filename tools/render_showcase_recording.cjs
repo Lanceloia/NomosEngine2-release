@@ -8,10 +8,15 @@ async function main() {
   const [directory, playwrightModule = 'playwright', fontFile] = process.argv.slice(2);
   if (!directory) throw Error('Usage: node tools/render_showcase_recording.cjs DIRECTORY [PLAYWRIGHT_MODULE] [FONT_FILE]');
   const root = path.resolve(directory);
-  if (fs.existsSync(path.join(root, 'demo.webm'))) throw Error('Video already exists; never overwrite captures.');
+  const products = ['demo.webm', 'poster.png', 'video-export.json', '.video',
+    ...Array.from({ length: 6 }, (_, index) => `chapter-${index + 1}.png`)];
+  if (products.some(name => fs.existsSync(path.join(root, name)))) throw Error('Export artifacts already exist; never overwrite captures.');
+  const reservation = path.join(root, '.video-export.lock');
+  const lock = fs.openSync(reservation, 'wx');
   const { chromium } = require(playwrightModule);
-  const browser = await chromium.launch({ args: ['--allow-file-access-from-files'] });
+  let browser;
   try {
+    browser = await chromium.launch({ args: ['--allow-file-access-from-files'] });
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const page = await context.newPage();
     const errors = [];
@@ -47,7 +52,7 @@ async function main() {
     await videoPage.evaluate(() => window.showcase.play());
     const duration = await videoPage.evaluate(() => window.showcase.recording.duration);
     const playbackStart = Date.now();
-    await videoPage.waitForFunction(() => Number(document.querySelector('#seek').value) >= window.showcase.recording.duration,
+    await videoPage.waitForFunction(() => window.showcase.ended,
                                null, { timeout: (duration + 30) * 1000 });
     if (errors.length) throw Error(errors.join('\n'));
     const video = videoPage.video();
@@ -67,7 +72,9 @@ async function main() {
     }, null, 2) + '\n');
     console.log(`Exported ${path.join(root, 'demo.webm')}`);
   } finally {
-    await browser.close();
+    if (browser) await browser.close();
+    fs.closeSync(lock);
+    fs.unlinkSync(reservation);
   }
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

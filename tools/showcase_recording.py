@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import os
+import signal
 import subprocess
 import sys
 import tempfile
@@ -77,12 +78,30 @@ def edit(work):
     print("仅新增一条 Law 条件；Assets、Source、Ports、case 未改。")
 
 
+def python_capture(arguments, origin_file):
+    bootstrap = (
+        "import json,runpy,sys; from pathlib import Path; "
+        "import nomos_c0,nomos_t0,nomos_kernel; "
+        "Path(sys.argv.pop(1)).write_text(json.dumps({m.__name__:m.__file__ "
+        "for m in (nomos_c0,nomos_t0,nomos_kernel)})); "
+        "mode=sys.argv.pop(1); target=sys.argv.pop(1); sys.argv[0]=target; "
+        "runpy.run_module(target,run_name='__main__') if mode=='module' "
+        "else runpy.run_path(target,run_name='__main__')"
+    )
+    child = subprocess.run([sys.executable, "-c", bootstrap, str(origin_file), *arguments],
+                           capture_output=True, text=True, check=False, timeout=30)
+    origins = load_json(origin_file)
+    if any(not Path(path).resolve().is_relative_to(ROOT) for path in origins.values()):
+        raise ValueError("executed C0/T0/K0 did not originate in this checkout")
+    return child
+
+
 def replay(work, name):
     arguments = [part for key in ("lib", "ports", "source", "assets", "case")
                  for part in (f"--{key}", str(work / f"{key}.yaml"))]
     # The child is the real T0 CLI; presentation does not implement settlement.
-    child = subprocess.run([sys.executable, "-m", "nomos_t0.author_check_v0",
-                            *arguments, "--json"], capture_output=True, text=True, check=False)
+    child = python_capture(["module", "nomos_t0.author_check_v0", *arguments, "--json"],
+                           work / f"{name}.origins.json")
     if child.stderr:
         print(child.stderr, file=sys.stderr, end="")
     report = json.loads(child.stdout)
@@ -108,7 +127,12 @@ def compare(work):
     from nomos_t0.witness_v0 import _freeze, _trace_row
 
     before, after = (load_json(work / f"{name}.json") for name in ("original", "changed"))
-    if not (before["goal_status"] == "met" and after["steps_completed"] == 9
+    if not (before["goal_status"] == "met" and before["steps_completed"] == 10
+            and len(before["published"]) == 14
+            and [(row["family"], row["source"]) for row in before["published"][12:]]
+            == [("action", "c0.six-seat.witch-b"),
+                ("event", "c0.six-seat.resolve-after-witch-b")]
+            and after["steps_completed"] == 9
             and after["requested_step"] == 10 and after["stop_reason"] == "k0_not_admitted"
             and len(after["published"]) == 12
             and before["published"][:12] == after["published"]):
@@ -171,8 +195,9 @@ def compare(work):
 
 
 def world(work):
-    child = subprocess.run([sys.executable, "tools/release_world_edit_demo.py", "--json"],
-                           cwd=ROOT, capture_output=True, text=True, check=True)
+    child = python_capture(["script", str(ROOT / "tools/release_world_edit_demo.py"), "--json"],
+                           work / "world.origins.json")
+    child.check_returncode()
     report = json.loads(child.stdout)
     write_json(work / "world.json", report)
     roles = report["role_move"]
@@ -198,6 +223,31 @@ def render_page(record):
     return template.replace("__RECORDING__", payload)
 
 
+def run_phase(command, env, timeout=60):
+    child = subprocess.Popen(["bash", "-c", command], cwd=ROOT, env=env,
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                             text=True, start_new_session=True)
+    try:
+        stdout, stderr = child.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired:
+        os.killpg(child.pid, signal.SIGKILL)
+        child.communicate()
+        raise
+    return subprocess.CompletedProcess(command, child.returncode, stdout, stderr)
+
+
+def code_capture():
+    paths = [Path(__file__), ROOT / "tools/release_world_edit_demo.py"]
+    for folder in ("src/nomos_c0", "src/nomos_t0", "engine/kernel/src/nomos_kernel"):
+        paths.extend((ROOT / folder).rglob("*.py"))
+    return {
+        "revision": subprocess.check_output(["git", "rev-parse", "HEAD"],
+                                            cwd=ROOT, text=True, timeout=10).strip(),
+        "sha256": {str(path.relative_to(ROOT)): digest(path.read_bytes())
+                   for path in sorted(paths)},
+    }
+
+
 def record(destination):
     import nomos_kernel
 
@@ -208,6 +258,7 @@ def record(destination):
            for module in (nomos_c0, nomos_t0, nomos_kernel)):
         raise ValueError("record with C0/T0/K0 installed from this checkout")
     destination.mkdir(exist_ok=False, parents=True)
+    code_before = code_capture()
     inputs = {name: digest((ROOT / path).read_bytes()) for name, path in INPUTS.items()}
     phases = (
         ("准备：真正的作者文件", "prepare", "", 0, 8),
@@ -228,8 +279,7 @@ def record(destination):
             command = f'python tools/showcase_recording.py {operation} "$WORK"{suffix}'
             begin = time.monotonic() - started
             events.append([begin, "o", f"$ {command}\r\n"])
-            child = subprocess.run(["bash", "-c", command], cwd=ROOT, env=env,
-                                   capture_output=True, text=True, check=False)
+            child = run_phase(command, env)
             if child.returncode != expected:
                 raise RuntimeError(
                     f"unexpected exit {child.returncode}: {child.stderr}\n{child.stdout}")
@@ -242,14 +292,14 @@ def record(destination):
             print(f"Recorded: {operation} (exit {child.returncode})", flush=True)
             time.sleep(hold)
         for name in ("original.json", "changed.json", "comparison.json", "world.json",
-                     "law.diff", "inputs.json"):
+                     "law.diff", "inputs.json", "original.origins.json",
+                     "changed.origins.json", "world.origins.json"):
             (destination / name).write_bytes((work / name).read_bytes())
     if inputs != {name: digest((ROOT / path).read_bytes()) for name, path in INPUTS.items()}:
         raise ValueError("repository author inputs changed during recording")
     duration = time.monotonic() - started
-    code_paths = [Path(__file__), ROOT / "tools/release_world_edit_demo.py"]
-    for folder in ("src/nomos_c0", "src/nomos_t0", "engine/kernel/src/nomos_kernel"):
-        code_paths.extend((ROOT / folder).rglob("*.py"))
+    if code_capture() != code_before:
+        raise ValueError("code changed during recording; no validated manifest is issued")
     recording = {"chapters": chapters, "duration": duration}
     write_json(destination / "recording.json", recording)
     header = {"version": 2, "width": 110, "height": 28, "duration": duration,
@@ -260,14 +310,14 @@ def record(destination):
         encoding="utf-8")
     (destination / "replay.html").write_text(render_page(recording), encoding="utf-8")
     manifest = {
-        "code_revision": subprocess.check_output(["git", "rev-parse", "HEAD"],
-                                                  cwd=ROOT, text=True).strip(),
+        "code_revision": code_before["revision"],
         "worktree_changes": subprocess.check_output(["git", "status", "--short"],
-                                                     cwd=ROOT, text=True).splitlines(),
+                                                     cwd=ROOT, text=True, timeout=10).splitlines(),
         "python": sys.version, "repository_inputs_unchanged": True,
         "inputs_sha256": inputs,
-        "code_sha256": {str(path.relative_to(ROOT)): digest(path.read_bytes())
-                        for path in sorted(code_paths)},
+        "code_sha256": code_before["sha256"],
+        "module_origins": {module.__name__: module.__file__
+                           for module in (nomos_c0, nomos_t0, nomos_kernel)},
         "artifacts_sha256": {path.name: digest(path.read_bytes())
                              for path in sorted(destination.iterdir())},
         "note": ("Actual subprocess outputs, then reading pauses. "

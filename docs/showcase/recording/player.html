@@ -13,10 +13,10 @@ header p { margin: 0; font-size: 15px; color: #515a60; }
 .tag { border-left: 3px solid #17865f; padding-left: 12px; line-height: 1.7; font-size: 13px; color: #515a60; white-space: nowrap; }
 section { flex: 1; min-height: 0; display: flex; flex-direction: column; background: #1c1e20; color: #e7e9eb; border-radius: 4px; overflow: hidden; }
 .bar { background: #303336; padding: 11px 20px; color: #bdc3c7; font-size: 14px; display: flex; justify-content: space-between; }
-pre { margin: 0; font: 18px/1.45 "Cascadia Mono", Consolas, "DejaVu Sans Mono", "Microsoft YaHei", monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+pre { margin: 0; font: 17px/1.4 "Cascadia Mono", Consolas, "DejaVu Sans Mono", "Microsoft YaHei", monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
 #command { padding: 15px 22px; color: #abb9c1; font-size: 15px; border-bottom: 1px solid #3b3f42; }
 #output { padding: 16px 22px; flex: 1; min-height: 0; overflow-y: auto; }
-.line { display: block; min-height: 1.45em; }
+.line { display: block; min-height: 1.4em; }
 .added, .success { color: #a8e5b4; }
 .changed, .refused { color: #ffcd90; }
 .focus { border-left: 3px solid #ffcd90; margin-left: -10px; padding-left: 7px; background: #3b3429; }
@@ -120,7 +120,8 @@ function tick(now) {
   previous = now;
   requestAnimationFrame(tick);
 }
-window.showcase = { seek, play: () => setPlaying(true), recording };
+window.showcase = { seek, play: () => setPlaying(true), recording,
+  get ended() { return position >= recording.duration; } };
 paint();
 requestAnimationFrame(tick);
 </script>

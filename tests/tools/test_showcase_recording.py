@@ -1,6 +1,8 @@
 """Small recording contracts; actual worlds are still executed by C0/T0/K0."""
 
+import subprocess
 from copy import deepcopy
+from pathlib import Path
 
 import pytest
 
@@ -57,7 +59,8 @@ def test_actual_short_rule_edit_and_zero_write_refusal(tmp_path, capsys):
 
 def test_compare_rejects_a_modified_published_prefix(tmp_path):
     recording.write_json(tmp_path / "original.json", {
-        "goal_status": "met", "published": ["different"] * 14,
+        "goal_status": "met", "steps_completed": 10,
+        "published": [{"family": "action", "source": "different"}] * 14,
     })
     recording.write_json(tmp_path / "changed.json", {
         "stop_reason": "k0_not_admitted", "steps_completed": 9,
@@ -65,3 +68,46 @@ def test_compare_rejects_a_modified_published_prefix(tmp_path):
     })
     with pytest.raises(ValueError, match="do not support"):
         recording.compare(tmp_path)
+
+
+@pytest.mark.parametrize("fault", ["missing_suffix", "wrong_suffix_source"])
+def test_compare_rejects_unsupported_original_publication(tmp_path, fault):
+    value = recording.load_json(
+        recording.ROOT / "docs/showcase/self-heal-predicates-v1/result.json")
+    original = deepcopy(value["original"])
+    if fault == "missing_suffix":
+        original["published"] = original["published"][:12]
+    else:
+        original["published"][12]["source"] = "not-the-witch"
+    recording.write_json(tmp_path / "original.json", original)
+    recording.write_json(tmp_path / "changed.json", value["edited"])
+    with pytest.raises(ValueError, match="do not support"):
+        recording.compare(tmp_path)
+
+
+def test_recording_phase_has_a_bounded_timeout():
+    with pytest.raises(subprocess.TimeoutExpired):
+        recording.run_phase("sleep 30", recording.os.environ.copy(), timeout=0.05)
+
+
+def test_saved_capture_outputs_and_reports_match_their_digests():
+    directory = Path(__file__).resolve().parents[2] / "docs/showcase/recording/capture-v1"
+    manifest = recording.load_json(directory / "manifest.json")
+    for name, expected in manifest["artifacts_sha256"].items():
+        assert recording.digest((directory / name).read_bytes()) == expected
+    original = recording.load_json(directory / "original.json")
+    changed = recording.load_json(directory / "changed.json")
+    comparison = recording.load_json(directory / "comparison.json")
+    assert original["goal_status"] == "met"
+    assert changed["stop_reason"] == "k0_not_admitted"
+    assert changed["requested_step"] == 10
+    assert changed["published"] == original["published"][:12]
+    assert comparison["refusal_snapshot_before"] == comparison["refusal_snapshot_after"]
+    assert comparison["candidate_still_present"] is True
+    assert all(comparison["unchanged_inputs"].values())
+    captured = recording.load_json(directory / "recording.json")
+    cast = [recording.json.loads(line) for line in (directory / "session.cast").read_text(
+        encoding="utf-8").splitlines()]
+    assert len(cast) == 1 + 2 * len(captured["chapters"])
+    for index, chapter in enumerate(captured["chapters"]):
+        assert cast[2 + index * 2][2].replace("\r\n", "\n") == chapter["output"]
