@@ -22,19 +22,19 @@ appraisal:
   defaults: {torch_gain: 0, torch_spend: 0, reservoir_spend: 0, reveals_reservoir: false, movement: false, interruption: false, invitation: false, departure: false}
   definitions:
     inspect_floor:
-      when: not candidate.was_tried and not local.floor_known
+      when: not candidate.was_tried and (not local.floor_known or candidate.evidence_changed)
       features: {floor: 1}
       values: {}
     inspect_routes:
-      when: not candidate.was_tried and not local.routes_known
+      when: not candidate.was_tried
       features: {routes: 1}
       values: {}
     inspect_person:
-      when: candidate.has_targets and not candidate.was_tried and not candidate.targets_detailed
+      when: candidate.has_targets and not candidate.was_tried and (not candidate.targets_detailed or candidate.evidence_changed)
       features: {person: 1}
       values: {}
     inspect_last_known_person:
-      when: candidate.has_targets and not candidate.was_tried and not candidate.targets_detailed
+      when: candidate.has_targets and not candidate.was_tried and (not candidate.targets_detailed or candidate.evidence_changed)
       features: {person: 1, memory_risk: 1}
       values: {}
     inspect_people:
