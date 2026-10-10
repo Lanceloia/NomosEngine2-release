@@ -60,6 +60,7 @@ python3 -m venv .venv
 
 输出应包括 `unchanged_published_prefix: 12`，原版 `goal_status: met`，
 编辑版 `stop_reason: k0_not_admitted`、`requested_step: 10`。
+上述命令的全新安装实测与未验证项见[展示准备记录](docs/SHOWCASE_READINESS.md)。
 `--json` 显示完整发生来源；[规则编辑实验](docs/SHOWCASE.md)提供演示顺序和本次原始证据。
 要亲手编辑文件，按[作者指南](docs/AUTHORING.md)操作。
 领域字段类型在 Lib 中[提前声明、按名引用](docs/C0_LIB_TYPE_ALIASES_V1.md)，包括单次使用的类型；范围仍由编译与运行检查。
@@ -120,6 +121,6 @@ T0 只报告这条有限见证的运行结果，不证明所有可能行动都�
 ## 归属与权利
 
 项目发起者负责项目愿景、问题定义、语义裁决与亲自验收；后期主要代码由 Codex 及协作者
-实现或审阅，不能认领所有代码都是 Owner 手写。
+实现或审阅，不能认领所有代码都是项目发起者手写。
 原创引擎材料保留权利；M1 改编作者资产另有 CC BY-SA 4.0 条款，二者不能混成一份授权。
 详见[权利说明](RIGHTS.md)。

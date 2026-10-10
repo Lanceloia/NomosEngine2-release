@@ -25,6 +25,8 @@
 | 控制预算 | `tests/nomos_c0/test_control_budget_v1.py` |
 | 后端生成 | `tests/nomos_c0/test_execution_emission.py`及实际改动执行器模块 |
 | 安装资源 | `tests/nomos_c0/test_bundled_examples_v1.py` |
+| 领域类型别名与一行字段 | `tests/nomos_c0/test_nominal_type_aliases_v1.py`、`tests/nomos_c0/test_compact_record_fields_v1.py` |
+| 演示的安装来源与证据记录边界 | `tests/tools/test_release_demo_install_boundaries.py` |
 | T0 结果 | `tests/nomos_t0/test_witness_v0.py` |
 
 模块名以实际文件为准。相邻门按修改依赖追加，不每次跑整个世界或全目录。
@@ -88,4 +90,5 @@ SHA256、原结论和新预算结论，拒绝覆盖原文件。exit 0只表示�
 已添加单job具名串行短门及wheel应用验证，不默认跑整局或性能门。
 使用[checkout](https://github.com/actions/checkout)及
 [setup-python](https://github.com/actions/setup-python)官方入口，显式Python 3.14.4。
-这份仓库尚无远端，工作流配置不等于GitHub上已经通过；本地命令与远端结果分别记录。
+本地发行仓库尚无远端，工作流配置不等于GitHub上已经通过；本地命令与远端结果分别记录。
+2026-10-10 的独立安装及演示实测见[展示准备记录](SHOWCASE_READINESS.md)。
