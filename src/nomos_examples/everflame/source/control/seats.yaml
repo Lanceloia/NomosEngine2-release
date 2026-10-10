@@ -4666,6 +4666,7 @@ seats:
         const: true
       when:
         all:
+        - not: {eq: [{ref: actor.ritual_notice}, {const: erupted}]}
         - eq: [{ref: candidate.name}, {const: ritual_resident}]
         - eq: [{ref: candidate.site}, {ref: actor.site}]
         - any:
