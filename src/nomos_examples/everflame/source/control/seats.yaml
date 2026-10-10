@@ -1009,11 +1009,13 @@ seats:
     - adventurer.last_cold_ref
     presentation:
       title: Thawed Through the Everflame
-      opening: Interrupt the ritual, give residents a chance to leave, and reach the outside shore.
-        Actions advance cold and rituals. Spending light can shrink protection; people can freeze
-        again outside its reach. Inspect icy routes. Thawing is not rescue; invite residents and
-        observe them again when you meet. They choose for themselves. Leaving ends your journey,
-        not everyone else's danger.
+      opening: >-
+        你带着永焰进入冰宫。此行要尝试中断仪式，帮助居民活着离开，再抵达桥外岸。
+        从舞厅的仪式通道接近仪式处；仪式尚未完成且现场条件允许时，可以尝试解冻或搬离其中的居民，以打断吟唱。
+        出宫可往大厅的桥梯方向寻找；这只是方向线索，未知通路仍需在当地寻找，冰封也可能阻路。
+        观察和其他行动都会推进寒冷与仪式，查看地图和思考不会。
+        永焰用于解冻和保护近处；消耗充能可能缩小保护范围，居民离开光照后可能再次冰封。
+        解冻不等于营救，邀请不等于接受。居民自行选择行动；你独自离开不证明他们已经安全。
       terms:
         tower_base: At the foot of the tower
         tower_wall_landing: Tower wall landing
