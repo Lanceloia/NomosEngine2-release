@@ -25,21 +25,29 @@ appraisal:
       features: {routes: 1}
       values: {}
     inspect_person:
-      when: not candidate.was_tried and not candidate.targets_detailed
+      when: candidate.has_targets and not candidate.was_tried and not candidate.targets_detailed
       features: {person: 1}
       values: {}
     inspect_people:
-      when: not candidate.was_tried and not local.person_detailed
+      when: not candidate.was_tried
       features: {person: 1, surroundings: 1}
       values: {}
     inspect_surroundings:
       when: not candidate.was_tried
       features: {surroundings: 1}
       values: {}
+    inspect_connections:
+      when: not candidate.was_tried
+      features: {routes: 1}
+      values: {}
     replenish:
       when: local.charge is not None and local.reservoir is not None and local.charge < 5 and local.reservoir > 0
       features: {refill: 1}
       values: {torch_gain: 1, reservoir_spend: 1}
+    replenish_single:
+      when: local.charge is not None and local.charge < 5 and not candidate.was_tried
+      features: {refill: 1}
+      values: {torch_gain: 1}
     obtain_supply:
       when: not candidate.was_tried
       features: {supplies: 1}
@@ -78,41 +86,58 @@ appraisal:
     bridge_slow_adventurer: travel
     pass_door_adventurer: travel
     cross_ice_adventurer: travel
+    observe_resident_tower_bear_adventurer: inspect_person
+    observe_resident_bar_bear_adventurer: inspect_person
+    observe_resident_prison_guard_adventurer: inspect_person
+    observe_resident_prison_voice_adventurer: inspect_person
+    observe_resident_fox_adventurer: inspect_person
+    observe_fox_adventurer: inspect_person
+    observe_resident_queen_adventurer: inspect_person
+    inspect_patient_adventurer: inspect_person
+    look_tower_top_adventurer: inspect_people
+    observe_queen_adventurer: inspect_people
+    observe_tower_adventurer: inspect_people
+    observe_bar_adventurer: inspect_people
+    observe_prison_voices_adventurer: inspect_people
+    observe_prison_people_adventurer: inspect_people
+    observe_foxes_adventurer: inspect_people
+    observe_climbs_adventurer: inspect_connections
+    observe_balloon_power_adventurer: inspect_surroundings
+    observe_prison_bars_adventurer: inspect_surroundings
+    observe_prison_line_adventurer: inspect_surroundings
+    observe_drink_adventurer: inspect_surroundings
+    observe_chest_adventurer: inspect_surroundings
+    observe_wall_adventurer: inspect_surroundings
+    load_charge_adventurer: replenish_single
+    load_elemental_torch_adventurer: replenish_single
+    load_balloon_power_adventurer: replenish_single
+    pass_prison_bars_adventurer: travel
+    pass_prison_line_adventurer: travel
   # Explicit exclusion from delegation, not exclusion from the world.
   manual:
     - explain_balloon_adventurer
-    - look_tower_top_adventurer
     - balloon_push_adventurer
     - balloon_push_bridge_adventurer
     - balloon_push_ice_adventurer
     - balloon_push_door_adventurer
     - balloon_flight_adventurer
-    - observe_balloon_power_adventurer
     - extract_balloon_power_adventurer
     - transfer_balloon_power_adventurer
-    - load_balloon_power_adventurer
     - balloon_control_adventurer
     - ask_alpha_adventurer
     - accept_alpha_adventurer
     - report_alpha_adventurer
-    - observe_resident_tower_bear_adventurer
     - brand_person_tower_bear_adventurer
     - locate_branded_person_tower_bear_adventurer
-    - observe_resident_bar_bear_adventurer
     - brand_person_bar_bear_adventurer
     - locate_branded_person_bar_bear_adventurer
-    - observe_resident_prison_guard_adventurer
     - brand_person_prison_guard_adventurer
     - locate_branded_person_prison_guard_adventurer
-    - observe_resident_prison_voice_adventurer
     - brand_person_prison_voice_adventurer
     - locate_branded_person_prison_voice_adventurer
-    - observe_resident_fox_adventurer
     - brand_person_fox_adventurer
     - locate_branded_person_fox_adventurer
-    - observe_tower_adventurer
     - pickup_elemental_charge_adventurer
-    - load_elemental_torch_adventurer
     - load_elemental_firelock_adventurer
     - fireball_adventurer
     - focus_elemental_adventurer
@@ -134,33 +159,21 @@ appraisal:
     - show_magic_adventurer
     - withdraw_magic_adventurer
     - receive_charge_adventurer
-    - load_charge_adventurer
-    - observe_prison_voices_adventurer
     - ask_prison_adventurer
-    - observe_prison_people_adventurer
-    - observe_prison_bars_adventurer
     - set_prison_bars_adventurer
-    - pass_prison_bars_adventurer
-    - observe_prison_line_adventurer
-    - pass_prison_line_adventurer
     - invite_guest_adventurer
     - thaw_door_adventurer
     - open_door_adventurer
     - close_door_adventurer
     - request_pour_adventurer
     - pour_drink_adventurer
-    - observe_bar_adventurer
-    - observe_drink_adventurer
     - thaw_drink_adventurer
-    - observe_chest_adventurer
     - open_chest_adventurer
     - take_gold_adventurer
     - take_magic_item_adventurer
-    - observe_climbs_adventurer
     - climb_skyhook_adventurer
     - observe_elemental_adventurer
     - offer_torch_adventurer
-    - observe_wall_adventurer
     - open_wall_adventurer
     - open_plain_wall_adventurer
     - care_person_adventurer
@@ -175,32 +188,54 @@ appraisal:
     - carry_pass_door_adventurer
     - strike_person_adventurer
     - bridge_rush_adventurer
-    - observe_fox_adventurer
     - request_tame_arctic_fox_one
     - request_tame_arctic_fox_two
     - request_tame_arctic_fox_three
     - request_tame_arctic_fox_four
-    - observe_foxes_adventurer
     - thaw_fox_adventurer
-    - inspect_patient_adventurer
-    - observe_resident_queen_adventurer
     - thaw_queen_adventurer
     - brand_person_queen_adventurer
     - locate_branded_person_queen_adventurer
-    - observe_queen_adventurer
 # Input bindings name payload fields; no private target state is read.
 inputs:
-  observe_floor_adventurer: &empty {destination: null, targets: [], movement_kind: ""}
-  observe_routes_adventurer: *empty
-  observe_resident_adventurer: {destination: null, targets: [victim], movement_kind: ""}
-  observe_hall_adventurer: *empty
-  observe_chandelier_adventurer: {destination: null, targets: [chandelier], movement_kind: ""}
-  reload_everflame_adventurer: *empty
-  detach_reservoir_adventurer: {destination: null, targets: [reservoir], movement_kind: ""}
-  thaw_floor_adventurer: {destination: null, targets: [floor_key], movement_kind: ""}
-  thaw_person_adventurer: {destination: null, targets: [victim], movement_kind: ""}
-  move_adventurer: &walk {destination: {kind: payload, field: destination}, targets: [], movement_kind: walk}
+  observe_floor_adventurer: {scope: floor, destination: null, targets: [], movement_kind: ""}
+  observe_routes_adventurer: {scope: ground_routes, destination: null, targets: [], movement_kind: ""}
+  observe_resident_adventurer: &person {scope: person, destination: null, targets: [victim], movement_kind: ""}
+  observe_hall_adventurer: {scope: hall_people, destination: null, targets: [], movement_kind: ""}
+  observe_chandelier_adventurer: {scope: chandelier, destination: null, targets: [chandelier], movement_kind: ""}
+  reload_everflame_adventurer: {scope: reservoir_refill, destination: null, targets: [], movement_kind: ""}
+  detach_reservoir_adventurer: {scope: reservoir_supply, destination: null, targets: [reservoir], movement_kind: ""}
+  thaw_floor_adventurer: {scope: floor_thaw, destination: null, targets: [floor_key], movement_kind: ""}
+  thaw_person_adventurer: {scope: person_thaw, destination: null, targets: [victim], movement_kind: ""}
+  move_adventurer: &walk {scope: travel, destination: {kind: payload, field: destination}, targets: [], movement_kind: walk}
   move_wall_adventurer: *walk
-  bridge_slow_adventurer: {destination: {kind: payload, field: destination}, targets: [], movement_kind: bridge}
-  pass_door_adventurer: {destination: {kind: payload, field: destination}, targets: [], movement_kind: door}
-  cross_ice_adventurer: {destination: {kind: known_crossing, field: crossing}, targets: [], movement_kind: ice}
+  bridge_slow_adventurer: {scope: travel, destination: {kind: payload, field: destination}, targets: [], movement_kind: bridge}
+  pass_door_adventurer: {scope: travel, destination: {kind: payload, field: destination}, targets: [], movement_kind: door}
+  cross_ice_adventurer: {scope: ice_travel, destination: {kind: known_crossing, field: crossing}, targets: [], movement_kind: ice}
+  observe_resident_tower_bear_adventurer: *person
+  observe_resident_bar_bear_adventurer: *person
+  observe_resident_prison_guard_adventurer: *person
+  observe_resident_prison_voice_adventurer: *person
+  observe_resident_fox_adventurer: *person
+  observe_fox_adventurer: *person
+  observe_resident_queen_adventurer: *person
+  inspect_patient_adventurer: *person
+  look_tower_top_adventurer: &tower_top_people {scope: tower_top_people, destination: null, targets: [], movement_kind: ""}
+  observe_queen_adventurer: *tower_top_people
+  observe_tower_adventurer: {scope: tower_people, destination: null, targets: [], movement_kind: ""}
+  observe_bar_adventurer: {scope: bar_people, destination: null, targets: [], movement_kind: ""}
+  observe_prison_voices_adventurer: {scope: prison_voices, destination: null, targets: [], movement_kind: ""}
+  observe_prison_people_adventurer: {scope: prison_people, destination: null, targets: [], movement_kind: ""}
+  observe_foxes_adventurer: {scope: foxes, destination: null, targets: [], movement_kind: ""}
+  observe_climbs_adventurer: {scope: climbs, destination: null, targets: [], movement_kind: ""}
+  observe_balloon_power_adventurer: {scope: balloon_power, destination: null, targets: [balloon], movement_kind: ""}
+  observe_prison_bars_adventurer: {scope: prison_bars, destination: null, targets: [bars], movement_kind: ""}
+  observe_prison_line_adventurer: {scope: prison_line, destination: null, targets: [], movement_kind: ""}
+  observe_drink_adventurer: {scope: drink, destination: null, targets: [drink], movement_kind: ""}
+  observe_chest_adventurer: {scope: chest, destination: null, targets: [target], movement_kind: ""}
+  observe_wall_adventurer: {scope: wall, destination: null, targets: [target], movement_kind: ""}
+  load_charge_adventurer: {scope: prison_charge, destination: null, targets: [], movement_kind: ""}
+  load_elemental_torch_adventurer: {scope: elemental_charge, destination: null, targets: [], movement_kind: ""}
+  load_balloon_power_adventurer: {scope: balloon_charge, destination: null, targets: [], movement_kind: ""}
+  pass_prison_bars_adventurer: *walk
+  pass_prison_line_adventurer: *walk
