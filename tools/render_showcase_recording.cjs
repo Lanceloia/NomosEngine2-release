@@ -13,9 +13,10 @@ async function main() {
   if (products.some(name => fs.existsSync(path.join(root, name)))) throw Error('Export artifacts already exist; never overwrite captures.');
   const reservation = path.join(root, '.video-export.lock');
   const lock = fs.openSync(reservation, 'wx');
-  const { chromium } = require(playwrightModule);
   let browser;
   try {
+    if (products.some(name => fs.existsSync(path.join(root, name)))) throw Error('Export artifacts appeared before reservation; never overwrite captures.');
+    const { chromium } = require(playwrightModule);
     browser = await chromium.launch({ args: ['--allow-file-access-from-files'] });
     const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
     const page = await context.newPage();
@@ -72,9 +73,12 @@ async function main() {
     }, null, 2) + '\n');
     console.log(`Exported ${path.join(root, 'demo.webm')}`);
   } finally {
-    if (browser) await browser.close();
-    fs.closeSync(lock);
-    fs.unlinkSync(reservation);
+    try {
+      if (browser) await browser.close();
+    } finally {
+      fs.closeSync(lock);
+      fs.unlinkSync(reservation);
+    }
   }
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

@@ -1,5 +1,6 @@
 """Small recording contracts; actual worlds are still executed by C0/T0/K0."""
 
+import shutil
 import subprocess
 from copy import deepcopy
 from pathlib import Path
@@ -88,6 +89,31 @@ def test_compare_rejects_unsupported_original_publication(tmp_path, fault):
 def test_recording_phase_has_a_bounded_timeout():
     with pytest.raises(subprocess.TimeoutExpired):
         recording.run_phase("sleep 30", recording.os.environ.copy(), timeout=0.05)
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="optional video exporter needs Node")
+def test_export_releases_reservation_when_dependency_is_missing(tmp_path):
+    result = subprocess.run([
+        "node", str(recording.ROOT / "tools/render_showcase_recording.cjs"), str(tmp_path),
+        str(tmp_path / "missing-playwright.cjs"),
+    ], capture_output=True, text=True, check=False, timeout=10)
+    assert result.returncode == 1
+    assert "Cannot find module" in result.stderr
+    assert not (tmp_path / ".video-export.lock").exists()
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="optional video exporter needs Node")
+def test_export_preserves_existing_media_without_loading_browser(tmp_path):
+    poster = tmp_path / "poster.png"
+    poster.write_bytes(b"existing evidence")
+    result = subprocess.run([
+        "node", str(recording.ROOT / "tools/render_showcase_recording.cjs"), str(tmp_path),
+        str(tmp_path / "missing-playwright.cjs"),
+    ], capture_output=True, text=True, check=False, timeout=10)
+    assert result.returncode == 1
+    assert "never overwrite" in result.stderr
+    assert poster.read_bytes() == b"existing evidence"
+    assert not (tmp_path / ".video-export.lock").exists()
 
 
 def test_saved_capture_outputs_and_reports_match_their_digests():
