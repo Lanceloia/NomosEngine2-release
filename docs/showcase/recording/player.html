@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NomosEngine2 · 规则编辑实录</title>
+<style>
+* { box-sizing: border-box; letter-spacing: 0; }
+body { margin: 0; background: #f6f7f8; color: #202426; font-family: "Microsoft YaHei", "Noto Sans SC", sans-serif; }
+main { max-width: 1440px; height: 100vh; min-height: 680px; margin: auto; padding: 28px 44px 24px; display: flex; flex-direction: column; gap: 16px; }
+header { display: flex; justify-content: space-between; align-items: end; gap: 24px; }
+h1 { font-size: 26px; font-weight: 650; margin: 0 0 8px; }
+header p { margin: 0; font-size: 15px; color: #515a60; }
+.tag { border-left: 3px solid #17865f; padding-left: 12px; line-height: 1.7; font-size: 13px; color: #515a60; white-space: nowrap; }
+section { flex: 1; min-height: 0; display: flex; flex-direction: column; background: #1c1e20; color: #e7e9eb; border-radius: 4px; overflow: hidden; }
+.bar { background: #303336; padding: 11px 20px; color: #bdc3c7; font-size: 14px; display: flex; justify-content: space-between; }
+pre { margin: 0; font: 18px/1.45 "Cascadia Mono", Consolas, "DejaVu Sans Mono", "Microsoft YaHei", monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+#command { padding: 15px 22px; color: #abb9c1; font-size: 15px; border-bottom: 1px solid #3b3f42; }
+#output { padding: 16px 22px; flex: 1; min-height: 0; overflow-y: auto; }
+.line { display: block; min-height: 1.45em; }
+.added, .success { color: #a8e5b4; }
+.changed, .refused { color: #ffcd90; }
+.focus { border-left: 3px solid #ffcd90; margin-left: -10px; padding-left: 7px; background: #3b3429; }
+.muted { color: #b5bdc2; }
+.waiting { color: #a1a8ad; }
+nav { display: flex; gap: 8px; flex-wrap: wrap; }
+button { font: inherit; cursor: pointer; border: 0; background: none; color: #515a60; padding: 7px 8px; border-radius: 3px; }
+nav button { font-size: 13px; border-bottom: 2px solid transparent; }
+nav button[aria-current="step"] { border-color: #17865f; color: #152d23; font-weight: 600; }
+button:hover { background: #e7ece9; }
+button:focus-visible, input:focus-visible { outline: 2px solid #17865f; outline-offset: 3px; }
+.controls { display: flex; align-items: center; gap: 12px; }
+.controls button { width: 34px; height: 34px; flex: 0 0 34px; }
+input { flex: 1; accent-color: #17865f; min-width: 80px; }
+time { font: 14px Consolas, monospace; min-width: 108px; }
+footer { font-size: 12px; color: #687279; }
+@media (max-width: 950px) { main { padding: 18px; } pre { font-size: 15px; } header { align-items: start; } .tag { white-space: normal; } }
+</style>
+<main>
+<header>
+  <div><h1>NomosEngine2：改规则，不改行动见证</h1><p id="chapter">规则编辑实录</p></div>
+  <div class="tag">真实命令输出 · 分章回放<br>临时副本 · 原仓库样例未改</div>
+</header>
+<section aria-label="已录制的终端输出">
+  <div class="bar"><span>作者终端 / C0 → K0 / T0 实际见证</span><span id="status"></span></div>
+  <pre id="command"></pre>
+  <pre id="output" aria-live="off"></pre>
+</section>
+<nav aria-label="演示章节"></nav>
+<div class="controls">
+  <button id="play" title="播放 / 暂停" aria-label="播放">&#9654;</button>
+  <button id="restart" title="从头播放" aria-label="从头播放">&#8634;</button>
+  <input id="seek" type="range" min="0" value="0" step="0.05" aria-label="播放位置">
+  <time></time>
+</div>
+<footer>画面是已执行命令的输出回放，不是交互编辑器；阅读停留另加，不代表运行耗时。仅证明本次有限见证。</footer>
+</main>
+<script>
+const recording = __RECORDING__;
+const output = document.querySelector('#output');
+const command = document.querySelector('#command');
+const slider = document.querySelector('#seek');
+const play = document.querySelector('#play');
+const nav = document.querySelector('nav');
+let position = 0, playing = false, previous = performance.now(), rendered = '';
+slider.max = recording.duration;
+const labels = ['作者文件', '原版运行', '只改 Law', '重跑见证', '核对拒绝', '职业 / 人数'];
+recording.chapters.forEach((chapter, index) => {
+  const button = document.createElement('button');
+  button.textContent = `${index + 1}. ${labels[index]}`;
+  button.onclick = () => seek(chapter.start);
+  nav.append(button);
+});
+function clock(value) {
+  return `${Math.floor(value / 60)}:${String(Math.floor(value % 60)).padStart(2, '0')}`;
+}
+function setPlaying(value) {
+  playing = value;
+  play.innerHTML = value ? '&#10074;&#10074;' : '&#9654;';
+  play.setAttribute('aria-label', value ? '暂停' : '播放');
+}
+function paint() {
+  let index = 0;
+  recording.chapters.forEach((chapter, number) => { if (position >= chapter.start) index = number; });
+  const chapter = recording.chapters[index];
+  const ready = position >= chapter.output_at;
+  const key = `${index}/${ready}`;
+  document.querySelector('#chapter').textContent = chapter.title;
+  document.querySelector('#status').textContent = ready ? `本次命令 ${chapter.process_seconds.toFixed(2)}s` : '实际执行等待';
+  command.textContent = `$ ${chapter.command}`;
+  if (rendered !== key) {
+    output.replaceChildren();
+    const content = ready ? chapter.output : '运行中…';
+    for (const line of content.trimEnd().split('\n')) {
+      const span = document.createElement('span');
+      span.className = 'line';
+      span.textContent = line || ' ';
+      if (line.startsWith('+') && !line.startsWith('+++')) span.classList.add('added', 'focus');
+      else if (/not_self|第十步|停在第|K0NotAdmitted|k0_not_admitted|\[exit 3\]/.test(line)) span.classList.add('refused', 'focus');
+      else if (/候选仍存在|没有写入|来源|八席|独立本人|前九步/.test(line)) span.classList.add('changed');
+      else if (/goal: met|witch-e|vote-g|\[exit 0\]/.test(line)) span.classList.add('success');
+      else if (/^  #|^@@|^---|^\+\+\+/.test(line)) span.classList.add('muted');
+      output.append(span);
+    }
+    output.scrollTop = 0;
+    rendered = key;
+  }
+  [...nav.children].forEach((button, number) => button.setAttribute('aria-current', number === index ? 'step' : 'false'));
+  slider.value = position;
+  document.querySelector('time').textContent = `${clock(position)} / ${clock(recording.duration)}`;
+}
+function seek(value) { position = Math.max(0, Math.min(recording.duration, value)); paint(); }
+play.onclick = () => { if (position >= recording.duration) seek(0); setPlaying(!playing); };
+document.querySelector('#restart').onclick = () => { seek(0); setPlaying(true); };
+slider.oninput = () => seek(Number(slider.value));
+function tick(now) {
+  if (playing) {
+    seek(position + Math.min(0.1, (now - previous) / 1000));
+    if (position >= recording.duration) setPlaying(false);
+  }
+  previous = now;
+  requestAnimationFrame(tick);
+}
+window.showcase = { seek, play: () => setPlaying(true), recording };
+paint();
+requestAnimationFrame(tick);
+</script>
+</html>

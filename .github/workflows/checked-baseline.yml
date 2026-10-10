@@ -44,6 +44,7 @@ jobs:
           tests/nomos_c0/test_compact_record_fields_v1.py
           tests/tools/test_release_demo_install_boundaries.py
           tests/tools/test_release_documentation.py
+          tests/tools/test_showcase_recording.py
           tests/nomos_c0/test_showcase_evidence_v1.py
           tests/nomos_c0/test_release_runtime_gate_v1.py
           tests/nomos_c0/test_release_runtime_gate_lifetime_v1.py
