@@ -7,21 +7,25 @@ goals:
     when: progress.ritualDisrupted == 0 and knowledge.ritual_active
     gains: {ritualDisrupted: 1}
     feature: interrupt
+    preferences: {cautious_investigator: 0, helpful_rescuer: 0, decisive_explorer: 0}
   help:
     label: 接近已知受困者
     selector: {observation: {kind: person, state: frozen}}
     when: true
     gains: {peopleThawed: 1, knownChargeSpent: 1}
     feature: help
+    preferences: {cautious_investigator: 0, helpful_rescuer: 0, decisive_explorer: 0}
   depart:
     label: 寻找离宫的机会
     selector: {sites: [palace_exit]}
     when: true
     gains: {departed: 1}
     feature: depart
+    preferences: {cautious_investigator: 0, helpful_rescuer: 0, decisive_explorer: 0}
   explore:
     label: 探查尚未抵达的区域
-    selector: {frontier: true}
-    when: true
+    selector: {frontier: {exclude_sites: [bridge_palace_landing, bridge_midspan, palace_exit]}}
+    when: progress.visitedPlaces < 8
     gains: {visitedPlaces: 1}
     feature: explore
+    preferences: {cautious_investigator: 50, helpful_rescuer: 0, decisive_explorer: 0}
