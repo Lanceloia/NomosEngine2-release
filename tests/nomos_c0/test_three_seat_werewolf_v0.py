@@ -221,7 +221,8 @@ def test_authored_actor_domain_instantiates_one_capability_per_participant() -> 
     assert len(source["opening_actor_guards"]) == 1
     assert source["opening_actor_guards"][0]["domain"] == "participants"
     scene_record = next(row for row in _part("lib")["records"] if row["name"] == "Scene")
-    assert {"a_id", "b_id", "c_id"}.isdisjoint({field["name"] for field in scene_record["fields"]})
+    assert {"a_id", "b_id", "c_id"}.isdisjoint(
+        {field.split()[1] for field in scene_record["fields"]})
     assert [item["family"] for item in source["actions"]] == [
         "vote",
         "attack",

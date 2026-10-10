@@ -897,8 +897,7 @@ def check_nominal_lib(
         canonical = json.dumps(row, sort_keys=True, separators=(",", ":"))
         if len(canonical) > 262144:
             raise C0LawError("Lib declaration is too large")
-        if "type_aliases" in row:
-            row = expand_type_aliases(row)
+        row = expand_type_aliases(row)
         if type(row["owners"]) is not list or any(type(item) is not dict for item in row["owners"]):
             raise C0LawError("Lib owners must be a finite declaration list")
         # Storage addresses are layout, not part of the nominal validation contract.

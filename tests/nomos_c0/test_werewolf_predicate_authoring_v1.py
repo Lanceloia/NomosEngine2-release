@@ -6,6 +6,7 @@ import pytest
 
 from nomos_c0.author_document_v1 import read_author_document
 from nomos_c0.condition_source_v0 import lower_author_expression
+from nomos_c0.nominal_field_declarations_v1 import normalize_record_field
 from nomos_c0.nominal_type_aliases_v1 import BUILTIN_TYPE_NAMES, expand_type_aliases
 from tools import release_rule_edit_demo
 
@@ -93,8 +94,9 @@ def test_shared_lib_field_types_are_declared_even_when_used_once():
     }
     used = set()
     for record in lib["records"]:
-        for field in record["fields"]:
-            assert isinstance(field["type"], str), "declare domain field types before use"
+        for index, raw_field in enumerate(record["fields"]):
+            assert isinstance(raw_field, str), "use compact named field declarations"
+            field = normalize_record_field(raw_field, record=record["name"], index=index)
             assert field["type"] in declared
             used.add(field["type"])
     assert set(lib["type_aliases"]) <= used

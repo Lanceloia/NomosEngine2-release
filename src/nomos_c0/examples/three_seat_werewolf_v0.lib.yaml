@@ -78,173 +78,112 @@ pure_definitions:
 records:
   - name: Player
     fields:
-      - name: id
-        type: ParticipantName
-      - name: alive
-        type: bool
+      - ParticipantName id
+      - bool alive
     invariant: null
   - name: Assignment
     fields:
-      - name: id
-        type: ParticipantName
-      - name: role
-        type: Role
+      - ParticipantName id
+      - Role role
     invariant: null
   - name: Vote
     fields:
-      - name: round
-        type: RoundNumber
-      - name: voter
-        type: ParticipantName
-      - name: target
-        type: ParticipantName
-      - name: action
-        type: occurrence_ref
+      - RoundNumber round
+      - ParticipantName voter
+      - ParticipantName target
+      - occurrence_ref action
     invariant: null
   - name: OwnVote
     fields:
-      - name: round
-        type: RoundNumber
-      - name: target
-        type: ParticipantName
-      - name: action
-        type: occurrence_ref
+      - RoundNumber round
+      - ParticipantName target
+      - occurrence_ref action
     invariant: null
   - name: Observation
     fields:
-      - name: round
-        type: RoundNumber
-      - name: target
-        type: ParticipantName
-      - name: faction
-        type: Faction
-      - name: action
-        type: occurrence_ref
+      - RoundNumber round
+      - ParticipantName target
+      - Faction faction
+      - occurrence_ref action
     invariant: null
   - name: Scene
     fields:
-      - name: phase
-        type: GamePhase
-      - name: round
-        type: RoundNumber
-      - name: players
-        type: PlayerRoster
-      - name: roles
-        type: RoleAssignments
-      - name: ballots
-        type: BallotHistory
-      - name: wolf_ballots
-        type: BallotHistory
-      - name: winner
-        type: WinningSide
-      - name: pending_attack
-        type: OptionalParticipant
-      - name: selection_done
-        type: bool
-      - name: witch_done
-        type: bool
-      - name: witch_saved
-        type: bool
-      - name: seer_done
-        type: bool
-      - name: last_death
-        type: OptionalParticipant
+      - GamePhase phase
+      - RoundNumber round
+      - PlayerRoster players
+      - RoleAssignments roles
+      - BallotHistory ballots
+      - BallotHistory wolf_ballots
+      - WinningSide winner
+      - OptionalParticipant pending_attack
+      - bool selection_done
+      - bool witch_done
+      - bool witch_saved
+      - bool seer_done
+      - OptionalParticipant last_death
     invariant: null
   - name: AttackChoice
     fields:
-      - name: round
-        type: RoundNumber
-      - name: target
-        type: ParticipantName
-      - name: action
-        type: occurrence_ref
+      - RoundNumber round
+      - ParticipantName target
+      - occurrence_ref action
     invariant: null
   - name: NightChoice
     fields:
-      - name: round
-        type: RoundNumber
-      - name: kind
-        type: SeerNightChoice
-      - name: action
-        type: occurrence_ref
+      - RoundNumber round
+      - SeerNightChoice kind
+      - occurrence_ref action
     invariant: null
   - name: WitchNotice
     fields:
-      - name: round
-        type: RoundNumber
-      - name: target
-        type: OptionalParticipant
-      - name: selection
-        type: occurrence_ref
-      - name: notice
-        type: occurrence_ref
+      - RoundNumber round
+      - OptionalParticipant target
+      - occurrence_ref selection
+      - occurrence_ref notice
     invariant: null
   - name: WitchChoice
     fields:
-      - name: round
-        type: RoundNumber
-      - name: saved
-        type: bool
-      - name: target
-        type: OptionalParticipant
-      - name: selection
-        type: occurrence_ref
-      - name: notice
-        type: occurrence_ref
-      - name: action
-        type: occurrence_ref
+      - RoundNumber round
+      - bool saved
+      - OptionalParticipant target
+      - occurrence_ref selection
+      - occurrence_ref notice
+      - occurrence_ref action
     invariant: null
   - name: Actor
     fields:
-      - name: name
-        type: ParticipantName
-      - name: own_role
-        type: Role
-      - name: votes
-        type: PersonalBallotHistory
-      - name: observations
-        type: InspectionHistory
-      - name: choices
-        type: SeerChoiceHistory
-      - name: attacks
-        type: AttackHistory
-      - name: witch_notice
-        type: OptionalWitchNotice
-      - name: witch_choices
-        type: WitchChoiceHistory
-      - name: healing_available
-        type: bool
+      - ParticipantName name
+      - Role own_role
+      - PersonalBallotHistory votes
+      - InspectionHistory observations
+      - SeerChoiceHistory choices
+      - AttackHistory attacks
+      - OptionalWitchNotice witch_notice
+      - WitchChoiceHistory witch_choices
+      - bool healing_available
     invariant: null
   - name: VoteAttempt
     fields:
-      - name: actor
-        type: ParticipantName
-      - name: target
-        type: ParticipantName
+      - ParticipantName actor
+      - ParticipantName target
     invariant: null
   - name: Envelope
     fields:
-      - name: action
-        type: occurrence_ref
-      - name: target
-        type: ParticipantName
+      - occurrence_ref action
+      - ParticipantName target
     invariant: null
   - name: PassAttempt
     fields:
-      - name: actor
-        type: ParticipantName
+      - ParticipantName actor
     invariant: null
   - name: PassEnvelope
     fields:
-      - name: action
-        type: occurrence_ref
+      - occurrence_ref action
     invariant: null
   - name: WitchAttempt
     fields:
-      - name: actor
-        type: ParticipantName
-      - name: save
-        type: bool
+      - ParticipantName actor
+      - bool save
     invariant: null
 owners:
   - symbol: scene

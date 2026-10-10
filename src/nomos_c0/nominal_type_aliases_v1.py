@@ -6,6 +6,7 @@ import keyword
 from copy import deepcopy
 
 from .author_contract_v1 import C0LawError
+from .nominal_field_declarations_v1 import normalize_record_field
 
 BUILTIN_TYPE_NAMES = frozenset({
     "bool", "int", "str", "enum", "optional", "tuple", "none",
@@ -64,7 +65,8 @@ def expand_type_aliases(row: dict[str, object]) -> dict[str, object]:
         if type(record) is not dict or type(record.get("fields")) is not list:
             raise C0LawError("Lib nominal declaration needs a field list")
         fields = []
-        for field in record["fields"]:
+        for index, raw_field in enumerate(record["fields"]):
+            field = normalize_record_field(raw_field, record=record.get("name"), index=index)
             if type(field) is not dict or "type" not in field:
                 raise C0LawError("Lib record field needs a type")
             fields.append({**field, "type": expand(field["type"])})

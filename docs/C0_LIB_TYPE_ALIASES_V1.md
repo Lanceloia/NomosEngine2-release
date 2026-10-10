@@ -14,19 +14,38 @@ type_aliases:
 records:
   - name: WitchNotice
     fields:
-      - {name: round, type: RoundNumber}
-      - {name: target, type: OptionalParticipant}
-      - {name: selection, type: occurrence_ref}
-      - {name: notice, type: occurrence_ref}
+      - RoundNumber round
+      - OptionalParticipant target
+      - occurrence_ref selection
+      - occurrence_ref notice
     invariant: null
 ```
 
 这是类型片段，不是独立可运行的完整 Lib；`Vote`、owner 和其他声明仍须提供。
 
+## 一行字段声明
+
+`fields` 的列表项可写成 `TypeName field_name`，类型在前，字段名在后：
+
+```yaml
+fields:
+  - ParticipantName id
+  - bool alive
+```
+
+每项仅有两个 ASCII 标识符，中间为空格或制表符；不含默认值、分号或内联类型表达式。
+类型必须是内建、已声明 record 或 alias 名；字段名仍受现行命名、重复及保留名检查。
+坏声明指出所在 record 和字段序号，类型未知和不合法字段仍在 Compile 阶段拒绝。
+
+这是现行语法的一种紧凑声明形式。结构化 `{name: id, type: ParticipantName}` 与它在前端
+归一为同一字段描述，再展开别名、生成指纹和检查类型；不是新的运行时协议或旧版本编译链。
+字段顺序、codec、范围与 owner 类型版本不因换排版而变化。狼人杀样例统一使用一行写法，
+`pure_definitions.parameters` 等其他声明位置不借此改变自己的合同。
+
 ## 样例书写规范
 
 具名声明是帮助理解领域含义的规范，不只是一项去重优化。
-现行狼人杀样例的 record 字段只使用内建类型名、已声明 record 名或 `type_aliases` 名：
+现行狼人杀样例的 record 字段统一为一行声明，只使用内建类型名、已声明 record 名或 `type_aliases` 名：
 
 - 范围、枚举、可选类型和集合类型集中声明，即使只用一次也不在字段内展开定义。
 - 按用途命名：`GamePhase`、`WinningSide`、`PlayerRoster`、`InspectionHistory`、`OptionalWitchNotice`。
@@ -51,6 +70,7 @@ records:
 
 运行时只使用展开后的受检字段描述和既有校验器，不解析别名，也不新增 K0 类型指令。
 实现：[别名展开](../src/nomos_c0/nominal_type_aliases_v1.py)、[Lib 检查](../src/nomos_c0/declarative_nominal_v0.py)。
+紧凑声明：[字段归一](../src/nomos_c0/nominal_field_declarations_v1.py)。
 
 ## 狼人杀样例整理
 
@@ -69,5 +89,6 @@ records:
 谓词与结构化集合操作仍是同一现行语法，不为历史报告增加备用运行入口。
 
 短测试：[别名与边界](../tests/nomos_c0/test_nominal_type_aliases_v1.py)、
+[一行字段](../tests/nomos_c0/test_compact_record_fields_v1.py)、
 [样例选型](../tests/nomos_c0/test_werewolf_predicate_authoring_v1.py)。
 旧输入与采集：[历史输入](showcase/historical-inputs/README.md)；现行展示见[矩阵](SHOWCASE_MATRIX.md)。
