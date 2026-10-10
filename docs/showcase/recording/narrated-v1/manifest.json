@@ -35,12 +35,13 @@
     "docs/showcase/recording/capture-v1/recording.json": "72aedce60b9c79116df68df728c9321b35a7a3cb5d3c268a6be164a5ba6398c7",
     "docs/showcase/recording/capture-v1/video-export.json": "02364f127d45534b057dcc3c5dcff87ea2209c8de44fc6f0b17f465677efb68c",
     "docs/showcase/recording/narration.json": "29bab7aa77ad3cf65dfb806dee2b07e208bc4d2028a3073ecc1f750a65dff794",
-    "tools/narrate_showcase_recording.py": "9a9ae5da96cd9578f4b3146eca990d2cee4040723e55f6197d137d5e7f085ea9"
+    "tools/narrate_showcase_recording.py": "051fad5f670b1a8fe8762ee56e45702098f400b366356341d4da927b565f5006"
   },
   "outputs_sha256": {
-    "experiment.mp4": "515a8445123f3c161a8eaa9bf70500a3812df52d4e6c3272bfde5e81b74b28a8",
+    "experiment.mp4": "517d574539df48eca49ca601fe6f2b5bcf1e3dddd6af3806c36d78fc6ddbc76c",
     "index.html": "3f4417aebf64384212e7542fdd563c54fb864043740ff95ab4c318c2404aaef3",
     "narration.wav": "794216efb4cfe366bf878025b1941846f12753b79623b29fb71a116f257013ad",
+    "subtitles.ass": "f82a119a1f852acf8e72590b48906b407cf49448ce792b695d387255491ac40b",
     "subtitles.srt": "953362739fd8a96f6196ab0150c1966d34b2a4c6b5cfeaf5cf1ce0c0d602c8ad"
   },
   "note": "Original capture unchanged. Alignment estimated from its export timing; no new engine run. Font used locally, not redistributed."

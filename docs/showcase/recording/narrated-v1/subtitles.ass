@@ -1,0 +1,15 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1440
+PlayResY: 1050
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Noto Sans SC,32,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,0,0,2,30,30,22,1
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,00:00:01.11,00:00:07.23,Default,,0,0,0,,这些是真正的作者文件。实验复制到临时目录，不修改原仓库。
+Dialogue: 0,00:00:11.01,00:00:17.40,Default,,0,0,0,,原规则下，同一条十步路线实际运行成功，发布十四条行动与事件。
+Dialogue: 0,00:00:23.20,00:00:28.96,Default,,0,0,0,,注意这条差异：只增加目标不是女巫本人的条件，其余输入不变。
+Dialogue: 0,00:00:37.03,00:00:43.67,Default,,0,0,0,,重新编译并执行同一见证。前九步相同，第十步救自己被内核拒绝。
+Dialogue: 0,00:00:52.83,00:01:00.76,Default,,0,0,0,,候选仍在，但提交不获准。失败条件和状态对照显示，这一步没有产生任何写入。
+Dialogue: 0,00:01:12.25,00:01:24.11,Default,,0,0,0,,规则保持不变，换女巫会转移通知、选项与行动来源；扩人数会\N产生新席位的独立视图与真实投票。声明和开局仍需同步编辑。

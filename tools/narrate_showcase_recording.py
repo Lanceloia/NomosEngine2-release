@@ -110,17 +110,33 @@ def main():
         sorted(speech.glob("*.wav")), starts, limits, output / "narration.wav", duration
     )
     subtitles = []
+    dialogues = []
     for index, (text, (start, end)) in enumerate(zip(board["chapters"], intervals, strict=True), 1):
         # Put longer commentary on two lines inside the added subtitle band.
         if len(text) > 40:
             middle = len(text) // 2
             text = text[:middle] + "\n" + text[middle:]
         subtitles.append(f"{index}\n{stamp(start)} --> {stamp(end)}\n{text}\n")
+        ass_start, ass_end = (stamp(value).replace(",", ".")[:-1] for value in (start, end))
+        ass_text = text.replace("\n", r"\N")
+        dialogues.append(f"Dialogue: 0,{ass_start},{ass_end},Default,,0,0,0,,{ass_text}")
     (output / "subtitles.srt").write_text("\n".join(subtitles), encoding="utf-8")
+    # Explicit pixel coordinates keep two subtitle lines inside their own band.
+    ass = (
+        "[Script Info]\nScriptType: v4.00+\nPlayResX: 1440\nPlayResY: 1050\n"
+        "[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, "
+        "OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, "
+        "Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, "
+        "MarginL, MarginR, MarginV, Encoding\n"
+        "Style: Default,Noto Sans SC,32,&H00FFFFFF,&H00FFFFFF,&H00000000,&H00000000,"
+        "0,0,0,0,100,100,0,0,1,0,0,2,30,30,22,1\n"
+        "[Events]\nFormat: Layer, Start, End, Style, Name, "
+        "MarginL, MarginR, MarginV, Effect, Text\n"
+    )
+    (output / "subtitles.ass").write_text(ass + "\n".join(dialogues) + "\n", encoding="utf-8")
     subtitle_filter = (
-        "pad=iw:ih+110:0:0:color=0x171b1e,subtitles=filename='subtitles.srt':"
-        f"fontsdir='{args.font_directory.resolve()}':"
-        "force_style='Fontname=Noto Sans SC,Fontsize=19,MarginV=9,Outline=0'"
+        "pad=iw:ih+150:0:0:color=0x171b1e,ass=filename='subtitles.ass':"
+        f"fontsdir='{args.font_directory.resolve()}'"
     )
     subprocess.run(
         [
