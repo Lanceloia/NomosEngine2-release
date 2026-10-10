@@ -40,6 +40,9 @@ jobs:
           tests/nomos_c0/test_nominal_validation_block_v1.py
           tests/nomos_c0/test_validation_contract_execution_v1.py
           tests/nomos_c0/test_bundled_examples_v1.py
+          tests/nomos_c0/test_nominal_type_aliases_v1.py
+          tests/nomos_c0/test_compact_record_fields_v1.py
+          tests/tools/test_release_demo_install_boundaries.py
           tests/nomos_c0/test_release_runtime_gate_v1.py
           tests/nomos_c0/test_release_runtime_gate_lifetime_v1.py
           tests/nomos_t0/test_witness_v0.py
@@ -57,3 +60,5 @@ jobs:
           env -u PYTHONPATH -u PYTHONHOME "$RUNNER_TEMP/installed/bin/python" -I "$checkout/tools/release_install_smoke.py" werewolf
           env -u PYTHONPATH -u PYTHONHOME "$RUNNER_TEMP/installed/bin/python" -I "$checkout/tools/release_install_smoke.py" everflame
           env -u PYTHONPATH -u PYTHONHOME "$RUNNER_TEMP/installed/bin/python" -I "$checkout/tools/release_rule_edit_demo.py"
+          env -u PYTHONPATH -u PYTHONHOME "$RUNNER_TEMP/installed/bin/python" -I "$checkout/tools/release_wolf_vote_demo.py"
+          env -u PYTHONPATH -u PYTHONHOME "$RUNNER_TEMP/installed/bin/python" -I "$checkout/tools/release_world_edit_demo.py"

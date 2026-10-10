@@ -155,7 +155,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     if args.record is not None and args.record.exists():
         parser.error("evidence directory already exists; choose a new directory")
-    if any(not Path(module.__file__).resolve().is_relative_to(HERE)
+    if args.record is not None and any(not Path(module.__file__).resolve().is_relative_to(HERE)
            for module in (nomos_c0, nomos_t0, nomos_kernel)):
         parser.error("run with C0/T0/K0 installed from this checkout")
     examples = Path(nomos_c0.__file__).resolve().parent / "examples"

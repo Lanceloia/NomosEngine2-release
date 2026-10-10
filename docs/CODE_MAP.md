@@ -1,6 +1,7 @@
 # 代码导览
 
 建议先读根 README 和[语义说明](SEMANTICS.md)，不要从最大文件开始猜架构。
+首次看项目可先读[实验导览](PROJECT_TOUR.md)，再沿下列路径检查实现。
 
 ## 沿一条救人规则读代码
 
@@ -36,6 +37,7 @@ Assets ────────────────────────�
 | --- | --- | --- |
 | 编译阶段 | `src/nomos_c0/owner_graph_v1.py` | `graph_frontend_v1.py`、`program_binding_v1.py` |
 | 类型与表达式 | `expression_ir_v1.py`、`composable_value_v1.py` | `nominal_fields_v1.py`、`guard_ir_v0.py` |
+| 具名类型与紧凑字段 | `nominal_type_aliases_v1.py`、`nominal_field_declarations_v1.py` | `declarative_nominal_v0.py`及[作者说明](C0_LIB_TYPE_ALIASES_V1.md) |
 | 生成优化 | `invariant_execution_v1.py` | `_execution_emission.py`及[维护边界](EXECUTION_BACKEND.md) |
 | 开局/规则隔离 | `program_start_v1.py` | `engine/kernel/src/nomos_kernel/_owner_state_runtime.py` |
 | 一次真实提交 | `program_runtime_v1.py`的submit | `_atomic_inmemory_session.py`的事务与因果闭包 |

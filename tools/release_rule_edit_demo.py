@@ -34,7 +34,9 @@ def main(argv=None):
     if args.record is not None and args.record.exists():
         parser.error("capture directory already exists; historical evidence is never overwritten")
     modules = (nomos_c0, nomos_t0, nomos_kernel)
-    if any(not Path(module.__file__).resolve().is_relative_to(HERE) for module in modules):
+    if args.record is not None and any(
+        not Path(module.__file__).resolve().is_relative_to(HERE) for module in modules
+    ):
         parser.error("run with C0/T0/K0 installed from this checkout")
     root = Path(nomos_c0.__file__).resolve().parent / "examples"
     cases = Path(nomos_t0.__file__).resolve().parent / "examples"
