@@ -32,7 +32,7 @@ goals:
   find_exit:
     label: 沿已知桥路寻找外岸
     selector: {frontier: {only_sites: [bridge_palace_landing, bridge_midspan, palace_exit]}}
-    when: true
+    when: progress.visitedPlaces >= 5 or knowledge.ritual_dangerous
     gains: {visitedPlaces: 1}
     feature: explore
     preferences: {cautious_investigator: 20, helpful_rescuer: 20, decisive_explorer: 20}
