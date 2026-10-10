@@ -1,6 +1,27 @@
 # Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
 schema: c0.nominal_lib.v1
 pure_definitions:
+  - name: perception.open_neighbor
+    parameters: {observer_site: str, subject_site: str}
+    result: bool
+    stage: admission
+    # Finite authored sightlines; passage permission is a separate rule.
+    body:
+      any:
+        - observer_site == 'ballroom_entrance' and subject_site == 'ballroom_chandelier_reach'
+        - observer_site == 'ballroom_chandelier_reach' and subject_site == 'ballroom_entrance'
+        - observer_site == 'ballroom_chandelier_reach' and subject_site == 'ballroom_chandelier_far_wall'
+        - observer_site == 'ballroom_chandelier_far_wall' and subject_site == 'ballroom_chandelier_reach'
+        - observer_site == 'halls_ballroom_door' and subject_site == 'halls_bridge_door'
+        - observer_site == 'halls_bridge_door' and subject_site == 'halls_ballroom_door'
+        - observer_site == 'ritual_passage_entry' and subject_site == 'ritual_threshold'
+        - observer_site == 'ritual_threshold' and subject_site == 'ritual_passage_entry'
+        - observer_site == 'ritual_threshold' and subject_site == 'ritual_ring'
+        - observer_site == 'ritual_ring' and subject_site == 'ritual_threshold'
+        - observer_site == 'bridge_palace_landing' and subject_site == 'bridge_midspan'
+        - observer_site == 'bridge_midspan' and subject_site == 'bridge_palace_landing'
+        - observer_site == 'bridge_midspan' and subject_site == 'palace_exit'
+        - observer_site == 'palace_exit' and subject_site == 'bridge_midspan'
   - name: conversation.decision
     parameters: {request: occurrence_ref, accepted: bool, action: occurrence_ref}
     result: GuestDecision

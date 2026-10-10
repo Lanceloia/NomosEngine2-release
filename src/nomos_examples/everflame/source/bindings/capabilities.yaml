@@ -1530,7 +1530,7 @@ events:
   - family: player_motion_seen_named
     template: player_motion_seen
     actor: adventurer
-    for_actions: [queen_move_emma, queen_cross_ice_emma, queen_pass_door_emma, queen_bridge_slow_emma, guard_move, guard_cross_ice, guard_pass_door, bridge_slow_ritual_resident, bridge_slow_huddled_one, bridge_slow_huddled_two, bridge_slow_wall_resident, bridge_slow_prison_resident_one, bridge_slow_prison_resident_two, retreat_bokold_one, retreat_bokold_two]
+    for_actions: [queen_move_emma, queen_cross_ice_emma, queen_pass_door_emma, queen_bridge_slow_emma, guard_move, guard_cross_ice, guard_pass_door, bridge_slow_ritual_resident, bridge_slow_huddled_one, bridge_slow_huddled_two, bridge_slow_wall_resident, bridge_slow_prison_resident_one, bridge_slow_prison_resident_two, retreat_bokold_one, retreat_bokold_two, approach_light_bokold_one, approach_light_bokold_two]
     source_prefix: m1.player_information.motion_seen.named
     share_result: true
     law: {ref: event.player_motion_seen, args: {}}

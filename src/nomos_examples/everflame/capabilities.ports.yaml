@@ -5761,15 +5761,15 @@ actions:
     actor_identity_field: name
     payload_actor_field: actor
     effects:
-      scene: []
+      scene: {actor_motion: actor_motion}
       actor: [site, known_sites, last_action_ref]
     envelope_fields: [action]
     schedule: null
     value:
       read: [scene.balloon_seats, scene.paths, scene.floors, scene.stair_paths, scene.unclimbable_stairs, actor.name, actor.site, actor.known_sites, actor.known_paths, actor.light_observation, actor.light_observation_ref, actor.light_sighting_site, actor.max_movement_speed, actor.current_movement_speed, payload.actor, payload.destination, payload.base_move_cost]
       fields: {BalloonSeat: [passenger], Path: [start, end, base_move_cost], KnownSite: [site], FloorRegion: [sites, frozen]}
-      write_paths: [actor.site, actor.known_sites, actor.last_action_ref]
-      construct: [KnownSite]
+      write_paths: [scene.actor_motion, actor.site, actor.known_sites, actor.last_action_ref]
+      construct: [KnownSite, ActorMotion]
       collections: {}
   - symbol: detach_reservoir
     actor: adventurer
@@ -9338,6 +9338,38 @@ seat_read_projections:
         status: str
         after_spend_one: str
         surface_available: bool
+        nearby_person_emma: {optional: str}
+        nearby_person_alpha: {optional: str}
+        nearby_person_tower_bear_one: {optional: str}
+        nearby_person_tower_bear_two: {optional: str}
+        nearby_person_ritual_resident: {optional: str}
+        nearby_person_huddled_one: {optional: str}
+        nearby_person_huddled_two: {optional: str}
+        nearby_person_wall_resident: {optional: str}
+        nearby_person_bokold_one: {optional: str}
+        nearby_person_bokold_two: {optional: str}
+        nearby_person_icebar_bear_one: {optional: str}
+        nearby_person_icebar_bear_two: {optional: str}
+        nearby_person_prison_guard: {optional: str}
+        nearby_person_prison_resident_one: {optional: str}
+        nearby_person_prison_resident_two: {optional: str}
+        nearby_person_captive_bear: {optional: str}
+        nearby_person_prison_bokold: {optional: str}
+        nearby_person_arctic_fox_one: {optional: str}
+        nearby_person_arctic_fox_two: {optional: str}
+        nearby_person_arctic_fox_three: {optional: str}
+        nearby_person_arctic_fox_four: {optional: str}
+        nearby_person_hall_bokold_one: {optional: str}
+        nearby_person_hall_bokold_two: {optional: str}
+        nearby_person_hall_bokold_three: {optional: str}
+        nearby_person_hall_bokold_four: {optional: str}
+        nearby_person_hall_bokold_five: {optional: str}
+        nearby_person_stable_bokold_one: {optional: str}
+        nearby_person_stable_bokold_two: {optional: str}
+        nearby_person_stable_bokold_three: {optional: str}
+        nearby_person_stable_bokold_four: {optional: str}
+        description_person_bokold_one: {optional: str}
+        description_person_bokold_two: {optional: str}
         presence_person_emma: bool
         presence_person_alpha: bool
         presence_person_tower_bear_one: bool
