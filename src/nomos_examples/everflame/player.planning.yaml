@@ -4,7 +4,7 @@ goals:
   interrupt:
     label: 寻找中断仪式的机会
     selector: {sites: [ritual_ring]}
-    when: not progress.ritualDisrupted and knowledge.ritual_active
+    when: progress.ritualDisrupted == 0 and knowledge.ritual_active
     gains: {ritualDisrupted: 1}
     feature: interrupt
   help:
