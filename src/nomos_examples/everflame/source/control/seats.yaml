@@ -4694,11 +4694,11 @@ seats:
           ref: candidate.name
       when:
         all:
-        - candidate.name == 'ritual_resident'
+        - eq: [{ref: candidate.name}, {const: ritual_resident}]
         - eq:
           - ref: actor.site
           - const: ritual_ring
-        - actor.ritual_notice != 'erupted'
+        - not: {eq: [{ref: actor.ritual_notice}, {const: erupted}]}
         - not:
             eq:
             - ref: actor.ritual_notice
