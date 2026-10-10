@@ -1,0 +1,206 @@
+# Actor-local appraisal source. These are judgments, not permission or promised outcomes.
+appraisal:
+  schema: c0.offer_appraisal.v1
+  features:
+    floor: 看清地面
+    routes: 了解通路
+    person: 了解人物
+    surroundings: 检查周围
+    refill: 补充永焰
+    supplies: 准备资源
+    clear_path: 清理冰面
+    help: 帮助居民
+    explore: 进入新区域
+    unknown: 探索未知
+    ice: 冰面风险
+    approach: 接近已知受困者
+  defaults: {torch_gain: 0, torch_spend: 0, reservoir_spend: 0, reveals_reservoir: false, movement: false}
+  definitions:
+    inspect_floor:
+      when: not candidate.was_tried and not local.floor_known
+      features: {floor: 1}
+      values: {}
+    inspect_routes:
+      when: not candidate.was_tried and not local.routes_known
+      features: {routes: 1}
+      values: {}
+    inspect_person:
+      when: not candidate.was_tried and not candidate.targets_detailed
+      features: {person: 1}
+      values: {}
+    inspect_people:
+      when: not candidate.was_tried and not local.person_detailed
+      features: {person: 1, surroundings: 1}
+      values: {}
+    inspect_surroundings:
+      when: not candidate.was_tried
+      features: {surroundings: 1}
+      values: {}
+    replenish:
+      when: local.charge is not None and local.reservoir is not None and local.charge < 5 and local.reservoir > 0
+      features: {refill: 1}
+      values: {torch_gain: 1, reservoir_spend: 1}
+    obtain_supply:
+      when: not candidate.was_tried
+      features: {supplies: 1}
+      values: {reveals_reservoir: true}
+    clear_observed_ice:
+      when: not candidate.was_tried and candidate.floor_targets and candidate.frozen_count == candidate.target_count
+      features: {clear_path: 1}
+      values: {torch_spend: 1}
+    relieve_observed_freezing:
+      when: not candidate.was_tried and candidate.has_targets and candidate.frozen_count == candidate.target_count
+      features: {help: candidate.frozen_count}
+      values: {torch_spend: 1}
+    travel:
+      when: >
+        not candidate.was_tried and candidate.has_destination
+        and (candidate.destination_new or candidate.approaching_need)
+        and (not local.floor_frozen or candidate.icy)
+      features:
+        explore: 1 if candidate.destination_new else 0
+        unknown: 1 if candidate.destination_unknown else 0
+        ice: 1 if candidate.icy else 0
+        approach: 1 if candidate.approaching_need else 0
+      values: {movement: true}
+  bindings:
+    observe_floor_adventurer: inspect_floor
+    observe_routes_adventurer: inspect_routes
+    observe_resident_adventurer: inspect_person
+    observe_hall_adventurer: inspect_people
+    observe_chandelier_adventurer: inspect_surroundings
+    reload_everflame_adventurer: replenish
+    detach_reservoir_adventurer: obtain_supply
+    thaw_floor_adventurer: clear_observed_ice
+    thaw_person_adventurer: relieve_observed_freezing
+    move_adventurer: travel
+    move_wall_adventurer: travel
+    bridge_slow_adventurer: travel
+    pass_door_adventurer: travel
+    cross_ice_adventurer: travel
+  # Explicit exclusion from delegation, not exclusion from the world.
+  manual:
+    - explain_balloon_adventurer
+    - look_tower_top_adventurer
+    - balloon_push_adventurer
+    - balloon_push_bridge_adventurer
+    - balloon_push_ice_adventurer
+    - balloon_push_door_adventurer
+    - balloon_flight_adventurer
+    - observe_balloon_power_adventurer
+    - extract_balloon_power_adventurer
+    - transfer_balloon_power_adventurer
+    - load_balloon_power_adventurer
+    - balloon_control_adventurer
+    - ask_alpha_adventurer
+    - accept_alpha_adventurer
+    - report_alpha_adventurer
+    - observe_resident_tower_bear_adventurer
+    - brand_person_tower_bear_adventurer
+    - locate_branded_person_tower_bear_adventurer
+    - observe_resident_bar_bear_adventurer
+    - brand_person_bar_bear_adventurer
+    - locate_branded_person_bar_bear_adventurer
+    - observe_resident_prison_guard_adventurer
+    - brand_person_prison_guard_adventurer
+    - locate_branded_person_prison_guard_adventurer
+    - observe_resident_prison_voice_adventurer
+    - brand_person_prison_voice_adventurer
+    - locate_branded_person_prison_voice_adventurer
+    - observe_resident_fox_adventurer
+    - brand_person_fox_adventurer
+    - locate_branded_person_fox_adventurer
+    - observe_tower_adventurer
+    - pickup_elemental_charge_adventurer
+    - load_elemental_torch_adventurer
+    - load_elemental_firelock_adventurer
+    - fireball_adventurer
+    - focus_elemental_adventurer
+    - focus_person_adventurer
+    - focus_queen_adventurer
+    - focus_fox_adventurer
+    - focus_tower_bear_adventurer
+    - focus_bar_bear_adventurer
+    - focus_prison_guard_adventurer
+    - focus_prison_voice_adventurer
+    - brand_person_adventurer
+    - brand_elemental_adventurer
+    - inspect_brands_adventurer
+    - locate_branded_person_adventurer
+    - locate_branded_elemental_adventurer
+    - load_firelock_adventurer
+    - drop_magic_adventurer
+    - pickup_magic_adventurer
+    - show_magic_adventurer
+    - withdraw_magic_adventurer
+    - receive_charge_adventurer
+    - load_charge_adventurer
+    - observe_prison_voices_adventurer
+    - ask_prison_adventurer
+    - observe_prison_people_adventurer
+    - observe_prison_bars_adventurer
+    - set_prison_bars_adventurer
+    - pass_prison_bars_adventurer
+    - observe_prison_line_adventurer
+    - pass_prison_line_adventurer
+    - invite_guest_adventurer
+    - thaw_door_adventurer
+    - open_door_adventurer
+    - close_door_adventurer
+    - request_pour_adventurer
+    - pour_drink_adventurer
+    - observe_bar_adventurer
+    - observe_drink_adventurer
+    - thaw_drink_adventurer
+    - observe_chest_adventurer
+    - open_chest_adventurer
+    - take_gold_adventurer
+    - take_magic_item_adventurer
+    - observe_climbs_adventurer
+    - climb_skyhook_adventurer
+    - observe_elemental_adventurer
+    - offer_torch_adventurer
+    - observe_wall_adventurer
+    - open_wall_adventurer
+    - open_plain_wall_adventurer
+    - care_person_adventurer
+    - thaw_ritual_resident
+    - carry_from_ritual_adventurer
+    - offer_escort_adventurer
+    - leave_palace_adventurer
+    - wait_adventurer
+    - carry_move_adventurer
+    - carry_cross_ice_adventurer
+    - carry_bridge_slow_adventurer
+    - carry_pass_door_adventurer
+    - strike_person_adventurer
+    - bridge_rush_adventurer
+    - observe_fox_adventurer
+    - request_tame_arctic_fox_one
+    - request_tame_arctic_fox_two
+    - request_tame_arctic_fox_three
+    - request_tame_arctic_fox_four
+    - observe_foxes_adventurer
+    - thaw_fox_adventurer
+    - inspect_patient_adventurer
+    - observe_resident_queen_adventurer
+    - thaw_queen_adventurer
+    - brand_person_queen_adventurer
+    - locate_branded_person_queen_adventurer
+    - observe_queen_adventurer
+# Input bindings name payload fields; no private target state is read.
+inputs:
+  observe_floor_adventurer: &empty {destination: null, targets: [], movement_kind: ""}
+  observe_routes_adventurer: *empty
+  observe_resident_adventurer: {destination: null, targets: [victim], movement_kind: ""}
+  observe_hall_adventurer: *empty
+  observe_chandelier_adventurer: {destination: null, targets: [chandelier], movement_kind: ""}
+  reload_everflame_adventurer: *empty
+  detach_reservoir_adventurer: {destination: null, targets: [reservoir], movement_kind: ""}
+  thaw_floor_adventurer: {destination: null, targets: [floor_key], movement_kind: ""}
+  thaw_person_adventurer: {destination: null, targets: [victim], movement_kind: ""}
+  move_adventurer: &walk {destination: {kind: payload, field: destination}, targets: [], movement_kind: walk}
+  move_wall_adventurer: *walk
+  bridge_slow_adventurer: {destination: {kind: payload, field: destination}, targets: [], movement_kind: bridge}
+  pass_door_adventurer: {destination: {kind: payload, field: destination}, targets: [], movement_kind: door}
+  cross_ice_adventurer: {destination: {kind: known_crossing, field: crossing}, targets: [], movement_kind: ice}
