@@ -14,6 +14,7 @@ appraisal:
     unknown: 探索未知
     ice: 冰面风险
     approach: 接近已知受困者
+    memory_risk: 旧线索定位风险
   defaults: {torch_gain: 0, torch_spend: 0, reservoir_spend: 0, reveals_reservoir: false, movement: false}
   definitions:
     inspect_floor:
@@ -27,6 +28,10 @@ appraisal:
     inspect_person:
       when: candidate.has_targets and not candidate.was_tried and not candidate.targets_detailed
       features: {person: 1}
+      values: {}
+    inspect_last_known_person:
+      when: candidate.has_targets and not candidate.was_tried and not candidate.targets_detailed
+      features: {person: 1, memory_risk: 1}
       values: {}
     inspect_people:
       when: not candidate.was_tried
@@ -93,7 +98,7 @@ appraisal:
     observe_resident_fox_adventurer: inspect_person
     observe_fox_adventurer: inspect_person
     observe_resident_queen_adventurer: inspect_person
-    inspect_patient_adventurer: inspect_person
+    inspect_patient_adventurer: inspect_last_known_person
     look_tower_top_adventurer: inspect_people
     observe_queen_adventurer: inspect_people
     observe_tower_adventurer: inspect_people
