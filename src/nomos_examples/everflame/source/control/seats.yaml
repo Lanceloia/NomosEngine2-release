@@ -1070,12 +1070,9 @@ seats:
         treasure_side: Beyond the treasure wall
         treasure_ice: Inside the ice wall
         endless_abyss: Abyss below the palace bridge
-      projection_columns:
-        known_site_protection:
-          status: Now
-          after_spend_one: After spending one charge, using known coverage
-      projection_focus:
-        known_site_protection: adventurer.site
+      # Structured projection is consumed by the player bridge, not dumped by CLI.
+      projection_columns: {}
+      projection_focus: {}
       preview_fields:
         cross_ice_adventurer:
           self_if_success: My protection if this crossing succeeds
@@ -1267,7 +1264,7 @@ seats:
         adventurer.known_exit_steps: null
         adventurer.known_crossings: null
         adventurer.known_residents: null
-        adventurer.conversations.visible_motions: Locally witnessed movements (not escort acceptance or rescue)
+        adventurer.conversations.visible_motions: null
         adventurer.sighting_ref: null
         adventurer.sighting_site: null
         adventurer.ritual_notice: Last ritual signs I saw
@@ -1294,7 +1291,7 @@ seats:
         adventurer.max_movement_speed: My maximum movement speed (protection does not restore lost speed)
         adventurer.last_cold_roll: My last cold roll (retained until another roll)
         adventurer.last_cold_ref: null
-        known_site_protection: Known places in relation to my current light
+        known_site_protection: null
       published: Action resolved.
       rejected: That action could not happen.
       no_offers: No available action here.
