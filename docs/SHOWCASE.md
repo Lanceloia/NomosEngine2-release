@@ -41,7 +41,9 @@
 
 ![实际运行输出的静态对照](showcase/rule-edit.png)
 
-PNG/GIF 是实际运行报告的排版可视化，不是终端或编辑器录屏；没有伪造执行进度。
+GIF 用连续运动解释请求与判定：同一个 B 请求救自己，原版在判定后生成行动与结算记录，
+编辑版请求止于边界，本次不发布。人物与规则位置保持固定，末态停留五秒。
+PNG/GIF 是实际运行报告的讲解可视化，不是终端或编辑器录屏；没有伪造执行进度。
 完整输入摘要、代码版本、解释器、模块来源见 [manifest](showcase/manifest.json)，
 实际工具输出见 [result](showcase/result.json)。报告中的 occurrence 整数仅在各次运行内有意义；
 完整前缀比较是在这组相同输入的新会话中作对照，不宣称跨局身份。
@@ -52,20 +54,24 @@ PNG/GIF 是实际运行报告的排版可视化，不是终端或编辑器录屏
 
 ## 重做画面
 
-新版连续动画的[分镜与评委批评](showcase/ANIMATION_DESIGN.md)已收敛，等待制作样片。
-当前 PNG/GIF 仍是下述四页结果展示，不把纸面设计或评分当作新版动画实测。
+新版连续动画按[分镜与评委批评](showcase/ANIMATION_DESIGN.md)制作，共 23 秒。
+可查看[六个关键帧](showcase/storyboard.png)与[800px 末态](showcase/rule-edit-800.png)。
+[动画元数据](showcase/animation.json)记录时序、文本边界和素材摘要；
+原始 `manifest.json` 的 `media` 字段保留首次四页素材的历史描述，不代表当前动效。
 
-`showcase/render.py` 是文档素材工具，不参与结算，使用当前仓库代码重新运行实验。
+`showcase/render.py` 是文档素材工具，不参与结算。
 仅重做图片才需要额外安装 Pillow；正常演示和引擎均不依赖它。
 
 ```bash
 python3 -m pip install pillow
-python3 docs/showcase/render.py \
+python3 docs/showcase/render.py --reuse-report \
   --font /path/to/chinese-font.ttf --mono /path/to/monospace-font.ttf
 ```
 
 Windows 可使用 `C:/Windows/Fonts/msyh.ttc` 和 `C:/Windows/Fonts/consola.ttf`；
-字体路径由使用者显式提供，字体不随本项目复制。脚本核对结果后保存报告、摘要和画面，
+字体路径由使用者显式提供，字体不随本项目复制。`--reuse-report` 核对已存报告的
+摘要与实际记录，再重绘；不运行世界，也不更新原实验的版本或时间。
+若需要重新采集当前代码的实验，去掉该参数。脚本核对结果后保存新报告、摘要和画面，
 若当前规则不再满足这项实验，直接报错，不沿用旧成绩。
 
 ## 深入阅读
@@ -80,10 +86,18 @@ Windows 可使用 `C:/Windows/Fonts/msyh.ttc` 和 `C:/Windows/Fonts/consola.ttf`
 
 ## 本批核对
 
-2026-10-10：发行代码实际运行原版与规则编辑版，完整报告已保存；
+首次采集，2026-10-10：发行代码实际运行原版与规则编辑版，完整报告已保存；
 静态图已查看，GIF 为四帧、1280×720、15 秒。两份 README、讲解与代码导览的
 本地链接均存在。素材证据具名模块 `tests/nomos_c0/test_showcase_evidence_v1.py`
 writer 6 passed（1.40 秒），覆盖真实报告、篡改来源/计数/停点/成功声明及摘要核对；
 同一审阅者独立复跑发行仓库该模块 6 passed（1.24 秒），未运行其他门。
 Ruff 与两仓库 diff 检查通过。一次干净上下文的只读招聘视角审阅未发现实质阻碍，
 这不等于真人招聘反馈或独立实玩。未新增核心测试门、M1 长路线或性能测量。
+
+连续动画批次复用上述报告，未再运行 Compile / Start / Run。
+末态与关键帧已实际检查，GIF 编码时序核对为 23 秒；具体素材审阅意见见分镜文档。
+素材工具的短测试覆盖记录来源、复用摘要、运动/发布时序与当前文件摘要，不替代引擎测试。
+终版 writer 具名素材模块 11 passed（1.30 秒），Ruff 通过；没有运行其他 pytest 模块。
+发行目录使用主树测试解释器复跑同一具名模块，11 passed（1.44 秒），这是 writer 同步核对，
+不是独立技术验收。实际 GIF 抽帧确认顶部固定、请求移动、末态静止，72 帧共 23 秒，420413 字节。
+评委已复看修正后的 800px 末态，未发现新溢出；详见分镜文档，不宣称真人首看接受。
