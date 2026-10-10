@@ -67,10 +67,12 @@ Windows 使用 `.venv\Scripts\python.exe`。摘要应包含：
 只向当前选项提交请求；后态来自 `author_snapshot()`，没有给 Scene 写入受害者或死亡。
 报告核对共同开局、前九步全部后态和来源，以及十步相同的实际提交。
 
-本次保存的[逐步报告](evidence/result.json)、[采集摘要](evidence/manifest.json)与
-[全票版](evidence/unanimous.source.yaml)／[多数版](evidence/majority.source.yaml)可直接核对。
+当前作者写法重新采集的[逐步报告](evidence-predicates-v1/result.json)、
+[采集摘要](evidence-predicates-v1/manifest.json)与
+[全票版](evidence-predicates-v1/unanimous.source.yaml)／[多数版](evidence-predicates-v1/majority.source.yaml)可直接核对。
 Source 快照由工具序列化，排版与原文不同，但两份快照之间只有这一条 Law 引用不同。
-采集代码为 `52e61c7f3`；采集时只有首页、索引和矩阵文档未提交，未改执行代码或输入。
+本次采集代码为 `960435fe3`。逐步报告与旧报告的结构化内容完全相同；
+旧 `52e61c7f3` 的[报告](evidence/result.json)和摘要保持原始字节，不更新成新版本。
 
 这是受信作者审计，包含私有职业，不能直接交给局内玩家。
 工具仅复用 T0 的发生记录序列化，不新增 T0 检查语言，也不替代其目标见证检查。

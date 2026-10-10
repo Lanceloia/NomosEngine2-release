@@ -1,0 +1,509 @@
+schema: c0.owner_graph.v6
+owners:
+- scene
+- domain: participants
+actor_domains:
+- name: participants
+  owner_template: participant
+  actor_state: Actor
+  owners:
+  - a
+  - b
+  - c
+  - d
+  - e
+  - f
+offer_provider:
+  name: finite_value
+  version: '1'
+game_form:
+  mode: manual
+opening_guard:
+  all:
+  - lt:
+    - const: 2
+    - domain_size: participants
+  - eq:
+    - ref: scene.phase
+    - const: day
+  - eq:
+    - ref: scene.round
+    - const: 1
+  - eq:
+    - ref: scene.winner
+    - const: none
+  - eq:
+    - ref: scene.seer_done
+    - const: false
+  - is_none:
+      ref: scene.pending_attack
+  - eq:
+    - ref: scene.selection_done
+    - const: false
+  - eq:
+    - ref: scene.witch_done
+    - const: false
+  - eq:
+    - ref: scene.witch_saved
+    - const: false
+  - none_matching:
+      collection:
+        ref: scene.wolf_ballots
+      as: ballot
+      where:
+        const: true
+  - is_none:
+      ref: scene.last_death
+  - none_matching:
+      collection:
+        ref: scene.ballots
+      as: ballot
+      where:
+        const: true
+  - none_matching:
+      collection:
+        ref: scene.players
+      as: player
+      where: not player.alive
+  - eq:
+    - count_matching:
+        collection:
+          ref: scene.players
+        as: player
+        where:
+          const: true
+    - domain_size: participants
+  - eq:
+    - count_matching:
+        collection:
+          ref: scene.roles
+        as: assigned
+        where:
+          const: true
+    - domain_size: participants
+  - exists:
+      collection:
+        ref: scene.roles
+      as: assigned
+      where:
+        eq:
+        - ref: assigned.role
+        - const: wolf
+  - lt:
+    - count_matching:
+        collection:
+          ref: scene.roles
+        as: assigned
+        where:
+          eq:
+          - ref: assigned.role
+          - const: wolf
+    - domain_size: participants
+  - exactly_one:
+      collection:
+        ref: scene.roles
+      as: assigned
+      where:
+        eq:
+        - ref: assigned.role
+        - const: seer
+  - any:
+    - none_matching:
+        collection:
+          ref: scene.roles
+        as: assigned
+        where:
+          eq:
+          - ref: assigned.role
+          - const: witch
+    - exactly_one:
+        collection:
+          ref: scene.roles
+        as: assigned
+        where:
+          eq:
+          - ref: assigned.role
+          - const: witch
+opening_actor_guards:
+- domain: participants
+  when:
+    all:
+    - exactly_one:
+        collection:
+          ref: scene.players
+        as: player
+        where:
+          eq:
+          - ref: player.id
+          - ref: actor.name
+    - exactly_one:
+        collection:
+          ref: scene.roles
+        as: assigned
+        where:
+          all:
+          - eq:
+            - ref: assigned.id
+            - ref: actor.name
+          - eq:
+            - ref: assigned.role
+            - ref: actor.own_role
+    - none_matching:
+        collection:
+          ref: actor.choices
+        as: choice
+        where:
+          const: true
+    - none_matching:
+        collection:
+          ref: actor.attacks
+        as: attack
+        where:
+          const: true
+    - is_none:
+        ref: actor.witch_notice
+    - none_matching:
+        collection:
+          ref: actor.witch_choices
+        as: choice
+        where:
+          const: true
+    - any:
+      - all:
+        - eq:
+          - ref: actor.own_role
+          - const: witch
+        - eq:
+          - ref: actor.healing_available
+          - const: true
+      - all:
+        - not:
+            eq:
+            - ref: actor.own_role
+            - const: witch
+        - eq:
+          - ref: actor.healing_available
+          - const: false
+lawdefs: []
+actions:
+- family: vote
+  template: vote
+  domain: participants
+  source_prefix: c0.six-seat.vote
+  law:
+    ref: action.vote
+    args: {}
+- family: attack
+  template: attack
+  domain: participants
+  source_prefix: c0.six-seat.attack
+  law:
+    ref: action.attack
+    args: {}
+- family: divine
+  template: divine
+  domain: participants
+  source_prefix: c0.six-seat.divine
+  law:
+    ref: action.divine
+    args: {}
+- family: skip_inspection
+  template: skip_inspection
+  domain: participants
+  source_prefix: c0.six-seat.pass
+  law:
+    ref: action.pass
+    args: {}
+- family: witch_intervene
+  template: witch_intervene
+  domain: participants
+  source_prefix: c0.six-seat.witch
+  law:
+    ref: action.witch_intervene
+    args: {}
+events:
+- family: resolve_vote
+  template: resolve_day
+  for_action_family: vote
+  source_prefix: c0.six-seat.resolve
+  law:
+    ref: event.resolve_day
+    args: {}
+- family: select_target
+  template: select_target
+  share_result: true
+  for_action_families:
+  - attack
+  - divine
+  - skip_inspection
+  source_prefix: c0.six-seat.select-target
+  law:
+    ref: event.select_majority
+    args: {}
+- family: resolve_night
+  template: resolve_night
+  for_event_family: select_target
+  source_prefix: c0.six-seat.resolve-night
+  law:
+    ref: event.resolve_night
+    args: {}
+- family: witch_notice
+  template: witch_notice
+  actor_domain: participants
+  for_event_family: select_target
+  source_prefix: c0.six-seat.witch-notice
+  law:
+    ref: event.witch_notice
+    args: {}
+- family: resolve_after_witch
+  template: resolve_night
+  for_action_family: witch_intervene
+  source_prefix: c0.six-seat.resolve-after-witch
+  law:
+    ref: event.resolve_night
+    args: {}
+seats:
+- seat_family: participants
+  names: upper
+  entries:
+  - vote
+  - attack
+  - divine
+  - skip_inspection
+  - witch_intervene
+  read:
+  - scene.phase
+  - scene.round
+  - scene.players
+  - scene.winner
+  - actor.name
+  - actor.own_role
+  - actor.votes
+  - actor.observations
+  - actor.choices
+  - actor.attacks
+  - actor.witch_notice
+  - actor.witch_notice.round
+  - actor.witch_notice.target
+  - actor.witch_choices
+  - actor.healing_available
+  offers:
+  - entry_family: witch_intervene
+    label: Save victim
+    when:
+      all:
+      - eq:
+        - ref: scene.phase
+        - const: night
+      - eq:
+        - ref: actor.own_role
+        - const: witch
+      - not_none:
+          ref: actor.witch_notice
+      - eq:
+        - ref: actor.witch_notice.round
+        - ref: scene.round
+      - not:
+          is_none:
+            ref: actor.witch_notice.target
+      - eq:
+        - ref: actor.healing_available
+        - const: true
+    payload:
+      save:
+        const: true
+  - entry_family: witch_intervene
+    label: Do not heal
+    when:
+      all:
+      - eq:
+        - ref: scene.phase
+        - const: night
+      - eq:
+        - ref: actor.own_role
+        - const: witch
+      - not_none:
+          ref: actor.witch_notice
+      - eq:
+        - ref: actor.witch_notice.round
+        - ref: scene.round
+    payload:
+      save:
+        const: false
+  - entry_family: vote
+    for_each:
+      collection:
+        ref: scene.players
+      as: target
+    label:
+      prefix: 'Vote for '
+      value:
+        ref: target.id
+    when:
+      all:
+      - eq:
+        - ref: scene.phase
+        - const: day
+      - eq:
+        - ref: scene.winner
+        - const: none
+      - eq:
+        - ref: target.alive
+        - const: true
+      - none_matching:
+          collection:
+            ref: actor.votes
+          as: prior
+          where:
+            eq:
+            - ref: prior.round
+            - ref: scene.round
+      - exists:
+          collection:
+            ref: scene.players
+          as: self_player
+          where:
+            all:
+            - eq:
+              - ref: self_player.id
+              - ref: actor.name
+            - eq:
+              - ref: self_player.alive
+              - const: true
+    payload:
+      target:
+        ref: target.id
+  - entry_family: divine
+    for_each:
+      collection:
+        ref: scene.players
+      as: target
+    label:
+      prefix: 'Inspect '
+      value:
+        ref: target.id
+    when:
+      all:
+      - eq:
+        - ref: scene.phase
+        - const: night
+      - eq:
+        - ref: scene.winner
+        - const: none
+      - eq:
+        - ref: target.alive
+        - const: true
+      - not:
+          eq:
+          - ref: actor.name
+          - ref: target.id
+      - eq:
+        - ref: actor.own_role
+        - const: seer
+      - none_matching:
+          collection:
+            ref: actor.choices
+          as: prior
+          where:
+            eq:
+            - ref: prior.round
+            - ref: scene.round
+      - exists:
+          collection:
+            ref: scene.players
+          as: self_player
+          where:
+            all:
+            - eq:
+              - ref: self_player.id
+              - ref: actor.name
+            - eq:
+              - ref: self_player.alive
+              - const: true
+    payload:
+      target:
+        ref: target.id
+  - entry_family: attack
+    for_each:
+      collection:
+        ref: scene.players
+      as: target
+    label:
+      prefix: 'Attack '
+      value:
+        ref: target.id
+    when:
+      all:
+      - eq:
+        - ref: scene.phase
+        - const: night
+      - eq:
+        - ref: scene.winner
+        - const: none
+      - eq:
+        - ref: target.alive
+        - const: true
+      - not:
+          eq:
+          - ref: actor.name
+          - ref: target.id
+      - eq:
+        - ref: actor.own_role
+        - const: wolf
+      - none_matching:
+          collection:
+            ref: actor.attacks
+          as: prior
+          where:
+            eq:
+            - ref: prior.round
+            - ref: scene.round
+      - exists:
+          collection:
+            ref: scene.players
+          as: self_player
+          where:
+            all:
+            - eq:
+              - ref: self_player.id
+              - ref: actor.name
+            - eq:
+              - ref: self_player.alive
+              - const: true
+    payload:
+      target:
+        ref: target.id
+  - entry_family: skip_inspection
+    label: Skip inspection
+    when:
+      all:
+      - eq:
+        - ref: scene.phase
+        - const: night
+      - eq:
+        - ref: scene.winner
+        - const: none
+      - eq:
+        - ref: actor.own_role
+        - const: seer
+      - exists:
+          collection:
+            ref: scene.players
+          as: candidate
+          where:
+            all:
+            - eq:
+              - ref: candidate.id
+              - ref: actor.name
+            - eq:
+              - ref: candidate.alive
+              - const: true
+      - none_matching:
+          collection:
+            ref: actor.choices
+          as: prior
+          where:
+            eq:
+            - ref: prior.round
+            - ref: scene.round
+    payload: {}

@@ -116,7 +116,7 @@ def test_same_round_vote_is_rejected_by_k0_after_offer_disappears() -> None:
 
 def test_expanded_actor_opening_guard_rejects_unknown_field_at_compile() -> None:
     source = _part("source")
-    source["opening_actor_guards"][0]["when"]["all"][0]["eq"][0]["count_matching"]["where"]["eq"][
+    source["opening_actor_guards"][0]["when"]["all"][0]["exactly_one"]["where"]["eq"][
         1
     ] = {"ref": "actor.missing"}
     with pytest.raises(C0LawError, match="reference crosses a declared read boundary"):
@@ -135,7 +135,7 @@ def test_count_matching_rejects_foreign_actor_collection_at_compile() -> None:
     lib = _part("lib")
     resolution = next(item for item in lib["lawdefs"] if item["name"] == "event.resolve_day")
     threshold = resolution["body"]["law"]["bindings"][0]["where"]["all"][1]
-    threshold["lt"][0]["count_matching"]["collection"] = {"ref": "actor.votes"}
+    threshold["let"]["in"] = "support * 2 > count(vote for vote in actor.votes if True)"
     with pytest.raises(C0LawError, match="reference has no declared root"):
         _program(lib=lib)
 
@@ -376,7 +376,7 @@ def test_majority_law_edit_changes_the_real_event_not_the_ballots() -> None:
     lib = _part("lib")
     law = next(item for item in lib["lawdefs"] if item["name"] == "event.resolve_day")
     threshold = law["body"]["law"]["bindings"][0]["where"]["all"][1]
-    assert "lt" in threshold
+    assert "let" in threshold
     threshold.clear()
     threshold["le"] = [
         {"const": 3},

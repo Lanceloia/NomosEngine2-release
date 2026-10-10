@@ -127,8 +127,9 @@ def test_existing_record_is_not_overwritten(tmp_path, monkeypatch):
     assert failure.value.code == 2
 
 
-def test_saved_evidence_matches_manifest_and_exact_author_edits():
-    evidence = demo.INPUTS / "evidence"
+@pytest.mark.parametrize("directory", ["evidence", "evidence-predicates-v1"])
+def test_saved_evidence_matches_manifest_and_exact_author_edits(directory):
+    evidence = demo.INPUTS / directory
     manifest = json.loads((evidence / "manifest.json").read_text(encoding="utf-8"))
     for name, digest in manifest["artifacts_sha256"].items():
         assert hashlib.sha256((evidence / name).read_bytes()).hexdigest() == digest

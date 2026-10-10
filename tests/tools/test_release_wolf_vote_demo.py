@@ -110,8 +110,9 @@ def test_existing_capture_is_not_overwritten_before_world_execution(tmp_path, mo
     assert failure.value.code == 2
 
 
-def test_saved_report_and_effective_sources_match_their_manifest():
-    evidence = demo.INPUTS / "evidence"
+@pytest.mark.parametrize("directory", ["evidence", "evidence-predicates-v1"])
+def test_saved_report_and_effective_sources_match_their_manifest(directory):
+    evidence = demo.INPUTS / directory
     manifest = json.loads((evidence / "manifest.json").read_text(encoding="utf-8"))
     raw = (evidence / "result.json").read_bytes()
     assert hashlib.sha256(raw).hexdigest() == manifest["result_sha256"]

@@ -25,6 +25,19 @@ def test_recorded_actual_report_supports_the_claim():
     RENDER.validate_report(report())
 
 
+def test_current_predicate_report_preserves_published_records():
+    directory = MEDIA / "self-heal-predicates-v1"
+    raw = (directory / "result.json").read_bytes()
+    manifest = json.loads((directory / "manifest.json").read_text(encoding="utf-8"))
+    assert hashlib.sha256(raw).hexdigest() == manifest["result_sha256"]
+    current = json.loads(raw)
+    RENDER.validate_report(current)
+    previous = report()
+    for version in ("original", "edited"):
+        assert current[version]["published"] == previous[version]["published"]
+        assert current[version]["goal_status"] == previous[version]["goal_status"]
+
+
 @pytest.mark.parametrize("fault", [
     "changed_source", "fake_count", "wrong_step", "no_success", "wrong_action", "extra_event",
 ])
@@ -51,10 +64,17 @@ def test_manifest_digest_matches_recorded_bytes():
     assert hashlib.sha256((MEDIA / "result.json").read_bytes()).hexdigest() == (
         manifest["result_sha256"]
     )
-    # This is a reproduction digest, not an authenticated issuer signature.
-    fingerprint, entries = RENDER.code_fingerprint(ROOT)
-    assert fingerprint == manifest["code_and_inputs_sha256"]
-    assert entries == manifest["file_sha256"]
+    # Historical evidence describes its captured checkout, not today's examples.
+    # Hashes establish consistency, not an authenticated issuer signature.
+    entries = manifest["file_sha256"]
+    encoded = json.dumps(entries, sort_keys=True, separators=(",", ":")).encode()
+    assert hashlib.sha256(encoded).hexdigest() == manifest["code_and_inputs_sha256"]
+    captured = MEDIA / "historical-inputs/pre-predicate-cleanup"
+    paths = list(captured.glob("*.yaml"))
+    assert len(paths) == 3
+    for path in paths:
+        original = "src/nomos_c0/examples/" + path.name
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == entries[original]
 
 
 def test_reuse_validates_stored_bytes_before_rendering(tmp_path):

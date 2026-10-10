@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from copy import deepcopy
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -14,6 +15,7 @@ from nomos_c0 import actor_binding_v1
 from nomos_c0.actor_binding_v1 import expand_actor_bindings
 from nomos_c0.author_contract_v1 import C0BindingError, C0LawError
 from nomos_c0.author_document_v1 import read_author_document
+from nomos_c0.compile_budget_v1 import C0CompileLimitError
 from nomos_c0.declarative_graph_ports_v0 import check_graph_ports
 from nomos_c0.declarative_nominal_v0 import check_nominal_lib
 from nomos_c0.direct_actor_event_v1 import C0DirectActorPorts
@@ -139,7 +141,7 @@ def test_one_participant_domain_builds_different_sizes_and_real_k0_votes(
     )
 
 
-def test_participant_bounds_and_opening_mismatch_reject_at_the_right_stage() -> None:
+def test_participant_bounds_and_opening_mismatch_reject_at_the_right_stage(monkeypatch) -> None:
     source, assets = _sized_opening("AB", {"A": "seer", "B": "wolf"})
     with pytest.raises(C0BindingError, match="opening guard"):
         _program(source).start(assets)
@@ -151,8 +153,14 @@ def test_participant_bounds_and_opening_mismatch_reject_at_the_right_stage() -> 
 
     source = _part(SIX, "source")
     source["actor_domains"][0]["owners"] = list("abcdefghijklm")
-    with pytest.raises(C0LawError, match="finite Program limits"):
-        _program(source)
+    # Exercise the actual budget contract without depending on release defaults.
+    with monkeypatch.context() as scoped:
+        scoped.setattr(actor_binding_v1, "COMPILE_BUDGET",
+                       replace(actor_binding_v1.COMPILE_BUDGET, actions=64))
+        with pytest.raises(C0CompileLimitError) as failure:
+            _program(source)
+        assert failure.value.resource == "actions"
+        assert failure.value.actual == 65 and failure.value.limit == 64
 
     source = _part(SIX, "source")
     source["opening_guard"]["all"][0]["lt"][1]["domain_size"] = "outsiders"
@@ -615,8 +623,12 @@ def test_chained_actor_recipient_fanout_stops_before_building_unbounded_events(
         return original_copy(value)
 
     monkeypatch.setattr(actor_binding_v1, "deepcopy", counted_copy)
-    with pytest.raises(C0LawError, match="finite Program limits"):
+    monkeypatch.setattr(actor_binding_v1, "COMPILE_BUDGET",
+                       replace(actor_binding_v1.COMPILE_BUDGET, causal_edges=128))
+    with pytest.raises(C0CompileLimitError) as failure:
         _program(source)
+    assert failure.value.resource == "causal_edges"
+    assert failure.value.actual == 129 and failure.value.limit == 128
 
 
 def test_witch_abstains_then_selected_victim_dies_at_dawn() -> None:
@@ -833,7 +845,7 @@ def test_source_local_law_can_be_selected_without_shadowing_lib() -> None:
     local = deepcopy(next(row for row in lib["lawdefs"] if row["name"] == "event.resolve_day"))
     local["name"] = "event.resolve_day.local"
     leader = local["body"]["law"]["bindings"][0]["where"]["all"][1]
-    votes_for_candidate = deepcopy(leader["lt"][1]["add"][0])
+    votes_for_candidate = deepcopy(leader["let"]["value"])
     leader.clear()
     leader["le"] = [{"const": 5}, votes_for_candidate]
     source["lawdefs"].append(local)

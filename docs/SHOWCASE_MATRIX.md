@@ -6,8 +6,8 @@
 这需要不同实验共同支撑。一次条件判断不能证明通用世界建模；一条营救路线也不能
 证明任意沙盒剧情都可生成。本页是展示规划与证据索引，不是新能力的实施授权。
 
-核对日期 2026-10-10。E1／E2 新增真实对照，代码快照 `15ecfccd9`；E4 对照为 `52e61c7f3`；
-其他保存报告仍属于各自采集快照，不把旧报告阅读算成重新运行。
+核对日期 2026-10-10。E1–E4 已用谓词与类型别名整理后的 `960435fe3` 重新采集；
+三份逐步报告与旧版结构化内容相同。新证据独立保存，旧报告、摘要与画面保持原字节。
 
 ## 三条展示线
 
@@ -24,7 +24,7 @@
 
 「保存对照」指已有原始运行报告；「源码／测试」指本轮读到了现行声明与测试断言，
 **不表示本轮重新执行了全部测试**；「整局证据」证明所记录路线真实运行，不自动证明每项
-机制的独立反例。本轮新增 E1／E2 短对照，没有运行 M1 长路线或重新测性能。
+机制的独立反例。本轮重新运行 E1–E4 短对照，没有运行 M1 长路线或重新测性能。
 
 | 编号与命题 | 当前可核对的证据 | 还缺什么／不能据此宣称什么 |
 | --- | --- | --- |
@@ -45,7 +45,7 @@
 `test_witch_role_moves_with_private_notice_and_k0_capability`。
 
 本轮将这些维度保存为[中文实验与声明差异](showcase/world-edits/README.md)、
-[实际报告](showcase/world-edits/evidence/result.json)和[采集摘要](showcase/world-edits/evidence/manifest.json)。
+[实际报告](showcase/world-edits/evidence-predicates-v1/result.json)和[采集摘要](showcase/world-edits/evidence-predicates-v1/manifest.json)。
 工具分别编译、开局和实际提交，不把现行测试断言复制成结果。角色对照保留同九步选择，
 随后各自让当前女巫行动；人数对照只提交短投票，不跑完整八人胜负。
 只显示多两个按钮或把职业名字改掉，不算实例或能力变化。旧 Owner 试玩是历史反馈，
@@ -53,12 +53,12 @@
 
 ### E3／E4：编辑规则
 
-E3 的[报告](showcase/result.json)与[采集摘要](showcase/manifest.json)支持共同前缀和准入分叉。
+E3 的[报告](showcase/self-heal-predicates-v1/result.json)与[采集摘要](showcase/self-heal-predicates-v1/manifest.json)支持共同前缀和准入分叉。
 实验工具只在内存修改规则，两版分别 Compile／Start／Run，不是运行时热替换。
 成功目标是使用解药，不是赢得游戏；拒绝发生在准入，不是已发布行动又被撤销。
 
-E4 的[中文实验页](showcase/wolf-vote/README.md)、[逐步报告](showcase/wolf-vote/evidence/result.json)
-与[采集摘要](showcase/wolf-vote/evidence/manifest.json)将上述具名模块的
+E4 的[中文实验页](showcase/wolf-vote/README.md)、[逐步报告](showcase/wolf-vote/evidence-predicates-v1/result.json)
+与[采集摘要](showcase/wolf-vote/evidence-predicates-v1/manifest.json)将上述具名模块的
 `test_source_selects_unanimity_or_majority_without_changing_the_opening`
 所验证的组合整理成可复现对照。同样的狼人投票为 F、F、E，仅把选中的 Law 引用换为
 `event.select_majority`。两版各发布十项 Action、十三条发生记录，最终都进入第二轮白天且
@@ -121,4 +121,4 @@ E4 的[中文实验页](showcase/wolf-vote/README.md)、[逐步报告](showcase/
 这是建议顺序，不自动启动核心开发、资产改写、Web 切换或新测量。
 
 E1／E2／E4 均使用具名短测试与真实采集，不以动画或测试夹具替代世界运行。
-禁自救报告与发行整局外部报告保持原记录；没有重跑或覆盖旧证据。
+历史禁自救报告与发行整局外部报告保持原记录；新短对照独立采集，不覆盖旧证据。

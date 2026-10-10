@@ -5,14 +5,15 @@
 
 | 文件 | 作者修改的内容 |
 | --- | --- |
-| [`lib.yaml`](three_seat_werewolf_v0.lib.yaml) | 名义记录、owner 与席位可读字段。 |
+| [`lib.yaml`](three_seat_werewolf_v0.lib.yaml) | 命名字段类型、名义记录、owner、共享 Law 与纯定义。 |
 | [`ports.yaml`](three_seat_werewolf_v0.ports.yaml) | 每类 Action 一份受信端口模板及 Event 端口。 |
-| [`source.yaml`](three_seat_werewolf_v0.source.yaml) | 封闭 Actor 域、LawDef、能力家族、开局约束与候选条件。 |
+| [`source.yaml`](three_seat_werewolf_v0.source.yaml) | 封闭 Actor 域、共享 Law 绑定、能力家族、开局约束与候选条件。 |
 | [`assets.yaml`](three_seat_werewolf_v0.assets.yaml) | A/B/C 的身份、职业和开局状态。 |
 
 Source 用一份 `opening_actor_guards` 校验域内每名 Actor 的开局身份与职业；
 夜间三个 Action 家族共用一份 `resolve_night` Event Law 绑定。三席样例仍由
-Lib 显式声明三个 owner 和最多三个玩家；扩为六人局不能只改 Source。
+Lib 使用参与者 owner 模板；Source 选择实例，Assets 提供一致的玩家与职业开局。
+扩人数需要同时修改实例名单与开局，而不是为每人另写一份 Lib。
 
 从仓库根目录运行：
 
@@ -22,7 +23,7 @@ Lib 显式声明三个 owner 和最多三个玩家；扩为六人局不能只改
 
 数字选择当前席位的选项；该席位完成本轮行动后，用 `seat B` 或 `seat C`
 切到另一席位。也可用 `--lib`、`--ports`、`--source`、`--assets` 指向四份
-显式文件。改动 `source.yaml` 中 `event.resolve_day` 的领先票数条件，
+显式文件。改动共享 Lib 中 `event.resolve_day` 的领先票数条件，
 会改变真实 Event 结算；改动 `assets.yaml` 中的职业还须通过开局一致性检查。
 
 `source.yaml` 的 `participants` 域明确列出 `a/b/c`。例如一条 `attack` 家族声明
@@ -36,3 +37,8 @@ YAML 是受检作者前端，不是可执行 Python。没有生成专属 `.py` �
 当前另有六席实例化 Source，以及真实 T0 见证入口；
 见[当前规则编辑指南](../../../docs/AUTHORING.md)。
 三席静态样例与六席实例化声明不是同一份 Source，不凭文件名推导人数上限。
+
+类型范围只在 `type_aliases` 中定义一次；普通条件用可读表达式，集合布尔检查
+用语义谓词，多数票支持票用 `let` 局部复用。具体选型见
+[类型与规则写法](../../../docs/C0_LIB_TYPE_ALIASES_V1.md)和
+[谓词指南](../../../docs/C0_FINITE_QUERY_PREDICATES_V1.md)。

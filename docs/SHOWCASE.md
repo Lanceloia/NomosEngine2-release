@@ -43,7 +43,14 @@
 因此「救人」选项仍会出现而被 K0 在准入时拒绝。这不是已发布行动又结算失败。
 公开限制与菜单联动目前没有由这次编辑闭合，不能把候选／准入分层当作充分的作者体验。
 
-## 本次真实结果
+## 当前作者写法的真实结果
+
+使用谓词与类型别名整理后的代码 `960435fe3` 重新运行两局，见
+[报告](showcase/self-heal-predicates-v1/result.json)与
+[采集摘要](showcase/self-heal-predicates-v1/manifest.json)。新旧报告结构化内容完全相同，
+仍是前九步来源相同、第十步准入分叉。旧报告和动画保持原始字节，不冒称新的采集。
+
+## 历史画面与采集
 
 ![实际运行输出的静态对照](showcase/rule-edit.png)
 
@@ -77,8 +84,13 @@ python3 docs/showcase/render.py --reuse-report \
 Windows 可使用 `C:/Windows/Fonts/msyh.ttc` 和 `C:/Windows/Fonts/consola.ttf`；
 字体路径由使用者显式提供，字体不随本项目复制。`--reuse-report` 核对已存报告的
 摘要与实际记录，再重绘；不运行世界，也不更新原实验的版本或时间。
-若需要重新采集当前代码的实验，去掉该参数。脚本核对结果后保存新报告、摘要和画面，
-若当前规则不再满足这项实验，直接报错，不沿用旧成绩。
+若需要重新采集当前代码，使用下列命令写入尚不存在的新目录，避免覆盖历史素材：
+
+```bash
+.venv/bin/python tools/release_rule_edit_demo.py --record /tmp/ne2-self-heal-new
+```
+
+新采集不生成动画；若规则不再满足实验，直接报错，不沿用旧成绩。
 
 ## 深入阅读
 

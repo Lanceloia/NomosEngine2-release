@@ -81,12 +81,15 @@ Windows 使用 `.venv\Scripts\python.exe`。保存目录必须尚不存在。
 这些 YAML 是实际送入编译／开局的结构化快照；可以直接用文件差异核对上述编辑，也可以
 按[作者指南](../../AUTHORING.md)把同样的修改应用于示例后交互运行。
 
-本次[实际报告](evidence/result.json)和[采集摘要](evidence/manifest.json)对应代码 `15ecfccd9`。
-先看 [B 女巫](evidence/witch-B.assets.yaml)／[E 女巫](evidence/witch-E.assets.yaml)的六处字段差异，
-再看[六席 Source](evidence/six.source.yaml)／[八席 Source](evidence/eight.source.yaml)与
-[八席开局](evidence/eight.assets.yaml)。快照排版不同于输入原文，但保持结构化内容；
+当前作者写法重新采集的[实际报告](evidence-predicates-v1/result.json)和
+[采集摘要](evidence-predicates-v1/manifest.json)对应代码 `960435fe3`。
+先看 [B 女巫](evidence-predicates-v1/witch-B.assets.yaml)／[E 女巫](evidence-predicates-v1/witch-E.assets.yaml)的六处字段差异，
+再看[六席 Source](evidence-predicates-v1/six.source.yaml)／[八席 Source](evidence-predicates-v1/eight.source.yaml)与
+[八席开局](evidence-predicates-v1/eight.assets.yaml)。快照排版不同于输入原文，但保持结构化内容；
 摘要只识别内容，不是认证签名，也不保证直接篡改报告无法伪造。
 报告保留主树采集路径；同步到发行仓库后仍是这一次采集，不冒称另一份独立试玩。
+逐步报告与旧报告的结构化内容完全相同。旧 `15ecfccd9` 的
+[报告](evidence/result.json)及摘要保持原始字节，不更新成新版本。
 
 [工具](../../../tools/release_world_edit_demo.py)只按当前选项提交[外部选择](actions.yaml)。
 `checkpoint()` 把 `read()`／`offers()` 与受信 `author_snapshot()` 分区保存，不拿私有审计值决定选项。

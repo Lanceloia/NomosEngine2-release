@@ -30,25 +30,19 @@ opening_guard:
     - {eq: [{ref: scene.selection_done}, {const: false}]}
     - {eq: [{ref: scene.witch_done}, {const: false}]}
     - {eq: [{ref: scene.witch_saved}, {const: false}]}
-    - eq:
-        - count_matching:
-            collection: {ref: scene.wolf_ballots}
-            as: ballot
-            where: {const: true}
-        - {const: 0}
+    - none_matching:
+        collection: {ref: scene.wolf_ballots}
+        as: ballot
+        where: {const: true}
     - is_none: {ref: scene.last_death}
-    - eq:
-        - count_matching:
-            collection: {ref: scene.ballots}
-            as: ballot
-            where: {const: true}
-        - {const: 0}
-    - eq:
-        - count_matching:
-            collection: {ref: scene.players}
-            as: player
-            where: {eq: [{ref: player.alive}, {const: true}]}
-        - {const: 3}
+    - none_matching:
+        collection: {ref: scene.ballots}
+        as: ballot
+        where: {const: true}
+    - none_matching:
+        collection: {ref: scene.players}
+        as: player
+        where: not player.alive
     - eq:
         - count_matching:
             collection: {ref: scene.players}
@@ -61,63 +55,47 @@ opening_guard:
             as: assigned
             where: {const: true}
         - {const: 3}
-    - eq:
-        - count_matching:
-            collection: {ref: scene.roles}
-            as: assigned
-            where: {eq: [{ref: assigned.role}, {const: wolf}]}
-        - {const: 1}
-    - eq:
-        - count_matching:
-            collection: {ref: scene.roles}
-            as: assigned
-            where: {eq: [{ref: assigned.role}, {const: seer}]}
-        - {const: 1}
-    - eq:
-        - count_matching:
-            collection: {ref: scene.roles}
-            as: assigned
-            where: {eq: [{ref: assigned.role}, {const: villager}]}
-        - {const: 1}
+    - exactly_one:
+        collection: {ref: scene.roles}
+        as: assigned
+        where: {eq: [{ref: assigned.role}, {const: wolf}]}
+    - exactly_one:
+        collection: {ref: scene.roles}
+        as: assigned
+        where: {eq: [{ref: assigned.role}, {const: seer}]}
+    - exactly_one:
+        collection: {ref: scene.roles}
+        as: assigned
+        where: {eq: [{ref: assigned.role}, {const: villager}]}
 # Each declared Actor must match one physical player and one role assignment.
 opening_actor_guards:
   - domain: participants
     when:
       all:
-        - eq:
-            - count_matching:
-                collection: {ref: scene.players}
-                as: player
-                where: {eq: [{ref: player.id}, {ref: actor.name}]}
-            - {const: 1}
-        - eq:
-            - count_matching:
-                collection: {ref: scene.roles}
-                as: assigned
-                where:
-                  all:
-                    - {eq: [{ref: assigned.id}, {ref: actor.name}]}
-                    - {eq: [{ref: assigned.role}, {ref: actor.own_role}]}
-            - {const: 1}
-        - eq:
-            - count_matching:
-                collection: {ref: actor.choices}
-                as: choice
-                where: {const: true}
-            - {const: 0}
-        - eq:
-            - count_matching:
-                collection: {ref: actor.attacks}
-                as: attack
-                where: {const: true}
-            - {const: 0}
+        - exactly_one:
+            collection: {ref: scene.players}
+            as: player
+            where: {eq: [{ref: player.id}, {ref: actor.name}]}
+        - exactly_one:
+            collection: {ref: scene.roles}
+            as: assigned
+            where:
+              all:
+                - {eq: [{ref: assigned.id}, {ref: actor.name}]}
+                - {eq: [{ref: assigned.role}, {ref: actor.own_role}]}
+        - none_matching:
+            collection: {ref: actor.choices}
+            as: choice
+            where: {const: true}
+        - none_matching:
+            collection: {ref: actor.attacks}
+            as: attack
+            where: {const: true}
         - is_none: {ref: actor.witch_notice}
-        - eq:
-            - count_matching:
-                collection: {ref: actor.witch_choices}
-                as: choice
-                where: {const: true}
-            - {const: 0}
+        - none_matching:
+            collection: {ref: actor.witch_choices}
+            as: choice
+            where: {const: true}
         - {eq: [{ref: actor.healing_available}, {const: false}]}
 # Lib LawDefs use the bound actor/payload; this Source adds no local LawDefs.
 lawdefs: []
@@ -194,14 +172,13 @@ seats:
                 collection: {ref: actor.votes}
                 as: prior
                 where: {eq: [{ref: prior.round}, {ref: scene.round}]}
-            - not:
-                none_matching:
-                  collection: {ref: scene.players}
-                  as: self_player
-                  where:
-                    all:
-                      - {eq: [{ref: self_player.id}, {ref: actor.name}]}
-                      - {eq: [{ref: self_player.alive}, {const: true}]}
+            - exists:
+                collection: {ref: scene.players}
+                as: self_player
+                where:
+                  all:
+                    - {eq: [{ref: self_player.id}, {ref: actor.name}]}
+                    - {eq: [{ref: self_player.alive}, {const: true}]}
         payload: {target: {ref: target.id}}
       - entry_family: divine
         for_each: {collection: {ref: scene.players}, as: target}
@@ -217,14 +194,13 @@ seats:
                 collection: {ref: actor.choices}
                 as: prior
                 where: {eq: [{ref: prior.round}, {ref: scene.round}]}
-            - not:
-                none_matching:
-                  collection: {ref: scene.players}
-                  as: self_player
-                  where:
-                    all:
-                      - {eq: [{ref: self_player.id}, {ref: actor.name}]}
-                      - {eq: [{ref: self_player.alive}, {const: true}]}
+            - exists:
+                collection: {ref: scene.players}
+                as: self_player
+                where:
+                  all:
+                    - {eq: [{ref: self_player.id}, {ref: actor.name}]}
+                    - {eq: [{ref: self_player.alive}, {const: true}]}
         payload: {target: {ref: target.id}}
       - entry_family: attack
         for_each: {collection: {ref: scene.players}, as: target}
@@ -240,14 +216,13 @@ seats:
                 collection: {ref: actor.attacks}
                 as: prior
                 where: {eq: [{ref: prior.round}, {ref: scene.round}]}
-            - not:
-                none_matching:
-                  collection: {ref: scene.players}
-                  as: self_player
-                  where:
-                    all:
-                      - {eq: [{ref: self_player.id}, {ref: actor.name}]}
-                      - {eq: [{ref: self_player.alive}, {const: true}]}
+            - exists:
+                collection: {ref: scene.players}
+                as: self_player
+                where:
+                  all:
+                    - {eq: [{ref: self_player.id}, {ref: actor.name}]}
+                    - {eq: [{ref: self_player.alive}, {const: true}]}
         payload: {target: {ref: target.id}}
       - entry_family: skip_inspection
         label: Skip inspection
@@ -256,14 +231,13 @@ seats:
             - {eq: [{ref: scene.phase}, {const: night}]}
             - {eq: [{ref: scene.winner}, {const: none}]}
             - {eq: [{ref: actor.own_role}, {const: seer}]}
-            - not:
-                none_matching:
-                  collection: {ref: scene.players}
-                  as: candidate
-                  where:
-                    all:
-                      - {eq: [{ref: candidate.id}, {ref: actor.name}]}
-                      - {eq: [{ref: candidate.alive}, {const: true}]}
+            - exists:
+                collection: {ref: scene.players}
+                as: candidate
+                where:
+                  all:
+                    - {eq: [{ref: candidate.id}, {ref: actor.name}]}
+                    - {eq: [{ref: candidate.alive}, {const: true}]}
             - none_matching:
                 collection: {ref: actor.choices}
                 as: prior

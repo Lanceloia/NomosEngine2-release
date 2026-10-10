@@ -43,6 +43,7 @@ from .nominal_signatures_v1 import (
     C0RecordSignature,
     C0VariantCase,
 )
+from .nominal_type_aliases_v1 import BUILTIN_TYPE_NAMES, expand_type_aliases
 from .nominal_types_v1 import (
     IRValidationError,
     ObjectSortHierarchy,
@@ -886,6 +887,7 @@ def check_nominal_lib(
         | ({"object_kinds"} if "object_kinds" in source else set())
         | ({"actor_kinds"} if "actor_kinds" in source else set())
         | ({"pure_definitions"} if "pure_definitions" in source else set())
+        | ({"type_aliases"} if "type_aliases" in source else set())
         | ({"appraisal_definitions"} if "appraisal_definitions" in source else set()),
         "Lib",
     )
@@ -893,6 +895,10 @@ def check_nominal_lib(
         raise C0LawError("Lib schema is unknown")
     try:
         canonical = json.dumps(row, sort_keys=True, separators=(",", ":"))
+        if len(canonical) > 262144:
+            raise C0LawError("Lib declaration is too large")
+        if "type_aliases" in row:
+            row = expand_type_aliases(row)
         if type(row["owners"]) is not list or any(type(item) is not dict for item in row["owners"]):
             raise C0LawError("Lib owners must be a finite declaration list")
         # Storage addresses are layout, not part of the nominal validation contract.
@@ -909,10 +915,10 @@ def check_nominal_lib(
             sort_keys=True,
             separators=(",", ":"),
         )
+    except C0LawError:
+        raise
     except (TypeError, ValueError, RecursionError) as error:
         raise C0LawError("Lib declaration is not finite JSON data") from error
-    if len(canonical) > 262144:
-        raise C0LawError("Lib declaration is too large")
     fingerprint = sha256(nominal.encode("utf-8")).hexdigest()[:16]
     lawdefs = row.get("lawdefs", [])
     if type(lawdefs) is not list:
@@ -941,18 +947,7 @@ def check_nominal_lib(
             "Lib nominal declaration",
         )
         name = _name(item["name"], "Lib record name")
-        if name in {
-            "bool",
-            "int",
-            "str",
-            "enum",
-            "optional",
-            "tuple",
-            "none",
-            "occurrence_ref",
-            "individual_ref",
-            "actor_ref",
-        }:
+        if name in BUILTIN_TYPE_NAMES:
             raise C0LawError("Lib record name collides with a built-in type")
         if name in definitions:
             raise C0LawError("Lib record names alias")
@@ -1020,6 +1015,10 @@ def check_nominal_lib(
 
     for name in definitions:
         compile_record(name)
+
+    # Unused declarations are still checked; aliases do not bypass type validation.
+    for raw_type in row.get("type_aliases", {}).values():
+        _type_spec(raw_type, definitions, compile_record)
 
     # Signatures need the complete nominal table before any body or invariant check.
     pure_definitions = check_pure_definitions(row.get("pure_definitions", []), compiled)
