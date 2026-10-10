@@ -15,7 +15,10 @@ appraisal:
     ice: 冰面风险
     approach: 接近已知受困者
     memory_risk: 旧线索定位风险
-  defaults: {torch_gain: 0, torch_spend: 0, reservoir_spend: 0, reveals_reservoir: false, movement: false}
+    interrupt: 中断眼前仪式
+    invite: 邀请身边居民同行
+    depart: 结束旅程
+  defaults: {torch_gain: 0, torch_spend: 0, reservoir_spend: 0, reveals_reservoir: false, movement: false, interruption: false, invitation: false, departure: false}
   definitions:
     inspect_floor:
       when: not candidate.was_tried and not local.floor_known
@@ -67,8 +70,8 @@ appraisal:
       values: {torch_spend: 1}
     travel:
       when: >
-        not candidate.was_tried and candidate.has_destination
-        and (candidate.destination_new or candidate.approaching_need)
+        candidate.has_destination
+        and ((not candidate.was_tried and candidate.destination_new) or candidate.approaching_need or candidate.approaching_goal)
         and (not local.floor_frozen or candidate.icy)
       features:
         explore: 1 if candidate.destination_new else 0
@@ -76,6 +79,18 @@ appraisal:
         ice: 1 if candidate.icy else 0
         approach: 1 if candidate.approaching_need else 0
       values: {movement: true}
+    interrupt_observed_ritual:
+      when: local.ritual_active and candidate.has_targets and candidate.frozen_count > 0 and not candidate.was_tried
+      features: {interrupt: 1, help: 1}
+      values: {interruption: true, movement: true}
+    invite_nearby_people:
+      when: local.nearby_people and not candidate.was_tried
+      features: {invite: 1}
+      values: {invitation: true}
+    finish_journey:
+      when: true
+      features: {depart: 1}
+      values: {departure: true}
   bindings:
     observe_floor_adventurer: inspect_floor
     observe_routes_adventurer: inspect_routes
@@ -118,6 +133,9 @@ appraisal:
     load_balloon_power_adventurer: replenish_single
     pass_prison_bars_adventurer: travel
     pass_prison_line_adventurer: travel
+    carry_from_ritual_adventurer: interrupt_observed_ritual
+    offer_escort_adventurer: invite_nearby_people
+    leave_palace_adventurer: finish_journey
   # Explicit exclusion from delegation, not exclusion from the world.
   manual:
     - explain_balloon_adventurer
@@ -183,9 +201,6 @@ appraisal:
     - open_plain_wall_adventurer
     - care_person_adventurer
     - thaw_ritual_resident
-    - carry_from_ritual_adventurer
-    - offer_escort_adventurer
-    - leave_palace_adventurer
     - wait_adventurer
     - carry_move_adventurer
     - carry_cross_ice_adventurer
@@ -244,3 +259,6 @@ inputs:
   load_balloon_power_adventurer: {scope: balloon_charge, destination: null, targets: [], movement_kind: ""}
   pass_prison_bars_adventurer: *walk
   pass_prison_line_adventurer: *walk
+  carry_from_ritual_adventurer: {scope: interrupt_ritual, destination: {kind: payload, field: destination}, targets: [victim], movement_kind: carry}
+  offer_escort_adventurer: {scope: invite_people, destination: null, targets: [], movement_kind: ""}
+  leave_palace_adventurer: {scope: depart, destination: null, targets: [], movement_kind: ""}

@@ -2,7 +2,7 @@
 schema: m1.play_score.v1
 thaw_entries: [thaw_person_adventurer, thaw_queen_adventurer, thaw_fox_adventurer, thaw_ritual_resident]
 scores:
-  common: facts.peopleThawed * 20 + facts.ritualDisrupted * 100 + facts.departed * 60
+  common: facts.visitedPlaces * 3 + facts.peopleThawed * 20 + facts.ritualDisrupted * 100 + facts.departed * 60
   cautious_investigator: facts.peopleDetailed * 8 + facts.visitedPlaces * 2
   helpful_rescuer: facts.peopleThawed * 20 + facts.peopleDetailed * 4 + facts.ritualDisrupted * 30
   decisive_explorer: facts.visitedPlaces * 10 + facts.departed * 30

@@ -1,0 +1,27 @@
+# Public goals, not a capsule or a simulation of future K0 state.
+schema: m1.public_planning.v1
+goals:
+  interrupt:
+    label: 寻找中断仪式的机会
+    selector: {sites: [ritual_ring]}
+    when: not progress.ritualDisrupted and knowledge.ritual_active
+    gains: {ritualDisrupted: 1}
+    feature: interrupt
+  help:
+    label: 接近已知受困者
+    selector: {observation: {kind: person, state: frozen}}
+    when: true
+    gains: {peopleThawed: 1, knownChargeSpent: 1}
+    feature: help
+  depart:
+    label: 寻找离宫的机会
+    selector: {sites: [palace_exit]}
+    when: true
+    gains: {departed: 1}
+    feature: depart
+  explore:
+    label: 探查尚未抵达的区域
+    selector: {frontier: true}
+    when: true
+    gains: {visitedPlaces: 1}
+    feature: explore
