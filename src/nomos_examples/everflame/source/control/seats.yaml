@@ -4614,8 +4614,13 @@ seats:
         - const: palace_exit
       payload: {}
     - entry: observe_chandelier_adventurer
-      fixed_participants: true
-      label: Observe and call beneath the chandelier
+      for_each_participants:
+        chandelier: {fixed_kind: chandelier, read: []}
+        reservoir: {fixed_kind: reservoir, read: []}
+        resident_one: {fixed_actor: huddled_one, private: true}
+        resident_two: {fixed_actor: huddled_two, private: true}
+      label: [{const: Observe and call beneath the chandelier}]
+      visible_when: true
       when:
         all:
         - eq:
@@ -4623,10 +4628,13 @@ seats:
           - const: ballroom_chandelier_reach
         - is_none:
             ref: actor.chandelier_sighting
-      payload: {}
+      payload: {chandelier: {ref: chandelier_ref}, reservoir: {ref: reservoir_ref}}
     - entry: detach_reservoir_adventurer
-      fixed_participants: true
-      label: Detach the flame-glass reservoir
+      for_each_participants:
+        chandelier: {fixed_kind: chandelier, read: []}
+        reservoir: {fixed_kind: reservoir, read: []}
+      label: [{const: Detach the flame-glass reservoir}]
+      visible_when: true
       when:
         all:
         - eq:
@@ -4637,10 +4645,13 @@ seats:
         - ref: actor.chandelier_sighting.mount_observed
         - is_none:
             ref: actor.reservoir_detach_ref
-      payload: {}
+      payload: {chandelier: {ref: chandelier_ref}, reservoir: {ref: reservoir_ref}}
     - entry: reload_everflame_adventurer
-      fixed_participants: true
-      label: Load one reservoir charge into the Everflame
+      for_each_participants:
+        reservoir: {fixed_kind: reservoir, read: []}
+        torch: {fixed_kind: everflame, read: []}
+      label: [{const: Load one reservoir charge into the Everflame}]
+      visible_when: true
       when:
         all:
         - not_none:
@@ -4658,7 +4669,7 @@ seats:
             eq:
             - ref: actor.known_everflame_charges
             - const: 5
-      payload: {}
+      payload: {reservoir: {ref: reservoir_ref}, torch: {ref: torch_ref}}
     - entry: thaw_ritual_resident
       for_each_participants:
         ritual:
