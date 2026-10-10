@@ -1,9 +1,8 @@
 # 选定语义与失败边界
 
 本仓库维护有限声明式语言，不承诺任意 Python 或完整 UFO。
-上游发行审计使用 S01–S32 编号；本页是其维护摘要，不把历史设计作为运行依赖。
 现行 Source 只有 `c0.owner_graph.v6`，没有旧版本回退。
-早期独立catalog及其schema转换已[删除](CURRENT_ENTRY_HARD_CUT.md)，不作为组件备用入口。
+Lib/Ports/Source 是唯一现行作者链，历史语言不作为备用编译入口。
 
 ## 层的责任
 
@@ -40,8 +39,13 @@
 | 控制预算结束 | 保留实际前缀，可继续；T0 标 not-met-within-bound |
 | 正常终局 | 合法前缀发布并封闭，未执行后缀不冒称成功 |
 
-T0 只证明给定规则/开局中这一条实际见证，不保证根因唯一。
+T0 只检查给定规则/开局中这一条实际见证，不保证根因唯一。
 时间/行动值、occurrence 与 C0 控制历史各有来源，不能混成一种整数。
+
+精确写权、状态隔离与候选/准入的区别见[设计取舍](DESIGN.md)。
+Action/Event 名称属于不同入口类别；输出保持声明顺序和首错，形成来源不规定
+写 owner 的数量。当前形成注解只支持有限 scheduler/trigger 对应，不提供通用
+多 scheduler 或任意共享 event type 的来源证明。
 
 ## 排除
 
@@ -50,5 +54,5 @@ T0 只证明给定规则/开局中这一条实际见证，不保证根因唯一�
 K0 Collective 的有来源入集有内核测试，不代表 C0 已有完整 Collective 作者语言。
 受信 Python 原生端点不是恶意插件沙箱。
 
-区别证据：[内核事务](KERNEL_TRANSACTION_REPAIR.md)、[写权](OWNER_WRITE_AUTHORITY.md)、
-[C0 语义](C0_SEMANTIC_REPAIR.md)、[生成组织](EXECUTION_BACKEND.md)。未测组合不写成保证。
+检查入口见[设计与反例](DESIGN.md)、[执行后端](EXECUTION_BACKEND.md)和
+[测试指南](TESTING.md)。未测组合不写成保证。

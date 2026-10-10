@@ -38,6 +38,39 @@ python -m nomos_t0.author_check_v0 \
 原版 exit 0，修改后目标未达成 exit 3。撤回实验条件后重新 Compile 才恢复原规则。
 T0 的结果不是全部玩法不可达证明，也不保证指出唯一失败 guard。
 
+## 拒绝后如何定位
+
+T0 CLI 报告停点和实际前缀，目前不会自动打印失败 clause。要看作者侧诊断，
+在同一份改后的文件上启动交互入口：
+
+```bash
+python -m nomos_c0.owner_graph_play_v1 \
+  --lib src/nomos_c0/examples/three_seat_werewolf_v0.lib.yaml \
+  --ports src/nomos_c0/examples/three_seat_werewolf_v0.ports.yaml \
+  --source src/nomos_c0/examples/six_seat_werewolf_v0.source.yaml \
+  --assets src/nomos_t0/examples/werewolf_witch_b.assets.yaml \
+  --author-diagnostics
+```
+
+用 `seat NAME` 切席，再输入当前选项的编号，按同一见证尝试：
+
+| 顺序 | 席位与选择 |
+| --- | --- |
+| 1–3 | A、B、C 各选 `Vote for C` |
+| 4–6 | D、E、F 各选 `Vote for A` |
+| 7 | A 选 `Skip inspection` |
+| 8–9 | C、D 各选 `Attack B` |
+| 10 | B 选 `Save victim` |
+
+改后的第十步拒绝时，诊断会指出 `save_choice/not_self = false`，
+并标出规则文件的位置；不要把固定编号当规则身份。
+程序接口为 `session.author_guard_report(seat, offer)`，渲染器为
+`nomos_c0.author_diagnostics_v1.render_author_guard_report`。
+
+它检查**当前**作者谓词，不重放历史判定，也不是全部 K0 拒绝原因的证明；
+身份、时窗等其他检查仍可能拒绝。诊断属于受信作者工具，不交给局内玩家。
+不启用诊断也不改变准入结果，读取诊断不执行行动或掷骰。
+
 ## 修改人数与职业
 
 六席 Source 的封闭实例列表控制有哪些 Actor/能力和席位，Assets 的玩家/角色表、

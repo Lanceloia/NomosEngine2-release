@@ -8,6 +8,7 @@ RPG/TRPG 沙盒中，玩家可能做出剧本没有预料的选择。我们的�
 
 首次阅读：[中文项目导览](docs/PROJECT_TOUR.md)把三个实验、作者文件和实际执行路径串起来；
 [代码地图](docs/CODE_MAP.md)用于继续检查实现。
+全部使用与维护文档见[文档导航](docs/README.md)。
 
 ## 用一组实验理解项目
 
@@ -60,7 +61,7 @@ python3 -m venv .venv
 
 输出应包括 `unchanged_published_prefix: 12`，原版 `goal_status: met`，
 编辑版 `stop_reason: k0_not_admitted`、`requested_step: 10`。
-上述命令的全新安装实测与未验证项见[展示准备记录](docs/SHOWCASE_READINESS.md)。
+上述命令的全新安装实测与未验证项见[验证说明](docs/VERIFICATION.md)。
 `--json` 显示完整发生来源；[规则编辑实验](docs/SHOWCASE.md)提供演示顺序和本次原始证据。
 要亲手编辑文件，按[作者指南](docs/AUTHORING.md)操作。
 领域字段类型在 Lib 中[提前声明、按名引用](docs/C0_LIB_TYPE_ALIASES_V1.md)，包括单次使用的类型；范围仍由编译与运行检查。
@@ -107,11 +108,12 @@ T0 只报告这条有限见证的运行结果，不证明所有可能行动都�
 
 ## 当前与未来
 
-**当前是本地发行基线，尚未公开发布。** 选定合同的六项审计缺陷已修复并独立复核；
-两个世界已从 wheel 独立运行。最后同输入冰宫整局为 43 项行动、1180 条发生，
+**当前是可安装、可复现的本地发行基线，尚未公开发布。**
+两个世界已从 wheel 独立运行。已有同输入冰宫整局为 43 项行动、1180 条发生，
 基线/候选 Run 为 45.056/45.106 秒，状态与来源摘要一致。
 这是一组返回门证据，不证明稳定提速、任意规则组合正确或完整原作已电子化。
-完整记录见[发行收束](docs/RELEASE_BASELINE_CLOSURE.md)、[重建账](docs/RECONSTRUCTION.md)。
+已执行验证与证据可访问范围见[验证说明](docs/VERIFICATION.md)，
+关键工程取舍和反例见[设计说明](docs/DESIGN.md)。
 
 当前只实际验证 Python 3.14.4；`>=3.11` 是语言版本要求，不代表全部平台已测。
 尚无通用存档恢复、多人服务或 LLM 主持人。长期希望让 LLM DM 提议行动、草拟可检查资产、

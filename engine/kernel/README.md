@@ -25,5 +25,5 @@ owner 是权威状态边界，不要求每个实体只能有一个读视图。
 | [_collective_abi](src/nomos_kernel/_collective_abi.py) | 有来源的成员入集 |
 
 具体限制见[发行语义](../../docs/SEMANTICS.md)。原生端点没有检查豁免。
-本轮修复见[事务记录](../../docs/KERNEL_TRANSACTION_REPAIR.md)，
+隔离与原子发布的设计、反例见[设计说明](../../docs/DESIGN.md#一次行动作为原子事务)，
 短门与长测边界见[测试指南](../../docs/TESTING.md)。

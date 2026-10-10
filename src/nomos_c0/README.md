@@ -83,7 +83,7 @@ python -m nomos_c0.owner_graph_play_v1 \
 
 Assets 缺省仅为已声明 optional 补 `null`，不猜 `0`、`false` 或空集合。
 形成、到场、交付、阅读分别有真实来源链，不自动产生知识。
-精确写权及迁移反例见[写权说明](../../docs/OWNER_WRITE_AUTHORITY.md)。
+精确写权及反例见[设计说明](../../docs/DESIGN.md#相同类型不代表相同权威)。
 
 ## 失败与范围
 

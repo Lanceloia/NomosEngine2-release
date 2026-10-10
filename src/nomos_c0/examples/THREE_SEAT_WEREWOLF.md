@@ -43,4 +43,4 @@ YAML 是受检作者前端，不是可执行 Python。没有生成专属 `.py` �
 内建类型直接使用已有类型名；普通条件用可读表达式，集合布尔检查
 用语义谓词，多数票支持票用 `let` 局部复用。具体选型见
 [类型与规则写法](../../../docs/C0_LIB_TYPE_ALIASES_V1.md)和
-[谓词指南](../../../docs/C0_FINITE_QUERY_PREDICATES_V1.md)。
+[谓词指南](../../../docs/AUTHORING_PREDICATES.md)。

@@ -1,46 +1,43 @@
 # 编译执行后端
 
-状态：B05已集成并独立接受；最终工程性能门通过，证据见[发行收束](RELEASE_BASELINE_CLOSURE.md)。
+C0 将已检查的 IR 编成专用 Python 执行计划。它优化的是规则的执行方式，
+不把狼人杀或冰宫知识写进编译器，也不跳过运行时准入。
 
-## 分工
-
-三类执行计划分别保留语义责任：
+## 组织
 
 | 文件 | 责任 |
 | --- | --- |
-| `invariant_execution_v1.py` | checked admission IR 的短路、引用、量词作用域与有限专用化 |
-| `nominal_validation_execution_v1.py` | 有序字段/名义类型检查、当前 nested validator、variant 与 invariant |
-| `validation_contract_execution_v1.py` | 封存依赖的当前属性 identity、短路和资格边界 |
-| `_execution_emission.py` | 编译期常量绑定、局部名、AST片段和Python发射 |
+| `invariant_execution_v1.py` | 准入 IR 的短路、引用、量词作用域和有限专用化 |
+| `nominal_validation_execution_v1.py` | 有序字段、名义类型、variant 和不变量检查 |
+| `validation_contract_execution_v1.py` | 当前属性 identity、封存依赖与验证资格 |
+| `_execution_emission.py` | 编译期常量绑定、局部名称、AST 片段和 Python 发射 |
 
-共同发射工具不认识场景、规则或验证语义，不决定权限/阶段，不缓存值或校验成功。
-常量按identity绑定但不比较、不去重；作者字段名仍是字符串字面量，不注入代码。
-函数直接使用生成namespace，没有运行期dispatcher或helper转发层。
-nominal的invariant后绑定仍修改函数实际使用的同一个namespace。
+前三类计划各自保留语义责任；共同发射工具只处理生成代码的机械组织。
+常量按 identity 绑定，不调用原生 equality 去重；作者字段名作为字符串，不注入代码。
+生成函数直接使用自己的 namespace，不经运行期万能 dispatcher。
 
-生成器对未专用化的操作调用同一checked IR求值器，这是单一语言合同的执行策略，
-不是旧schema/alias/版本fallback。三处旧的bind/compile/exec机械代码已删除，
-没有保留另一套发射路径作为兼容。
+## 正确性边界
 
-## 验证
+- 专用化依赖封存的布局和类型元数据；不缓存世界当前值或准入成功。
+- 未专用化操作仍使用同一 checked IR 求值器，不切换旧语言或另一套世界模拟器。
+- 字段验证、不变量、分支读取顺序和首个错误仍属于语义合同。
+- 生成代码相同不是全部正确性的证明；还需要来源、权限、异常和隔离反例。
 
-Python3.14.4。七个具名模块168 passed（1.72秒），相关Ruff通过。
+例如，同一请求在菜单生成后可能已经过时。生成器可以预先确定字段读取路径，
+但提交时仍须读取、校验当前值，不能复用上次的成功结果。
+
+## 检查入口
+
+从仓库根运行具名模块：
 
 ```bash
 python -m pytest -q \
   tests/nomos_c0/test_execution_emission.py \
   tests/nomos_c0/test_invariant_execution_v1.py \
   tests/nomos_c0/test_nominal_validation_block_v1.py \
-  tests/nomos_c0/test_specialized_nominal_validation_v1.py \
   tests/nomos_c0/test_validation_contract_execution_v1.py \
   tests/nomos_c0/test_runtime_reference_execution_v1.py \
   tests/nomos_c0/test_quantifier_collection_execution_v1.py
 ```
 
-新工具反例覆盖identity绑定不触发原生eq、命名不碰撞、后绑定与原生异常。
-现有语义门覆盖首错、读取顺序、短路、实时metadata与嵌套回调。
-这只是组织重构，不宣称提速；正常配对与最终整局仍由B06核定。
-
-Gauss对最终候选`89dfc8a`独立核同namespace后绑定、删除旧机械路径及未新增运行dispatcher；
-本页七模块连同安装/测量两模块181 passed（17.22秒），无material finding。
-未独立运行性能或整局，此接受不授性能通过。
+这些测试检查生成与执行合同；不是整局性能结论。测量方法见[测试指南](TESTING.md)。

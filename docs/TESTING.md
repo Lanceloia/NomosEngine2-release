@@ -1,12 +1,11 @@
 # 测试与测量
 
-测试回答合同是否成立；长游玩见证回答某个世界的组合是否运行。
-两者不能互相替代，也不能把短绿色测试扩写为所有作者输入都正确。
+短测试检查语义合同；长游玩见证检查某个世界的组合。
+两者不能互相替代，也不能把一条路线通过外推为所有作者输入正确。
 
-## 日常短门
+## 日常具名测试
 
-每次 pytest 显式列具体 `test_*.py` 或 nodeid，串行运行。
-根 conftest 拒绝目录级/默认收集和第二个独立进程；不绕过或删除锁。
+每次 pytest 显式列具体 `test_*.py` 或 nodeid，串行运行，不默认收集全目录。
 
 ```bash
 .venv/bin/python -m pytest -q \
@@ -17,27 +16,36 @@
 
 | 改动 | 优先具名模块 |
 | --- | --- |
-| K0 opening 隔离 | `engine/kernel/tests/test_opening_validation_isolation.py` |
-| K0 pre-due 原子边界 | `engine/kernel/tests/test_pre_due_transaction_boundary.py` |
-| owner 精确写权 | `tests/nomos_c0/test_owner_write_authority_v1.py` |
-| Action/Event 命名空间 | `tests/nomos_c0/test_formation_namespace_v1.py` |
-| 候选故障 | `tests/nomos_c0/test_dynamic_offer_fault_isolation_v1.py` |
-| 控制预算 | `tests/nomos_c0/test_control_budget_v1.py` |
-| 后端生成 | `tests/nomos_c0/test_execution_emission.py`及实际改动执行器模块 |
+| 开局隔离 | `engine/kernel/tests/test_opening_validation_isolation.py` |
+| pre-due 原子边界 | `engine/kernel/tests/test_pre_due_transaction_boundary.py` |
+| 精确 owner 写权 | `tests/nomos_c0/test_owner_write_authority_v1.py` |
+| Action/Event 名称 | `tests/nomos_c0/test_formation_namespace_v1.py` |
+| 候选故障与控制预算 | `test_dynamic_offer_fault_isolation_v1.py`、`test_control_budget_v1.py` |
+| 执行生成 | `tests/nomos_c0/test_execution_emission.py`及实际改动执行器 |
+| 类型与一行字段 | `test_nominal_type_aliases_v1.py`、`test_compact_record_fields_v1.py` |
 | 安装资源 | `tests/nomos_c0/test_bundled_examples_v1.py` |
-| 领域类型别名与一行字段 | `tests/nomos_c0/test_nominal_type_aliases_v1.py`、`tests/nomos_c0/test_compact_record_fields_v1.py` |
-| 演示的安装来源与证据记录边界 | `tests/tools/test_release_demo_install_boundaries.py` |
+| 演示安装边界 | `tests/tools/test_release_demo_install_boundaries.py` |
+| 保存的自救实验 | `tests/nomos_c0/test_showcase_evidence_v1.py` |
 | T0 结果 | `tests/nomos_t0/test_witness_v0.py` |
 
-模块名以实际文件为准。相邻门按修改依赖追加，不每次跑整个世界或全目录。
-Ruff 检查改动文件；最终集成才运行已约定的具名合并门。
+表中省略目录的 C0 测试均位于 `tests/nomos_c0/`。
+按修改依赖追加相邻模块；Ruff 检查改动 Python，不每次跑整局。
 
 ## 独立安装
 
+从干净提交导出后构建，避免旧 `build/lib` 或遗漏资源影响结果：
+
 ```bash
-python -m build --wheel --outdir /tmp/ne2-wheels
+export_root=$(mktemp -d)
+git archive HEAD | tar -x -C "$export_root"
+.venv/bin/python -m build --wheel --outdir /tmp/ne2-wheels "$export_root"
 python -m venv /tmp/ne2-installed
 /tmp/ne2-installed/bin/python -m pip install /tmp/ne2-wheels/nomos_engine2-0.1.0-py3-none-any.whl
+```
+
+在仓库外目录，用上面环境运行：
+
+```bash
 cd /tmp
 env -u PYTHONPATH -u PYTHONHOME /tmp/ne2-installed/bin/python -I \
   /path/to/checkout/tools/release_install_smoke.py werewolf
@@ -45,50 +53,29 @@ env -u PYTHONPATH -u PYTHONHOME /tmp/ne2-installed/bin/python -I \
   /path/to/checkout/tools/release_install_smoke.py everflame
 ```
 
-smoke 使用已安装资源，检查所有 `nomos_*` origin 位于安装环境并提交真实 Action。
-这是应用安装验证，不是用 M1 长路线替代底层单元测试。
-发行构建必须从干净提交导出，不能依赖旧 `build/lib` 或工作树遗漏的资源。
+将 `/path/to/checkout` 换成实际仓库位置，wheel 输出目录使用空目录。
+smoke 使用已安装资源，检查所有已加载 `nomos_*` 模块来自安装环境，并提交真实 Action。
+以上为 Linux/WSL 命令；不是原生 Windows 已通过的声明。
 
-## 性能门
+## 性能测量
 
-工具：[release_runtime_gate.py](../tools/release_runtime_gate.py)。
-两个隔离进程分别加载明确的 baseline/candidate core，使用同一作者文件字节。
-复用 Program、每次新建 Session；这是进程内暖态门，不是冷启动门。
+[测量工具](../tools/release_runtime_gate.py)在独立进程中加载明确的 baseline/candidate，
+使用同一作者输入，分别报告 Compile、Start、Run。Program 复用，每次新建 Session；
+暖态结果不能当冷启动耗时，也不能当浏览器响应时间。
 
-Compile、Start、Run 分开报告；不启用 profiler、mock 或运行时验证跳过。
-短 M1 用真实两个等待和 NPC/due 推进；Parcel 用256个独立 Session 聚合
-真实 dispatch→因果→defer→due→confirm，是一个组合样本，不分别归因各层成本。
-重复数由`--parcel-sessions-per-pair`在计时前固定，双方完全相同，不按耗时自适应。
-首轮32局结果保留于返回记录；256局是一项配对样本，不是256项独立配对。
-附带的Parcel进程CPU时间只用于诊断，不替代wall时间或降低性能阈值。
-Owner于2026-10-10批准新的发行工程预算：AB/BA按顺序固定八对，中位比值≤1.10，
-且至少六对≤1.10才通过。max/min>1.10仍记录noise warning，但不单独阻止发行，
-不触发追加测量；这是工程预算，不是稳定收益的统计证明。
-旧5%/噪声硬门的原始结论不改写，按新预算重判另存报告并标明所测版本。
+运行前用 `python tools/release_runtime_gate.py --help` 查看参数。
+先过相关正确性短门，确有必要时才运行固定 AB/BA 配对或整局。
+测量不启用 profiler 或跳过验证；状态、来源和控制摘要在计时外核对。
+保留正常 GC，并记录负载噪声，不挑最好的一次或按结果追加样本。
 
-计时外核状态、来源、控制/行动值/Appraisal 与完整行动输入；只归一化本局 opaque scope。
-GC 每个聚合样本前 collect，Run 保持正常自动 GC。完整 M1 日志不在测量中写终端。
-只有短门都过才进入一次必要成对整局；整局>10%回退需要定位，不单次证明稳定收益。
-短门未过 exit 2；整局回退 exit 3；脚本/语义错误不是性能结果。
+工具当前短样本预算为固定八对：Run 中位比值不超过 1.10，且至少六对不超过 1.10。
+这是工程回退预算，不是统计稳定性或提速承诺。报告里的 noise warning 仍需阅读。
+语义不一致、脚本错误与耗时回退是不同结果，不能通过删保障改善成绩。
+已记录测量的范围见[验证说明](VERIFICATION.md)。
 
-稳定回退只安排一批针对性修正；必要正确性代价需明确取舍，不无限优化或移除保障。
+## CI
 
-已有完整八对报告可以只读重判，不启动worker、编译或世界Session：
-
-```bash
-python tools/release_runtime_gate.py --assess-report original.json --output approved-assessment.json
-```
-
-工具逐对重核状态/来源/控制摘要和AB/BA顺序，以原始Run时长计算比值，输出原报告
-SHA256、原结论和新预算结论，拒绝覆盖原文件。exit 0只表示该份证据的两个短门通过，
-不证明当前代码版本或整局通过。它不是跨轮挑选成绩的入口。
-本次已有两组八对数据按新预算接受，不再重跑数千Session；整局验证独立安排一次，
-不得为启动整局而重新执行两组短样本。日常测试仍只运行具名短模块。
-
-## CI状态
-
-已添加单job具名串行短门及wheel应用验证，不默认跑整局或性能门。
-使用[checkout](https://github.com/actions/checkout)及
-[setup-python](https://github.com/actions/setup-python)官方入口，显式Python 3.14.4。
-本地发行仓库尚无远端，工作流配置不等于GitHub上已经通过；本地命令与远端结果分别记录。
-2026-10-10 的独立安装及演示实测见[展示准备记录](SHOWCASE_READINESS.md)。
+[工作流](../.github/workflows/checked-baseline.yml)显式选具名模块、构建干净 wheel，
+从独立环境运行两个真实消费者与三个展示工具，不默认跑整局和性能门。
+使用 Python 3.14.4；工作流配置不等于已经在 GitHub 执行。
+当前本地结果与未验证环境见[验证说明](VERIFICATION.md)。

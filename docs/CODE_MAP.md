@@ -13,10 +13,20 @@
    把已检查的规则、参与者和输出接入 K0。
 3. **实际提交**：[Session](../src/nomos_c0/program_runtime_v1.py)将当前选项提交到
    [K0 原子会话](../engine/kernel/src/nomos_kernel/_atomic_inmemory_session.py)，
-   后者重核当前态并发布实际发生。
+   后者的 `settle()` 重核当前态并发布实际发生。准入入口是
+   [行动绑定](../src/nomos_c0/composable_action_v1.py)的 `_Admission.admit()`：
+   `self.program.ir.condition(roots)` 为假时返回 `None`，K0 将它转为 `K0NotAdmitted`。
+   `settle()` 在 `_settle_causal_waves()`、不变量与终局检查成功后，才一起替换
+   `_states`、`_tape` 等权威字段；准入后异常进入 `K0SettlementDefect` 和 fatal。
+   禁自救实验走的是前一个零写拒绝分支，不是后一个回滚分支。
 4. **实验与证据**：[对照工具](../tools/release_rule_edit_demo.py)只改一条内存规则，
    [T0](../src/nomos_t0/witness_v0.py)从当前选项执行同一行动见证并记录来源。
    [T0 短测试](../tests/nomos_t0/test_witness_v0.py)检验有限见证报告的合同。
+
+作者诊断由 `program_runtime_v1.py` 的 `author_guard_report()` 检查当前谓词，
+`author_diagnostics_v1.py` 渲染命名 clause 和源码位置；交互入口加
+`--author-diagnostics` 可在拒绝后显示，见[作者指南](AUTHORING.md#拒绝后如何定位)。
+它不改变准入，也不是全部 K0 拒绝原因的历史证明。
 
 作者指南使用历史文件名 `three_seat_*`，但本次六席人数由 Source 和 Assets 声明，
 不由 Lib 文件名决定。先看[演示](SHOWCASE.md)，再跟踪上述路径即可。
@@ -49,6 +59,6 @@ C0 源码下的相对文件名均指 `src/nomos_c0/`。
 生成器仅共享代码发射机械组织；不得把领域规则塞进 compiler 或 helper。
 命名类型、IR、执行计划、真实当前态验证各有职责，不以新增万能层掩盖重复权威。
 
-六项缺陷及已修反例见[重建账](RECONSTRUCTION.md)，
+关键取舍与对应反例见[设计说明](DESIGN.md)，
 安装与测试入口见[测试指南](TESTING.md)。当前 Web 在独立仓库，消费冻结版；
 此发行候选未自动替换其依赖，也不复制前端作为内核的一部分。
