@@ -12,6 +12,7 @@
 | 核对每项展示到底证明了什么 | [实验地图](SHOWCASE_MATRIX.md) |
 | 先看一次实际规则编辑与重跑 | [短回放及证据](showcase/recording/README.md) |
 | 亲手修改规则、人数或职业 | [作者指南](AUTHORING.md) |
+| 启动冰宫桌面试玩、核对候选版本 | [Web 入口](M1_WEB.md)、[展示候选](M1_SHOWCASE_CANDIDATE.md) |
 
 ## 作者参考
 

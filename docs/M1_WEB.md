@@ -1,5 +1,7 @@
 # M1 桌面试玩
 
+本地可复现版本与证据范围见[展示候选](M1_SHOWCASE_CANDIDATE.md)。
+
 当前独立应用目录为 `m1-tabletop-prototype`，它自持 React 前端和 Python 会话服务。
 将它与本引擎仓库放在同一父目录，然后在应用目录执行：
 
