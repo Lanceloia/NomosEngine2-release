@@ -6,4 +6,4 @@ scores:
   cautious_investigator: facts.peopleDetailed * 8 + facts.visitedPlaces * 2
   helpful_rescuer: facts.peopleThawed * 20 + facts.peopleDetailed * 4 + facts.ritualDisrupted * 30
   decisive_explorer: facts.visitedPlaces * 10 + facts.departed * 30
-  cost: facts.publishedActions * 2 + facts.enduranceSpent + facts.knownChargeSpent * 2
+  cost: facts.publishedActions * 2 + facts.enduranceSpent + facts.knownChargeSpent * 2 + facts.failed * 100
