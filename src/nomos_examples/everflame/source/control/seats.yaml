@@ -1170,6 +1170,11 @@ seats:
         thaw_ritual_resident: You spent one charge thawing the person at the ritual and interrupted
           the chant. They still have to leave by their own actions; meet and observe them again.
       rejected_actions:
+        carry_from_ritual_adventurer: The carry could not start. This intervention is for the frozen
+          resident in an ongoing ritual. Check your nearby observation and the ritual signs before
+          trying again.
+        care_person_adventurer: The care could not start. Observe the person nearby again; care
+          requires an incapacitated person who is not frozen. Check your own ability to act too.
         bridge_slow_adventurer: This crossing did not happen. Careful crossing still cannot pass a
           frozen bridge segment. Inspect reachable ground and your condition; these are possible
           limits, not a report of a hidden cause.
@@ -4689,9 +4694,11 @@ seats:
           ref: candidate.name
       when:
         all:
+        - candidate.name == 'ritual_resident'
         - eq:
           - ref: actor.site
           - const: ritual_ring
+        - actor.ritual_notice != 'erupted'
         - not:
             eq:
             - ref: actor.ritual_notice
