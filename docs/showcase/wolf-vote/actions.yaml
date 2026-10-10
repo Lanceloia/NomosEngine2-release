@@ -1,0 +1,13 @@
+# Demonstration requests, not world rules or a second witness language.
+# The tool submits each named current offer, just as the terminal controller does.
+steps:
+  - {seat: A, label: Vote for C}
+  - {seat: B, label: Vote for C}
+  - {seat: C, label: Vote for C}
+  - {seat: D, label: Vote for A}
+  - {seat: E, label: Vote for A}
+  - {seat: F, label: Vote for A}
+  - {seat: A, label: Skip inspection}
+  - {seat: C, label: Attack F}
+  - {seat: D, label: Attack F}
+  - {seat: F, label: Attack E}

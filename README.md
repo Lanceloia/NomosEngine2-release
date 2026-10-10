@@ -11,7 +11,7 @@ RPG/TRPG 沙盒中，玩家可能做出剧本没有预料的选择。我们的�
 | 你可以检查什么 | 代表例子 | 当前证据 |
 | --- | --- | --- |
 | 作者能否编辑世界 | 扩人数、换女巫 | 现行测试与已完成的试玩，尚缺统一编辑对照 |
-| 作者能否编辑规则 | 禁止自救、全票一致换多数票 | 自救已有保存报告；规则替换有现行测试 |
+| 作者能否编辑规则 | 禁止自救、全票一致换多数票 | 两种实验均有保存报告：准入变化与后态变化 |
 | 规则如何共同产生故事 | M1 的永焰、寒冷、观察与营救 | 已有真实整局，局部因果对照待整理 |
 
 这些证据分别说明世界、规律与故事的关系，不把一个条件判断当作整个引擎。
@@ -35,6 +35,10 @@ RPG/TRPG 沙盒中，玩家可能做出剧本没有预料的选择。我们的�
 工具只在内存改一条规则，原文件不变；
 两次重新编译、开局和实际回放，不由演示脚本写入结局。
 
+另一个[共同袭击规则对照](docs/showcase/wolf-vote/README.md)保持相同开局和十次选择，
+只把全票一致换为多数票：两版所有行动都获准，前者无人死亡，后者 F 死亡。
+它说明的是世界后果变化，而不只是请求被拒绝。
+
 ## 五分钟复现
 
 从仓库根执行（Windows 可将 `.venv/bin/python` 换成 `.venv\Scripts\python.exe`）：
@@ -43,6 +47,7 @@ RPG/TRPG 沙盒中，玩家可能做出剧本没有预料的选择。我们的�
 python3 -m venv .venv
 .venv/bin/python -m pip install -e '.[dev]'
 .venv/bin/python tools/release_rule_edit_demo.py
+.venv/bin/python tools/release_wolf_vote_demo.py
 ```
 
 输出应包括 `unchanged_published_prefix: 12`，原版 `goal_status: met`，
