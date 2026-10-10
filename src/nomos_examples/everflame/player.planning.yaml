@@ -29,3 +29,10 @@ goals:
     gains: {visitedPlaces: 1}
     feature: explore
     preferences: {cautious_investigator: 50, helpful_rescuer: 0, decisive_explorer: 0}
+  find_exit:
+    label: 沿已知桥路寻找外岸
+    selector: {frontier: {only_sites: [bridge_palace_landing, bridge_midspan, palace_exit]}}
+    when: true
+    gains: {visitedPlaces: 1}
+    feature: explore
+    preferences: {cautious_investigator: 20, helpful_rescuer: 20, decisive_explorer: 20}
