@@ -2,6 +2,10 @@
 
 首次认识 NomosEngine2，先看这支约三分钟的中文项目介绍，再查看实验录像。
 
+[浏览器观看中文介绍](https://lanceloia.github.io/NomosEngine2-release/showcase/introduction/film-v1/index.html)：
+点击开始观看，可暂停、拖动和选章；[真实规则编辑实验讲解](https://lanceloia.github.io/NomosEngine2-release/showcase/recording/narrated-v1/experiment.mp4)
+展示实际命令与结果。
+
 - [项目介绍视频](film-v1/introduction.mp4)：中文合成旁白、画内字幕、随讲解切换重点的架构与实验示意。
 - [可暂停、拖动、选章的讲解页面](film-v1/index.html)：浏览器直接打开，点击「开始观看」；旁白文件须与网页保持同目录。
 - [完整中文讲稿](film-v1/TRANSCRIPT.md)、[独立字幕](film-v1/subtitles.srt)、[作者分镜](storyboard.json)。
