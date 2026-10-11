@@ -1,0 +1,334 @@
+{
+  "kind": "Captioned positioning preview; original experiment and M1 evidence reused",
+  "narration": "pending",
+  "duration_seconds": 274.3999999999999,
+  "controls": {
+    "play": true,
+    "pause": true,
+    "restart": true,
+    "chapter": true,
+    "ending": true
+  },
+  "canvas": {
+    "changed": 14226,
+    "nonblank": 28297
+  },
+  "exported_subtitle_minimum_pixels": 2323,
+  "page_errors": [],
+  "media_preload_aborts": [
+    "resource.webm"
+  ],
+  "samples": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "origin",
+      "image": "previews/1280-origin.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "origin"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "history",
+      "image": "previews/1280-history.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "history"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "pipeline",
+      "image": "previews/1280-pipeline.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "pipeline"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "witness",
+      "image": "previews/1280-witness.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "witness"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "admission",
+      "image": "previews/1280-admission.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "admission"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "vote",
+      "image": "previews/1280-vote.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "vote"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "configuration",
+      "image": "previews/1280-configuration.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "configuration"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "adventure",
+      "image": "previews/1280-adventure.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "adventure"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "image": "previews/1280-rescue.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "rescue"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "combination",
+      "image": "previews/1280-combination.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "combination"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "future",
+      "image": "previews/1280-future.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "future"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "credits",
+      "image": "previews/1280-credits.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "credits"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "origin",
+      "image": "previews/1440-origin.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "origin"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "history",
+      "image": "previews/1440-history.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "history"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "pipeline",
+      "image": "previews/1440-pipeline.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "pipeline"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "witness",
+      "image": "previews/1440-witness.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "witness"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "admission",
+      "image": "previews/1440-admission.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "admission"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "vote",
+      "image": "previews/1440-vote.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "vote"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "configuration",
+      "image": "previews/1440-configuration.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "configuration"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "adventure",
+      "image": "previews/1440-adventure.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "adventure"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "image": "previews/1440-rescue.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "rescue"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "combination",
+      "image": "previews/1440-combination.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "combination"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "future",
+      "image": "previews/1440-future.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "future"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "credits",
+      "image": "previews/1440-credits.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "credits"
+    }
+  ],
+  "video": {
+    "width": 1280,
+    "height": 720,
+    "fps": 12,
+    "codec": "H.264",
+    "audio": false,
+    "encoder_threads": 2,
+    "decoded": true
+  },
+  "sha256": {
+    "index.html": "a64f48d33ee4b24b13583601c922446dd3fd8d641b70812cfb17ae3056502f0f",
+    "film.js": "d7eb90226b06027009fe69e8b03e6d808ba9b366b2861739cf0f1f2d5780ef9c",
+    "timeline.js": "afbaf57c6d361bc7fcf209cd3d29628e1b51bf8d6f36d32cd3174ad974e2d0e5",
+    "font/chinese.woff": "ca2fa732e0bf164765684bd1c5c10b70de9fd590a586345b932eaf96302d74be",
+    "font/site-chinese.woff": "53a36bdf320fb58634720d206d55528f3c9b62821d0bf47b1b920f88be29cbbb",
+    "poster.png": "a4f713cf652697be2b266f25e50ffc9517ec0298a3def74bda1e10ce21ee4ff3",
+    "introduction.mp4": "db796592849a1276146007d56899de1cab24736662cfdc30e4a6019766c4440f"
+  },
+  "homepage_font_validation": {
+    "note": "Homepage font rebuilt after adding the direct project-tour link; separate final browser check at 1280 and 1440, no overflow, font loaded and MP4 metadata decoded.",
+    "video_clock_changed": false
+  },
+  "poster_note": "Final poster is a canvas frame without subtitles, avoiding overlap with native video controls."
+}

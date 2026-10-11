@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="NomosEngine2：声明游戏规则，编译可玩原型，以实际行动回放验证规则。">
-<title>NomosEngine2 · 游戏规则原型的设计与验证</title>
+<meta name="description" content="NomosEngine2：规则驱动自由探索世界的创作与验证工具链。作者声明世界，玩家选择行动，系统依据规则结算，让故事从游玩中形成。">
+<title>NomosEngine2 · 规则驱动自由探索世界</title>
 <style>
-@font-face{font-family:NomosChinese;src:url('showcase/introduction/film-v3/font/site-chinese.woff') format('woff');font-display:swap}
+@font-face{font-family:NomosChinese;src:url('showcase/introduction/film-v4/font/site-chinese.woff') format('woff');font-display:swap}
 *{box-sizing:border-box}body{margin:0;background:#fafbfc;color:#20252a;font:17px/1.7 NomosChinese,'Microsoft YaHei',sans-serif;letter-spacing:0}a{color:#12675e;text-underline-offset:4px}a:hover{color:#934027}a:focus-visible{outline:3px solid #12675e;outline-offset:5px}main{max-width:1080px;margin:auto;padding:32px 32px 56px}header{border-bottom:1px solid #d5dce0;padding-bottom:28px}nav{display:flex;flex-wrap:wrap;gap:12px 26px;font-size:15px}h1{font-size:40px;line-height:1.25;margin:30px 0 12px}h2{font-size:24px;margin:0 0 12px}h3{font-size:18px;margin:0 0 6px}p{margin:10px 0}.lead{font-size:22px;line-height:1.55;max-width:800px}.sub{color:#505b63;max-width:850px}.watch{display:flex;flex-wrap:wrap;gap:12px 24px;margin:20px 0 0}.band{padding:28px 0;border-bottom:1px solid #d5dce0}.film{display:block;width:100%;aspect-ratio:16/9;background:#111214;margin:16px 0 0}.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}.step{border-left:3px solid #d2b85e;padding-left:16px}.step:nth-child(2){border-color:#369687}.step:nth-child(3){border-color:#b15b50}.step p{color:#505b63;font-size:16px}.links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 36px}.links p{font-size:15px;color:#505b63}footer{font-size:14px;color:#505b63;padding-top:20px}@media(max-width:680px){main{padding:24px 20px}h1{font-size:32px}.lead{font-size:20px}.steps,.links{grid-template-columns:1fr}}
 </style>
 </head>
@@ -14,14 +14,19 @@
 <header>
 <nav aria-label="项目入口"><a href="https://github.com/Lanceloia/NomosEngine2-release/tree/showcase-2026-10-11">引擎源码</a><a href="#experiments">三个实验</a><a href="#read">代码与设计</a><a href="https://github.com/Lanceloia/nomos-m1-web/tree/showcase-2026-10-11">M1 Web</a></nav>
 <h1>NomosEngine2</h1>
-<p class="lead">设计游戏规则，编译成可玩的原型，再用行动回放检验规则。</p>
-<p class="sub">从支援 TRPG 的自由行动出发，我们希望让作者描述世界允许发生什么，让故事成为实际选择留下的历史。狼人杀和冰宫冒险，正在检验这条规则驱动沙盒的创作链。</p>
-<div class="watch"><a href="showcase/introduction/film-v3/index.html">观看中文介绍 · 4分32秒 · 可选章</a><a href="https://github.com/Lanceloia/NomosEngine2-release/blob/showcase-2026-10-11/docs/PROJECT_TOUR.md">直接阅读项目导览</a></div>
+<p class="lead">声明世界，让行动形成故事。</p>
+<p class="sub">玩家总会想到剧情分支之外的新尝试。受 TRPG 启发，NomosEngine2 希望让作者声明人物、物件、能力与世界规律，让系统回应玩家的选择，逐步建立可以自由探索的规则世界。</p>
+<div class="watch"><a href="showcase/introduction/film-v4/index.html">新版中文介绍 · 字幕预演 · 可选章</a><a href="https://github.com/Lanceloia/NomosEngine2-release/blob/main/docs/NOMOS_PRODUCT_PROPOSITION.md">项目定位与北极星</a><a href="https://github.com/Lanceloia/NomosEngine2-release/blob/main/docs/PROJECT_TOUR.md">阅读项目导览</a></div>
 </header>
 <section class="band" aria-labelledby="video-title">
-<h2 id="video-title">规则改了，世界怎样回应？</h2>
-<p>介绍项目动机、编译与结算的分工、三组规则编辑实验，以及 M1 的真实观察、解冻与居民回应。</p>
-<video class="film" controls preload="metadata" poster="showcase/introduction/film-v3/m1/opening-purpose.png" src="showcase/introduction/film-v3/introduction.mp4" aria-label="中文项目介绍视频"></video>
+<h2 id="video-title">为什么从剧情走向规则？</h2>
+<p>作者创作世界允许发生什么，玩家选择实际发生什么，系统依据规则结算。新版字幕预演串起这一愿望、C0/K0/T0 的分工、狼人杀实验与 M1 真实冒险片段；新配音正在准备。</p>
+<video class="film" controls preload="metadata" poster="showcase/introduction/film-v4/poster.png" src="showcase/introduction/film-v4/introduction.mp4" aria-label="新版项目介绍字幕预演，无配音"></video>
+</section>
+<section class="band" aria-labelledby="purpose-title">
+<h2 id="purpose-title">从创作愿望到可运行的工具</h2>
+<p>预写剧情难以覆盖不断出现的选择。TRPG 通过规则、世界设定、主持人的判断与玩家即兴，形成不同经历。我们希望把世界规则和结算建立为可维护的系统，让创作者逐步减少穷举剧情分支的负担。</p>
+<p>目前已建立声明式作者语言、C0 编译器、K0 执行内核和 T0 行动见证检查器。狼人杀与 M1 是检验这套方法的世界；快速设计与验证游戏原型，是工具当前的实际用途。</p>
 </section>
 <section class="band" id="experiments" aria-labelledby="experiment-title">
 <h2 id="experiment-title">三个实验，从不同方向检验创作能力</h2>
@@ -37,7 +42,7 @@
 <div><h3><a href="https://github.com/Lanceloia/NomosEngine2-release/blob/showcase-2026-10-11/docs/CODE_MAP.md">代码地图</a></h3><p>C0 编译声明，K0 准入与原子结算，T0 用同一产物检查给定行动见证。</p></div>
 <div><h3><a href="https://github.com/Lanceloia/NomosEngine2-release/blob/showcase-2026-10-11/docs/PERSONAL_CONTRIBUTION.md">个人贡献与设计案例</a></h3><p>世界源码与预期剧情为什么分离？人类负责方向、语义与验收，AI 协作者承担后期实现。</p></div>
 <div><h3><a href="https://github.com/Lanceloia/nomos-m1-web/tree/showcase-2026-10-11">M1 冰宫冒险</a></h3><p>取得独立 Web 应用，本地体验永焰、寒冷、观察与居民行动的共同运行。</p></div>
-<div><h3><a href="https://github.com/Lanceloia/NomosEngine2-release/blob/showcase-2026-10-11/docs/PROJECT_EVOLUTION.md">从 TRPG 到规则原型工具链</a></h3><p>具体世界怎样暴露问题，并推动规则作者化、语义 IR 与当前架构。</p></div>
+<div><h3><a href="https://github.com/Lanceloia/NomosEngine2-release/blob/main/docs/PROJECT_EVOLUTION.md">从 TRPG 愿望到规则世界创作</a></h3><p>具体世界怎样暴露问题，并推动规则作者化、语义 IR 与当前架构。</p></div>
 </div>
 </section>
 <section class="band" aria-labelledby="evidence-title">
