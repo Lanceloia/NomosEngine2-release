@@ -16,11 +16,9 @@ lawdefs:
             - local: scene.actor_motion.start == actor.site or scene.actor_motion.end == actor.site
         outputs:
           conversations:
-            record:
-              type: PersonConversations
-              fields:
-                tower: {ref: actor.conversations.tower}
-                prison: {ref: actor.conversations.prison}
+            copy:
+              from: {ref: actor.conversations}
+              changes:
                 visible_motions:
                   record:
                     type: VisibleMotionLog

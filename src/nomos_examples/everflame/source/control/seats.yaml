@@ -3,6 +3,7 @@ seats:
   - name: emma
     actor: emma
     entries:
+    - escort_reply_emma
     - queen_verify_survivors_emma
     - queen_pay_reward_emma
     - queen_wait_emma
@@ -13,6 +14,7 @@ seats:
     - queen_bridge_slow_emma
     - queen_pass_door_emma
     read:
+    - emma.escort_replied_invitations
     - emma.reward_account
     - emma.reward_account.verified
     - emma.guide_consumption
@@ -60,6 +62,72 @@ seats:
     - emma.escort_destination
     - emma.max_movement_speed
     offers:
+    - entry: escort_reply_emma
+      for_each_participants:
+        recipient: {selected_members: true, as: inviter}
+      visible_when: {const: true}
+      label: [{const: Report my current escort readiness}]
+      when:
+        all:
+        - actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+        - {call: {ref: escort.reply_pending, args: {hearing: {ref: actor.escort_heard_ref}, invitation: {ref: actor.escort_utterance_ref}, speaker: {ref: actor.escort_speaker}, destination: {ref: actor.escort_destination}, answered: {ref: actor.escort_replied_invitations}}}}
+        - {call: {ref: escort.can_attempt_now, args: {speed: {ref: actor.current_movement_speed}, site: {ref: actor.site}, blocked: false}}}
+        - actor.attending
+      availability:
+        ref: queen_escort_reply_audience
+        when:
+          all:
+          - recipient.site == actor.site and recipient.vital.life == 'alive' and recipient.cold_state != 'frozen'
+          - any:
+            - scene.escort_reply_log is None
+            - all:
+              - scene.escort_reply_log is not None
+              - {lt: [{count_matching: {collection: {ref: scene.escort_reply_log.entries}, as: previous, where: true}}, 256]}
+      payload: {recipient: {ref: inviter}, status: {const: ready_now}}
+    - entry: escort_reply_emma
+      for_each_participants:
+        recipient: {selected_members: true, as: inviter}
+      visible_when: {const: true}
+      label: [{const: Report my current escort readiness}]
+      when:
+        all:
+        - actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+        - {call: {ref: escort.reply_pending, args: {hearing: {ref: actor.escort_heard_ref}, invitation: {ref: actor.escort_utterance_ref}, speaker: {ref: actor.escort_speaker}, destination: {ref: actor.escort_destination}, answered: {ref: actor.escort_replied_invitations}}}}
+        - {not: {call: {ref: escort.can_attempt_now, args: {speed: {ref: actor.current_movement_speed}, site: {ref: actor.site}, blocked: false}}}}
+        - actor.attending
+      availability:
+        ref: queen_escort_reply_audience
+        when:
+          all:
+          - recipient.site == actor.site and recipient.vital.life == 'alive' and recipient.cold_state != 'frozen'
+          - any:
+            - scene.escort_reply_log is None
+            - all:
+              - scene.escort_reply_log is not None
+              - {lt: [{count_matching: {collection: {ref: scene.escort_reply_log.entries}, as: previous, where: true}}, 256]}
+      payload: {recipient: {ref: inviter}, status: {const: unable_now}}
+    - entry: escort_reply_emma
+      for_each_participants:
+        recipient: {selected_members: true, as: inviter}
+      visible_when: {const: true}
+      label: [{const: Report my current escort readiness}]
+      when:
+        all:
+        - actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+        - {call: {ref: escort.reply_pending, args: {hearing: {ref: actor.escort_heard_ref}, invitation: {ref: actor.escort_utterance_ref}, speaker: {ref: actor.escort_speaker}, destination: {ref: actor.escort_destination}, answered: {ref: actor.escort_replied_invitations}}}}
+        - {call: {ref: escort.can_attempt_now, args: {speed: {ref: actor.current_movement_speed}, site: {ref: actor.site}, blocked: false}}}
+        - actor.attending
+      availability:
+        ref: queen_escort_reply_audience
+        when:
+          all:
+          - recipient.site == actor.site and recipient.vital.life == 'alive' and recipient.cold_state != 'frozen'
+          - any:
+            - scene.escort_reply_log is None
+            - all:
+              - scene.escort_reply_log is not None
+              - {lt: [{count_matching: {collection: {ref: scene.escort_reply_log.entries}, as: previous, where: true}}, 256]}
+      payload: {recipient: {ref: inviter}, status: {const: not_ready_now}}
     - entry: queen_verify_survivors_emma
       fixed_participants: true
       label: Verify newly arrived survivors at the palace exit
@@ -890,6 +958,8 @@ seats:
     - locate_branded_person_queen_adventurer
     - observe_queen_adventurer
     read:
+    - adventurer.conversations.latest_escort_reply
+    - adventurer.conversations.heard_escort_replies
     - adventurer.conversations.prison.charge_receipt
     - adventurer.conversations.tower
     - adventurer.conversations.tower.offer
@@ -946,6 +1016,7 @@ seats:
     - adventurer.treasure_receipt.label
     - adventurer.treasure_receipt.acquisition
     - adventurer.floor_sighting
+    - adventurer.conversations.movement_attempt
     - adventurer.floor_sighting.key
     - adventurer.floor_sighting.site
     - adventurer.floor_sighting.frozen
@@ -1107,6 +1178,7 @@ seats:
         - adventurer.person_sighting.life
         - adventurer.person_sighting.cold_state
       published_fields:
+        move_adventurer: [adventurer.site]
         cross_ice_adventurer: [adventurer.site, adventurer.last_cross_roll]
         carry_from_ritual_adventurer: [adventurer.site, adventurer.ritual_notice]
         thaw_ritual_resident: [adventurer.last_thawed, adventurer.known_everflame_charges, adventurer.ritual_notice]
@@ -1190,9 +1262,8 @@ seats:
         thaw_ritual_resident: This thaw did not happen. Check your charge and seek a fresh nearby
           observation before trying again; the person may no longer be reachable or eligible.
           These are possible limits, not a report of their hidden current state.
-        move_adventurer: This direct passage attempt did not happen. Ice, a blocked stair or your
-          current condition can prevent it; inspect the reachable floor and check other choices.
-          This is a list of possible limits, not a report of a hidden cause.
+        move_adventurer: This passage could not start. Select a current known route while able to
+          act. A physical obstruction during a valid attempt is a published result instead.
         cross_ice_adventurer: This crossing could not start. Check your current position, condition
           and reachable crossing choices. Refusal is not a failed balance roll or a collision.
         thaw_person_adventurer: This thaw did not happen. Check your current charge and observe the
@@ -1254,6 +1325,9 @@ seats:
         adventurer.treasure_receipt.label: Last magic item acquired
         adventurer.treasure_receipt.acquisition: null
         adventurer.floor_sighting: null
+        adventurer.conversations.movement_attempt: null
+        adventurer.conversations.latest_escort_reply: null
+        adventurer.conversations.heard_escort_replies: null
         adventurer.floor_sighting.key: null
         adventurer.floor_sighting.site: Where I last inspected the floor
         adventurer.floor_sighting.frozen: Ice present at that inspection
@@ -5375,9 +5449,9 @@ seats:
           ref: actor.site
   - seat_family: open_route_residents
     names: {ritual_resident: ritual_resident, huddled_one: huddled_one, huddled_two: huddled_two}
-    entries: [accept_torch, observe_person, thaw_person, care_person, cross_ice, move, wait, bridge_slow,
+    entries: [escort_reply, accept_torch, observe_person, thaw_person, care_person, cross_ice, move, wait, bridge_slow,
       carry_move, carry_cross_ice, carry_bridge_slow, carry_pass_door, strike_person, bridge_rush, inspect_patient]
-    read: [actor.name, actor.site, actor.known_paths, actor.known_bridge_paths, actor.known_exit_steps,
+    read: [actor.conversations.escort_replied_invitations, actor.prison_access.line, actor.prison_access.line.guardian.site, actor.prison_access.line.guardian.present, actor.name, actor.site, actor.known_paths, actor.known_bridge_paths, actor.known_exit_steps,
       actor.known_crossings, actor.heard_torch_offer, actor.heard_torch_offer.recipient, actor.heard_torch_offer.site,
       actor.heard_torch_offer.utterance, actor.heard_torch_offer.speaker, actor.heard_torch_offer.destination,
       actor.torch_offer_hearing_ref, actor.accepted_torch_offer_ref, actor.torch_accept_ref, actor.person_sighting,
@@ -5386,15 +5460,78 @@ seats:
       actor.escort_speaker, actor.escort_destination, actor.rescue_state, actor.rescue_ref, actor.cold_state,
       actor.vital.life, actor.current_movement_speed, actor.last_cold_roll, actor.last_cold_ref, actor.known_residents]
     offers:
+    - entry_family: escort_reply
+      for_each_participants:
+        recipient: {selected_members: true, as: inviter}
+      visible_when: {const: true}
+      label: [{const: Report my current escort readiness}]
+      when:
+        all:
+        - actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+        - {call: {ref: escort.reply_pending, args: {hearing: {ref: actor.escort_heard_ref}, invitation: {ref: actor.escort_utterance_ref}, speaker: {ref: actor.escort_speaker}, destination: {ref: actor.escort_destination}, answered: {ref: actor.conversations.escort_replied_invitations}}}}
+        - {call: {ref: escort.can_attempt_now, args: {speed: {ref: actor.current_movement_speed}, site: {ref: actor.site}, blocked: actor.prison_access.line is not None and actor.prison_access.line.guardian.site == actor.site and actor.prison_access.line.guardian.present}}}
+      availability:
+        ref: escort_reply_audience
+        when:
+          all:
+          - recipient.site == actor.site and recipient.vital.life == 'alive' and recipient.cold_state != 'frozen'
+          - any:
+            - scene.escort_reply_log is None
+            - all:
+              - scene.escort_reply_log is not None
+              - {lt: [{count_matching: {collection: {ref: scene.escort_reply_log.entries}, as: previous, where: true}}, 256]}
+      payload: {recipient: {ref: inviter}, status: {const: ready_now}}
+    - entry_family: escort_reply
+      for_each_participants:
+        recipient: {selected_members: true, as: inviter}
+      visible_when: {const: true}
+      label: [{const: Report my current escort readiness}]
+      when:
+        all:
+        - actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+        - {call: {ref: escort.reply_pending, args: {hearing: {ref: actor.escort_heard_ref}, invitation: {ref: actor.escort_utterance_ref}, speaker: {ref: actor.escort_speaker}, destination: {ref: actor.escort_destination}, answered: {ref: actor.conversations.escort_replied_invitations}}}}
+        - {not: {call: {ref: escort.can_attempt_now, args: {speed: {ref: actor.current_movement_speed}, site: {ref: actor.site}, blocked: actor.prison_access.line is not None and actor.prison_access.line.guardian.site == actor.site and actor.prison_access.line.guardian.present}}}}
+      availability:
+        ref: escort_reply_audience
+        when:
+          all:
+          - recipient.site == actor.site and recipient.vital.life == 'alive' and recipient.cold_state != 'frozen'
+          - any:
+            - scene.escort_reply_log is None
+            - all:
+              - scene.escort_reply_log is not None
+              - {lt: [{count_matching: {collection: {ref: scene.escort_reply_log.entries}, as: previous, where: true}}, 256]}
+      payload: {recipient: {ref: inviter}, status: {const: unable_now}}
+    - entry_family: escort_reply
+      for_each_participants:
+        recipient: {selected_members: true, as: inviter}
+      visible_when: {const: true}
+      label: [{const: Report my current escort readiness}]
+      when:
+        all:
+        - actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+        - {call: {ref: escort.reply_pending, args: {hearing: {ref: actor.escort_heard_ref}, invitation: {ref: actor.escort_utterance_ref}, speaker: {ref: actor.escort_speaker}, destination: {ref: actor.escort_destination}, answered: {ref: actor.conversations.escort_replied_invitations}}}}
+        - {call: {ref: escort.can_attempt_now, args: {speed: {ref: actor.current_movement_speed}, site: {ref: actor.site}, blocked: actor.prison_access.line is not None and actor.prison_access.line.guardian.site == actor.site and actor.prison_access.line.guardian.present}}}
+      availability:
+        ref: escort_reply_audience
+        when:
+          all:
+          - recipient.site == actor.site and recipient.vital.life == 'alive' and recipient.cold_state != 'frozen'
+          - any:
+            - scene.escort_reply_log is None
+            - all:
+              - scene.escort_reply_log is not None
+              - {lt: [{count_matching: {collection: {ref: scene.escort_reply_log.entries}, as: previous, where: true}}, 256]}
+      payload: {recipient: {ref: inviter}, status: {const: not_ready_now}}
     - {use_offer_set: resident_care}
     - {use_offer_set: resident_mobility_and_rescue}
   - seat_family: prison_residents
     names: {prison_resident_one: prison_resident_one, prison_resident_two: prison_resident_two}
-    entries: [observe_prison_line, wait_near_guide, try_prison_line, pass_prison_line, pass_door, accept_torch,
+    entries: [escort_reply, observe_prison_line, wait_near_guide, try_prison_line, pass_prison_line, pass_door, accept_torch,
       observe_person, thaw_person, care_person, cross_ice, move, wait, bridge_slow, carry_move, carry_cross_ice,
       carry_bridge_slow, carry_pass_door, strike_person, bridge_rush, inspect_patient]
-    read: [actor.last_action_ref, actor.prison_access.line, actor.prison_access.line.guardian, actor.prison_access.line.guardian.name,
-      actor.prison_access.line.guardian.site, actor.prison_access.line.guardian.present, actor.prison_access.line.guardian.observation,
+    read: [actor.conversations.escort_replied_invitations, actor.prison_access.line.guardian.site, actor.last_action_ref, actor.prison_access.line, actor.prison_access.line.guardian, actor.prison_access.line.guardian.name,
+      actor.prison_access.line.guardian.present, actor.prison_access.line.guardian.observation,
       actor.prison_access.line.paths, actor.name, actor.site, actor.known_paths, actor.known_bridge_paths,
       actor.known_exit_steps, actor.known_crossings, actor.heard_torch_offer, actor.heard_torch_offer.recipient,
       actor.heard_torch_offer.site, actor.heard_torch_offer.utterance, actor.heard_torch_offer.speaker,
@@ -5405,6 +5542,69 @@ seats:
       actor.rescue_state, actor.rescue_ref, actor.cold_state, actor.vital.life, actor.current_movement_speed,
       actor.last_cold_roll, actor.last_cold_ref, actor.known_residents]
     offers:
+    - entry_family: escort_reply
+      for_each_participants:
+        recipient: {selected_members: true, as: inviter}
+      visible_when: {const: true}
+      label: [{const: Report my current escort readiness}]
+      when:
+        all:
+        - actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+        - {call: {ref: escort.reply_pending, args: {hearing: {ref: actor.escort_heard_ref}, invitation: {ref: actor.escort_utterance_ref}, speaker: {ref: actor.escort_speaker}, destination: {ref: actor.escort_destination}, answered: {ref: actor.conversations.escort_replied_invitations}}}}
+        - {call: {ref: escort.can_attempt_now, args: {speed: {ref: actor.current_movement_speed}, site: {ref: actor.site}, blocked: actor.prison_access.line is not None and actor.prison_access.line.guardian.site == actor.site and actor.prison_access.line.guardian.present}}}
+      availability:
+        ref: escort_reply_audience
+        when:
+          all:
+          - recipient.site == actor.site and recipient.vital.life == 'alive' and recipient.cold_state != 'frozen'
+          - any:
+            - scene.escort_reply_log is None
+            - all:
+              - scene.escort_reply_log is not None
+              - {lt: [{count_matching: {collection: {ref: scene.escort_reply_log.entries}, as: previous, where: true}}, 256]}
+      payload: {recipient: {ref: inviter}, status: {const: ready_now}}
+    - entry_family: escort_reply
+      for_each_participants:
+        recipient: {selected_members: true, as: inviter}
+      visible_when: {const: true}
+      label: [{const: Report my current escort readiness}]
+      when:
+        all:
+        - actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+        - {call: {ref: escort.reply_pending, args: {hearing: {ref: actor.escort_heard_ref}, invitation: {ref: actor.escort_utterance_ref}, speaker: {ref: actor.escort_speaker}, destination: {ref: actor.escort_destination}, answered: {ref: actor.conversations.escort_replied_invitations}}}}
+        - {not: {call: {ref: escort.can_attempt_now, args: {speed: {ref: actor.current_movement_speed}, site: {ref: actor.site}, blocked: actor.prison_access.line is not None and actor.prison_access.line.guardian.site == actor.site and actor.prison_access.line.guardian.present}}}}
+      availability:
+        ref: escort_reply_audience
+        when:
+          all:
+          - recipient.site == actor.site and recipient.vital.life == 'alive' and recipient.cold_state != 'frozen'
+          - any:
+            - scene.escort_reply_log is None
+            - all:
+              - scene.escort_reply_log is not None
+              - {lt: [{count_matching: {collection: {ref: scene.escort_reply_log.entries}, as: previous, where: true}}, 256]}
+      payload: {recipient: {ref: inviter}, status: {const: unable_now}}
+    - entry_family: escort_reply
+      for_each_participants:
+        recipient: {selected_members: true, as: inviter}
+      visible_when: {const: true}
+      label: [{const: Report my current escort readiness}]
+      when:
+        all:
+        - actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+        - {call: {ref: escort.reply_pending, args: {hearing: {ref: actor.escort_heard_ref}, invitation: {ref: actor.escort_utterance_ref}, speaker: {ref: actor.escort_speaker}, destination: {ref: actor.escort_destination}, answered: {ref: actor.conversations.escort_replied_invitations}}}}
+        - {call: {ref: escort.can_attempt_now, args: {speed: {ref: actor.current_movement_speed}, site: {ref: actor.site}, blocked: actor.prison_access.line is not None and actor.prison_access.line.guardian.site == actor.site and actor.prison_access.line.guardian.present}}}
+      availability:
+        ref: escort_reply_audience
+        when:
+          all:
+          - recipient.site == actor.site and recipient.vital.life == 'alive' and recipient.cold_state != 'frozen'
+          - any:
+            - scene.escort_reply_log is None
+            - all:
+              - scene.escort_reply_log is not None
+              - {lt: [{count_matching: {collection: {ref: scene.escort_reply_log.entries}, as: previous, where: true}}, 256]}
+      payload: {recipient: {ref: inviter}, status: {const: not_ready_now}}
     - {use_offer_set: resident_care}
     - entry_family: wait_near_guide
       fixed_participants: true
@@ -5557,6 +5757,7 @@ seats:
   - name: wall_resident
     actor: wall_resident
     entries:
+    - escort_reply_wall_resident
     - accept_torch_wall_resident
     - observe_person_wall_resident
     - thaw_person_wall_resident
@@ -5575,6 +5776,13 @@ seats:
     - bridge_rush_wall_resident
     - inspect_patient_wall_resident
     read:
+    - wall_resident.conversations.escort_replied_invitations
+    - wall_resident.escort_utterance_ref
+    - wall_resident.escort_speaker
+    - wall_resident.escort_destination
+    - wall_resident.prison_access.line
+    - wall_resident.prison_access.line.guardian.site
+    - wall_resident.prison_access.line.guardian.present
     - wall_resident.name
     - wall_resident.site
     - wall_resident.known_walls
@@ -5606,6 +5814,69 @@ seats:
     - wall_resident.vital.life
     - wall_resident.current_movement_speed
     offers:
+    - entry: escort_reply_wall_resident
+      for_each_participants:
+        recipient: {selected_members: true, as: inviter}
+      visible_when: {const: true}
+      label: [{const: Report my current escort readiness}]
+      when:
+        all:
+        - actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+        - {call: {ref: escort.reply_pending, args: {hearing: {ref: actor.escort_heard_ref}, invitation: {ref: actor.escort_utterance_ref}, speaker: {ref: actor.escort_speaker}, destination: {ref: actor.escort_destination}, answered: {ref: actor.conversations.escort_replied_invitations}}}}
+        - {call: {ref: escort.can_attempt_now, args: {speed: {ref: actor.current_movement_speed}, site: {ref: actor.site}, blocked: actor.prison_access.line is not None and actor.prison_access.line.guardian.site == actor.site and actor.prison_access.line.guardian.present}}}
+      availability:
+        ref: escort_reply_audience
+        when:
+          all:
+          - recipient.site == actor.site and recipient.vital.life == 'alive' and recipient.cold_state != 'frozen'
+          - any:
+            - scene.escort_reply_log is None
+            - all:
+              - scene.escort_reply_log is not None
+              - {lt: [{count_matching: {collection: {ref: scene.escort_reply_log.entries}, as: previous, where: true}}, 256]}
+      payload: {recipient: {ref: inviter}, status: {const: ready_now}}
+    - entry: escort_reply_wall_resident
+      for_each_participants:
+        recipient: {selected_members: true, as: inviter}
+      visible_when: {const: true}
+      label: [{const: Report my current escort readiness}]
+      when:
+        all:
+        - actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+        - {call: {ref: escort.reply_pending, args: {hearing: {ref: actor.escort_heard_ref}, invitation: {ref: actor.escort_utterance_ref}, speaker: {ref: actor.escort_speaker}, destination: {ref: actor.escort_destination}, answered: {ref: actor.conversations.escort_replied_invitations}}}}
+        - {not: {call: {ref: escort.can_attempt_now, args: {speed: {ref: actor.current_movement_speed}, site: {ref: actor.site}, blocked: actor.prison_access.line is not None and actor.prison_access.line.guardian.site == actor.site and actor.prison_access.line.guardian.present}}}}
+      availability:
+        ref: escort_reply_audience
+        when:
+          all:
+          - recipient.site == actor.site and recipient.vital.life == 'alive' and recipient.cold_state != 'frozen'
+          - any:
+            - scene.escort_reply_log is None
+            - all:
+              - scene.escort_reply_log is not None
+              - {lt: [{count_matching: {collection: {ref: scene.escort_reply_log.entries}, as: previous, where: true}}, 256]}
+      payload: {recipient: {ref: inviter}, status: {const: unable_now}}
+    - entry: escort_reply_wall_resident
+      for_each_participants:
+        recipient: {selected_members: true, as: inviter}
+      visible_when: {const: true}
+      label: [{const: Report my current escort readiness}]
+      when:
+        all:
+        - actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+        - {call: {ref: escort.reply_pending, args: {hearing: {ref: actor.escort_heard_ref}, invitation: {ref: actor.escort_utterance_ref}, speaker: {ref: actor.escort_speaker}, destination: {ref: actor.escort_destination}, answered: {ref: actor.conversations.escort_replied_invitations}}}}
+        - {call: {ref: escort.can_attempt_now, args: {speed: {ref: actor.current_movement_speed}, site: {ref: actor.site}, blocked: actor.prison_access.line is not None and actor.prison_access.line.guardian.site == actor.site and actor.prison_access.line.guardian.present}}}
+      availability:
+        ref: escort_reply_audience
+        when:
+          all:
+          - recipient.site == actor.site and recipient.vital.life == 'alive' and recipient.cold_state != 'frozen'
+          - any:
+            - scene.escort_reply_log is None
+            - all:
+              - scene.escort_reply_log is not None
+              - {lt: [{count_matching: {collection: {ref: scene.escort_reply_log.entries}, as: previous, where: true}}, 256]}
+      payload: {recipient: {ref: inviter}, status: {const: not_ready_now}}
     - entry: care_person_wall_resident
       for_each_participants:
         victim: {selected_members: true, as: patient}

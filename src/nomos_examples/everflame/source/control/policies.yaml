@@ -6,6 +6,7 @@ appraisal_profiles:
       ref: queen.local_wait
       args: {}
     entries:
+      escort_reply: escort_reply_emma
       verify_survivors: queen_verify_survivors_emma
       pay_reward: queen_pay_reward_emma
       wait: queen_wait_emma
@@ -44,6 +45,7 @@ appraisal_profiles:
         light_wait_bonus: 1
         guarded_destination: prison_outer
     entries:
+      escort_reply: escort_reply
       wait: wait
       wait_near_guide: wait_near_guide
       cross_ice: cross_ice
@@ -72,6 +74,7 @@ appraisal_profiles:
     seat: wall_resident
     fallback_entry: wait_wall_resident
     tie_order:
+    - escort_reply_wall_resident
     - wait_wall_resident
     - observe_wall_wall_resident
     - move_wall_wall_resident
@@ -90,6 +93,9 @@ appraisal_profiles:
     - bridge_rush_wall_resident
     - inspect_patient_wall_resident
     rules:
+    - entry: escort_reply_wall_resident
+      mode: score
+      value: {call: {ref: escort.reply_score, args: {status: {ref: payload.status}, inclined: true, pending: {call: {ref: escort.reply_pending, args: {hearing: {ref: actor.escort_heard_ref}, invitation: {ref: actor.escort_utterance_ref}, speaker: {ref: actor.escort_speaker}, destination: {ref: actor.escort_destination}, answered: {ref: actor.conversations.escort_replied_invitations}}}}}}}
     - entry: care_person_wall_resident
       mode: score
       value: 10
@@ -207,6 +213,7 @@ appraisal_profiles:
     seat: ritual_resident
     fallback_entry: wait_ritual_resident
     tie_order:
+    - escort_reply_ritual_resident
     - wait_ritual_resident
     - thaw_person_ritual_resident
     - observe_person_ritual_resident
@@ -223,6 +230,9 @@ appraisal_profiles:
     - bridge_rush_ritual_resident
     - inspect_patient_ritual_resident
     rules:
+    - entry: escort_reply_ritual_resident
+      mode: score
+      value: {call: {ref: escort.reply_score, args: {status: {ref: payload.status}, inclined: false, pending: {call: {ref: escort.reply_pending, args: {hearing: {ref: actor.escort_heard_ref}, invitation: {ref: actor.escort_utterance_ref}, speaker: {ref: actor.escort_speaker}, destination: {ref: actor.escort_destination}, answered: {ref: actor.conversations.escort_replied_invitations}}}}}}}
     - entry: care_person_ritual_resident
       mode: score
       value: 10
@@ -309,6 +319,7 @@ appraisal_profiles:
       args:
         movement_score: 3
     entries:
+      escort_reply: escort_reply
       wait: wait
       cross_ice: cross_ice
       move: move
@@ -329,7 +340,7 @@ appraisal_profiles:
     definition:
       ref: resident.remain_hidden
       args: {}
-    entries: {wait: wait_ritual_resident, cross_ice: cross_ice_ritual_resident, move: move_ritual_resident,
+    entries: {escort_reply: escort_reply_ritual_resident, wait: wait_ritual_resident, cross_ice: cross_ice_ritual_resident, move: move_ritual_resident,
       accept_torch: accept_torch_ritual_resident, observe_person: observe_person_ritual_resident, thaw_person: thaw_person_ritual_resident,
       bridge_slow: bridge_slow_ritual_resident, care_person: care_person_ritual_resident, carry_move: carry_move_ritual_resident,
       carry_cross_ice: carry_cross_ice_ritual_resident, carry_bridge_slow: carry_bridge_slow_ritual_resident,
@@ -340,7 +351,7 @@ appraisal_profiles:
     definition:
       ref: resident.remain_hidden
       args: {}
-    entries: {wait: wait_huddled_one, cross_ice: cross_ice_huddled_one, move: move_huddled_one, accept_torch: accept_torch_huddled_one,
+    entries: {escort_reply: escort_reply_huddled_one, wait: wait_huddled_one, cross_ice: cross_ice_huddled_one, move: move_huddled_one, accept_torch: accept_torch_huddled_one,
       observe_person: observe_person_huddled_one, thaw_person: thaw_person_huddled_one, bridge_slow: bridge_slow_huddled_one,
       care_person: care_person_huddled_one, carry_move: carry_move_huddled_one, carry_cross_ice: carry_cross_ice_huddled_one,
       carry_bridge_slow: carry_bridge_slow_huddled_one, carry_pass_door: carry_pass_door_huddled_one, strike_person: strike_person_huddled_one,
@@ -350,7 +361,7 @@ appraisal_profiles:
     definition:
       ref: resident.remain_hidden
       args: {}
-    entries: {wait: wait_huddled_two, cross_ice: cross_ice_huddled_two, move: move_huddled_two, accept_torch: accept_torch_huddled_two,
+    entries: {escort_reply: escort_reply_huddled_two, wait: wait_huddled_two, cross_ice: cross_ice_huddled_two, move: move_huddled_two, accept_torch: accept_torch_huddled_two,
       observe_person: observe_person_huddled_two, thaw_person: thaw_person_huddled_two, bridge_slow: bridge_slow_huddled_two,
       care_person: care_person_huddled_two, carry_move: carry_move_huddled_two, carry_cross_ice: carry_cross_ice_huddled_two,
       carry_bridge_slow: carry_bridge_slow_huddled_two, carry_pass_door: carry_pass_door_huddled_two, strike_person: strike_person_huddled_two,

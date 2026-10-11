@@ -16,6 +16,7 @@ source_parts:
 - source/rules/thaw.yaml
 - source/rules/area_damage.yaml
 - source/rules/ground_movement.yaml
+- source/rules/direct_passage.yaml
 - source/rules/carry_movement.yaml
 - source/rules/door_bridge_movement.yaml
 - source/rules/ice_movement.yaml
@@ -35,6 +36,7 @@ source_parts:
 - source/regions/prison_charge.yaml
 - source/regions/ritual_thaw.yaml
 - source/rules/escort_and_reward.yaml
+- source/rules/escort_reply.yaml
 - source/rules/ritual_and_world_events.yaml
 - source/rules/cold.yaml
 - source/rules/combat_custody_and_fox.yaml

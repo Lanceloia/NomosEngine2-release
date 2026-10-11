@@ -23,11 +23,9 @@ lawdefs:
           last_action_ref: {ref: occurrence}
           request: {ref: said}
           conversation:
-            record:
-              type: PersonConversations
-              fields:
-                visible_motions: {ref: actor.conversations.visible_motions}
-                prison: {ref: actor.conversations.prison}
+            copy:
+              from: {ref: actor.conversations}
+              changes:
                 tower: {record: {type: TowerConversation, fields: {request: {ref: said}, offer: null, hearing: null, acceptance: null}}}
   - name: event.alpha_request_heard
     family: direct_actor_event
@@ -152,11 +150,9 @@ lawdefs:
           - scene.tower_offer.request == actor.conversations.tower.request.utterance and scene.tower_offer.speaker == actor.conversations.tower.request.recipient
         outputs:
           conversation:
-            record:
-              type: PersonConversations
-              fields:
-                visible_motions: {ref: actor.conversations.visible_motions}
-                prison: {ref: actor.conversations.prison}
+            copy:
+              from: {ref: actor.conversations}
+              changes:
                 tower: {record: {type: TowerConversation, fields: {request: {ref: actor.conversations.tower.request}, offer: {ref: scene.tower_offer}, hearing: {ref: occurrence}, acceptance: null}}}
   - name: action.accept_alpha
     family: action
@@ -182,11 +178,9 @@ lawdefs:
           last_action_ref: {ref: occurrence}
           acceptance: {ref: accepted}
           conversation:
-            record:
-              type: PersonConversations
-              fields:
-                visible_motions: {ref: actor.conversations.visible_motions}
-                prison: {ref: actor.conversations.prison}
+            copy:
+              from: {ref: actor.conversations}
+              changes:
                 tower: {record: {type: TowerConversation, fields: {request: {ref: actor.conversations.tower.request}, offer: {ref: actor.conversations.tower.offer}, hearing: {ref: actor.conversations.tower.hearing}, acceptance: {ref: accepted}}}}
   - name: event.alpha_acceptance_heard
     family: direct_actor_event

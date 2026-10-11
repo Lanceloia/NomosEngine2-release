@@ -25,6 +25,7 @@ opening:
     share_willingness: 0
     personal_fact: sad_here
   emma:
+    escort_replied_invitations: []
     reward_account: {verified: []}
     known_sites: [{site: tower_top}]
     known_paths: []
@@ -1161,6 +1162,8 @@ opening:
     known_climbs: []
     resources: {}
     conversations:
+      escort_replied_invitations: []
+      heard_escort_replies: []
       prison:
         contacts: []
         questions: []
@@ -1233,6 +1236,8 @@ opening:
     known_climbs: []
     resources: {}
     conversations:
+      escort_replied_invitations: []
+      heard_escort_replies: []
       prison:
         contacts: []
         questions: []
@@ -1396,6 +1401,8 @@ opening:
     known_climbs: []
     resources: {}
     conversations:
+      escort_replied_invitations: []
+      heard_escort_replies: []
       prison:
         contacts: []
         questions: []
@@ -1559,6 +1566,8 @@ opening:
     known_climbs: []
     resources: {}
     conversations:
+      escort_replied_invitations: []
+      heard_escort_replies: []
       prison:
         contacts: []
         questions: []
@@ -1684,6 +1693,8 @@ opening:
     known_climbs: []
     resources: {}
     conversations:
+      escort_replied_invitations: []
+      heard_escort_replies: []
       prison:
         contacts: []
         questions: []
@@ -1799,6 +1810,8 @@ opening:
     known_climbs: []
     resources: {}
     conversations:
+      escort_replied_invitations: []
+      heard_escort_replies: []
       prison:
         contacts: []
         questions: []
@@ -1914,6 +1927,8 @@ opening:
     known_climbs: []
     resources: {}
     conversations:
+      escort_replied_invitations: []
+      heard_escort_replies: []
       prison:
         contacts: []
         questions: []
@@ -2035,6 +2050,8 @@ opening:
     known_climbs: []
     resources: {}
     conversations:
+      escort_replied_invitations: []
+      heard_escort_replies: []
       prison:
         contacts: []
         questions: []
@@ -2075,6 +2092,8 @@ opening:
     known_climbs: []
     resources: {}
     conversations:
+      escort_replied_invitations: []
+      heard_escort_replies: []
       prison:
         contacts: []
         questions: []
@@ -2207,6 +2226,8 @@ opening:
     known_climbs: []
     resources: {}
     conversations:
+      escort_replied_invitations: []
+      heard_escort_replies: []
       prison:
         contacts: []
         questions: []
@@ -2242,6 +2263,8 @@ opening:
     known_climbs: []
     resources: {}
     conversations:
+      escort_replied_invitations: []
+      heard_escort_replies: []
       prison:
         contacts: []
         questions: []
@@ -2277,6 +2300,8 @@ opening:
     known_climbs: []
     resources: {}
     conversations:
+      escort_replied_invitations: []
+      heard_escort_replies: []
       prison:
         contacts: []
         questions: []
@@ -2312,6 +2337,8 @@ opening:
     known_climbs: []
     resources: {}
     conversations:
+      escort_replied_invitations: []
+      heard_escort_replies: []
       prison:
         contacts: []
         questions: []
@@ -2347,6 +2374,8 @@ opening:
     known_climbs: []
     resources: {}
     conversations:
+      escort_replied_invitations: []
+      heard_escort_replies: []
       prison:
         contacts: []
         questions: []
@@ -2382,6 +2411,8 @@ opening:
     known_climbs: []
     resources: {}
     conversations:
+      escort_replied_invitations: []
+      heard_escort_replies: []
       prison:
         contacts: []
         questions: []
@@ -2417,6 +2448,8 @@ opening:
     known_climbs: []
     resources: {}
     conversations:
+      escort_replied_invitations: []
+      heard_escort_replies: []
       prison:
         contacts: []
         questions: []
@@ -2452,6 +2485,8 @@ opening:
     known_climbs: []
     resources: {}
     conversations:
+      escort_replied_invitations: []
+      heard_escort_replies: []
       prison:
         contacts: []
         questions: []
@@ -2487,6 +2522,8 @@ opening:
     known_climbs: []
     resources: {}
     conversations:
+      escort_replied_invitations: []
+      heard_escort_replies: []
       prison:
         contacts: []
         questions: []

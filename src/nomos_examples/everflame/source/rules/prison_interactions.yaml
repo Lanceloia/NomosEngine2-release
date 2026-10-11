@@ -113,11 +113,9 @@ lawdefs:
           action: {ref: occurrence}
           last_action_ref: {ref: occurrence}
           conversation:
-            record:
-              type: PersonConversations
-              fields:
-                visible_motions: {ref: actor.conversations.visible_motions}
-                tower: {ref: actor.conversations.tower}
+            copy:
+              from: {ref: actor.conversations}
+              changes:
                 prison:
                   record:
                     type: PrisonConversation
@@ -152,11 +150,9 @@ lawdefs:
           last_action_ref: {ref: occurrence}
           question: {ref: said}
           conversation:
-            record:
-              type: PersonConversations
-              fields:
-                visible_motions: {ref: actor.conversations.visible_motions}
-                tower: {ref: actor.conversations.tower}
+            copy:
+              from: {ref: actor.conversations}
+              changes:
                 prison:
                   record:
                     type: PrisonConversation
@@ -220,11 +216,9 @@ lawdefs:
             - {exactly_one: {collection: {ref: actor.conversations.prison.questions}, as: question, where: question.utterance == scene.prison_answer.question and question.recipient == scene.prison_answer.speaker}}
         outputs:
           conversation:
-            record:
-              type: PersonConversations
-              fields:
-                visible_motions: {ref: actor.conversations.visible_motions}
-                tower: {ref: actor.conversations.tower}
+            copy:
+              from: {ref: actor.conversations}
+              changes:
                 prison:
                   record:
                     type: PrisonConversation

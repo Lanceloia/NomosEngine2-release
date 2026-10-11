@@ -1,0 +1,127 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+# A reply reports this appraisal only; it creates no following commitment.
+lawdefs:
+  - name: action.escort_reply
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+        - name: answered
+          stage: admission
+          let: {ref: actor.conversations.escort_replied_invitations}
+        - name: can_attempt
+          stage: admission
+          let:
+            call:
+              ref: escort.can_attempt_now
+              args:
+                speed: {ref: actor.current_movement_speed}
+                site: {ref: actor.site}
+                blocked: actor.prison_access.line is not None and actor.prison_access.line.guardian.site == actor.site and actor.prison_access.line.guardian.present
+        - &reply_log_binding
+          name: reply_log
+          stage: admission
+          let: {if: {when: "scene.escort_reply_log is not None", then: {ref: scene.escort_reply_log.entries}, else: {empty_like: scene.escort_reply_log.entries}}}
+        - &said_binding
+          name: said
+          stage: effect
+          let:
+            record:
+              type: EscortReply
+              fields:
+                speaker: {ref: actor.name}
+                recipient: {ref: actor.escort_speaker}
+                site: {ref: actor.site}
+                destination: {ref: actor.escort_destination}
+                status: {ref: payload.status}
+                invitation: {ref: actor.escort_utterance_ref}
+                invitation_hearing: {ref: actor.escort_heard_ref}
+                action: {ref: occurrence}
+        guard: &reply_guard
+          require:
+          - identity: actor.name == payload.actor and recipient.name == payload.recipient and actor.name != recipient.name
+          - awake: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - heard: actor.escort_heard_ref is not None and actor.escort_utterance_ref is not None and actor.escort_speaker is not None and actor.escort_destination is not None
+          - invited_by_recipient: actor.escort_speaker == recipient.name
+          - actual_audience: actor.site == recipient.site and recipient.vital.life == 'alive' and recipient.cold_state != 'frozen'
+          - once: {none_matching: {collection: {ref: answered}, as: previous, where: previous == actor.escort_utterance_ref}}
+          - bounded: {lt: [{count_matching: {collection: {ref: reply_log}, as: previous, where: true}}, 256]}
+          - truthful_capability: (not can_attempt and payload.status == 'unable_now') or (can_attempt and (payload.status == 'ready_now' or payload.status == 'not_ready_now'))
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          reply_log: &new_reply_log
+            record:
+              type: EscortReplyLog
+              fields: {entries: {append: [{ref: reply_log}, {ref: said}]}}
+          conversations:
+            copy:
+              from: {ref: actor.conversations}
+              changes:
+                escort_reply: {ref: said}
+                escort_replied_invitations: {append: [{ref: answered}, {ref: actor.escort_utterance_ref}]}
+  - name: action.queen_escort_reply
+    family: action
+    formals: {}
+    body:
+      value:
+        schema: c0.value.v1
+        bindings:
+        - name: answered
+          stage: admission
+          let: {ref: actor.escort_replied_invitations}
+        - name: can_attempt
+          stage: admission
+          let: {call: {ref: escort.can_attempt_now, args: {speed: {ref: actor.current_movement_speed}, site: {ref: actor.site}, blocked: false}}}
+        - *reply_log_binding
+        - *said_binding
+        guard:
+          all:
+          - *reply_guard
+          - actor.attending
+        outputs:
+          action: {ref: occurrence}
+          last_action_ref: {ref: occurrence}
+          reply_log: *new_reply_log
+          escort_reply: {ref: said}
+          escort_replied_invitations: {append: [{ref: answered}, {ref: actor.escort_utterance_ref}]}
+  - name: event.escort_reply_heard
+    family: direct_actor_event
+    formals: {}
+    body:
+      law:
+        schema: c0.value.v1
+        bindings:
+        - name: heard_before
+          stage: admission
+          let: {ref: actor.conversations.heard_escort_replies}
+        - name: matching_replies
+          stage: admission
+          let:
+            collect_matching:
+              collection: {if: {when: "scene.escort_reply_log is not None", then: {ref: scene.escort_reply_log.entries}, else: {empty_like: scene.escort_reply_log.entries}}}
+              as: reply
+              where: reply.action == trigger.occurrence
+              value: {ref: reply}
+        - name: said
+          stage: admission
+          let: {if: {when: {exactly_one: {collection: {ref: matching_replies}, as: reply, where: true}}, then: {tuple_at: {collection: {ref: matching_replies}, index: 0}}, else: null}}
+        - name: heard
+          stage: effect
+          let: {record: {type: HeardEscortReply, fields: {reply: {ref: said}, hearing: {ref: occurrence}}}}
+        guard:
+          require:
+          - actual_reply: said is not None
+          - addressed_here: said.recipient == actor.name and said.site == actor.site
+          - awake: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
+          - once: {none_matching: {collection: {ref: heard_before}, as: previous, where: previous.reply.action == trigger.occurrence}}
+          - bounded: {lt: [{count_matching: {collection: {ref: heard_before}, as: previous, where: true}}, 256]}
+        outputs:
+          conversations:
+            copy:
+              from: {ref: actor.conversations}
+              changes:
+                latest_escort_reply: {ref: heard}
+                heard_escort_replies: {append: [{ref: heard_before}, {ref: heard}]}

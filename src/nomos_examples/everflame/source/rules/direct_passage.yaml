@@ -1,0 +1,75 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+# Physical obstruction is an outcome of a valid attempt, not its admission gate.
+lawdefs:
+- name: action.try_direct_passage
+  family: action
+  formals: {}
+  body:
+    value:
+      schema: c0.value.v1
+      bindings:
+      - name: passable
+        stage: admission
+        let:
+          call:
+            ref: movement.ordinary_floor_passable
+            args:
+              floors: {ref: scene.floors}
+              stairs: {ref: scene.stair_paths}
+              unclimbable_stairs: {ref: scene.unclimbable_stairs}
+              start: {ref: actor.site}
+              destination: {ref: payload.destination}
+      - name: landing
+        stage: admission
+        let: {if: {when: {ref: passable}, then: {ref: payload.destination}, else: {ref: actor.site}}}
+      guard:
+        all:
+        - actor.name == payload.actor
+        - actor.vital.life == 'alive' and actor.vital.endurance > 0 and actor.cold_state != 'frozen' and actor.current_movement_speed > 0
+        - call: {ref: transport.unboarded, args: {seats: {ref: scene.balloon_seats}, person: {ref: actor.name}}}
+        - call: {ref: movement.has_unique_path, args: {paths: {ref: scene.paths}, start: {ref: actor.site}, end: {ref: payload.destination}, cost: {ref: payload.base_move_cost}}}
+        - call: {ref: movement.has_unique_path, args: {paths: {ref: actor.known_paths}, start: {ref: actor.site}, end: {ref: payload.destination}, cost: {ref: payload.base_move_cost}}}
+      outputs:
+        action: {ref: occurrence}
+        site: {ref: landing}
+        conversations:
+          copy:
+            from: {ref: actor.conversations}
+            changes:
+              movement_attempt:
+                record:
+                  type: MovementAttemptResult
+                  fields:
+                    start: {ref: actor.site}
+                    destination: {ref: payload.destination}
+                    landing: {ref: landing}
+                    outcome: {if: {when: {ref: passable}, then: {const: arrived}, else: {const: blocked}}}
+                    action: {ref: occurrence}
+        known_sites:
+          call: {ref: movement.remember_site, args: {known_sites: {ref: actor.known_sites}, destination: {ref: landing}}}
+        known_residents:
+          if:
+            when:
+              all:
+              - passable and landing == scene.notice_site
+              - none_matching: {collection: actor.known_residents, as: known, where: known.name == scene.notice_subject}
+            then:
+              append:
+              - {ref: actor.known_residents}
+              - record:
+                  type: KnownResident
+                  fields: {name: {ref: scene.notice_subject}, site: {ref: scene.notice_site}, observation: {ref: occurrence}}
+            else: {ref: actor.known_residents}
+        sighting_ref:
+          if: {when: "passable and landing == scene.notice_site", then: {ref: occurrence}, else: {ref: actor.sighting_ref}}
+        sighting_site:
+          if: {when: "passable and landing == scene.notice_site", then: {ref: landing}, else: {ref: actor.sighting_site}}
+        last_action_ref: {ref: occurrence}
+        actor_motion:
+          if:
+            when: {ref: passable}
+            then:
+              record:
+                type: ActorMotion
+                fields: {name: {ref: actor.name}, start: {ref: actor.site}, end: {ref: landing}, action: {ref: occurrence}}
+            else: {ref: scene.actor_motion}

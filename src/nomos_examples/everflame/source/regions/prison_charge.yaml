@@ -48,11 +48,9 @@ lawdefs:
           transfer_ref: {ref: occurrence}
           holder: {ref: actor.name}
           conversation:
-            record:
-              type: PersonConversations
-              fields:
-                visible_motions: {ref: actor.conversations.visible_motions}
-                tower: {ref: actor.conversations.tower}
+            copy:
+              from: {ref: actor.conversations}
+              changes:
                 prison:
                   record:
                     type: PrisonConversation
@@ -87,11 +85,9 @@ lawdefs:
           last_action_ref: {ref: occurrence}
           load_ref: {ref: occurrence}
           conversation:
-            record:
-              type: PersonConversations
-              fields:
-                visible_motions: {ref: actor.conversations.visible_motions}
-                tower: {ref: actor.conversations.tower}
+            copy:
+              from: {ref: actor.conversations}
+              changes:
                 prison:
                   record:
                     type: PrisonConversation

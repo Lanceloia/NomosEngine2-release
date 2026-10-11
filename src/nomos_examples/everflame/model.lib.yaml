@@ -1,6 +1,32 @@
 # Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
 schema: c0.nominal_lib.v1
 pure_definitions:
+  - name: escort.reply_score
+    parameters: {status: str, inclined: bool, pending: bool}
+    result: int
+    stage: admission
+    body:
+      if:
+        when: pending and (status == 'unable_now' or (inclined and status == 'ready_now') or (not inclined and status == 'not_ready_now'))
+        then: 11
+        else: 0
+  - name: escort.reply_pending
+    parameters: {hearing: {optional: occurrence_ref}, invitation: {optional: occurrence_ref}, speaker: {optional: str}, destination: {optional: str}, answered: {optional: {tuple: occurrence_ref}}}
+    result: bool
+    stage: admission
+    body:
+      all:
+      - hearing is not None and invitation is not None and speaker is not None and destination is not None
+      - any:
+        - answered is None
+        - all:
+          - answered is not None
+          - none_matching: {collection: {ref: answered}, as: previous, where: previous == invitation}
+  - name: escort.can_attempt_now
+    parameters: {speed: int, site: str, blocked: bool}
+    result: bool
+    stage: admission
+    body: speed > 0 and site != 'treasure_ice' and site != 'captive_cell' and not blocked
   - name: perception.visible_site
     parameters: {observer_site: str, subject_site: str}
     result: bool
@@ -596,6 +622,7 @@ appraisal_definitions:
   - name: queen.local_wait
     formals: {}
     entries:
+    - escort_reply
     - verify_survivors
     - pay_reward
     - wait
@@ -607,6 +634,7 @@ appraisal_definitions:
     - pass_door
     fallback_entry: wait
     tie_order:
+    - escort_reply
     - pay_reward
     - verify_survivors
     - wait
@@ -617,6 +645,9 @@ appraisal_definitions:
     - bridge_slow
     - pass_door
     rules:
+    - entry: escort_reply
+      mode: score
+      value: {call: {ref: escort.reply_score, args: {status: {ref: payload.status}, inclined: true, pending: {call: {ref: escort.reply_pending, args: {hearing: {ref: actor.escort_heard_ref}, invitation: {ref: actor.escort_utterance_ref}, speaker: {ref: actor.escort_speaker}, destination: {ref: actor.escort_destination}, answered: {ref: actor.escort_replied_invitations}}}}}}}
     - {entry: verify_survivors, mode: score, value: 1}
     - {entry: pay_reward, mode: score, value: 3}
     - entry: wait
@@ -1220,6 +1251,7 @@ appraisal_definitions:
     formals:
       movement_score: int
     entries:
+    - escort_reply
     - wait
     - cross_ice
     - move
@@ -1237,6 +1269,7 @@ appraisal_definitions:
     - inspect_patient
     fallback_entry: wait
     tie_order:
+    - escort_reply
     - wait
     - cross_ice
     - move
@@ -1253,6 +1286,9 @@ appraisal_definitions:
     - bridge_rush
     - inspect_patient
     rules:
+    - entry: escort_reply
+      mode: score
+      value: {call: {ref: escort.reply_score, args: {status: {ref: payload.status}, inclined: {lt: [0, {arg: movement_score}]}, pending: {call: {ref: escort.reply_pending, args: {hearing: {ref: actor.escort_heard_ref}, invitation: {ref: actor.escort_utterance_ref}, speaker: {ref: actor.escort_speaker}, destination: {ref: actor.escort_destination}, answered: {ref: actor.conversations.escort_replied_invitations}}}}}}}
     - entry: bridge_slow
       mode: score
       value:
@@ -1345,6 +1381,7 @@ appraisal_definitions:
       light_wait_bonus: int
       guarded_destination: str
     entries:
+    - escort_reply
     - observe_prison_line
     - wait_near_guide
     - try_prison_line
@@ -1367,6 +1404,7 @@ appraisal_definitions:
     - inspect_patient
     fallback_entry: wait
     tie_order:
+    - escort_reply
     - wait
     - observe_prison_line
     - wait_near_guide
@@ -1388,6 +1426,9 @@ appraisal_definitions:
     - bridge_rush
     - inspect_patient
     rules:
+    - entry: escort_reply
+      mode: score
+      value: {call: {ref: escort.reply_score, args: {status: {ref: payload.status}, inclined: {lt: [0, {arg: movement_score}]}, pending: {call: {ref: escort.reply_pending, args: {hearing: {ref: actor.escort_heard_ref}, invitation: {ref: actor.escort_utterance_ref}, speaker: {ref: actor.escort_speaker}, destination: {ref: actor.escort_destination}, answered: {ref: actor.conversations.escort_replied_invitations}}}}}}}
     - entry: observe_prison_line
       mode: score
       value:
@@ -1553,11 +1594,14 @@ appraisal_definitions:
       mode: ignore
   - name: resident.remain_hidden
     formals: {}
-    entries: &id001 [wait, cross_ice, move, accept_torch, observe_person, thaw_person, bridge_slow, care_person,
+    entries: &id001 [escort_reply, wait, cross_ice, move, accept_torch, observe_person, thaw_person, bridge_slow, care_person,
       carry_move, carry_cross_ice, carry_bridge_slow, carry_pass_door, strike_person, bridge_rush, inspect_patient]
     fallback_entry: wait
     tie_order: *id001
     rules:
+    - entry: escort_reply
+      mode: score
+      value: {call: {ref: escort.reply_score, args: {status: {ref: payload.status}, inclined: false, pending: {call: {ref: escort.reply_pending, args: {hearing: {ref: actor.escort_heard_ref}, invitation: {ref: actor.escort_utterance_ref}, speaker: {ref: actor.escort_speaker}, destination: {ref: actor.escort_destination}, answered: {ref: actor.conversations.escort_replied_invitations}}}}}}}
     - {entry: care_person, mode: ignore}
     - {entry: bridge_slow, mode: ignore}
     - {entry: accept_torch, mode: ignore}
@@ -1698,6 +1742,32 @@ appraisal_definitions:
     - {entry: stable_cross_ice, mode: score, value: 0}
     - {entry: stable_pass_door, mode: score, value: 0}
 records:
+  - name: EscortReply
+    fields:
+    - {name: speaker, type: {str: [1, 48]}}
+    - {name: recipient, type: {str: [1, 48]}}
+    - {name: site, type: {str: [1, 48]}}
+    - {name: destination, type: {str: [1, 48]}}
+    - {name: status, type: {enum: [ready_now, unable_now, not_ready_now]}}
+    - {name: invitation, type: occurrence_ref}
+    - {name: invitation_hearing, type: occurrence_ref}
+    - {name: action, type: occurrence_ref}
+    invariant: state.speaker != state.recipient and state.invitation != state.invitation_hearing and state.action != state.invitation and state.action != state.invitation_hearing
+  - name: HeardEscortReply
+    fields:
+    - {name: reply, type: EscortReply}
+    - {name: hearing, type: occurrence_ref}
+    invariant: state.hearing != state.reply.action and state.hearing != state.reply.invitation and state.hearing != state.reply.invitation_hearing
+  - name: EscortReplyLog
+    fields:
+    - {name: entries, type: {tuple: {item: EscortReply, max: 256}}}
+    invariant: {unique_by: {collection: {ref: state.entries}, as: reply, keys: [reply.action]}}
+  - name: EscortReplyAttempt
+    fields:
+    - {name: actor, type: {str: [1, 48]}}
+    - {name: recipient, type: {str: [1, 48]}}
+    - {name: status, type: {enum: [ready_now, unable_now, not_ready_now]}}
+    invariant: null
   - name: VerifiedSurvivor
     fields:
       - {name: name, type: {str: [1, 48]}}
@@ -1858,6 +1928,8 @@ records:
     invariant: null
   - name: Queen
     fields:
+    - {name: escort_reply, type: {optional: EscortReply}}
+    - {name: escort_replied_invitations, type: {tuple: {item: occurrence_ref, max: 256}}}
     - {name: reward_account, type: RewardAccount}
     - {name: guide_consumption, type: {optional: GuideConsumption}}
     - {name: guide_step, type: {optional: GuideStepObservation}}
@@ -2314,6 +2386,11 @@ records:
     invariant: null
   - name: PersonConversations
     fields:
+      - {name: movement_attempt, type: {optional: MovementAttemptResult}}
+      - {name: escort_reply, type: {optional: EscortReply}}
+      - {name: escort_replied_invitations, type: {tuple: {item: occurrence_ref, max: 256}}}
+      - {name: latest_escort_reply, type: {optional: HeardEscortReply}}
+      - {name: heard_escort_replies, type: {tuple: {item: HeardEscortReply, max: 256}}}
       - {name: visible_motions, type: {optional: VisibleMotionLog}}
       - {name: prison, type: PrisonConversation}
       - {name: tower, type: {optional: TowerConversation}}
@@ -3449,6 +3526,7 @@ records:
     invariant: null
   - name: Scene
     fields:
+    - {name: escort_reply_log, type: {optional: EscortReplyLog}}
     - {name: magic_research, type: {optional: MagicResearchWindow}}
     - {name: magic_display, type: {optional: MagicDisplay}}
     - {name: research_seed, type: {int: [0, 9223372036854775807]}}
@@ -3672,6 +3750,14 @@ records:
       - {name: fireball_roll, type: {optional: {int: [1, 20]}}}
       - {name: branding, type: {optional: BrandKnowledge}}
     invariant: null
+  - name: MovementAttemptResult
+    fields:
+      - {name: start, type: {str: [1, 48]}}
+      - {name: destination, type: {str: [1, 48]}}
+      - {name: landing, type: {str: [1, 48]}}
+      - {name: outcome, type: {enum: [arrived, blocked]}}
+      - {name: action, type: occurrence_ref}
+    invariant: "(state.outcome == 'arrived' and state.landing == state.destination) or (state.outcome == 'blocked' and state.landing == state.start)"
   - name: Person
     fields:
     - {name: known_climbs, type: {tuple: {item: KnownClimb, max: 8}}}
@@ -4719,6 +4805,8 @@ owners:
     identity_field: name
     write: replace_one
     seat_read:
+    - escort_reply
+    - escort_replied_invitations
     - reward_account
     - reward_account.verified
     - guide_consumption
@@ -4928,6 +5016,10 @@ owners:
     identity_field: name
     write: replace_one
     seat_read:
+    - conversations.escort_replied_invitations
+    - prison_access.line
+    - prison_access.line.guardian.site
+    - prison_access.line.guardian.present
     - name
     - site
     - known_walls
@@ -4976,6 +5068,9 @@ owners:
     identity_field: name
     write: replace_one
     seat_read:
+    - conversations.movement_attempt
+    - conversations.latest_escort_reply
+    - conversations.heard_escort_replies
     - conversations.visible_motions
     - conversations.tower
     - conversations.tower.offer
@@ -5105,6 +5200,10 @@ owners:
     identity_field: name
     write: replace_one
     seat_read:
+    - conversations.escort_replied_invitations
+    - prison_access.line
+    - prison_access.line.guardian.site
+    - prison_access.line.guardian.present
     - name
     - site
     - known_paths
@@ -5150,10 +5249,11 @@ owners:
     identity_field: name
     write: replace_one
     seat_read:
+    - conversations.escort_replied_invitations
+    - prison_access.line.guardian.site
     - prison_access.line
     - prison_access.line.guardian
     - prison_access.line.guardian.name
-    - prison_access.line.guardian.site
     - prison_access.line.guardian.present
     - prison_access.line.guardian.observation
     - prison_access.line.paths
@@ -5202,10 +5302,11 @@ owners:
     identity_field: name
     write: replace_one
     seat_read:
+    - conversations.escort_replied_invitations
+    - prison_access.line.guardian.site
     - prison_access.line
     - prison_access.line.guardian
     - prison_access.line.guardian.name
-    - prison_access.line.guardian.site
     - prison_access.line.guardian.present
     - prison_access.line.guardian.observation
     - prison_access.line.paths
@@ -5254,6 +5355,10 @@ owners:
     identity_field: name
     write: replace_one
     seat_read:
+    - conversations.escort_replied_invitations
+    - prison_access.line
+    - prison_access.line.guardian.site
+    - prison_access.line.guardian.present
     - name
     - site
     - known_paths
@@ -5299,6 +5404,10 @@ owners:
     identity_field: name
     write: replace_one
     seat_read:
+    - conversations.escort_replied_invitations
+    - prison_access.line
+    - prison_access.line.guardian.site
+    - prison_access.line.guardian.present
     - name
     - site
     - known_paths

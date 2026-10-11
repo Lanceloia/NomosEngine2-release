@@ -1,6 +1,19 @@
 # Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
 # Instances and triggers; port signatures remain in capabilities.ports.yaml.
 actions:
+  - family: escort_reply
+    template: escort_reply
+    domain: residents
+    source_prefix: m1.v2.escort.reply
+    law: {ref: action.escort_reply, args: {}}
+    participants: {recipient: {actors: [adventurer]}}
+  - name: escort_reply_emma
+    template: queen_escort_reply
+    actor: emma
+    source_key: m1.v2.escort.reply.emma
+    event_type: m1.v2.escort.reply.emma.action
+    law: {ref: action.queen_escort_reply, args: {}}
+    participants: {recipient: {actors: [adventurer]}}
   - name: queen_verify_survivors_emma
     template: queen_verify_survivors
     actor: emma
@@ -954,7 +967,7 @@ actions:
       torch: {kind: everflame}
       victim: {actors: [ritual_resident]}
   - {name: cross_ice_adventurer, template: cross_ice, actor: adventurer, source_key: m1.v2.cross_ice.adventurer, event_type: m1.v2.cross_ice.adventurer.action, law: {ref: action.cross_ice, args: {}}}
-  - {name: move_adventurer, template: move, actor: adventurer, source_key: m1.v2.move.adventurer, event_type: m1.v2.move.adventurer.action, law: {ref: action.move, args: {}}}
+  - {name: move_adventurer, template: try_direct_passage, actor: adventurer, source_key: m1.v2.move.adventurer, event_type: m1.v2.move.adventurer.action, law: {ref: action.try_direct_passage, args: {}}}
   - {family: bridge_slow, template: bridge_slow, domain: bridge_walkers, source_prefix: m1.v2.bridge.slow, law: {ref: action.bridge_slow, args: {require_safe_site: true}}}
   - {name: offer_escort_adventurer, template: offer_escort, actor: adventurer, source_key: m1.v2.offer_escort.adventurer, event_type: m1.v2.offer_escort.adventurer.action, law: {ref: action.offer_escort, args: {}}}
   - name: carry_from_ritual_adventurer
@@ -1520,6 +1533,13 @@ actions:
       args: {}
     use_participants: [care_person_participants]
 events:
+  - family: escort_reply_heard
+    template: escort_reply_heard
+    actor: adventurer
+    for_actions: [escort_reply_ritual_resident, escort_reply_huddled_one, escort_reply_huddled_two, escort_reply_wall_resident, escort_reply_prison_resident_one, escort_reply_prison_resident_two, escort_reply_emma]
+    source_prefix: m1.v2.escort.reply.heard
+    share_result: true
+    law: {ref: event.escort_reply_heard, args: {}}
   - family: player_motion_seen_family
     template: player_motion_seen
     actor: adventurer

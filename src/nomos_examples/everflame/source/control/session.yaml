@@ -2,6 +2,7 @@
 offer_provider: {name: finite_value, version: '1'}
 opening_guard:
   all:
+    - adventurer.conversations.movement_attempt is None
     - none_matching: {collection: {ref: scene.scent_steps}, as: step, where: true}
     - {eq: [4, {count_matching: {collection: {ref: scene.palace_event_pool}, as: kind, where: true}}]}
     - unique_by: {collection: {ref: scene.palace_event_pool}, as: kind, keys: [kind]}
@@ -470,6 +471,8 @@ game_form:
         - const: alive
     costs: {}
     cost_groups:
+    - entries: [escort_reply_ritual_resident]
+      value: 1000
     - entries: [accept_torch_ritual_resident, observe_person_ritual_resident, thaw_person_ritual_resident, wait_ritual_resident]
       value: {const: 10000}
     - entries: [care_person_ritual_resident, strike_person_ritual_resident, inspect_patient_ritual_resident]
@@ -495,6 +498,8 @@ game_form:
         - const: alive
     costs: {}
     cost_groups:
+    - entries: [escort_reply_huddled_one]
+      value: 1000
     - entries: [accept_torch_huddled_one, observe_person_huddled_one, thaw_person_huddled_one, wait_huddled_one]
       value: {const: 10000}
     - entries: [care_person_huddled_one, strike_person_huddled_one, inspect_patient_huddled_one]
@@ -521,6 +526,8 @@ game_form:
                       ref: payload.base_move_cost}, maximum_speed: {ref: actor.max_movement_speed}, current_speed: {
                       ref: actor.current_movement_speed}}}}]}}
     cost_groups:
+    - entries: [escort_reply_prison_resident_one]
+      value: 1000
     - entries: [wait_near_guide_prison_resident_one, observe_prison_line_prison_resident_one, care_person_prison_resident_one,
           strike_person_prison_resident_one, inspect_patient_prison_resident_one]
       value: 10000
@@ -551,6 +558,8 @@ game_form:
                       ref: payload.base_move_cost}, maximum_speed: {ref: actor.max_movement_speed}, current_speed: {
                       ref: actor.current_movement_speed}}}}]}}
     cost_groups:
+    - entries: [escort_reply_prison_resident_two]
+      value: 1000
     - entries: [wait_near_guide_prison_resident_two, observe_prison_line_prison_resident_two, care_person_prison_resident_two,
           strike_person_prison_resident_two, inspect_patient_prison_resident_two]
       value: 10000
@@ -570,6 +579,8 @@ game_form:
     eligible: actor.cold_state != 'frozen' and actor.vital.life == 'alive'
     costs: {}
     cost_groups:
+    - entries: [escort_reply_wall_resident]
+      value: 1000
     - entries: [accept_torch_wall_resident, observe_person_wall_resident, thaw_person_wall_resident, care_person_wall_resident,
           observe_wall_wall_resident, wait_wall_resident, strike_person_wall_resident, inspect_patient_wall_resident]
       value: 10000
@@ -594,6 +605,8 @@ game_form:
         - const: alive
     costs: {}
     cost_groups:
+    - entries: [escort_reply_huddled_two]
+      value: 1000
     - entries: [accept_torch_huddled_two, observe_person_huddled_two, thaw_person_huddled_two, wait_huddled_two]
       value: {const: 10000}
     - entries: [care_person_huddled_two, strike_person_huddled_two, inspect_patient_huddled_two]
@@ -731,6 +744,8 @@ game_form:
     eligible: actor.vital.life == 'alive' and actor.cold_state != 'frozen'
     costs: {}
     cost_groups:
+    - entries: [escort_reply_emma]
+      value: 1000
     - entries: [queen_verify_survivors_emma, queen_pay_reward_emma, queen_wait_emma, queen_observe_routes_emma,
           balloon_control_emma]
       value: 10000
