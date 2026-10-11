@@ -19,7 +19,7 @@ Program + 开局数据 → K0 Session → 行动、后果与发生来源
 
 | 你有多少时间 | 推荐入口 |
 | --- | --- |
-| 约三分钟：先了解项目 | [中文项目介绍与讲稿](docs/showcase/introduction/README.md) |
+| 约三分钟：先了解项目 | [在线中文介绍](https://lanceloia.github.io/NomosEngine2-release/)、[讲稿与视频文件](docs/showcase/introduction/README.md) |
 | 想核对规则改动是否真的有效 | [三个可复现实验](docs/PROJECT_TOUR.md#先看三个实验)，安装命令见下文 |
 | 想体验规则组合成的冒险 | [M1 桌面演示](docs/M1_WEB.md)，当前需要本地运行 |
 | 想检查系统与编译实现 | [代码地图](docs/CODE_MAP.md)、[设计取舍](docs/DESIGN.md) |
@@ -142,8 +142,10 @@ T0 报告这条行动见证的实际运行结果和目标检查。
 
 ## 当前与未来
 
-**当前是可安装、可复现的本地发行基线。**
-公开仓库已创建，首次代码推送等待 GitHub workflow 授权；中文演示与代码已整理在本目录。
+**当前发行基线已公开，提供代码、中文演示与可复现实验。**
+[浏览器观看介绍](https://lanceloia.github.io/NomosEngine2-release/)；
+[GitHub 验证记录](https://github.com/Lanceloia/NomosEngine2-release/actions/workflows/checked-baseline.yml)
+执行具名合同测试、干净 wheel 安装与三个规则编辑实验。
 两个世界已从 wheel 独立运行。已有同输入冰宫整局为 43 项行动、1180 条发生，
 基线/候选 Run 为 45.056/45.106 秒，状态与来源摘要一致。
 这组记录用于核对同输入下的运行状态与来源一致性。

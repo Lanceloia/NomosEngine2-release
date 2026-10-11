@@ -49,7 +49,9 @@
 ## 尚未验证或未提供
 
 当前只实际验证 Python 3.14.4/Linux；`>=3.11` 是包声明，不表示所有版本已测。
-原生 Windows 尚未验证。已创建公开远端，首次推送因凭据缺少 workflow scope 被拒绝；
-当前尚无可获取的远端代码或 GitHub CI 结果。授权及成功推送后再更新此状态。
+原生 Windows 尚未验证。2026-10-11 完成授权并首次推送至
+[公开发行仓库](https://github.com/Lanceloia/NomosEngine2-release)。
+[远端 CI](https://github.com/Lanceloia/NomosEngine2-release/actions/workflows/checked-baseline.yml)
+按具体提交记录合同测试、wheel 安装和三个编辑实验；执行结果以对应 run 为准。
 当前不提供多人登录认证、通用存档恢复、连续空间时间、LLM 训练或通用 DM。
 完整支持范围以[语义说明](SEMANTICS.md)为准，不从单条演示外推。

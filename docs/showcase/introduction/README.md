@@ -2,17 +2,17 @@
 
 首次认识 NomosEngine2，先看这支约三分钟的中文项目介绍，再查看实验录像。
 
-发布后使用的[浏览器中文介绍入口](https://lanceloia.github.io/NomosEngine2-release/showcase/introduction/film-v1/index.html)：
+[浏览器中文介绍入口](https://lanceloia.github.io/NomosEngine2-release/showcase/introduction/film-v1/index.html)：
 点击开始观看，可暂停、拖动和选章；[真实规则编辑实验讲解](https://lanceloia.github.io/NomosEngine2-release/showcase/recording/narrated-v1/experiment.mp4)
 展示实际命令与结果。
-当前代码上传和 Pages 部署待 GitHub 授权完成；下方本地文件已可观看。
+也可以下载下方视频文件，用本地播放器观看。
 
 - [项目介绍视频](film-v1/introduction.mp4)：中文合成旁白、画内字幕、随讲解切换重点的架构与实验示意。
 - [可暂停、拖动、选章的讲解页面](film-v1/index.html)：浏览器直接打开，点击「开始观看」；旁白文件须与网页保持同目录。
 - [完整中文讲稿](film-v1/TRANSCRIPT.md)、[独立字幕](film-v1/subtitles.srt)、[作者分镜](storyboard.json)。
 - 接着看[真实规则编辑实验的中文讲解版](../recording/narrated-v1/experiment.mp4)，或[原始分章回放](../recording/capture-v1/replay.html)。
 
-`player.html` 是构建模板，不是可播放入口。GitHub 不执行仓库中的 HTML；下载后打开 `film-v1/index.html`，
+`player.html` 是构建模板。在线使用上方 Pages 入口；GitHub 的源码预览不执行 HTML。下载后打开 `film-v1/index.html`，
 或直接下载 MP4 用播放器观看。MP4 已包含音轨和画内字幕，不依赖外部字幕文件。
 
 ## 讲什么
