@@ -26,7 +26,7 @@ function build(script) {
 function main() {
   const root = path.resolve(__dirname,'..');
   const revision = process.argv[2] || 'v4';
-  if (!/^v[45]$/.test(revision)) throw Error('Expected presentation revision v4 or v5.');
+  if (!/^v[456]$/.test(revision)) throw Error('Expected presentation revision v4, v5 or v6.');
   const draft = path.join(root,`docs/showcase/introduction/draft-${revision}`);
   const target = path.join(root,`docs/showcase/introduction/film-${revision}`);
   const film = build(fs.readFileSync(path.join(draft,'SCRIPT.md'),'utf8'));

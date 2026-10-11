@@ -46,7 +46,7 @@ Program + 开局数据 → K0 Session → 行动、后果与发生来源
 能让这些经历自然发生的世界规则，再通过真实运行检验。目前已实现其中的行动见证检查：
 给定规则、开局与行动序列，逐步核对实际发生。故事理解与规则推导是后续建设方向。
 
-先看[新版项目介绍与字幕预演](docs/showcase/introduction/film-v5/index.html)，
+先看[新版项目介绍与字幕预演](docs/showcase/introduction/film-v6/index.html)，
 从创作愿望到工具分工，再到实验和 M1 实录。新版配音待录制；[讲稿与分镜](docs/showcase/introduction/README.md)可逐段阅读。
 
 ## 用一组实验理解项目

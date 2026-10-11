@@ -8,14 +8,14 @@ const {createHash} = require('node:crypto');
 
 async function main() {
   const [playwrightModule,ffmpeg,revision='v4'] = process.argv.slice(2);
-  if(!playwrightModule)throw Error('Usage: node tools/produce_introduction_v4.cjs PLAYWRIGHT_MODULE [FFMPEG] [v4|v5]');
-  if (!/^v[45]$/.test(revision)) throw Error('Expected presentation revision v4 or v5.');
+  if(!playwrightModule)throw Error('Usage: node tools/produce_introduction_v4.cjs PLAYWRIGHT_MODULE [FFMPEG] [v4|v5|v6]');
+  if (!/^v[456]$/.test(revision)) throw Error('Expected presentation revision v4, v5 or v6.');
   const root=path.resolve(__dirname,`../docs/showcase/introduction/film-${revision}`);
   const output=path.join(root,'introduction.mp4'), temporary=path.join(root,'.preview-render.mp4');
   if(ffmpeg && (fs.existsSync(output)||fs.existsSync(temporary)))throw Error('Preview exists; do not overwrite a frozen export.');
   const {chromium}=require(playwrightModule);
   let browser,encoder,closed,published=false,complete=false;
-  const errors=[],mediaAborts=[],samples=[];
+  const errors=[],mediaAborts=[],samples=[],evidenceSamples=[];
   try {
     browser=await chromium.launch({args:['--allow-file-access-from-files']});
     const page=await browser.newPage({viewport:{width:1440,height:900}});
@@ -47,7 +47,7 @@ async function main() {
       await page.setViewportSize(viewport);
       for(const scene of film.scenes) {
         const t=scene.start+(scene.end-scene.start)*.82;
-        await page.evaluate(async t=>{window.animatic.seek(t);await window.animatic.prepare(t);window.animatic.draw(t);},t);
+        await page.evaluate(async t=>{await window.animatic.seek(t);await window.animatic.prepare(t);window.animatic.draw(t);},t);
         const geometry=await page.evaluate(()=>({
           overflow:document.documentElement.scrollWidth>innerWidth||document.documentElement.scrollHeight>innerHeight,
           captionOverflow:document.querySelector('#subtitle').scrollHeight>76,
@@ -56,6 +56,28 @@ async function main() {
         if(geometry.overflow||geometry.captionOverflow||!geometry.fontReady||geometry.chapter!==scene.id)throw Error(JSON.stringify(geometry));
         const image=`previews/${viewport.width}-${scene.id}.png`;
         await page.screenshot({path:path.join(root,image)});samples.push({viewport,scene:scene.id,image,...geometry});
+      }
+      if(await page.evaluate(()=>typeof window.animatic.mediaStatus==='function')) {
+        const scenes=film.scenes.filter(s=>['adventure','rescue'].includes(s.id));
+        for(const scene of scenes)for(const [index,caption] of scene.lines.entries()) {
+          const t=(caption.start+caption.end)/2;
+          const evidence=await page.evaluate(async t=> {
+            await window.animatic.seek(t);await window.animatic.prepare(t);window.animatic.draw(t);
+            const status=window.animatic.mediaStatus(t);
+            const {data}=document.querySelector('canvas').getContext('2d').getImageData(90,270,1260,400);
+            let nonblank=0;for(let i=0;i<data.length;i+=4)if(data[i]>70||data[i+1]>70||data[i+2]>70)nonblank++;
+            return {status,nonblank,subtitle:document.querySelector('#subtitle').textContent};
+          },t);
+          if(!evidence.status.ready||evidence.nonblank<3000||evidence.subtitle!==caption.text)throw Error('M1 cue not ready: '+JSON.stringify(evidence));
+          const image=`previews/${viewport.width}-${scene.id}-cue-${index}.png`;
+          await page.screenshot({path:path.join(root,image)});
+          evidenceSamples.push({viewport,scene:scene.id,cue:index,time:t,image,...evidence});
+        }
+        const rescue=film.scenes.find(s=>s.id==='rescue');
+        const target=(rescue.lines[5].start+rescue.lines[5].end)/2;
+        for(let repeat=0;repeat<3;repeat++) {
+          await page.evaluate(async t=>{await window.animatic.seek(t);if(!window.animatic.mediaStatus(t).ready)throw Error('Repeated seek left undecoded media');},target);
+        }
       }
     }
     await page.selectOption('#chapter','vote');
@@ -108,7 +130,7 @@ async function main() {
     if(ffmpeg)names.push('introduction.mp4');
     fs.writeFileSync(path.join(root,'checks.json'),JSON.stringify({kind:'Captioned positioning preview; original experiment and M1 evidence reused',
       narration:'pending',duration_seconds:film.duration,controls:{play:true,pause:true,restart:true,chapter:true,ending:true},
-      canvas:pixels,exported_subtitle_minimum_pixels:minimum,page_errors:errors,media_preload_aborts:mediaAborts,samples,
+      canvas:pixels,exported_subtitle_minimum_pixels:minimum,page_errors:errors,media_preload_aborts:mediaAborts,samples,evidenceSamples,
       video:ffmpeg?{width:1280,height:720,fps:12,codec:'H.264',audio:false,encoder_threads:2,decoded:true}:null,
       sha256:Object.fromEntries(names.map(name=>[name,createHash('sha256').update(fs.readFileSync(path.join(root,name))).digest('hex')]))},null,2)+'\n');
     complete=true;console.log('PASS: captioned preview controls, desktop geometry, moving canvas and subtitles.');

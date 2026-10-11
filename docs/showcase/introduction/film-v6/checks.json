@@ -1,0 +1,827 @@
+{
+  "kind": "Captioned positioning preview; original experiment and M1 evidence reused",
+  "narration": "pending",
+  "duration_seconds": 363.05454545454546,
+  "controls": {
+    "play": true,
+    "pause": true,
+    "restart": true,
+    "chapter": true,
+    "ending": true
+  },
+  "canvas": {
+    "changed": 14805,
+    "nonblank": 29166
+  },
+  "exported_subtitle_minimum_pixels": 2453,
+  "page_errors": [],
+  "media_preload_aborts": [
+    "resource.webm"
+  ],
+  "samples": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "origin",
+      "image": "previews/1280-origin.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "origin"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "history",
+      "image": "previews/1280-history.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "history"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "pipeline",
+      "image": "previews/1280-pipeline.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "pipeline"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "witness",
+      "image": "previews/1280-witness.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "witness"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "admission",
+      "image": "previews/1280-admission.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "admission"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "vote",
+      "image": "previews/1280-vote.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "vote"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "configuration",
+      "image": "previews/1280-configuration.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "configuration"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "adventure",
+      "image": "previews/1280-adventure.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "adventure"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "image": "previews/1280-rescue.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "rescue"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "combination",
+      "image": "previews/1280-combination.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "combination"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "future",
+      "image": "previews/1280-future.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "future"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "credits",
+      "image": "previews/1280-credits.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "credits"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "origin",
+      "image": "previews/1440-origin.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "origin"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "history",
+      "image": "previews/1440-history.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "history"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "pipeline",
+      "image": "previews/1440-pipeline.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "pipeline"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "witness",
+      "image": "previews/1440-witness.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "witness"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "admission",
+      "image": "previews/1440-admission.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "admission"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "vote",
+      "image": "previews/1440-vote.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "vote"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "configuration",
+      "image": "previews/1440-configuration.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "configuration"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "adventure",
+      "image": "previews/1440-adventure.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "adventure"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "image": "previews/1440-rescue.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "rescue"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "combination",
+      "image": "previews/1440-combination.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "combination"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "future",
+      "image": "previews/1440-future.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "future"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "credits",
+      "image": "previews/1440-credits.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "credits"
+    }
+  ],
+  "evidenceSamples": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "adventure",
+      "cue": 0,
+      "time": 185.39090909090908,
+      "image": "previews/1280-adventure-cue-0.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 43521,
+      "subtitle": "接下来，多个规则要在一个可探索的世界里共同运行。"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "adventure",
+      "cue": 1,
+      "time": 193.44545454545454,
+      "image": "previews/1280-adventure-cue-1.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 43521,
+      "subtitle": "M1《冰焰解冻之旅》，改编自二零二五年一页地下城竞赛作品，Thawed Through the Everflame。"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "adventure",
+      "cue": 2,
+      "time": 202.04545454545453,
+      "image": "previews/1280-adventure-cue-2.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 43521,
+      "subtitle": "你带着永焰进入冰宫，希望中断仪式，帮助居民离开，再抵达外岸。"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "adventure",
+      "cue": 3,
+      "time": 208.0090909090909,
+      "image": "previews/1280-adventure-cue-3.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 34251,
+      "subtitle": "地图给出眼前的方向，人在哪里、路怎么走，还需要一步步了解。"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "adventure",
+      "cue": 4,
+      "time": 214.24545454545455,
+      "image": "previews/1280-adventure-cue-4.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 13725,
+      "subtitle": "永焰能解冻，也能保护近处；充能有限，用掉一点，还可能缩小保护范围。"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "adventure",
+      "cue": 5,
+      "time": 220.0272727272727,
+      "image": "previews/1280-adventure-cue-5.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 13725,
+      "subtitle": "眼前的冰，要现在融化，还是把力量留给后面的需要？"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "cue": 0,
+      "time": 224.8090909090909,
+      "image": "previews/1280-rescue-cue-0.png",
+      "status": {
+        "name": "resource",
+        "target": 17.880000000000006,
+        "ready": true
+      },
+      "nonblank": 203743,
+      "subtitle": "先看一段真实游玩记录。"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "cue": 1,
+      "time": 229.5,
+      "image": "previews/1280-rescue-cue-1.png",
+      "status": {
+        "name": "resource",
+        "target": 20.69454545454546,
+        "ready": true
+      },
+      "nonblank": 203663,
+      "subtitle": "玩家检查脚下冰面，选择用掉一点永焰，将它解冻。"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "cue": 2,
+      "time": 234.1909090909091,
+      "image": "previews/1280-rescue-cue-2.png",
+      "status": {
+        "name": "resource",
+        "target": 23.5,
+        "ready": true
+      },
+      "nonblank": 203683,
+      "subtitle": "充能从五点降到了四点。"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "cue": 3,
+      "time": 239.4272727272727,
+      "image": "previews/1280-rescue-cue-3.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 31685,
+      "subtitle": "再检查地面，确认冰面已经化开，接下来怎么走就有了新的依据。"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "cue": 4,
+      "time": 246.1181818181818,
+      "image": "previews/1280-rescue-cue-4.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 31685,
+      "subtitle": "观察也要花时间，寒冷与仪式仍在推进，多了解一点，还是尽快行动，需要玩家权衡。"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "cue": 5,
+      "time": 252.80909090909088,
+      "image": "previews/1280-rescue-cue-5.png",
+      "status": {
+        "name": "reply",
+        "target": 7.545454545454545,
+        "ready": true
+      },
+      "nonblank": 214070,
+      "subtitle": "另一段记录里，玩家穿过冰面，来到吊灯下，邀请居民一起离开。"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "cue": 6,
+      "time": 258.68181818181813,
+      "image": "previews/1280-rescue-cue-6.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 59731,
+      "subtitle": "两位居民依据自己的状态答复，玩家实际听到：现在已经准备好。"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "cue": 7,
+      "time": 264.19090909090903,
+      "image": "previews/1280-rescue-cue-7.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 69245,
+      "subtitle": "随后，玩家也察觉到他们从吊灯边缘移动到了舞厅入口。"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "cue": 8,
+      "time": 270.1545454545454,
+      "image": "previews/1280-rescue-cue-8.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 59731,
+      "subtitle": "下一步，可以结合他们的回应、位置和手里的余量，考虑怎样继续帮助他们。"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "cue": 9,
+      "time": 278.20909090909083,
+      "image": "previews/1280-rescue-cue-9.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 59731,
+      "subtitle": "这就是 M1 的组合验证：资源消耗、环境变化、玩家观察和居民行动共同运行，成为下一次选择的依据。"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "adventure",
+      "cue": 0,
+      "time": 185.39090909090908,
+      "image": "previews/1440-adventure-cue-0.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 43521,
+      "subtitle": "接下来，多个规则要在一个可探索的世界里共同运行。"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "adventure",
+      "cue": 1,
+      "time": 193.44545454545454,
+      "image": "previews/1440-adventure-cue-1.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 43521,
+      "subtitle": "M1《冰焰解冻之旅》，改编自二零二五年一页地下城竞赛作品，Thawed Through the Everflame。"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "adventure",
+      "cue": 2,
+      "time": 202.04545454545453,
+      "image": "previews/1440-adventure-cue-2.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 43521,
+      "subtitle": "你带着永焰进入冰宫，希望中断仪式，帮助居民离开，再抵达外岸。"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "adventure",
+      "cue": 3,
+      "time": 208.0090909090909,
+      "image": "previews/1440-adventure-cue-3.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 34251,
+      "subtitle": "地图给出眼前的方向，人在哪里、路怎么走，还需要一步步了解。"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "adventure",
+      "cue": 4,
+      "time": 214.24545454545455,
+      "image": "previews/1440-adventure-cue-4.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 13725,
+      "subtitle": "永焰能解冻，也能保护近处；充能有限，用掉一点，还可能缩小保护范围。"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "adventure",
+      "cue": 5,
+      "time": 220.0272727272727,
+      "image": "previews/1440-adventure-cue-5.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 13725,
+      "subtitle": "眼前的冰，要现在融化，还是把力量留给后面的需要？"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "cue": 0,
+      "time": 224.8090909090909,
+      "image": "previews/1440-rescue-cue-0.png",
+      "status": {
+        "name": "resource",
+        "target": 17.880000000000006,
+        "ready": true
+      },
+      "nonblank": 203743,
+      "subtitle": "先看一段真实游玩记录。"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "cue": 1,
+      "time": 229.5,
+      "image": "previews/1440-rescue-cue-1.png",
+      "status": {
+        "name": "resource",
+        "target": 20.69454545454546,
+        "ready": true
+      },
+      "nonblank": 203663,
+      "subtitle": "玩家检查脚下冰面，选择用掉一点永焰，将它解冻。"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "cue": 2,
+      "time": 234.1909090909091,
+      "image": "previews/1440-rescue-cue-2.png",
+      "status": {
+        "name": "resource",
+        "target": 23.5,
+        "ready": true
+      },
+      "nonblank": 203683,
+      "subtitle": "充能从五点降到了四点。"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "cue": 3,
+      "time": 239.4272727272727,
+      "image": "previews/1440-rescue-cue-3.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 31685,
+      "subtitle": "再检查地面，确认冰面已经化开，接下来怎么走就有了新的依据。"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "cue": 4,
+      "time": 246.1181818181818,
+      "image": "previews/1440-rescue-cue-4.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 31685,
+      "subtitle": "观察也要花时间，寒冷与仪式仍在推进，多了解一点，还是尽快行动，需要玩家权衡。"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "cue": 5,
+      "time": 252.80909090909088,
+      "image": "previews/1440-rescue-cue-5.png",
+      "status": {
+        "name": "reply",
+        "target": 7.545454545454545,
+        "ready": true
+      },
+      "nonblank": 214070,
+      "subtitle": "另一段记录里，玩家穿过冰面，来到吊灯下，邀请居民一起离开。"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "cue": 6,
+      "time": 258.68181818181813,
+      "image": "previews/1440-rescue-cue-6.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 59731,
+      "subtitle": "两位居民依据自己的状态答复，玩家实际听到：现在已经准备好。"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "cue": 7,
+      "time": 264.19090909090903,
+      "image": "previews/1440-rescue-cue-7.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 69245,
+      "subtitle": "随后，玩家也察觉到他们从吊灯边缘移动到了舞厅入口。"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "cue": 8,
+      "time": 270.1545454545454,
+      "image": "previews/1440-rescue-cue-8.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 59731,
+      "subtitle": "下一步，可以结合他们的回应、位置和手里的余量，考虑怎样继续帮助他们。"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "cue": 9,
+      "time": 278.20909090909083,
+      "image": "previews/1440-rescue-cue-9.png",
+      "status": {
+        "ready": true
+      },
+      "nonblank": 59731,
+      "subtitle": "这就是 M1 的组合验证：资源消耗、环境变化、玩家观察和居民行动共同运行，成为下一次选择的依据。"
+    }
+  ],
+  "video": {
+    "width": 1280,
+    "height": 720,
+    "fps": 12,
+    "codec": "H.264",
+    "audio": false,
+    "encoder_threads": 2,
+    "decoded": true
+  },
+  "sha256": {
+    "index.html": "a64f48d33ee4b24b13583601c922446dd3fd8d641b70812cfb17ae3056502f0f",
+    "film.js": "430c84ca566467fba3d646331a6a70a35a7e04326e5acf93a4c4b03bb7c8580b",
+    "timeline.js": "6c56fac5eb38c990ff9dca024bd6314a001f05616a40c48791c641ec069d7ca1",
+    "font/chinese.woff": "dfb9cbed7d2d00b586f48090e6b11c1986bcd48a8361c669ff36f44876a812f4",
+    "font/site-chinese.woff": "995bdebdc671a797650b1d270729a3495d66463d22fb21d095975ee2adf5666b",
+    "poster.png": "2d8bb2c168584cafd924b507453b2ad6e99a84af36c4e85982d2b1cbdffb2ee0",
+    "introduction.mp4": "00956502a352065ec5cc2e29d903d21cf8def7d5825435859d87281e77624af0"
+  }
+}

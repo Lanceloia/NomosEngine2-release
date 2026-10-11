@@ -48,3 +48,32 @@ test('story-first revision distinguishes rule exploration from current witness c
   assert.match(renderer,/规则探索.*后续方向/);
   assert.match(renderer,/行动见证检查.*当前能力/);
 });
+
+test('recording candidate gives M1 a complete situation and separate real records',()=> {
+  const script=fs.readFileSync(path.join(root,'docs/showcase/introduction/draft-v6/SCRIPT.md'),'utf8');
+  const film=build(script), before=build(fs.readFileSync(path.join(root,'docs/showcase/introduction/draft-v5/SCRIPT.md'),'utf8'));
+  const m1=film.scenes.filter(s=>['adventure','rescue'].includes(s.id));
+  const m1Time=m1.reduce((n,s)=>n+s.end-s.start,0);
+  const oldTime=before.scenes.filter(s=>['adventure','rescue'].includes(s.id)).reduce((n,s)=>n+s.end-s.start,0);
+  assert.ok(m1Time>oldTime*1.8);assert.ok(m1Time>90&&m1Time<130);
+  assert.match(m1[0].narration,/中断仪式.*帮助居民离开.*外岸/);
+  assert.match(m1[0].narration,/充能有限/);
+  assert.match(m1[1].narration,/另一段记录/);
+  assert.match(m1[1].narration,/实际听到.*准备好/);
+  assert.match(m1[1].narration,/察觉.*舞厅入口/);
+  assert.doesNotMatch(m1[1].narration,/已经获救|成功营救/);
+  assert.match(film.scenes.find(s=>s.id==='witness').narration,/现阶段.*同一份 C0 产物/);
+});
+
+test('recording candidate keys media to captions and waits for seek completion',()=> {
+  const renderer=fs.readFileSync(path.join(root,'docs/showcase/introduction/film-v6/film.js'),'utf8');
+  const producer=fs.readFileSync(path.join(root,'tools/produce_introduction_v4.cjs'),'utf8');
+  for(const id of IDS)assert.ok(renderer.includes(`function ${id}(p`));
+  assert.match(renderer,/cueAt\(sceneAt\(t\),t\)/);
+  assert.match(renderer,/async function jump/);
+  assert.match(renderer,/prepared\.then\(\(\)=>prepareFrame\(t\)\)/);
+  assert.match(renderer,/同一组投票/);
+  assert.match(producer,/await window.animatic.seek\(t\)/);
+  assert.match(producer,/evidenceSamples/);
+  assert.ok(!fs.readFileSync(path.join(root,'docs/showcase/introduction/film-v6/index.html'),'utf8').includes('narration.mp3'));
+});
