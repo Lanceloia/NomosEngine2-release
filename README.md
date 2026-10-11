@@ -149,8 +149,10 @@ T0 报告这条行动见证的实际运行结果和目标检查。
 
 **当前发行基线已公开，提供代码、中文演示与可复现实验。**
 [浏览器观看介绍](https://lanceloia.github.io/NomosEngine2-release/)；
-[GitHub 验证记录](https://github.com/Lanceloia/NomosEngine2-release/actions/workflows/checked-baseline.yml)
+[冻结版本的成功 CI](https://github.com/Lanceloia/NomosEngine2-release/actions/runs/38135299619)
 执行具名合同测试、干净 wheel 安装与三个规则编辑实验。
+展示源码入口：[引擎](https://github.com/Lanceloia/NomosEngine2-release/tree/showcase-2026-10-11)、
+[M1 Web](https://github.com/Lanceloia/nomos-m1-web/tree/showcase-2026-10-11)；均使用`showcase-2026-10-11`。
 两个世界已从 wheel 独立运行。2026-10-10 已保存的历史固定负载为 43 项行动、1180 条发生，
 基线/候选 Run 为 45.056/45.106 秒，状态与来源摘要一致。
 这组记录用于核对同输入下的运行状态与来源一致性。
@@ -165,6 +167,11 @@ LLM DM 可以作为未来的上游工具，提议行动、草拟可检查资产�
 研究历史保留在原研究仓库，本目录侧重可复现的实现和维护文档。
 
 ## 归属与权利
+
+本人早期课程代码与中文导览：[C--编译器](https://github.com/Lanceloia/cp2020/tree/1cf28947cc4beef5d9bd2f87274e036b8fb15766)、
+[操作系统](https://github.com/Lanceloia/os2019/tree/b86451574242d3eaded3baae354c1102d710ac72)、
+[计算机系统基础](https://github.com/Lanceloia/ics2018/tree/fd881ab8ef2b87dd55030a07bc69479d07feddff)。
+具体实现、课程框架与个人增量分别在各仓库说明。
 
 项目发起者负责项目愿景、问题定义、语义裁决与亲自验收；后期主要代码由 Codex 及协作者
 实现或审阅。发起者推动了“世界源码与行动见证分离”、从具体游戏转向通用规则编译、

@@ -46,6 +46,19 @@
 如何运行具名合同、独立安装和新测量，见[测试指南](TESTING.md)。
 原子性、权限与局部信息的检查入口见[设计取舍](DESIGN.md)。
 
+## 展示版本的远端验证
+
+冻结标签[showcase-2026-10-11](https://github.com/Lanceloia/NomosEngine2-release/tree/showcase-2026-10-11)
+指向提交`ce190292c75d8e36da2e692c7b5dfaf08323ebde`。
+[这次成功CI的运行与日志](https://github.com/Lanceloia/NomosEngine2-release/actions/runs/38135299619)
+在2026-10-11完成，运行环境为Linux／Python 3.14.4：
+
+- 具名合同测试：327 passed in 27.57s。
+- 干净Git归档构建wheel，安装到独立虚拟环境。
+- 从checkout外运行狼人杀与冰宫消费者，以及禁自救、共同袭击、换职业／扩人数三项编辑实验。
+
+这是上述冻结提交的实际记录。后续文档维护沿用该实现快照，不改变原运行结果与标签。
+
 ## 尚未验证或未提供
 
 当前只实际验证 Python 3.14.4/Linux；`>=3.11` 是包声明，不表示所有版本已测。

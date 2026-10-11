@@ -47,12 +47,23 @@ K0 准入和发布路径。T0 报告指定路线在哪一步停止，以及目�
 
 编译器与系统基础也可沿个人早期代码继续核查：
 
+三个课程仓库已补中文简介、代码地图和阅读问题，按冻结文档版本开始：
+
+| 仓库 | 阅读导览 | 实现重点 |
+| --- | --- | --- |
+| CP2020 | [C--代码导览](https://github.com/Lanceloia/cp2020/blob/1cf28947cc4beef5d9bd2f87274e036b8fb15766/docs/CODE_TOUR.md) | AST、符号／类型检查、三地址式IR |
+| OS2019 | [系统编程导览](https://github.com/Lanceloia/os2019/blob/b86451574242d3eaded3baae354c1102d710ac72/docs/CODE_TOUR.md) | 协程上下文、线程同步、文件系统、持久化与C REPL |
+| ICS2018 | [系统链路导览](https://github.com/Lanceloia/ics2018/blob/fd881ab8ef2b87dd55030a07bc69479d07feddff/docs/CODE_TOUR.md) | 教学框架中的指令、中断、系统调用与加载路径 |
+
+下面两项还有逐步实现提交，可直接追问代码：
+
 - [C-- 的 semantic.c（Lab3 提交）](https://github.com/Lanceloia/cp2020/blob/619db3ac4a260292004fb900d9897ba95834ce2e/Lab/Code/semantic.c)：
   2020-05-15 的个人提交，语义检查与中间代码相关实现；同目录保留词法、语法和符号表模块。
 - [操作系统课程的协程库 co.c](https://github.com/Lanceloia/os2019/blob/85d0ea79408c98b00b9d9e411691a0ce4af4da41/os-workbench/libco/co.c)：
   2019-03-24 的个人提交；可从栈、上下文切换和调度接口追问具体实现。
 
-这些是教学框架上的个人课程实现。本次只核查 Git 路径及提交归属，没有在现代环境重建课程程序。
+这些课程仓库分别说明教学框架和个人工作；ICS仅保存整包导入，局部标记与报告用于进一步核查。
+2026年新增文档由Codex辅助整理，历史实现保持原样；本次核查源码与提交，没有在现代环境重建课程程序。
 它们与当前 AI 协作项目分别描述，便于判断不同阶段的责任和能力。
 
 ## 可现场讨论的问题

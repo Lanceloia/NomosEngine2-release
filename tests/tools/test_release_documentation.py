@@ -34,12 +34,35 @@ def test_homepage_has_direct_reading_paths_and_current_media():
     assert not parsed.refresh
     for name in ("PROJECT_TOUR.md", "CODE_MAP.md", "PERSONAL_CONTRIBUTION.md"):
         assert any(link.endswith(name) for link in parsed.links)
-    assert "https://github.com/Lanceloia/nomos-m1-web" in parsed.links
+    for repo in ("NomosEngine2-release", "nomos-m1-web"):
+        assert f"https://github.com/Lanceloia/{repo}/tree/showcase-2026-10-11" in parsed.links
     assert "showcase/introduction/film-v3/index.html" in parsed.links
     assert parsed.assets
     for asset in parsed.assets:
         assert (page.parent / asset).is_file()
     assert (page.parent / "showcase/introduction/film-v3/font/site-chinese.woff").is_file()
+
+
+def test_homepage_and_verification_link_the_same_successful_ci_run():
+    target = "https://github.com/Lanceloia/NomosEngine2-release/actions/runs/38135299619"
+    for path in ("docs/index.html", "docs/VERIFICATION.md", "README.md"):
+        assert target in (ROOT / path).read_text(encoding="utf-8")
+    assert "ce190292c75d8e36da2e692c7b5dfaf08323ebde" in (
+        ROOT / "docs/VERIFICATION.md"
+    ).read_text(encoding="utf-8")
+
+
+def test_course_reading_paths_are_pinned_in_homepage_and_contribution_guide():
+    revisions = {
+        "cp2020": "1cf28947cc4beef5d9bd2f87274e036b8fb15766",
+        "os2019": "b86451574242d3eaded3baae354c1102d710ac72",
+        "ics2018": "fd881ab8ef2b87dd55030a07bc69479d07feddff",
+    }
+    homepage = (ROOT / "docs/index.html").read_text(encoding="utf-8")
+    guide = (ROOT / "docs/PERSONAL_CONTRIBUTION.md").read_text(encoding="utf-8")
+    for repo, revision in revisions.items():
+        assert f"https://github.com/Lanceloia/{repo}/tree/{revision}" in homepage
+        assert f"https://github.com/Lanceloia/{repo}/blob/{revision}/docs/CODE_TOUR.md" in guide
 
 
 def test_public_markdown_local_links_point_to_existing_files():
