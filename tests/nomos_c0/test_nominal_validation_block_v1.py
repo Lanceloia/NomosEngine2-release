@@ -1,6 +1,7 @@
 """Nominal blocks retain ordered checks, current callbacks and receipt scope."""
 
 from dataclasses import make_dataclass, replace
+from dis import get_instructions
 
 import pytest
 from nomos_kernel import K0OccurrenceRef, K0ProfileError
@@ -312,3 +313,46 @@ def test_changed_generated_callback_cancels_receipts_and_keeps_second_failure():
     finally:
         type.__setattr__(type(item), "validate_for_k0", original)
     assert len(calls) == 2 and operations._active.get() is None
+
+
+@pytest.mark.parametrize("name", ["number", "\u212a", "class", "not-an-identifier"])
+def test_field_load_keeps_exact_attribute_name_without_getattr_dispatch(name):
+    spec = nominal._FieldSpec(name, nominal._TypeSpec("int", int, maximum=2))
+    check = execution.compile_nominal_field_validation((spec,), nominal._compile_value_validator)
+    calls = []
+
+    class Native:
+        def __getattribute__(self, actual):
+            calls.append(actual)
+            return object.__getattribute__(self, actual)
+
+    value = Native()
+    object.__setattr__(value, name, 1)
+    check(value)
+    assert calls == [name]
+    assert "getattr" not in check.__code__.co_names
+    assert any(item.opname == "LOAD_ATTR" and item.argval == name
+               for item in get_instructions(check))
+    object.__setattr__(value, name, True)
+    with pytest.raises(K0ProfileError, match="malformed"):
+        check(value)
+
+
+def test_earlier_getter_changes_later_descriptor_before_its_current_read():
+    spec = nominal._TypeSpec("int", int, maximum=2)
+    fields = (nominal._FieldSpec("first", spec), nominal._FieldSpec("later", spec))
+    calls = []
+
+    class Native:
+        @property
+        def first(self):
+            calls.append("first")
+            Native.later = property(lambda self: calls.append("later") or True)
+            return 1
+
+        later = 1
+
+    check = execution.compile_nominal_field_validation(fields, nominal._compile_value_validator)
+    with pytest.raises(K0ProfileError, match="malformed"):
+        check(Native())
+    assert calls == ["first", "later"]

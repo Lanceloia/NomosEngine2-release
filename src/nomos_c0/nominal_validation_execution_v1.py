@@ -28,6 +28,7 @@ def _compile_nominal_validation(fields, fallback_factory, *, carrier=None):
     emission = FunctionEmission({"K0ProfileError": K0ProfileError})
     namespace = emission.namespace
     lines = ["def execute(value):"]
+    field_reads = {}
     bind = emission.bind
     fresh = emission.fresh
 
@@ -98,7 +99,8 @@ def _compile_nominal_validation(fields, fallback_factory, *, carrier=None):
 
     for field in fields:
         current = fresh()
-        write(1, f"{current} = getattr(value, {field.name!r})")
+        field_reads[current] = field.name
+        write(1, f"{current} = value")
         emit(field.value, current, 1)
         write(1, f"del {current}")
     if carrier is not None:
@@ -116,8 +118,15 @@ def _compile_nominal_validation(fields, fallback_factory, *, carrier=None):
         write(2, "except C0ValueStateError as error:")
         write(3, "raise K0ProfileError('declared state invariant met malformed state') from error")
     write(1, "return None")
-    # Field names are string literals; only compiler-selected templates form code.
+    # AST attributes retain the exact field name, without parser normalization.
     module = ast.parse("\n".join(lines))
+    for statement in module.body[0].body:
+        if isinstance(statement, ast.Assign) and statement.targets[0].id in field_reads:
+            statement.value = ast.Attribute(
+                value=ast.Name(id="value", ctx=ast.Load()),
+                attr=field_reads[statement.targets[0].id],
+                ctx=ast.Load(),
+            )
     filename = (
         "<c0-nominal-field-validation>" if carrier is None else "<c0-nominal-validation-block>"
     )

@@ -59,3 +59,25 @@ def test_nested_native_hash_cannot_hide_a_changed_later_descriptor(monkeypatch):
     with pytest.raises(K0ProfileError, match="computed descriptor"):
         _copy_closed_state(original)
     assert object.__getattribute__(original, "__dict__")["later"] == 2
+
+
+def test_nested_native_hash_cannot_hide_a_changed_later_slot(monkeypatch):
+    @dataclass(frozen=True)
+    class Key:
+        number: int
+
+        def __hash__(self):
+            if mutate:
+                monkeypatch.setattr(Record, "later", property(lambda self: 3))
+            return self.number
+
+    @dataclass(frozen=True, slots=True)
+    class Record:
+        first: frozenset
+        later: int
+
+    mutate = False
+    original = Record(frozenset((Key(1),)), 2)
+    mutate = True
+    with pytest.raises(K0ProfileError, match="computed descriptor"):
+        _copy_closed_state(original)

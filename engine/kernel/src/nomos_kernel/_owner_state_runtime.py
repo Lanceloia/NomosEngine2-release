@@ -188,7 +188,7 @@ def _copy_closed_state(state: object, expected: object = _UNCHECKED_STATE) -> ob
             if field.name in namespace:
                 descriptor = namespace[field.name]
                 break
-        if hasattr(type(descriptor), "__get__") and type(descriptor) is not MemberDescriptorType:
+        if type(descriptor) is not MemberDescriptorType and hasattr(type(descriptor), "__get__"):
             raise K0ProfileError("owner nominal value field cannot use a computed descriptor")
         object.__setattr__(
             copied,
@@ -244,7 +244,7 @@ def _closed_data_key(value: object) -> tuple:
             if field.name in namespace:
                 descriptor = namespace[field.name]
                 break
-        if hasattr(type(descriptor), "__get__") and type(descriptor) is not MemberDescriptorType:
+        if type(descriptor) is not MemberDescriptorType and hasattr(type(descriptor), "__get__"):
             raise K0ProfileError("owner nominal value field cannot use a computed descriptor")
         result.append((field.name, _closed_data_key(object.__getattribute__(value, field.name))))
     return (id(carrier), tuple(result))
