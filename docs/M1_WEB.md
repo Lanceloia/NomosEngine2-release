@@ -1,23 +1,22 @@
-# M1 桌面试玩
+# M1 Web 试玩
 
-M1 是本工具链的应用样例：用同一作者编译链组合位置、资源、观察、寒冷和居民行动。
-可以先看[中文项目介绍](showcase/introduction/README.md)，
-再决定是否安装试玩；核对编译器行为则从[规则编辑实验](PROJECT_TOUR.md#先看三个实验)开始。
+M1 是同一作者编译链的应用样例：位置、永焰充能、观察、寒冷与居民行动共同组成冰宫冒险。
+[视频介绍](showcase/introduction/README.md)可以先看实际变化，再决定是否安装。
 
-## 获取与访问
+## 获取匹配版本
 
-当前访问方式为本地启动，下方 `127.0.0.1` 指向运行服务的电脑。
-Web 的公开仓库与在线入口将在发布、部署完成后登记。
-在线试玩由页面与 Python 会话服务共同提供，C0/K0 负责真实运行。
+两个公开仓库使用相同展示标签 `showcase-2026-10-11`。标签固定这次对外展示，
+后续开发更新保留在各自默认分支。
 
-## 本地启动
-
-本地可复现版本与证据范围见[展示候选](M1_SHOWCASE_CANDIDATE.md)。
-
-当前独立应用目录为 `m1-tabletop-prototype`，它自持 React 前端和 Python 会话服务。
-将它与本引擎仓库放在同一父目录，然后在应用目录执行：
+| 仓库 | 负责什么 |
+| --- | --- |
+| [NomosEngine2-release](https://github.com/Lanceloia/NomosEngine2-release/tree/showcase-2026-10-11) | C0/K0/T0、作者资产与实验 |
+| [nomos-m1-web](https://github.com/Lanceloia/nomos-m1-web/tree/showcase-2026-10-11) | React 页面、Python 会话服务、公开选项上的人格评分 |
 
 ```bash
+git clone --branch showcase-2026-10-11 https://github.com/Lanceloia/NomosEngine2-release.git nomosengine2-release
+git clone --branch showcase-2026-10-11 https://github.com/Lanceloia/nomos-m1-web.git m1-tabletop-prototype
+cd m1-tabletop-prototype
 python3 -m venv .venv
 .venv/bin/python -m pip install -e ../nomosengine2-release
 npm ci
@@ -25,23 +24,29 @@ npm run build
 npm start
 ```
 
-Windows 使用 `.venv\Scripts\python.exe`。需要 Node.js 20.3+。
-打开 <http://127.0.0.1:5173/>；等待首次世界编译完成后即可开始。
-后端与页面由同一个进程提供，新游戏复用 Program，不共用局内状态。
-开发模式 `npm run dev` 同时启动本目录 API 和 Vite；旧 Web 目录不是依赖。
+需要 Node.js 20.3+、Python 3.11+；本轮实现验证环境为 Python 3.14.4 / Linux。
+Windows 将 Python 路径换成 `.venv\Scripts\python.exe`。
+打开 <http://127.0.0.1:5173/>，首次编译完成后开始新游戏。新游戏共享规则 Program，各局状态独立。
+开发用 `npm run dev`；端口占用可使用 `M1_WEB_PORT=5180 npm start`。
 
-人物、物件、寒冷与营救后果由本仓库 `src/nomos_examples/everflame/world.bundle.yaml`
-加载并交给同一 C0/K0 Session。页面不修改世界状态或藏入必胜路线。
-三种人格引导在当前公开选项上评分，可以设置步数、暂停或手动接管。
-该演示只面向单机桌面，不提供多人登录或通用恢复。
+## 玩家会看到什么
 
-`/api/health` 可核对实际引擎路径、Git 版本、全部作者文件摘要及编译次数。
-应用 README 提供操作说明与具名短测试命令；旧候选快照保留供研究，不自动切回。
+眼前人物与物件、地图、确认前已有代价提示、实际行动后果和终局评价。
+可以自己探索，也可以选择人格倾向查看推荐或授权有限步数代行。
+评分基于当前公开选项与已有观察；世界后果仍由真实 C0/K0 Session 结算。
 
-## 当前等待
+Web 服务提供请求去重、版本校核与局内状态隔离。
+`/api/health` 给出实际引擎路径、Git 版本、作者文件摘要与编译次数，便于核对连线。
+桌面检查覆盖1280×720、1440×900、1920×1080；手机以纵向滚动使用，已有三尺寸布局检查。
+运行和分享说明见 Web README；远程邀请使用限时私有 HTTPS 入口，公共主页提供视频与本地源码。
 
-2026-10-11 的真实浏览器短样本中，检查脚下、跨冰、邀请三次操作响应约
-0.87、1.27、1.59 秒；页面会等待真实 NPC 行动与世界推进。不是即时交互，
-首次 Compile 也不包含在这些数字内。当前代码减少标准槽位的描述符查询和
-生成字段验证的 `getattr` 派发，没有削弱逐项检查或减少 NPC 行动。
-尚未重新进行陌生玩家评分，不把此小幅优化当作体验问题已解决。
+## 计时记录怎样阅读
+
+2026-10-11 的浏览器短样本中，检查脚下、跨冰、邀请三次响应约0.87、1.27、1.59秒，
+包含实际 NPC 行动与世界推进，首次 Compile 单列。
+[2026-10-10 固定43项行动／1180条发生的历史报告](evidence/runtime-pair-2026-10-10/README.md)
+约45秒，用于核对同输入的状态与来源摘要；两种计时对应不同负载。
+
+展示标签只更新介绍、文档与获取入口，引擎执行代码承接 `a1843474f28880819a937613ed09fc266177207e`，
+Web 应用代码承接 `715ebc7ad10cd3053b2d9f88d38b25a0070b8a3f`。
+影片另保留[采集版本](showcase/introduction/film-v3/README.md)，可分别核查。

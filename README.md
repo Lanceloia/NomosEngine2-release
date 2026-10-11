@@ -1,6 +1,10 @@
 # NomosEngine2
 
-**面向规则驱动沙盒的创作工具链：声明世界规则，让行动产生故事。**
+**设计游戏规则，编译成可玩的原型，再用行动回放检验规则。**
+
+NomosEngine2 面向规则驱动沙盒的创作：作者声明人物、物件、能力和世界规律，
+修改规则即可改变同一行动的实际后果。当前用狼人杀和冰宫冒险检验这条创作链，
+长期希望支援自由行动的 RPG/TRPG，让故事来自玩家选择与世界规则的共同运行。
 
 沙盒中的玩家可能做出作者没有预料的选择。我们的目标是让作者声明实体、能力、
 物件状态和世界规律，由共同的执行内核检查行动并结算后果，让故事成为实际行动留下的历史，
@@ -19,9 +23,9 @@ Program + 开局数据 → K0 Session → 行动、后果与发生来源
 
 | 你有多少时间 | 推荐入口 |
 | --- | --- |
-| 约三分钟：先了解项目 | [在线中文介绍](https://lanceloia.github.io/NomosEngine2-release/)、[讲稿与视频文件](docs/showcase/introduction/README.md) |
+| 约四分半：先了解项目 | [在线中文介绍](https://lanceloia.github.io/NomosEngine2-release/)、[讲稿与视频文件](docs/showcase/introduction/README.md) |
 | 想核对规则改动是否真的有效 | [三个可复现实验](docs/PROJECT_TOUR.md#先看三个实验)，安装命令见下文 |
-| 想体验规则组合成的冒险 | [M1 桌面演示](docs/M1_WEB.md)，当前需要本地运行 |
+| 想体验规则组合成的冒险 | [M1 Web 源码与启动](docs/M1_WEB.md)，支持本地试玩 |
 | 想检查系统与编译实现 | [代码地图](docs/CODE_MAP.md)、[设计取舍](docs/DESIGN.md) |
 
 首次阅读：[中文项目导览](docs/PROJECT_TOUR.md)把三个实验、作者文件和实际执行路径串起来；
@@ -31,7 +35,7 @@ Program + 开局数据 → K0 Session → 行动、后果与发生来源
 [项目演进](docs/PROJECT_EVOLUTION.md)介绍从 TRPG 创作愿望到沙盒工具链的探索：
 具体世界怎样推动规则作者化、语义 IR 和当前 C0 / K0 / T0 的形成。
 
-先看[约三分钟中文项目介绍](docs/showcase/introduction/film-v1/introduction.mp4)：
+先看[约4分32秒中文项目介绍](docs/showcase/introduction/film-v3/introduction.mp4)：
 有旁白和字幕，讲清动机、方法、当前成果与未来愿景；[讲解页面与讲稿](docs/showcase/introduction/README.md)可选章核对。
 
 ## 用一组实验理解项目
@@ -83,6 +87,7 @@ Program + 开局数据 → K0 Session → 行动、后果与发生来源
 ```bash
 git clone https://github.com/Lanceloia/NomosEngine2-release.git nomosengine2-release
 cd nomosengine2-release
+git checkout showcase-2026-10-11
 python3 -m venv .venv
 .venv/bin/python -m pip install -e '.[dev]'
 .venv/bin/python tools/release_rule_edit_demo.py
@@ -146,7 +151,7 @@ T0 报告这条行动见证的实际运行结果和目标检查。
 [浏览器观看介绍](https://lanceloia.github.io/NomosEngine2-release/)；
 [GitHub 验证记录](https://github.com/Lanceloia/NomosEngine2-release/actions/workflows/checked-baseline.yml)
 执行具名合同测试、干净 wheel 安装与三个规则编辑实验。
-两个世界已从 wheel 独立运行。已有同输入冰宫整局为 43 项行动、1180 条发生，
+两个世界已从 wheel 独立运行。2026-10-10 已保存的历史固定负载为 43 项行动、1180 条发生，
 基线/候选 Run 为 45.056/45.106 秒，状态与来源摘要一致。
 这组记录用于核对同输入下的运行状态与来源一致性。
 [原始报告与负载说明](docs/evidence/runtime-pair-2026-10-10/README.md)可核对计时、版本与结果摘要。
