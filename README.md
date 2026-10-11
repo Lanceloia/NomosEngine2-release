@@ -9,6 +9,12 @@
 当前工程重点是声明式作者语言、编译器、规则执行内核和行动见证验证工具。
 狼人杀检验规则编辑，M1 冰宫冒险检验观察、资源、行动和时间的共同运行。
 
+```text
+作者规则 + 世界声明 → C0 编译 → Program
+Program + 开局数据 → K0 Session → 行动、后果与发生来源
+行动见证 → T0 在同一 Session 上执行 → 目标结果与失败诊断
+```
+
 ## 从这里开始
 
 | 你有多少时间 | 推荐入口 |
@@ -72,9 +78,11 @@
 
 ## 安装与复现
 
-从仓库根执行（Windows 可将 `.venv/bin/python` 换成 `.venv\Scripts\python.exe`）：
+获取仓库后执行（Windows 可将 `.venv/bin/python` 换成 `.venv\Scripts\python.exe`）：
 
 ```bash
+git clone https://github.com/Lanceloia/NomosEngine2-release.git nomosengine2-release
+cd nomosengine2-release
 python3 -m venv .venv
 .venv/bin/python -m pip install -e '.[dev]'
 .venv/bin/python tools/release_rule_edit_demo.py
@@ -134,7 +142,7 @@ T0 报告这条行动见证的实际运行结果和目标检查。
 
 ## 当前与未来
 
-**当前是可安装、可复现的本地发行基线，尚未公开发布。**
+**当前提供可安装、可复现的发行基线；代码与中文演示随仓库发布。**
 两个世界已从 wheel 独立运行。已有同输入冰宫整局为 43 项行动、1180 条发生，
 基线/候选 Run 为 45.056/45.106 秒，状态与来源摘要一致。
 这组记录用于核对同输入下的运行状态与来源一致性。
@@ -150,6 +158,8 @@ LLM DM 可以作为未来的上游工具，提议行动、草拟可检查资产�
 ## 归属与权利
 
 项目发起者负责项目愿景、问题定义、语义裁决与亲自验收；后期主要代码由 Codex 及协作者
-实现或审阅。具体设计、实验和代码路径见上方导览。
+实现或审阅。发起者推动了“世界源码与行动见证分离”、从具体游戏转向通用规则编译、
+以及从作者重复中提炼语义 IR 的设计，并亲自核对禁自救、换女巫和扩人数实验。
+这些决定的形成过程见[项目演进](docs/PROJECT_EVOLUTION.md)，实现证据见上方导览。
 原创引擎材料保留权利；M1 改编作者资产另有 CC BY-SA 4.0 条款，二者不能混成一份授权。
 详见[权利说明](RIGHTS.md)。

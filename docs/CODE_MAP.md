@@ -11,6 +11,10 @@
 2. **编译与绑定**：[compile_owner_graph](../src/nomos_c0/owner_graph_v1.py)
    检查世界声明并构建 Program；[行动绑定](../src/nomos_c0/composable_action_v1.py)
    把已检查的规则、参与者和输出接入 K0。
+   按符号继续检查：`graph_frontend_v1.check_owner_graph()` →
+   `composable_action_v1.compile_composable_action()` →
+   `world_binding_v1.bind_world()` → 已绑定行动的 `build_spec()`。
+   前端核声明，行动编译生成受检执行表示，世界绑定核对应关系，`build_spec()` 给 K0 注册执行端口。
 3. **实际提交**：[Session](../src/nomos_c0/program_runtime_v1.py)将当前选项提交到
    [K0 原子会话](../engine/kernel/src/nomos_kernel/_atomic_inmemory_session.py)，
    后者的 `settle()` 重核当前态并发布实际发生。准入入口是
