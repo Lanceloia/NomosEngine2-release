@@ -9394,10 +9394,10 @@ seat_offer_previews:
     fixed_individual_root: {name: torch, kind: everflame, binding: fixed_unique_opening}
     max_candidates: 32
     value:
-      read: [actor.name, actor.site, actor.known_coverage, actor.known_everflame_charges, candidate.intended, torch.holder]
-      fields: {Coverage: [origin, near_sites, mid_sites, far_sites], KnownCrossing: [intended]}
+      read: [actor.name, actor.site, actor.known_coverage, actor.known_everflame_charges, actor.current_movement_speed, actor.max_movement_speed, candidate.intended, candidate.base_move_cost, torch.holder]
+      fields: {Coverage: [origin, near_sites, mid_sites, far_sites], KnownCrossing: [intended, base_move_cost]}
       write_paths: []
-      outputs: {self_if_success: str}
+      outputs: {self_if_success: str, action_value_cost: int}
       construct: []
       collections: {}
   - symbol: move_self_protection
@@ -9411,10 +9411,10 @@ seat_offer_previews:
     fixed_individual_root: {name: torch, kind: everflame, binding: fixed_unique_opening}
     max_candidates: 32
     value:
-      read: [actor.name, actor.site, actor.known_coverage, actor.known_everflame_charges, candidate.end, torch.holder]
-      fields: {Coverage: [origin, near_sites, mid_sites, far_sites], Path: [end]}
+      read: [actor.name, actor.site, actor.known_coverage, actor.known_everflame_charges, actor.current_movement_speed, actor.max_movement_speed, candidate.end, candidate.base_move_cost, torch.holder]
+      fields: {Coverage: [origin, near_sites, mid_sites, far_sites], Path: [end, base_move_cost]}
       write_paths: []
-      outputs: {self_after_move: str}
+      outputs: {self_after_move: str, action_value_cost: int}
       construct: []
       collections: {}
   - symbol: thaw_protection

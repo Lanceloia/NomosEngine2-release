@@ -1082,8 +1082,10 @@ seats:
       projection_focus: {}
       preview_fields:
         cross_ice_adventurer:
+          action_value_cost: 行动值消耗
           self_if_success: My protection if this crossing succeeds
         move_adventurer:
+          action_value_cost: 行动值消耗
           self_after_move: My protection if this passage succeeds
         thaw_ritual_resident:
           status: Protection at the known target area now

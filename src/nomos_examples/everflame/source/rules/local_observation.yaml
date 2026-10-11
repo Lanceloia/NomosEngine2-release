@@ -445,8 +445,19 @@ lawdefs:
       value:
         schema: c0.value.v1
         bindings: []
-        guard: {const: true}
+        guard: &movement_preview_speed
+          all:
+          - {lt: [0, {ref: actor.current_movement_speed}]}
+          - {lt: [0, {ref: actor.max_movement_speed}]}
+          - {le: [{ref: actor.current_movement_speed}, {ref: actor.max_movement_speed}]}
         outputs:
+          action_value_cost: &movement_preview_cost
+            call:
+              ref: movement.action_cost
+              args:
+                base_cost: {ref: candidate.base_move_cost}
+                maximum_speed: {ref: actor.max_movement_speed}
+                current_speed: {ref: actor.current_movement_speed}
           self_after_move:
             if:
               when:
@@ -465,8 +476,9 @@ lawdefs:
       value:
         schema: c0.value.v1
         bindings: []
-        guard: {const: true}
+        guard: *movement_preview_speed
         outputs:
+          action_value_cost: *movement_preview_cost
           self_if_success:
             if:
               when:
