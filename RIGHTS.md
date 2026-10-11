@@ -11,6 +11,10 @@ by the upstream project. They are not covered by the engine's reserved-rights
 notice. Their attribution is retained in `src/nomos_examples/M1_ATTRIBUTION.md`
 and included in installed distributions.
 
+The Chinese presentation font subsets under `docs/showcase/introduction/font/`
+and `docs/showcase/introduction/film-v1/font/` retain SIL OFL 1.1. Their copyright,
+derivation notice and complete license accompany each copy.
+
 This notice does not claim ownership of third-party material and does not
 override existing terms. No original adventure PDF, archived font or unrelated
 research archive is included in this extraction.

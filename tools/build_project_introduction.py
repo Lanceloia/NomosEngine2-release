@@ -90,6 +90,7 @@ def assemble(board: dict, intervals: list[tuple[float, float]], output: Path) ->
     (output / "index.html").write_text(
         template.replace("__INTRODUCTION__", serialized), encoding="utf-8"
     )
+    shutil.copytree(SOURCE / "font", output / "font")
     (output / "timeline.json").write_text(
         json.dumps(board, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
@@ -151,6 +152,7 @@ try {
         ROOT / "docs/showcase/recording/capture-v1/comparison.json",
         ROOT / "docs/showcase/wolf-vote/evidence-predicates-v1/result.json",
         ROOT / "docs/showcase/world-edits/evidence-predicates-v1/result.json",
+        *sorted((SOURCE / "font").iterdir()),
     ]
     manifest = {
         "kind": "educational summary, not an execution capture",
@@ -159,7 +161,11 @@ try {
         "synthesis": "local Windows System.Speech",
         "duration_seconds": board["duration"],
         "inputs_sha256": {str(path.relative_to(ROOT)): digest(path) for path in inputs},
-        "outputs_sha256": {path.name: digest(path) for path in output.iterdir() if path.is_file()},
+        "outputs_sha256": {
+            str(path.relative_to(output)): digest(path)
+            for path in sorted(output.rglob("*"))
+            if path.is_file()
+        },
         "note": (
             "Saved evidence is summarized, not rerun. SHA256 identifies bytes; "
             "it is not a signature. No engine or world changes."

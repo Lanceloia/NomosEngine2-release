@@ -50,6 +50,9 @@ def test_render_embeds_data_safely_and_emits_timed_subtitles(tmp_path):
     assert "</script><script>bad</script>" not in page
     assert "00:00:00,600 --> 00:00:02,000" in (tmp_path / "subtitles.srt").read_text()
     assert json.loads((tmp_path / "timeline.json").read_text())["duration"] == 3.3
+    assert 'url("font/nomos-introduction-sc.woff2")' in page
+    for name in ("nomos-introduction-sc.woff2", "OFL.txt", "README.md"):
+        assert (tmp_path / "font" / name).read_bytes() == (intro.SOURCE / "font" / name).read_bytes()
 
 
 def test_storyboard_and_player_cover_each_declared_visual():
