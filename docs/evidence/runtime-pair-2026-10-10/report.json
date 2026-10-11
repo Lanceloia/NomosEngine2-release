@@ -1,0 +1,1024 @@
+{
+  "policy": "owner-approved-2026-10-10",
+  "scope": "one serial full pair; no new short samples",
+  "python": "3.14.4 (main, Aug 20 2026, 10:41:58) [GCC 15.2.0]",
+  "cores": [
+    {
+      "root": "/mnt/d/nomosengine2-runtime-frozen",
+      "commit": "83c2d964213d1865b6070434b53f7fdf408f32f8",
+      "status": "",
+      "short_evidence_commit": "83c2d964213d1865b6070434b53f7fdf408f32f8"
+    },
+    {
+      "root": "/mnt/d/nomosengine2-release",
+      "commit": "c298b8f03908545c2347e508416beb5320737004",
+      "status": "",
+      "short_evidence_commit": "eb8c2e89ca885e42e215d1f12458f27d8960cad5"
+    }
+  ],
+  "short_evidence_sha256": "a7ea2eed4dd54c2bfdbb5ceed46d91531391865b132c02f59052d09ab096fd3b",
+  "short_assessment": {
+    "policy": "owner-approved-2026-10-10",
+    "regression_limit": 1.1,
+    "required_pairs": 6,
+    "pair_count": 8,
+    "parcel_sessions_per_pair": 256,
+    "samples": {
+      "short": {
+        "status": "passed",
+        "median_ratio": 1.0071301528704173,
+        "within_budget": 6,
+        "noise_ratio": 1.381085283411041,
+        "noise_warning": true,
+        "original_status": "inconclusive",
+        "ratios": [
+          0.9842603880838409,
+          0.98016220304071,
+          1.3346429394712034,
+          1.1312381866659016,
+          1.060680447077457,
+          1.0001380993677664,
+          0.9663725734408428,
+          1.0141222063730682
+        ]
+      },
+      "parcel": {
+        "status": "passed",
+        "median_ratio": 0.9564921559043464,
+        "within_budget": 8,
+        "noise_ratio": 1.3166662677376997,
+        "noise_warning": true,
+        "original_status": "inconclusive",
+        "ratios": [
+          1.0064580485822685,
+          0.8532937892888881,
+          0.7824678953892537,
+          0.9460520084841707,
+          0.8803852517411155,
+          0.9669323033245222,
+          1.0047108645619063,
+          1.0302490834467415
+        ]
+      }
+    },
+    "measured_cores": [
+      {
+        "root": "/mnt/d/nomosengine2-runtime-frozen",
+        "commit": "83c2d964213d1865b6070434b53f7fdf408f32f8",
+        "status": ""
+      },
+      {
+        "root": "/mnt/d/nomosengine2-release",
+        "commit": "eb8c2e89ca885e42e215d1f12458f27d8960cad5",
+        "status": ""
+      }
+    ],
+    "full": "not_assessed",
+    "scope": "saved short evidence only; not current-revision or full-release acceptance"
+  },
+  "input_fingerprint": {
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/capabilities.ports.yaml": "7be2928a3f9b3ece745ced6228571c87a091a913a49991324a9183b294fef514",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/model.lib.yaml": "1a27c2b762b32d4eb2814ba7535da11547114e52edf4e9d5ba74588a33efe2a2",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/opening.assets.yaml": "fd46cca3383d63774c5347e68a3db021240b016f56eee97cfe9c71d0dc653b65",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/bindings/capabilities.yaml": "6a7cb3833cde75daf5fa904c6d5ec0df7ac252e5eb4b684e17e5ee1951e9005d",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/control/ice_elemental.yaml": "6381baf169bbcf6ef053dda14faa92a7ddda5be1186d360eea932bbd8dea7adc",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/control/policies.yaml": "394abaf17d8becbc3a2737896fa89158721f2b8628d8fef4d35e635d75954533",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/control/seats.yaml": "26eb72faaf56040e75e008eb24c0588e9d38f5ba0d730843bcffcf9137ab5a10",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/control/session.yaml": "fc42ba99f74a616f96b8872c15cd984b586bcab252c65029a3eb761bd180dd45",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/menu_sets.yaml": "500978901f90a4616f2b898170cd9e615f55ec424dde27f43a08fb5843da9986",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/participant_bindings.yaml": "a88e4315be8b89a2f6d50edda9cfd55bbeb30b01fefc22f97451138e033c4f2c",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/regions/ballroom_chandelier.yaml": "9cc45e7964915658b7162de6ff505da300f5cfdf705ffcf523a0cb414950a619",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/regions/palace_events.yaml": "7c14e3b450fc8b1b3620f4ed3e03764a7a71987ecd7fcfa0bc3ddf032784c1d4",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/regions/prison_charge.yaml": "fe214f55c679f7ce2d234ad050e852802cd2e5f9bc67f968752d95f924019ed1",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/regions/ritual_thaw.yaml": "e60e4604d9cde2f544795a309f673e3e774a5342389a302501099978d565282b",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/actor_ice_movement.yaml": "d613b96a7e1ee0f0d595a3330fb59745cdce688874b1b9e5391f1ffa306872c2",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/area_damage.yaml": "c94f1de804f4ae8a2bf656d8ebd7bf6da1819b2f70fc45df4249908a268e9c44",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/balloon_ground_movement.yaml": "18fbaa2410ec1bb3b1e602b38bb6651d1cf5c34be058aa4d463ccf37516f5279",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/balloon_interactions.yaml": "94a037005765689623ad9d1175abe25d923dd473bc2710fe110a9a23ebe44593",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/bar_and_sharing.yaml": "ba96e27b8e813a84c7785586eb46646bef880438cdf7071919e06d2b9abdc49f",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/carry_movement.yaml": "989a2e91a659ccfacd7b2e1cac89de97176bd8f87969312321917b7815f71f57",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/cold.yaml": "332417feb4a4935340081b09c0dfc1aeac9a7a99d1f2f39a4ba2cb1e5786d3c0",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/combat_custody_and_fox.yaml": "882de31568ba049841539ead0e62dc5b8be9db39f01216ad2533f83e931a9491",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/door_bridge_movement.yaml": "e06ebffa754b4c79e3ce2ea67a2f1e734608e5882f7bfb06720b0e8404f5e366",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/escort_and_reward.yaml": "b53de505cb5f4ec3545fc7f3d8c28324aab82e90cf68eb14d22dce582a6b90ab",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/everflame.yaml": "7aef5e0c333b7cf2b5438e51a1c37bb3cb92915511e4081235b0c240bf5ad9a1",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/fox_bridge_movement.yaml": "067e6516a4e5123d63a040ebe627e2910d83212656bd506bd508383041429b9a",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/ground_movement.yaml": "abc6c96849b28eab8eb61e2dc6613b000f9b7d663efb0666db2c4f7ffa615d97",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/ice_movement.yaml": "113213c8a728f9a887fc07b1560ee2241cafa80c226a88eafa5b01ef857084f4",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/local_observation.yaml": "0bc88b48dcd268cac8c76578548b47cf1815fec40476f8a8e0c719b3fb2bd002",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/magic_research.yaml": "4e456e7f9655da61cc0a19aebe3521fd3539b53be9b37c9034ab5202a7f1f27b",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/prison_interactions.yaml": "c66e33e30bd6b74a8804525f23054f7b16dd12448f0d90b2852e32429f6dd7f2",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/ritual_and_world_events.yaml": "d693de36e656a8396b0bca75224b35c24eacf71553bda478a3395bbaa25b7a85",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/shared_actions.yaml": "ae4077f06e0b40d9d360d076dae96b775ed26e178437e3232db5f4784f49dbea",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/thaw.yaml": "50ee126f2427de2cfd6009ff5374dd934837e3b8782bf1230db65424153156bf",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/tower_dialogue.yaml": "2e2c98636787f4e50a7a7dae04bc564fa2734a877313461d7b04dccb78f846fa",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/treasure_resources.yaml": "43399de4760759d25a5a5bb24be2bbc54b3f2ebfa4286082a5a836ef9a2339d0",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/visits_and_invitations.yaml": "8c40d66ccc8097bde1d817882c61f4acbb6dbe5231f87ec868827681943d8301",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/wall_climbing.yaml": "d646be7f48ce00f445e9c45f9493df93e2a9a2c1ddbbcd7198ce6f8c7571dd85",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/world.yaml": "e866c35e7cb02931dc9a2420cae990a20e2ea46f8000d1cba9e08300ec36b99c",
+    "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/world.bundle.yaml": "a616f2d5fad1074b5db8793ae4b308dc3fab1555a51d1b5c6dcdda27d8d390b7",
+    "/mnt/d/nomosengine2-release/src/nomos_c0/examples/parcel_delivery_v0.lib.json": "c4954e16e6a7ea0dfbb35a2541f7adf6429f01c95bcaf318c11bec824974a19a",
+    "/mnt/d/nomosengine2-release/src/nomos_c0/examples/parcel_delivery_v0.ports.json": "aaeaad71288cf40854e7d3fb293f0dd369b636db4648f19b85499ea3107bfa1a",
+    "/mnt/d/nomosengine2-release/src/nomos_c0/examples/parcel_delivery_v0.source.json": "8f6bf04092c4d41ad9cda463c7f83e9ffb31596a0e8e4f785d9f13789188e51a",
+    "/mnt/d/nomosengine2-release/src/nomos_c0/examples/parcel_delivery_v0.a.assets.json": "6ffdca730f1eb9e8a29cb38259422910ada2c3b59df9e343a02e49ac23a0a742"
+  },
+  "builds": [
+    {
+      "ready": true,
+      "compile_seconds": 33.626959290000286,
+      "parcel_compile_seconds": 0.05220773700011705,
+      "origins": {
+        "nomos_kernel._identity": "/mnt/d/nomosengine2-runtime-frozen/engine/kernel/src/nomos_kernel/_identity.py",
+        "nomos_kernel": "/mnt/d/nomosengine2-runtime-frozen/engine/kernel/src/nomos_kernel/__init__.py",
+        "nomos_kernel._coordinates": "/mnt/d/nomosengine2-runtime-frozen/engine/kernel/src/nomos_kernel/_coordinates.py",
+        "nomos_kernel._actor_identity": "/mnt/d/nomosengine2-runtime-frozen/engine/kernel/src/nomos_kernel/_actor_identity.py",
+        "nomos_kernel._owner_abi": "/mnt/d/nomosengine2-runtime-frozen/engine/kernel/src/nomos_kernel/_owner_abi.py",
+        "nomos_kernel._admission_abi": "/mnt/d/nomosengine2-runtime-frozen/engine/kernel/src/nomos_kernel/_admission_abi.py",
+        "nomos_kernel._action_value_abi": "/mnt/d/nomosengine2-runtime-frozen/engine/kernel/src/nomos_kernel/_action_value_abi.py",
+        "nomos_kernel._dynamic_owner_abi": "/mnt/d/nomosengine2-runtime-frozen/engine/kernel/src/nomos_kernel/_dynamic_owner_abi.py",
+        "nomos_kernel._dynamic_actor_abi": "/mnt/d/nomosengine2-runtime-frozen/engine/kernel/src/nomos_kernel/_dynamic_actor_abi.py",
+        "nomos_kernel._event_jump_abi": "/mnt/d/nomosengine2-runtime-frozen/engine/kernel/src/nomos_kernel/_event_jump_abi.py",
+        "nomos_kernel._rule_products_abi": "/mnt/d/nomosengine2-runtime-frozen/engine/kernel/src/nomos_kernel/_rule_products_abi.py",
+        "nomos_kernel._semantic_link_abi": "/mnt/d/nomosengine2-runtime-frozen/engine/kernel/src/nomos_kernel/_semantic_link_abi.py",
+        "nomos_kernel._state_image_abi": "/mnt/d/nomosengine2-runtime-frozen/engine/kernel/src/nomos_kernel/_state_image_abi.py",
+        "nomos_kernel._occurrence_record_abi": "/mnt/d/nomosengine2-runtime-frozen/engine/kernel/src/nomos_kernel/_occurrence_record_abi.py",
+        "nomos_kernel._terminal_settlement_abi": "/mnt/d/nomosengine2-runtime-frozen/engine/kernel/src/nomos_kernel/_terminal_settlement_abi.py",
+        "nomos_kernel._settlement_outcome_abi": "/mnt/d/nomosengine2-runtime-frozen/engine/kernel/src/nomos_kernel/_settlement_outcome_abi.py",
+        "nomos_c0.author_contract_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/author_contract_v1.py",
+        "nomos_kernel._causal_law_abi": "/mnt/d/nomosengine2-runtime-frozen/engine/kernel/src/nomos_kernel/_causal_law_abi.py",
+        "nomos_kernel._canonical_wire": "/mnt/d/nomosengine2-runtime-frozen/engine/kernel/src/nomos_kernel/_canonical_wire.py",
+        "nomos_kernel._owner_state_runtime": "/mnt/d/nomosengine2-runtime-frozen/engine/kernel/src/nomos_kernel/_owner_state_runtime.py",
+        "nomos_kernel._candidate_owner_state_runtime": "/mnt/d/nomosengine2-runtime-frozen/engine/kernel/src/nomos_kernel/_candidate_owner_state_runtime.py",
+        "nomos_kernel._occurrence_formation_abi": "/mnt/d/nomosengine2-runtime-frozen/engine/kernel/src/nomos_kernel/_occurrence_formation_abi.py",
+        "nomos_kernel._atomic_inmemory_session": "/mnt/d/nomosengine2-runtime-frozen/engine/kernel/src/nomos_kernel/_atomic_inmemory_session.py",
+        "nomos_c0.scene_action_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/scene_action_v1.py",
+        "nomos_c0.scene_due_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/scene_due_v1.py",
+        "nomos_c0": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/__init__.py",
+        "nomos_c0.author_document_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/author_document_v1.py",
+        "nomos_c0.compile_budget_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/compile_budget_v1.py",
+        "nomos_c0.participant_expression_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/participant_expression_v1.py",
+        "nomos_c0.condition_source_v0": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/condition_source_v0.py",
+        "nomos_c0.expression_ir_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/expression_ir_v1.py",
+        "nomos_c0.generated_record_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/generated_record_v1.py",
+        "nomos_c0.guard_ir_v0": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/guard_ir_v0.py",
+        "nomos_c0.nominal_fields_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/nominal_fields_v1.py",
+        "nomos_c0.output_family_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/output_family_v1.py",
+        "nomos_c0.pure_definition_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/pure_definition_v1.py",
+        "nomos_c0.replayable_die_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/replayable_die_v1.py",
+        "nomos_c0.value_effect_ir_v0": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/value_effect_ir_v0.py",
+        "nomos_c0.variant_types_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/variant_types_v1.py",
+        "nomos_c0.composable_value_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/composable_value_v1.py",
+        "nomos_c0.value_symbols_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/value_symbols_v1.py",
+        "nomos_c0.nominal_signatures_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/nominal_signatures_v1.py",
+        "nomos_c0.checked_value_binding_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/checked_value_binding_v1.py",
+        "nomos_c0.actor_domain_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/actor_domain_v1.py",
+        "nomos_c0.actor_product_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/actor_product_v1.py",
+        "nomos_c0.object_product_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/object_product_v1.py",
+        "nomos_c0.semantic_ir_v0": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/semantic_ir_v0.py",
+        "nomos_c0.composable_action_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/composable_action_v1.py",
+        "nomos_c0.candidate_input_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/candidate_input_v1.py",
+        "nomos_c0.expression_read_authority_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/expression_read_authority_v1.py",
+        "nomos_c0.private_actor_binding_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/private_actor_binding_v1.py",
+        "nomos_c0.seat_offers_v0": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/seat_offers_v0.py",
+        "nomos_c0.finite_appraisal_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/finite_appraisal_v1.py",
+        "nomos_c0.lawdef_binding_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/lawdef_binding_v1.py",
+        "nomos_c0.appraisal_definition_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/appraisal_definition_v1.py",
+        "nomos_c0.direct_scene_event_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/direct_scene_event_v1.py",
+        "nomos_c0.object_domain_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/object_domain_v1.py",
+        "nomos_c0.scheduled_scene_event_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/scheduled_scene_event_v1.py",
+        "nomos_c0.direct_actor_event_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/direct_actor_event_v1.py",
+        "nomos_c0.nominal_types_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/nominal_types_v1.py",
+        "nomos_c0.opening_construction_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/opening_construction_v1.py",
+        "nomos_c0.seat_offer_preview_v0": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/seat_offer_preview_v0.py",
+        "nomos_c0.seat_read_projection_v0": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/seat_read_projection_v0.py",
+        "nomos_c0.graph_contracts_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/graph_contracts_v1.py",
+        "nomos_c0.invariant_execution_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/invariant_execution_v1.py",
+        "nomos_c0.nominal_owner_layout_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/nominal_owner_layout_v1.py",
+        "nomos_c0.nominal_validation_execution_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/nominal_validation_execution_v1.py",
+        "nomos_c0.validation_contract_execution_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/validation_contract_execution_v1.py",
+        "nomos_c0.validation_operation_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/validation_operation_v1.py",
+        "nomos_c0.declarative_nominal_v0": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/declarative_nominal_v0.py",
+        "nomos_c0.endpoint_signature_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/endpoint_signature_v1.py",
+        "nomos_c0.participant_group_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/participant_group_v1.py",
+        "nomos_c0.declarative_graph_ports_v0": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/declarative_graph_ports_v0.py",
+        "nomos_c0.actor_binding_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/actor_binding_v1.py",
+        "nomos_c0.world_ir_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/world_ir_v1.py",
+        "nomos_c0.control_ir_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/control_ir_v1.py",
+        "nomos_c0.temporal_lowering_v0": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/temporal_lowering_v0.py",
+        "nomos_c0.world_binding_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/world_binding_v1.py",
+        "nomos_c0.control_binding_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/control_binding_v1.py",
+        "nomos_c0.event_formation_ir_v2": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/event_formation_ir_v2.py",
+        "nomos_c0.event_formation_binding_v2": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/event_formation_binding_v2.py",
+        "nomos_c0.event_formation_v2": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/event_formation_v2.py",
+        "nomos_c0.object_owner_binding_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/object_owner_binding_v1.py",
+        "nomos_c0.visibility_ir_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/visibility_ir_v1.py",
+        "nomos_c0.visibility_binding_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/visibility_binding_v1.py",
+        "nomos_c0.actor_template_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/actor_template_v1.py",
+        "nomos_c0.program_ir_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/program_ir_v1.py",
+        "nomos_c0.source_schema_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/source_schema_v1.py",
+        "nomos_c0.graph_frontend_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/graph_frontend_v1.py",
+        "nomos_c0.author_diagnostics_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/author_diagnostics_v1.py",
+        "nomos_c0.program_runtime_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/program_runtime_v1.py",
+        "nomos_c0.owner_graph_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/owner_graph_v1.py",
+        "nomos_c0.source_bundle_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/source_bundle_v1.py",
+        "nomos_c0.program_binding_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/program_binding_v1.py",
+        "nomos_c0.program_start_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/program_start_v1.py",
+        "nomos_c0.offer_set_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/offer_set_v1.py",
+        "nomos_c0.participant_binding_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/participant_binding_v1.py",
+        "nomos_c0.participant_candidates_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/participant_candidates_v1.py",
+        "nomos_c0.action_cost_group_v1": "/mnt/d/nomosengine2-runtime-frozen/src/nomos_c0/action_cost_group_v1.py"
+      },
+      "input_fingerprint": {
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/capabilities.ports.yaml": "7be2928a3f9b3ece745ced6228571c87a091a913a49991324a9183b294fef514",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/model.lib.yaml": "1a27c2b762b32d4eb2814ba7535da11547114e52edf4e9d5ba74588a33efe2a2",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/opening.assets.yaml": "fd46cca3383d63774c5347e68a3db021240b016f56eee97cfe9c71d0dc653b65",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/bindings/capabilities.yaml": "6a7cb3833cde75daf5fa904c6d5ec0df7ac252e5eb4b684e17e5ee1951e9005d",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/control/ice_elemental.yaml": "6381baf169bbcf6ef053dda14faa92a7ddda5be1186d360eea932bbd8dea7adc",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/control/policies.yaml": "394abaf17d8becbc3a2737896fa89158721f2b8628d8fef4d35e635d75954533",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/control/seats.yaml": "26eb72faaf56040e75e008eb24c0588e9d38f5ba0d730843bcffcf9137ab5a10",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/control/session.yaml": "fc42ba99f74a616f96b8872c15cd984b586bcab252c65029a3eb761bd180dd45",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/menu_sets.yaml": "500978901f90a4616f2b898170cd9e615f55ec424dde27f43a08fb5843da9986",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/participant_bindings.yaml": "a88e4315be8b89a2f6d50edda9cfd55bbeb30b01fefc22f97451138e033c4f2c",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/regions/ballroom_chandelier.yaml": "9cc45e7964915658b7162de6ff505da300f5cfdf705ffcf523a0cb414950a619",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/regions/palace_events.yaml": "7c14e3b450fc8b1b3620f4ed3e03764a7a71987ecd7fcfa0bc3ddf032784c1d4",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/regions/prison_charge.yaml": "fe214f55c679f7ce2d234ad050e852802cd2e5f9bc67f968752d95f924019ed1",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/regions/ritual_thaw.yaml": "e60e4604d9cde2f544795a309f673e3e774a5342389a302501099978d565282b",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/actor_ice_movement.yaml": "d613b96a7e1ee0f0d595a3330fb59745cdce688874b1b9e5391f1ffa306872c2",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/area_damage.yaml": "c94f1de804f4ae8a2bf656d8ebd7bf6da1819b2f70fc45df4249908a268e9c44",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/balloon_ground_movement.yaml": "18fbaa2410ec1bb3b1e602b38bb6651d1cf5c34be058aa4d463ccf37516f5279",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/balloon_interactions.yaml": "94a037005765689623ad9d1175abe25d923dd473bc2710fe110a9a23ebe44593",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/bar_and_sharing.yaml": "ba96e27b8e813a84c7785586eb46646bef880438cdf7071919e06d2b9abdc49f",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/carry_movement.yaml": "989a2e91a659ccfacd7b2e1cac89de97176bd8f87969312321917b7815f71f57",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/cold.yaml": "332417feb4a4935340081b09c0dfc1aeac9a7a99d1f2f39a4ba2cb1e5786d3c0",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/combat_custody_and_fox.yaml": "882de31568ba049841539ead0e62dc5b8be9db39f01216ad2533f83e931a9491",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/door_bridge_movement.yaml": "e06ebffa754b4c79e3ce2ea67a2f1e734608e5882f7bfb06720b0e8404f5e366",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/escort_and_reward.yaml": "b53de505cb5f4ec3545fc7f3d8c28324aab82e90cf68eb14d22dce582a6b90ab",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/everflame.yaml": "7aef5e0c333b7cf2b5438e51a1c37bb3cb92915511e4081235b0c240bf5ad9a1",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/fox_bridge_movement.yaml": "067e6516a4e5123d63a040ebe627e2910d83212656bd506bd508383041429b9a",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/ground_movement.yaml": "abc6c96849b28eab8eb61e2dc6613b000f9b7d663efb0666db2c4f7ffa615d97",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/ice_movement.yaml": "113213c8a728f9a887fc07b1560ee2241cafa80c226a88eafa5b01ef857084f4",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/local_observation.yaml": "0bc88b48dcd268cac8c76578548b47cf1815fec40476f8a8e0c719b3fb2bd002",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/magic_research.yaml": "4e456e7f9655da61cc0a19aebe3521fd3539b53be9b37c9034ab5202a7f1f27b",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/prison_interactions.yaml": "c66e33e30bd6b74a8804525f23054f7b16dd12448f0d90b2852e32429f6dd7f2",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/ritual_and_world_events.yaml": "d693de36e656a8396b0bca75224b35c24eacf71553bda478a3395bbaa25b7a85",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/shared_actions.yaml": "ae4077f06e0b40d9d360d076dae96b775ed26e178437e3232db5f4784f49dbea",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/thaw.yaml": "50ee126f2427de2cfd6009ff5374dd934837e3b8782bf1230db65424153156bf",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/tower_dialogue.yaml": "2e2c98636787f4e50a7a7dae04bc564fa2734a877313461d7b04dccb78f846fa",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/treasure_resources.yaml": "43399de4760759d25a5a5bb24be2bbc54b3f2ebfa4286082a5a836ef9a2339d0",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/visits_and_invitations.yaml": "8c40d66ccc8097bde1d817882c61f4acbb6dbe5231f87ec868827681943d8301",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/wall_climbing.yaml": "d646be7f48ce00f445e9c45f9493df93e2a9a2c1ddbbcd7198ce6f8c7571dd85",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/world.yaml": "e866c35e7cb02931dc9a2420cae990a20e2ea46f8000d1cba9e08300ec36b99c",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/world.bundle.yaml": "a616f2d5fad1074b5db8793ae4b308dc3fab1555a51d1b5c6dcdda27d8d390b7",
+        "/mnt/d/nomosengine2-release/src/nomos_c0/examples/parcel_delivery_v0.lib.json": "c4954e16e6a7ea0dfbb35a2541f7adf6429f01c95bcaf318c11bec824974a19a",
+        "/mnt/d/nomosengine2-release/src/nomos_c0/examples/parcel_delivery_v0.ports.json": "aaeaad71288cf40854e7d3fb293f0dd369b636db4648f19b85499ea3107bfa1a",
+        "/mnt/d/nomosengine2-release/src/nomos_c0/examples/parcel_delivery_v0.source.json": "8f6bf04092c4d41ad9cda463c7f83e9ffb31596a0e8e4f785d9f13789188e51a",
+        "/mnt/d/nomosengine2-release/src/nomos_c0/examples/parcel_delivery_v0.a.assets.json": "6ffdca730f1eb9e8a29cb38259422910ada2c3b59df9e343a02e49ac23a0a742"
+      },
+      "python": "3.14.4 (main, Aug 20 2026, 10:41:58) [GCC 15.2.0]",
+      "yaml": "6.0.3",
+      "parcel_sessions_per_pair": 256
+    },
+    {
+      "ready": true,
+      "compile_seconds": 36.27623171000005,
+      "parcel_compile_seconds": 0.05540032999988398,
+      "origins": {
+        "nomos_kernel._identity": "/mnt/d/nomosengine2-release/engine/kernel/src/nomos_kernel/_identity.py",
+        "nomos_kernel": "/mnt/d/nomosengine2-release/engine/kernel/src/nomos_kernel/__init__.py",
+        "nomos_kernel._coordinates": "/mnt/d/nomosengine2-release/engine/kernel/src/nomos_kernel/_coordinates.py",
+        "nomos_kernel._actor_identity": "/mnt/d/nomosengine2-release/engine/kernel/src/nomos_kernel/_actor_identity.py",
+        "nomos_kernel._owner_abi": "/mnt/d/nomosengine2-release/engine/kernel/src/nomos_kernel/_owner_abi.py",
+        "nomos_kernel._admission_abi": "/mnt/d/nomosengine2-release/engine/kernel/src/nomos_kernel/_admission_abi.py",
+        "nomos_kernel._action_value_abi": "/mnt/d/nomosengine2-release/engine/kernel/src/nomos_kernel/_action_value_abi.py",
+        "nomos_kernel._dynamic_owner_abi": "/mnt/d/nomosengine2-release/engine/kernel/src/nomos_kernel/_dynamic_owner_abi.py",
+        "nomos_kernel._dynamic_actor_abi": "/mnt/d/nomosengine2-release/engine/kernel/src/nomos_kernel/_dynamic_actor_abi.py",
+        "nomos_kernel._event_jump_abi": "/mnt/d/nomosengine2-release/engine/kernel/src/nomos_kernel/_event_jump_abi.py",
+        "nomos_kernel._rule_products_abi": "/mnt/d/nomosengine2-release/engine/kernel/src/nomos_kernel/_rule_products_abi.py",
+        "nomos_kernel._semantic_link_abi": "/mnt/d/nomosengine2-release/engine/kernel/src/nomos_kernel/_semantic_link_abi.py",
+        "nomos_kernel._state_image_abi": "/mnt/d/nomosengine2-release/engine/kernel/src/nomos_kernel/_state_image_abi.py",
+        "nomos_kernel._occurrence_record_abi": "/mnt/d/nomosengine2-release/engine/kernel/src/nomos_kernel/_occurrence_record_abi.py",
+        "nomos_kernel._terminal_settlement_abi": "/mnt/d/nomosengine2-release/engine/kernel/src/nomos_kernel/_terminal_settlement_abi.py",
+        "nomos_kernel._settlement_outcome_abi": "/mnt/d/nomosengine2-release/engine/kernel/src/nomos_kernel/_settlement_outcome_abi.py",
+        "nomos_c0.author_contract_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/author_contract_v1.py",
+        "nomos_c0": "/mnt/d/nomosengine2-release/src/nomos_c0/__init__.py",
+        "nomos_c0.author_document_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/author_document_v1.py",
+        "nomos_kernel._causal_law_abi": "/mnt/d/nomosengine2-release/engine/kernel/src/nomos_kernel/_causal_law_abi.py",
+        "nomos_kernel._canonical_wire": "/mnt/d/nomosengine2-release/engine/kernel/src/nomos_kernel/_canonical_wire.py",
+        "nomos_kernel._owner_state_runtime": "/mnt/d/nomosengine2-release/engine/kernel/src/nomos_kernel/_owner_state_runtime.py",
+        "nomos_kernel._candidate_owner_state_runtime": "/mnt/d/nomosengine2-release/engine/kernel/src/nomos_kernel/_candidate_owner_state_runtime.py",
+        "nomos_kernel._occurrence_formation_abi": "/mnt/d/nomosengine2-release/engine/kernel/src/nomos_kernel/_occurrence_formation_abi.py",
+        "nomos_kernel._atomic_inmemory_session": "/mnt/d/nomosengine2-release/engine/kernel/src/nomos_kernel/_atomic_inmemory_session.py",
+        "nomos_c0.compile_budget_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/compile_budget_v1.py",
+        "nomos_c0.participant_expression_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/participant_expression_v1.py",
+        "nomos_c0.condition_source_v0": "/mnt/d/nomosengine2-release/src/nomos_c0/condition_source_v0.py",
+        "nomos_c0.expression_ir_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/expression_ir_v1.py",
+        "nomos_c0.generated_record_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/generated_record_v1.py",
+        "nomos_c0.guard_ir_v0": "/mnt/d/nomosengine2-release/src/nomos_c0/guard_ir_v0.py",
+        "nomos_c0.nominal_fields_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/nominal_fields_v1.py",
+        "nomos_c0.output_family_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/output_family_v1.py",
+        "nomos_c0.pure_definition_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/pure_definition_v1.py",
+        "nomos_c0.replayable_die_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/replayable_die_v1.py",
+        "nomos_c0.value_effect_ir_v0": "/mnt/d/nomosengine2-release/src/nomos_c0/value_effect_ir_v0.py",
+        "nomos_c0.variant_types_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/variant_types_v1.py",
+        "nomos_c0.composable_value_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/composable_value_v1.py",
+        "nomos_c0.value_symbols_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/value_symbols_v1.py",
+        "nomos_c0.nominal_signatures_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/nominal_signatures_v1.py",
+        "nomos_c0.checked_value_binding_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/checked_value_binding_v1.py",
+        "nomos_c0.actor_domain_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/actor_domain_v1.py",
+        "nomos_c0.actor_product_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/actor_product_v1.py",
+        "nomos_c0.object_product_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/object_product_v1.py",
+        "nomos_c0.semantic_ir_v0": "/mnt/d/nomosengine2-release/src/nomos_c0/semantic_ir_v0.py",
+        "nomos_c0.composable_action_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/composable_action_v1.py",
+        "nomos_c0.candidate_input_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/candidate_input_v1.py",
+        "nomos_c0.expression_read_authority_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/expression_read_authority_v1.py",
+        "nomos_c0.private_actor_binding_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/private_actor_binding_v1.py",
+        "nomos_c0.seat_offers_v0": "/mnt/d/nomosengine2-release/src/nomos_c0/seat_offers_v0.py",
+        "nomos_c0.finite_appraisal_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/finite_appraisal_v1.py",
+        "nomos_c0.lawdef_binding_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/lawdef_binding_v1.py",
+        "nomos_c0.appraisal_definition_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/appraisal_definition_v1.py",
+        "nomos_c0.direct_scene_event_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/direct_scene_event_v1.py",
+        "nomos_c0.object_domain_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/object_domain_v1.py",
+        "nomos_c0.scheduled_scene_event_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/scheduled_scene_event_v1.py",
+        "nomos_c0.direct_actor_event_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/direct_actor_event_v1.py",
+        "nomos_c0.nominal_types_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/nominal_types_v1.py",
+        "nomos_c0.opening_construction_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/opening_construction_v1.py",
+        "nomos_c0.seat_offer_preview_v0": "/mnt/d/nomosengine2-release/src/nomos_c0/seat_offer_preview_v0.py",
+        "nomos_c0.seat_read_projection_v0": "/mnt/d/nomosengine2-release/src/nomos_c0/seat_read_projection_v0.py",
+        "nomos_c0.graph_contracts_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/graph_contracts_v1.py",
+        "nomos_c0._execution_emission": "/mnt/d/nomosengine2-release/src/nomos_c0/_execution_emission.py",
+        "nomos_c0.invariant_execution_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/invariant_execution_v1.py",
+        "nomos_c0.nominal_owner_layout_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/nominal_owner_layout_v1.py",
+        "nomos_c0.nominal_validation_execution_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/nominal_validation_execution_v1.py",
+        "nomos_c0.validation_contract_execution_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/validation_contract_execution_v1.py",
+        "nomos_c0.validation_operation_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/validation_operation_v1.py",
+        "nomos_c0.declarative_nominal_v0": "/mnt/d/nomosengine2-release/src/nomos_c0/declarative_nominal_v0.py",
+        "nomos_c0.endpoint_signature_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/endpoint_signature_v1.py",
+        "nomos_c0.participant_group_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/participant_group_v1.py",
+        "nomos_c0.declarative_graph_ports_v0": "/mnt/d/nomosengine2-release/src/nomos_c0/declarative_graph_ports_v0.py",
+        "nomos_c0.actor_binding_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/actor_binding_v1.py",
+        "nomos_c0.world_ir_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/world_ir_v1.py",
+        "nomos_c0.control_ir_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/control_ir_v1.py",
+        "nomos_c0.temporal_lowering_v0": "/mnt/d/nomosengine2-release/src/nomos_c0/temporal_lowering_v0.py",
+        "nomos_c0.world_binding_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/world_binding_v1.py",
+        "nomos_c0.control_binding_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/control_binding_v1.py",
+        "nomos_c0.event_formation_ir_v2": "/mnt/d/nomosengine2-release/src/nomos_c0/event_formation_ir_v2.py",
+        "nomos_c0.event_formation_binding_v2": "/mnt/d/nomosengine2-release/src/nomos_c0/event_formation_binding_v2.py",
+        "nomos_c0.event_formation_v2": "/mnt/d/nomosengine2-release/src/nomos_c0/event_formation_v2.py",
+        "nomos_c0.object_owner_binding_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/object_owner_binding_v1.py",
+        "nomos_c0.visibility_ir_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/visibility_ir_v1.py",
+        "nomos_c0.visibility_binding_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/visibility_binding_v1.py",
+        "nomos_c0.actor_template_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/actor_template_v1.py",
+        "nomos_c0.program_ir_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/program_ir_v1.py",
+        "nomos_c0.source_schema_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/source_schema_v1.py",
+        "nomos_c0.graph_frontend_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/graph_frontend_v1.py",
+        "nomos_c0.author_diagnostics_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/author_diagnostics_v1.py",
+        "nomos_c0.program_runtime_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/program_runtime_v1.py",
+        "nomos_c0.owner_graph_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/owner_graph_v1.py",
+        "nomos_c0.source_bundle_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/source_bundle_v1.py",
+        "nomos_c0.program_binding_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/program_binding_v1.py",
+        "nomos_c0.program_start_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/program_start_v1.py",
+        "nomos_c0.offer_set_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/offer_set_v1.py",
+        "nomos_c0.participant_binding_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/participant_binding_v1.py",
+        "nomos_c0.participant_candidates_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/participant_candidates_v1.py",
+        "nomos_c0.action_cost_group_v1": "/mnt/d/nomosengine2-release/src/nomos_c0/action_cost_group_v1.py"
+      },
+      "input_fingerprint": {
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/capabilities.ports.yaml": "7be2928a3f9b3ece745ced6228571c87a091a913a49991324a9183b294fef514",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/model.lib.yaml": "1a27c2b762b32d4eb2814ba7535da11547114e52edf4e9d5ba74588a33efe2a2",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/opening.assets.yaml": "fd46cca3383d63774c5347e68a3db021240b016f56eee97cfe9c71d0dc653b65",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/bindings/capabilities.yaml": "6a7cb3833cde75daf5fa904c6d5ec0df7ac252e5eb4b684e17e5ee1951e9005d",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/control/ice_elemental.yaml": "6381baf169bbcf6ef053dda14faa92a7ddda5be1186d360eea932bbd8dea7adc",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/control/policies.yaml": "394abaf17d8becbc3a2737896fa89158721f2b8628d8fef4d35e635d75954533",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/control/seats.yaml": "26eb72faaf56040e75e008eb24c0588e9d38f5ba0d730843bcffcf9137ab5a10",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/control/session.yaml": "fc42ba99f74a616f96b8872c15cd984b586bcab252c65029a3eb761bd180dd45",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/menu_sets.yaml": "500978901f90a4616f2b898170cd9e615f55ec424dde27f43a08fb5843da9986",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/participant_bindings.yaml": "a88e4315be8b89a2f6d50edda9cfd55bbeb30b01fefc22f97451138e033c4f2c",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/regions/ballroom_chandelier.yaml": "9cc45e7964915658b7162de6ff505da300f5cfdf705ffcf523a0cb414950a619",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/regions/palace_events.yaml": "7c14e3b450fc8b1b3620f4ed3e03764a7a71987ecd7fcfa0bc3ddf032784c1d4",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/regions/prison_charge.yaml": "fe214f55c679f7ce2d234ad050e852802cd2e5f9bc67f968752d95f924019ed1",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/regions/ritual_thaw.yaml": "e60e4604d9cde2f544795a309f673e3e774a5342389a302501099978d565282b",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/actor_ice_movement.yaml": "d613b96a7e1ee0f0d595a3330fb59745cdce688874b1b9e5391f1ffa306872c2",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/area_damage.yaml": "c94f1de804f4ae8a2bf656d8ebd7bf6da1819b2f70fc45df4249908a268e9c44",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/balloon_ground_movement.yaml": "18fbaa2410ec1bb3b1e602b38bb6651d1cf5c34be058aa4d463ccf37516f5279",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/balloon_interactions.yaml": "94a037005765689623ad9d1175abe25d923dd473bc2710fe110a9a23ebe44593",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/bar_and_sharing.yaml": "ba96e27b8e813a84c7785586eb46646bef880438cdf7071919e06d2b9abdc49f",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/carry_movement.yaml": "989a2e91a659ccfacd7b2e1cac89de97176bd8f87969312321917b7815f71f57",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/cold.yaml": "332417feb4a4935340081b09c0dfc1aeac9a7a99d1f2f39a4ba2cb1e5786d3c0",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/combat_custody_and_fox.yaml": "882de31568ba049841539ead0e62dc5b8be9db39f01216ad2533f83e931a9491",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/door_bridge_movement.yaml": "e06ebffa754b4c79e3ce2ea67a2f1e734608e5882f7bfb06720b0e8404f5e366",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/escort_and_reward.yaml": "b53de505cb5f4ec3545fc7f3d8c28324aab82e90cf68eb14d22dce582a6b90ab",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/everflame.yaml": "7aef5e0c333b7cf2b5438e51a1c37bb3cb92915511e4081235b0c240bf5ad9a1",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/fox_bridge_movement.yaml": "067e6516a4e5123d63a040ebe627e2910d83212656bd506bd508383041429b9a",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/ground_movement.yaml": "abc6c96849b28eab8eb61e2dc6613b000f9b7d663efb0666db2c4f7ffa615d97",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/ice_movement.yaml": "113213c8a728f9a887fc07b1560ee2241cafa80c226a88eafa5b01ef857084f4",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/local_observation.yaml": "0bc88b48dcd268cac8c76578548b47cf1815fec40476f8a8e0c719b3fb2bd002",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/magic_research.yaml": "4e456e7f9655da61cc0a19aebe3521fd3539b53be9b37c9034ab5202a7f1f27b",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/prison_interactions.yaml": "c66e33e30bd6b74a8804525f23054f7b16dd12448f0d90b2852e32429f6dd7f2",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/ritual_and_world_events.yaml": "d693de36e656a8396b0bca75224b35c24eacf71553bda478a3395bbaa25b7a85",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/shared_actions.yaml": "ae4077f06e0b40d9d360d076dae96b775ed26e178437e3232db5f4784f49dbea",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/thaw.yaml": "50ee126f2427de2cfd6009ff5374dd934837e3b8782bf1230db65424153156bf",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/tower_dialogue.yaml": "2e2c98636787f4e50a7a7dae04bc564fa2734a877313461d7b04dccb78f846fa",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/treasure_resources.yaml": "43399de4760759d25a5a5bb24be2bbc54b3f2ebfa4286082a5a836ef9a2339d0",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/visits_and_invitations.yaml": "8c40d66ccc8097bde1d817882c61f4acbb6dbe5231f87ec868827681943d8301",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/rules/wall_climbing.yaml": "d646be7f48ce00f445e9c45f9493df93e2a9a2c1ddbbcd7198ce6f8c7571dd85",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/source/world.yaml": "e866c35e7cb02931dc9a2420cae990a20e2ea46f8000d1cba9e08300ec36b99c",
+        "/mnt/d/nomosengine2-release/src/nomos_examples/everflame/world.bundle.yaml": "a616f2d5fad1074b5db8793ae4b308dc3fab1555a51d1b5c6dcdda27d8d390b7",
+        "/mnt/d/nomosengine2-release/src/nomos_c0/examples/parcel_delivery_v0.lib.json": "c4954e16e6a7ea0dfbb35a2541f7adf6429f01c95bcaf318c11bec824974a19a",
+        "/mnt/d/nomosengine2-release/src/nomos_c0/examples/parcel_delivery_v0.ports.json": "aaeaad71288cf40854e7d3fb293f0dd369b636db4648f19b85499ea3107bfa1a",
+        "/mnt/d/nomosengine2-release/src/nomos_c0/examples/parcel_delivery_v0.source.json": "8f6bf04092c4d41ad9cda463c7f83e9ffb31596a0e8e4f785d9f13789188e51a",
+        "/mnt/d/nomosengine2-release/src/nomos_c0/examples/parcel_delivery_v0.a.assets.json": "6ffdca730f1eb9e8a29cb38259422910ada2c3b59df9e343a02e49ac23a0a742"
+      },
+      "python": "3.14.4 (main, Aug 20 2026, 10:41:58) [GCC 15.2.0]",
+      "yaml": "6.0.3",
+      "parcel_sessions_per_pair": 256
+    }
+  ],
+  "full_samples": [
+    {
+      "run_seconds": 45.05599359400003,
+      "start_seconds": 0.9226478780001344,
+      "state_digest": "9775308cf59cf0308cc77ca9a2c9d412dd78b72768d6dad31d87246b991e0ab3",
+      "occurrences": 1180,
+      "time": 4500,
+      "actions": [
+        {
+          "entry": "cross_ice_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "crossing": "entrance_to_ritual"
+          },
+          "time": 0
+        },
+        {
+          "entry": "move_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "destination": "ritual_threshold"
+          },
+          "time": 100
+        },
+        {
+          "entry": "move_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "destination": "ritual_ring"
+          },
+          "time": 200
+        },
+        {
+          "entry": "carry_from_ritual_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "destination": "ritual_threshold",
+            "ritual": "ritual",
+            "victim": "ritual_resident"
+          },
+          "time": 300
+        },
+        {
+          "entry": "observe_routes_adventurer",
+          "payload": {},
+          "time": 500
+        },
+        {
+          "entry": "move_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "destination": "ritual_passage_entry"
+          },
+          "time": 600
+        },
+        {
+          "entry": "cross_ice_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "crossing": "ritual_to_entrance"
+          },
+          "time": 700
+        },
+        {
+          "entry": "observe_routes_adventurer",
+          "payload": {},
+          "time": 800
+        },
+        {
+          "entry": "cross_ice_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "crossing": "entrance_to_chandelier"
+          },
+          "time": 900
+        },
+        {
+          "entry": "observe_chandelier_adventurer",
+          "payload": {},
+          "time": 1000
+        },
+        {
+          "entry": "detach_reservoir_adventurer",
+          "payload": {},
+          "time": 1100
+        },
+        {
+          "entry": "observe_floor_adventurer",
+          "payload": {},
+          "time": 1200
+        },
+        {
+          "entry": "thaw_floor_adventurer",
+          "payload": {
+            "floor_key": "ballroom"
+          },
+          "time": 1300
+        },
+        {
+          "entry": "reload_everflame_adventurer",
+          "payload": {},
+          "time": 1400
+        },
+        {
+          "entry": "observe_routes_adventurer",
+          "payload": {},
+          "time": 1500
+        },
+        {
+          "entry": "cross_ice_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "crossing": "chandelier_to_entrance"
+          },
+          "time": 1600
+        },
+        {
+          "entry": "cross_ice_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "crossing": "entrance_to_ritual"
+          },
+          "time": 1700
+        },
+        {
+          "entry": "move_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "destination": "ritual_threshold"
+          },
+          "time": 1800
+        },
+        {
+          "entry": "observe_resident_adventurer",
+          "payload": {
+            "victim": "ritual_resident"
+          },
+          "time": 1900
+        },
+        {
+          "entry": "thaw_person_adventurer",
+          "payload": {
+            "torch": {
+              "kind": "_K0IndividualRef",
+              "family": "everflame",
+              "ordinal": 5,
+              "scope": "local"
+            },
+            "victim": "ritual_resident"
+          },
+          "time": 2000
+        },
+        {
+          "entry": "offer_escort_adventurer",
+          "payload": {
+            "destination": "palace_exit"
+          },
+          "time": 2100
+        },
+        {
+          "entry": "move_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "destination": "ritual_passage_entry"
+          },
+          "time": 2200
+        },
+        {
+          "entry": "cross_ice_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "crossing": "ritual_to_entrance"
+          },
+          "time": 2300
+        },
+        {
+          "entry": "move_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "destination": "halls_ballroom_door"
+          },
+          "time": 2400
+        },
+        {
+          "entry": "observe_routes_adventurer",
+          "payload": {},
+          "time": 2500
+        },
+        {
+          "entry": "cross_ice_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "crossing": "halls_to_bridge_door"
+          },
+          "time": 2600
+        },
+        {
+          "entry": "observe_routes_adventurer",
+          "payload": {},
+          "time": 2700
+        },
+        {
+          "entry": "move_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "destination": "bridge_palace_landing"
+          },
+          "time": 2800
+        },
+        {
+          "entry": "observe_routes_adventurer",
+          "payload": {},
+          "time": 2900
+        },
+        {
+          "entry": "observe_floor_adventurer",
+          "payload": {},
+          "time": 3000
+        },
+        {
+          "entry": "bridge_slow_adventurer",
+          "payload": {
+            "base_move_cost": 20000,
+            "destination": "bridge_midspan"
+          },
+          "time": 3100
+        },
+        {
+          "entry": "observe_routes_adventurer",
+          "payload": {},
+          "time": 3300
+        },
+        {
+          "entry": "observe_floor_adventurer",
+          "payload": {},
+          "time": 3400
+        },
+        {
+          "entry": "bridge_slow_adventurer",
+          "payload": {
+            "base_move_cost": 20000,
+            "destination": "palace_exit"
+          },
+          "time": 3500
+        },
+        {
+          "entry": "wait_adventurer",
+          "payload": {},
+          "time": 3700
+        },
+        {
+          "entry": "wait_adventurer",
+          "payload": {},
+          "time": 3800
+        },
+        {
+          "entry": "wait_adventurer",
+          "payload": {},
+          "time": 3900
+        },
+        {
+          "entry": "wait_adventurer",
+          "payload": {},
+          "time": 4000
+        },
+        {
+          "entry": "wait_adventurer",
+          "payload": {},
+          "time": 4100
+        },
+        {
+          "entry": "wait_adventurer",
+          "payload": {},
+          "time": 4200
+        },
+        {
+          "entry": "wait_adventurer",
+          "payload": {},
+          "time": 4300
+        },
+        {
+          "entry": "wait_adventurer",
+          "payload": {},
+          "time": 4400
+        },
+        {
+          "entry": "leave_palace_adventurer",
+          "payload": {},
+          "time": 4500
+        }
+      ],
+      "history_digest": "f3b3316f717ab8c7b5ceb49b5d438795327746b5be4c1da16a6da561005c71ab"
+    },
+    {
+      "run_seconds": 45.10586983100029,
+      "start_seconds": 0.9049738430003345,
+      "state_digest": "9775308cf59cf0308cc77ca9a2c9d412dd78b72768d6dad31d87246b991e0ab3",
+      "occurrences": 1180,
+      "time": 4500,
+      "actions": [
+        {
+          "entry": "cross_ice_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "crossing": "entrance_to_ritual"
+          },
+          "time": 0
+        },
+        {
+          "entry": "move_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "destination": "ritual_threshold"
+          },
+          "time": 100
+        },
+        {
+          "entry": "move_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "destination": "ritual_ring"
+          },
+          "time": 200
+        },
+        {
+          "entry": "carry_from_ritual_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "destination": "ritual_threshold",
+            "ritual": "ritual",
+            "victim": "ritual_resident"
+          },
+          "time": 300
+        },
+        {
+          "entry": "observe_routes_adventurer",
+          "payload": {},
+          "time": 500
+        },
+        {
+          "entry": "move_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "destination": "ritual_passage_entry"
+          },
+          "time": 600
+        },
+        {
+          "entry": "cross_ice_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "crossing": "ritual_to_entrance"
+          },
+          "time": 700
+        },
+        {
+          "entry": "observe_routes_adventurer",
+          "payload": {},
+          "time": 800
+        },
+        {
+          "entry": "cross_ice_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "crossing": "entrance_to_chandelier"
+          },
+          "time": 900
+        },
+        {
+          "entry": "observe_chandelier_adventurer",
+          "payload": {},
+          "time": 1000
+        },
+        {
+          "entry": "detach_reservoir_adventurer",
+          "payload": {},
+          "time": 1100
+        },
+        {
+          "entry": "observe_floor_adventurer",
+          "payload": {},
+          "time": 1200
+        },
+        {
+          "entry": "thaw_floor_adventurer",
+          "payload": {
+            "floor_key": "ballroom"
+          },
+          "time": 1300
+        },
+        {
+          "entry": "reload_everflame_adventurer",
+          "payload": {},
+          "time": 1400
+        },
+        {
+          "entry": "observe_routes_adventurer",
+          "payload": {},
+          "time": 1500
+        },
+        {
+          "entry": "cross_ice_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "crossing": "chandelier_to_entrance"
+          },
+          "time": 1600
+        },
+        {
+          "entry": "cross_ice_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "crossing": "entrance_to_ritual"
+          },
+          "time": 1700
+        },
+        {
+          "entry": "move_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "destination": "ritual_threshold"
+          },
+          "time": 1800
+        },
+        {
+          "entry": "observe_resident_adventurer",
+          "payload": {
+            "victim": "ritual_resident"
+          },
+          "time": 1900
+        },
+        {
+          "entry": "thaw_person_adventurer",
+          "payload": {
+            "torch": {
+              "kind": "_K0IndividualRef",
+              "family": "everflame",
+              "ordinal": 5,
+              "scope": "local"
+            },
+            "victim": "ritual_resident"
+          },
+          "time": 2000
+        },
+        {
+          "entry": "offer_escort_adventurer",
+          "payload": {
+            "destination": "palace_exit"
+          },
+          "time": 2100
+        },
+        {
+          "entry": "move_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "destination": "ritual_passage_entry"
+          },
+          "time": 2200
+        },
+        {
+          "entry": "cross_ice_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "crossing": "ritual_to_entrance"
+          },
+          "time": 2300
+        },
+        {
+          "entry": "move_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "destination": "halls_ballroom_door"
+          },
+          "time": 2400
+        },
+        {
+          "entry": "observe_routes_adventurer",
+          "payload": {},
+          "time": 2500
+        },
+        {
+          "entry": "cross_ice_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "crossing": "halls_to_bridge_door"
+          },
+          "time": 2600
+        },
+        {
+          "entry": "observe_routes_adventurer",
+          "payload": {},
+          "time": 2700
+        },
+        {
+          "entry": "move_adventurer",
+          "payload": {
+            "base_move_cost": 10000,
+            "destination": "bridge_palace_landing"
+          },
+          "time": 2800
+        },
+        {
+          "entry": "observe_routes_adventurer",
+          "payload": {},
+          "time": 2900
+        },
+        {
+          "entry": "observe_floor_adventurer",
+          "payload": {},
+          "time": 3000
+        },
+        {
+          "entry": "bridge_slow_adventurer",
+          "payload": {
+            "base_move_cost": 20000,
+            "destination": "bridge_midspan"
+          },
+          "time": 3100
+        },
+        {
+          "entry": "observe_routes_adventurer",
+          "payload": {},
+          "time": 3300
+        },
+        {
+          "entry": "observe_floor_adventurer",
+          "payload": {},
+          "time": 3400
+        },
+        {
+          "entry": "bridge_slow_adventurer",
+          "payload": {
+            "base_move_cost": 20000,
+            "destination": "palace_exit"
+          },
+          "time": 3500
+        },
+        {
+          "entry": "wait_adventurer",
+          "payload": {},
+          "time": 3700
+        },
+        {
+          "entry": "wait_adventurer",
+          "payload": {},
+          "time": 3800
+        },
+        {
+          "entry": "wait_adventurer",
+          "payload": {},
+          "time": 3900
+        },
+        {
+          "entry": "wait_adventurer",
+          "payload": {},
+          "time": 4000
+        },
+        {
+          "entry": "wait_adventurer",
+          "payload": {},
+          "time": 4100
+        },
+        {
+          "entry": "wait_adventurer",
+          "payload": {},
+          "time": 4200
+        },
+        {
+          "entry": "wait_adventurer",
+          "payload": {},
+          "time": 4300
+        },
+        {
+          "entry": "wait_adventurer",
+          "payload": {},
+          "time": 4400
+        },
+        {
+          "entry": "leave_palace_adventurer",
+          "payload": {},
+          "time": 4500
+        }
+      ],
+      "history_digest": "f3b3316f717ab8c7b5ceb49b5d438795327746b5be4c1da16a6da561005c71ab"
+    }
+  ],
+  "status": "passed",
+  "full_ratio": 1.0011069834004704
+}
