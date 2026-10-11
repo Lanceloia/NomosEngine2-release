@@ -1,15 +1,16 @@
 # 声明世界，让行动形成故事
 
 [项目首页](https://lanceloia.github.io/NomosEngine2-release/)提供源码、实验与代码地图的直接入口。
-[新版字幕动画](film-v4/index.html)可以暂停、拖动和选章；
-[无声 MP4 预演](film-v4/introduction.mp4)可播放或下载。
-新版配音待录制，完整口播见 [NARRATION](draft-v4/NARRATION.txt)，
-[讲稿](draft-v4/SCRIPT.md)与[分镜](draft-v4/DIRECTION.md)说明叙事主线。
+[新版字幕动画](film-v5/index.html)可以暂停、拖动和选章；
+[无声 MP4 预演](film-v5/introduction.mp4)可播放或下载。
+新版配音待录制，完整口播见 [NARRATION](draft-v5/NARRATION.txt)，
+[讲稿](draft-v5/SCRIPT.md)与[分镜](draft-v5/DIRECTION.md)说明叙事主线。
 
 ## 影片讲什么
 
 从剧情分支难以覆盖新选择的问题与 TRPG 启发出发，介绍作者声明世界、玩家选择行动、系统结算后果。
 然后解释为此建立的 C0 编译、K0 结算、T0 路线验证工具。
+T0 一段先讲作者从精彩故事探索世界规则的愿景，再说明当前已实现的行动见证检查。
 三个狼人杀实验分别检查限制、结算与人物配置；M1 冰宫冒险展示规则的组合。
 最后介绍未来的创作与主持工具，以及项目的人类决策和 AI 实现分工。
 
@@ -19,7 +20,8 @@ M1 使用 2026-10-11 采集的五次真实操作：永焰5→4、复查冰面有
 
 ## 播放与版本
 
-本地打开 [动画页](film-v4/index.html)，或使用新版 MP4。新版动画引用相邻 film-v3 中已有的真实媒体，
+本地打开 [动画页](film-v5/index.html)，或使用新版 MP4。新版动画引用相邻 film-v3 中已有的真实媒体，
 复制时保留这两个目录。旧 [有声版](film-v3/introduction.mp4)与[动画页](film-v3/index.html)留作历史；
 其素材和来源仍有效，新版校准了把原型验证作为项目目的的开场与收尾。
 本次更新复用已采集结果；[M1 获取方式](../../M1_WEB.md)用于进一步实际试玩。
+上一轮 [v4 字幕预演](film-v4/README.md)保留原样，便于核对 T0 动机的本次修订。

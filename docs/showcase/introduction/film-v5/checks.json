@@ -1,0 +1,329 @@
+{
+  "kind": "Captioned positioning preview; original experiment and M1 evidence reused",
+  "narration": "pending",
+  "duration_seconds": 290.6363636363636,
+  "controls": {
+    "play": true,
+    "pause": true,
+    "restart": true,
+    "chapter": true,
+    "ending": true
+  },
+  "canvas": {
+    "changed": 14226,
+    "nonblank": 28251
+  },
+  "exported_subtitle_minimum_pixels": 2323,
+  "page_errors": [],
+  "media_preload_aborts": [
+    "resource.webm"
+  ],
+  "samples": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "origin",
+      "image": "previews/1280-origin.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "origin"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "history",
+      "image": "previews/1280-history.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "history"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "pipeline",
+      "image": "previews/1280-pipeline.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "pipeline"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "witness",
+      "image": "previews/1280-witness.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "witness"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "admission",
+      "image": "previews/1280-admission.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "admission"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "vote",
+      "image": "previews/1280-vote.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "vote"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "configuration",
+      "image": "previews/1280-configuration.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "configuration"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "adventure",
+      "image": "previews/1280-adventure.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "adventure"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "image": "previews/1280-rescue.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "rescue"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "combination",
+      "image": "previews/1280-combination.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "combination"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "future",
+      "image": "previews/1280-future.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "future"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "credits",
+      "image": "previews/1280-credits.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "credits"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "origin",
+      "image": "previews/1440-origin.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "origin"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "history",
+      "image": "previews/1440-history.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "history"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "pipeline",
+      "image": "previews/1440-pipeline.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "pipeline"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "witness",
+      "image": "previews/1440-witness.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "witness"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "admission",
+      "image": "previews/1440-admission.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "admission"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "vote",
+      "image": "previews/1440-vote.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "vote"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "configuration",
+      "image": "previews/1440-configuration.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "configuration"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "adventure",
+      "image": "previews/1440-adventure.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "adventure"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "image": "previews/1440-rescue.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "rescue"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "combination",
+      "image": "previews/1440-combination.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "combination"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "future",
+      "image": "previews/1440-future.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "future"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "credits",
+      "image": "previews/1440-credits.png",
+      "overflow": false,
+      "captionOverflow": false,
+      "fontReady": true,
+      "chapter": "credits"
+    }
+  ],
+  "video": {
+    "width": 1280,
+    "height": 720,
+    "fps": 12,
+    "codec": "H.264",
+    "audio": false,
+    "encoder_threads": 2,
+    "decoded": true
+  },
+  "sha256": {
+    "index.html": "a64f48d33ee4b24b13583601c922446dd3fd8d641b70812cfb17ae3056502f0f",
+    "film.js": "281c0eaf053597833996c6f2a3bab272215fb6475fc22f85636ea2e844b24ad0",
+    "timeline.js": "757b22297ef5b1d495aa0fe8734c52ecd9fad38e0c52024882ea1d1d7d8644ed",
+    "font/chinese.woff": "0352ca069d012ba6794776e02690e82901aa1e64fec793f4f80b0c1b5f151e71",
+    "font/site-chinese.woff": "5960df136d166028f53687484c7b4fbbc85b591421a78caeb374410cdb692e0e",
+    "poster.png": "0ed1c5adabf2400c683ab128b9198ba07c671bf0fc2825b5193e7231b46358cd",
+    "introduction.mp4": "8007c36c8cf12763ea69f817a997c5628dac26888886ffa5b70fb5af65fe51f0"
+  }
+}

@@ -7,9 +7,10 @@ const {once} = require('node:events');
 const {createHash} = require('node:crypto');
 
 async function main() {
-  const [playwrightModule,ffmpeg] = process.argv.slice(2);
-  if(!playwrightModule)throw Error('Usage: node tools/produce_introduction_v4.cjs PLAYWRIGHT_MODULE [FFMPEG]');
-  const root=path.resolve(__dirname,'../docs/showcase/introduction/film-v4');
+  const [playwrightModule,ffmpeg,revision='v4'] = process.argv.slice(2);
+  if(!playwrightModule)throw Error('Usage: node tools/produce_introduction_v4.cjs PLAYWRIGHT_MODULE [FFMPEG] [v4|v5]');
+  if (!/^v[45]$/.test(revision)) throw Error('Expected presentation revision v4 or v5.');
+  const root=path.resolve(__dirname,`../docs/showcase/introduction/film-${revision}`);
   const output=path.join(root,'introduction.mp4'), temporary=path.join(root,'.preview-render.mp4');
   if(ffmpeg && (fs.existsSync(output)||fs.existsSync(temporary)))throw Error('Preview exists; do not overwrite a frozen export.');
   const {chromium}=require(playwrightModule);

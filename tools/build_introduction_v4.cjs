@@ -25,8 +25,10 @@ function build(script) {
 
 function main() {
   const root = path.resolve(__dirname,'..');
-  const draft = path.join(root,'docs/showcase/introduction/draft-v4');
-  const target = path.join(root,'docs/showcase/introduction/film-v4');
+  const revision = process.argv[2] || 'v4';
+  if (!/^v[45]$/.test(revision)) throw Error('Expected presentation revision v4 or v5.');
+  const draft = path.join(root,`docs/showcase/introduction/draft-${revision}`);
+  const target = path.join(root,`docs/showcase/introduction/film-${revision}`);
   const film = build(fs.readFileSync(path.join(draft,'SCRIPT.md'),'utf8'));
   fs.mkdirSync(target,{recursive:true});
   fs.writeFileSync(path.join(target,'timeline.js'),'window.NOMOS_FILM = '+JSON.stringify(film,null,2).replaceAll('<','\\u003c')+';\n');

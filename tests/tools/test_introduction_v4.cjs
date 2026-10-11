@@ -35,3 +35,16 @@ test('renderer has exactly the declared scenes and no stale audio',()=> {
 test('missing or reordered chapter fails',()=> {
   assert.throws(()=>build(script.replace('## history','## wrong')),/ordered storyboard/);
 });
+
+test('story-first revision distinguishes rule exploration from current witness checking',()=> {
+  const script=fs.readFileSync(path.join(root,'docs/showcase/introduction/draft-v5/SCRIPT.md'),'utf8');
+  const film=build(script), witness=film.scenes.find(s=>s.id==='witness');
+  assert.match(witness.narration,/先写出一个精彩的故事/);
+  assert.match(witness.narration,/目前.*行动见证检查/);
+  assert.match(witness.narration,/规则推导.*接下来/);
+  assert.match(witness.narration,/玩家仍能/);
+  const renderer=fs.readFileSync(path.join(root,'docs/showcase/introduction/film-v5/film.js'),'utf8');
+  for(const id of IDS)assert.ok(renderer.includes(`function ${id}(p)`));
+  assert.match(renderer,/规则探索.*后续方向/);
+  assert.match(renderer,/行动见证检查.*当前能力/);
+});
