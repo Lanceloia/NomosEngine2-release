@@ -8,6 +8,7 @@
 | --- | --- |
 | 理解问题、愿景和已经做成的部分 | [项目导览](PROJECT_TOUR.md) |
 | 理解为什么重构、当前架构怎样形成 | [项目演进](PROJECT_EVOLUTION.md) |
+| 核对发起者的决策、验收和本人课程代码 | [个人贡献](PERSONAL_CONTRIBUTION.md) |
 | 看中文旁白介绍，再核对真实实验 | [项目介绍](showcase/introduction/README.md) |
 | 安装并运行三个实验 | [仓库首页](../README.md) |
 | 核对每项展示到底证明了什么 | [实验地图](SHOWCASE_MATRIX.md) |
