@@ -1,9 +1,9 @@
 # 声明世界，让行动形成故事
 
 [项目首页](https://lanceloia.github.io/NomosEngine2-release/)提供源码、实验与代码地图的直接入口。
-[新版字幕动画](film-v6/index.html)可以暂停、拖动和选章；
-[无声 MP4 预演](film-v6/introduction.mp4)可播放或下载。
-新版配音待录制，完整口播见 [NARRATION](draft-v6/NARRATION.txt)，
+[中文有声动画](film-v7/index.html)可以暂停、拖动和选章；
+[有声 MP4](film-v7/introduction.mp4)可播放或下载，全片约 5 分 19 秒，M1 约 82 秒。
+完整口播见 [NARRATION](draft-v6/NARRATION.txt)，
 [讲稿](draft-v6/SCRIPT.md)与[分镜](draft-v6/DIRECTION.md)说明叙事主线。
 
 ## 影片讲什么
@@ -16,13 +16,14 @@ T0 一段先讲作者从精彩故事探索世界规则的愿景，再说明当�
 
 M1 使用 2026-10-11 两局中采集的五次真实操作：检查、解冻与复查；穿冰与邀请。
 画面放大永焰5→4、地面冰封与无冰的记录，以及玩家实际听见的答复和移动观察。
-两段记录分别介绍，详见[素材来源与五次行动](film-v6/EVIDENCE.md)。
+两段记录分别介绍，详见[素材来源与五次行动](film-v7/EVIDENCE.md)。
 影片中的狼人杀图示整理自[已有真实实验](../../PROJECT_TOUR.md#先看三个实验)。
 
 ## 播放与版本
 
-本地打开 [动画页](film-v6/index.html)，或使用新版 MP4。新版动画引用相邻 film-v3 中已有的真实媒体，
+本地打开 [动画页](film-v7/index.html)，或使用新版 MP4。新版动画引用相邻 film-v3 中已有的真实媒体，
 复制时保留这两个目录。旧 [有声版](film-v3/introduction.mp4)与[动画页](film-v3/index.html)留作历史；
 其素材和来源仍有效，新版校准了把原型验证作为项目目的的开场与收尾。
 本次更新复用已采集结果；[M1 获取方式](../../M1_WEB.md)用于进一步实际试玩。
 上一轮 [v5 字幕预演](film-v5/README.md)保留原样，便于核对 M1 展开与录音前修订。
+[v6 录音前预演](film-v6/README.md)与[有声版制作检查](film-v7/README.md)也可对照阅读。

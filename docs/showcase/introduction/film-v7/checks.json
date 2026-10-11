@@ -1,0 +1,1214 @@
+{
+  "kind": "Narrated storyboard browser checks; not a new world run or a listening acceptance",
+  "duration": 319.44,
+  "measured_audio_duration": 319.44,
+  "controls": {
+    "play": true,
+    "pause": true,
+    "restart": true,
+    "chapter": true,
+    "ending": true
+  },
+  "canvas": {
+    "changed": 4538,
+    "nonblank": 16809
+  },
+  "exported_captions": {
+    "subtitle_minimum_changed_pixels": 2453
+  },
+  "page_errors": [],
+  "media_preload_aborts": [
+    "resource.webm"
+  ],
+  "samples": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "origin",
+      "time": 15.043504339999998,
+      "image": "previews/1280-origin.png",
+      "overflow": false,
+      "subtitle": "NomosEngine2想探索的，是怎样让世界依据自己的规则回应玩家。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "origin"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "history",
+      "time": 33.00782982,
+      "image": "previews/1280-history.png",
+      "overflow": false,
+      "subtitle": "我们希望把其中的规则和结算建立为可维护的系统，让作者更专注于创造世界。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "history"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "pipeline",
+      "time": 59.42982757,
+      "image": "previews/1280-pipeline.png",
+      "overflow": false,
+      "subtitle": "世界记住这些变化，下一步选择也因此不同，逐渐形成这次游玩的故事。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "pipeline"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "witness",
+      "time": 92.4072002,
+      "image": "previews/1280-witness.png",
+      "overflow": false,
+      "subtitle": "下一阶段，再向故事约束、规则候选与作者修订扩展。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "witness"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "admission",
+      "time": 119.19598479,
+      "image": "previews/1280-admission.png",
+      "overflow": false,
+      "subtitle": "第十步，B仍能看到救人的选项，但提交救自己时，原规则允许，修改后的规则拒绝。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "admission"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "vote",
+      "time": 141.40264634,
+      "image": "previews/1280-vote.png",
+      "overflow": false,
+      "subtitle": "前一个实验检查能否行动，这一个检查行动之后世界怎样变化。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "vote"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "configuration",
+      "time": 159.47923692,
+      "image": "previews/1280-configuration.png",
+      "overflow": false,
+      "subtitle": "这些实验共同检查：作者改变世界声明时，改变的是运行中的人物、能力与后果。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "configuration"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "adventure",
+      "time": 188.85436771999997,
+      "image": "previews/1280-adventure.png",
+      "overflow": false,
+      "subtitle": "永焰能解冻，也能保护近处；充能有限，用掉一点，还可能缩小保护范围。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "adventure"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "time": 235.86413775,
+      "image": "previews/1280-rescue.png",
+      "overflow": false,
+      "subtitle": "下一步，可以结合他们的回应、位置和手里的余量，考虑怎样继续帮助他们。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "rescue"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "combination",
+      "time": 262.32956382,
+      "image": "previews/1280-combination.png",
+      "overflow": false,
+      "subtitle": "作者现在可以用它们设计、修改和验证游戏原型；长期希望让可复用规则支撑更丰富的自由探索世界。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "combination"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "future",
+      "time": 285.96814449000004,
+      "image": "previews/1280-future.png",
+      "overflow": false,
+      "subtitle": "游玩中，模型也可以依据角色可知的信息提出行动，讲述实际经历，让创作与主持围绕同一个规则世界协作。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "future"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "credits",
+      "time": 314.19806124,
+      "image": "previews/1280-credits.png",
+      "overflow": false,
+      "subtitle": "这条路线经历了多次探索与重构，始终追求同一个愿望：作者创作世界允许发生什么，玩家选择实际发生什么，系统依据规则结算，让故事从游玩中形成。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "credits"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "pipeline",
+      "cue": 0,
+      "time": 39.08388875,
+      "image": "previews/1280-pipeline-cue-0.png"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "pipeline",
+      "cue": 1,
+      "time": 44.113577,
+      "image": "previews/1280-pipeline-cue-1.png"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "pipeline",
+      "cue": 2,
+      "time": 48.74017025,
+      "image": "previews/1280-pipeline-cue-2.png"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "pipeline",
+      "cue": 3,
+      "time": 54.83140575,
+      "image": "previews/1280-pipeline-cue-3.png"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "pipeline",
+      "cue": 4,
+      "time": 61.495731000000006,
+      "image": "previews/1280-pipeline-cue-4.png"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "adventure",
+      "cue": 0,
+      "time": 164.82924025,
+      "image": "previews/1280-adventure-cue-0.png"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "adventure",
+      "cue": 1,
+      "time": 170.60371874999998,
+      "image": "previews/1280-adventure-cue-1.png"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "adventure",
+      "cue": 2,
+      "time": 176.79259075,
+      "image": "previews/1280-adventure-cue-2.png"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "adventure",
+      "cue": 3,
+      "time": 181.95445,
+      "image": "previews/1280-adventure-cue-3.png"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "adventure",
+      "cue": 4,
+      "time": 187.45652475000003,
+      "image": "previews/1280-adventure-cue-4.png"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "adventure",
+      "cue": 5,
+      "time": 192.53148499999998,
+      "image": "previews/1280-adventure-cue-5.png"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "cue": 0,
+      "time": 195.64057225,
+      "image": "previews/1280-rescue-cue-0.png"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "cue": 1,
+      "time": 198.721899,
+      "image": "previews/1280-rescue-cue-1.png"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "cue": 2,
+      "time": 201.92640025,
+      "image": "previews/1280-rescue-cue-2.png"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "cue": 3,
+      "time": 205.6567405,
+      "image": "previews/1280-rescue-cue-3.png"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "cue": 4,
+      "time": 211.77172925000002,
+      "image": "previews/1280-rescue-cue-4.png"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "cue": 5,
+      "time": 217.887965,
+      "image": "previews/1280-rescue-cue-5.png"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "cue": 6,
+      "time": 223.03931425000002,
+      "image": "previews/1280-rescue-cue-6.png"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "cue": 7,
+      "time": 227.81755125,
+      "image": "previews/1280-rescue-cue-7.png"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "cue": 8,
+      "time": 232.99506825,
+      "image": "previews/1280-rescue-cue-8.png"
+    },
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "scene": "rescue",
+      "cue": 9,
+      "time": 240.43874725,
+      "image": "previews/1280-rescue-cue-9.png"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "origin",
+      "time": 15.043504339999998,
+      "image": "previews/1440-origin.png",
+      "overflow": false,
+      "subtitle": "NomosEngine2想探索的，是怎样让世界依据自己的规则回应玩家。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "origin"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "history",
+      "time": 33.00782982,
+      "image": "previews/1440-history.png",
+      "overflow": false,
+      "subtitle": "我们希望把其中的规则和结算建立为可维护的系统，让作者更专注于创造世界。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "history"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "pipeline",
+      "time": 59.42982757,
+      "image": "previews/1440-pipeline.png",
+      "overflow": false,
+      "subtitle": "世界记住这些变化，下一步选择也因此不同，逐渐形成这次游玩的故事。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "pipeline"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "witness",
+      "time": 92.4072002,
+      "image": "previews/1440-witness.png",
+      "overflow": false,
+      "subtitle": "下一阶段，再向故事约束、规则候选与作者修订扩展。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "witness"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "admission",
+      "time": 119.19598479,
+      "image": "previews/1440-admission.png",
+      "overflow": false,
+      "subtitle": "第十步，B仍能看到救人的选项，但提交救自己时，原规则允许，修改后的规则拒绝。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "admission"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "vote",
+      "time": 141.40264634,
+      "image": "previews/1440-vote.png",
+      "overflow": false,
+      "subtitle": "前一个实验检查能否行动，这一个检查行动之后世界怎样变化。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "vote"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "configuration",
+      "time": 159.47923692,
+      "image": "previews/1440-configuration.png",
+      "overflow": false,
+      "subtitle": "这些实验共同检查：作者改变世界声明时，改变的是运行中的人物、能力与后果。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "configuration"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "adventure",
+      "time": 188.85436771999997,
+      "image": "previews/1440-adventure.png",
+      "overflow": false,
+      "subtitle": "永焰能解冻，也能保护近处；充能有限，用掉一点，还可能缩小保护范围。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "adventure"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "time": 235.86413775,
+      "image": "previews/1440-rescue.png",
+      "overflow": false,
+      "subtitle": "下一步，可以结合他们的回应、位置和手里的余量，考虑怎样继续帮助他们。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "rescue"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "combination",
+      "time": 262.32956382,
+      "image": "previews/1440-combination.png",
+      "overflow": false,
+      "subtitle": "作者现在可以用它们设计、修改和验证游戏原型；长期希望让可复用规则支撑更丰富的自由探索世界。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "combination"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "future",
+      "time": 285.96814449000004,
+      "image": "previews/1440-future.png",
+      "overflow": false,
+      "subtitle": "游玩中，模型也可以依据角色可知的信息提出行动，讲述实际经历，让创作与主持围绕同一个规则世界协作。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "future"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "credits",
+      "time": 314.19806124,
+      "image": "previews/1440-credits.png",
+      "overflow": false,
+      "subtitle": "这条路线经历了多次探索与重构，始终追求同一个愿望：作者创作世界允许发生什么，玩家选择实际发生什么，系统依据规则结算，让故事从游玩中形成。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "credits"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "pipeline",
+      "cue": 0,
+      "time": 39.08388875,
+      "image": "previews/1440-pipeline-cue-0.png"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "pipeline",
+      "cue": 1,
+      "time": 44.113577,
+      "image": "previews/1440-pipeline-cue-1.png"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "pipeline",
+      "cue": 2,
+      "time": 48.74017025,
+      "image": "previews/1440-pipeline-cue-2.png"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "pipeline",
+      "cue": 3,
+      "time": 54.83140575,
+      "image": "previews/1440-pipeline-cue-3.png"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "pipeline",
+      "cue": 4,
+      "time": 61.495731000000006,
+      "image": "previews/1440-pipeline-cue-4.png"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "adventure",
+      "cue": 0,
+      "time": 164.82924025,
+      "image": "previews/1440-adventure-cue-0.png"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "adventure",
+      "cue": 1,
+      "time": 170.60371874999998,
+      "image": "previews/1440-adventure-cue-1.png"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "adventure",
+      "cue": 2,
+      "time": 176.79259075,
+      "image": "previews/1440-adventure-cue-2.png"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "adventure",
+      "cue": 3,
+      "time": 181.95445,
+      "image": "previews/1440-adventure-cue-3.png"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "adventure",
+      "cue": 4,
+      "time": 187.45652475000003,
+      "image": "previews/1440-adventure-cue-4.png"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "adventure",
+      "cue": 5,
+      "time": 192.53148499999998,
+      "image": "previews/1440-adventure-cue-5.png"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "cue": 0,
+      "time": 195.64057225,
+      "image": "previews/1440-rescue-cue-0.png"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "cue": 1,
+      "time": 198.721899,
+      "image": "previews/1440-rescue-cue-1.png"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "cue": 2,
+      "time": 201.92640025,
+      "image": "previews/1440-rescue-cue-2.png"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "cue": 3,
+      "time": 205.6567405,
+      "image": "previews/1440-rescue-cue-3.png"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "cue": 4,
+      "time": 211.77172925000002,
+      "image": "previews/1440-rescue-cue-4.png"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "cue": 5,
+      "time": 217.887965,
+      "image": "previews/1440-rescue-cue-5.png"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "cue": 6,
+      "time": 223.03931425000002,
+      "image": "previews/1440-rescue-cue-6.png"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "cue": 7,
+      "time": 227.81755125,
+      "image": "previews/1440-rescue-cue-7.png"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "cue": 8,
+      "time": 232.99506825,
+      "image": "previews/1440-rescue-cue-8.png"
+    },
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "scene": "rescue",
+      "cue": 9,
+      "time": 240.43874725,
+      "image": "previews/1440-rescue-cue-9.png"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "origin",
+      "time": 15.043504339999998,
+      "image": "previews/1920-origin.png",
+      "overflow": false,
+      "subtitle": "NomosEngine2想探索的，是怎样让世界依据自己的规则回应玩家。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "origin"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "history",
+      "time": 33.00782982,
+      "image": "previews/1920-history.png",
+      "overflow": false,
+      "subtitle": "我们希望把其中的规则和结算建立为可维护的系统，让作者更专注于创造世界。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "history"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "pipeline",
+      "time": 59.42982757,
+      "image": "previews/1920-pipeline.png",
+      "overflow": false,
+      "subtitle": "世界记住这些变化，下一步选择也因此不同，逐渐形成这次游玩的故事。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "pipeline"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "witness",
+      "time": 92.4072002,
+      "image": "previews/1920-witness.png",
+      "overflow": false,
+      "subtitle": "下一阶段，再向故事约束、规则候选与作者修订扩展。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "witness"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "admission",
+      "time": 119.19598479,
+      "image": "previews/1920-admission.png",
+      "overflow": false,
+      "subtitle": "第十步，B仍能看到救人的选项，但提交救自己时，原规则允许，修改后的规则拒绝。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "admission"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "vote",
+      "time": 141.40264634,
+      "image": "previews/1920-vote.png",
+      "overflow": false,
+      "subtitle": "前一个实验检查能否行动，这一个检查行动之后世界怎样变化。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "vote"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "configuration",
+      "time": 159.47923692,
+      "image": "previews/1920-configuration.png",
+      "overflow": false,
+      "subtitle": "这些实验共同检查：作者改变世界声明时，改变的是运行中的人物、能力与后果。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "configuration"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "adventure",
+      "time": 188.85436771999997,
+      "image": "previews/1920-adventure.png",
+      "overflow": false,
+      "subtitle": "永焰能解冻，也能保护近处；充能有限，用掉一点，还可能缩小保护范围。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "adventure"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "rescue",
+      "time": 235.86413775,
+      "image": "previews/1920-rescue.png",
+      "overflow": false,
+      "subtitle": "下一步，可以结合他们的回应、位置和手里的余量，考虑怎样继续帮助他们。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "rescue"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "combination",
+      "time": 262.32956382,
+      "image": "previews/1920-combination.png",
+      "overflow": false,
+      "subtitle": "作者现在可以用它们设计、修改和验证游戏原型；长期希望让可复用规则支撑更丰富的自由探索世界。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "combination"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "future",
+      "time": 285.96814449000004,
+      "image": "previews/1920-future.png",
+      "overflow": false,
+      "subtitle": "游玩中，模型也可以依据角色可知的信息提出行动，讲述实际经历，让创作与主持围绕同一个规则世界协作。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "future"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "credits",
+      "time": 314.19806124,
+      "image": "previews/1920-credits.png",
+      "overflow": false,
+      "subtitle": "这条路线经历了多次探索与重构，始终追求同一个愿望：作者创作世界允许发生什么，玩家选择实际发生什么，系统依据规则结算，让故事从游玩中形成。",
+      "captionOverflow": false,
+      "captionInside": true,
+      "fontReady": true,
+      "chapter": "credits"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "pipeline",
+      "cue": 0,
+      "time": 39.08388875,
+      "image": "previews/1920-pipeline-cue-0.png"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "pipeline",
+      "cue": 1,
+      "time": 44.113577,
+      "image": "previews/1920-pipeline-cue-1.png"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "pipeline",
+      "cue": 2,
+      "time": 48.74017025,
+      "image": "previews/1920-pipeline-cue-2.png"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "pipeline",
+      "cue": 3,
+      "time": 54.83140575,
+      "image": "previews/1920-pipeline-cue-3.png"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "pipeline",
+      "cue": 4,
+      "time": 61.495731000000006,
+      "image": "previews/1920-pipeline-cue-4.png"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "adventure",
+      "cue": 0,
+      "time": 164.82924025,
+      "image": "previews/1920-adventure-cue-0.png"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "adventure",
+      "cue": 1,
+      "time": 170.60371874999998,
+      "image": "previews/1920-adventure-cue-1.png"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "adventure",
+      "cue": 2,
+      "time": 176.79259075,
+      "image": "previews/1920-adventure-cue-2.png"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "adventure",
+      "cue": 3,
+      "time": 181.95445,
+      "image": "previews/1920-adventure-cue-3.png"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "adventure",
+      "cue": 4,
+      "time": 187.45652475000003,
+      "image": "previews/1920-adventure-cue-4.png"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "adventure",
+      "cue": 5,
+      "time": 192.53148499999998,
+      "image": "previews/1920-adventure-cue-5.png"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "rescue",
+      "cue": 0,
+      "time": 195.64057225,
+      "image": "previews/1920-rescue-cue-0.png"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "rescue",
+      "cue": 1,
+      "time": 198.721899,
+      "image": "previews/1920-rescue-cue-1.png"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "rescue",
+      "cue": 2,
+      "time": 201.92640025,
+      "image": "previews/1920-rescue-cue-2.png"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "rescue",
+      "cue": 3,
+      "time": 205.6567405,
+      "image": "previews/1920-rescue-cue-3.png"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "rescue",
+      "cue": 4,
+      "time": 211.77172925000002,
+      "image": "previews/1920-rescue-cue-4.png"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "rescue",
+      "cue": 5,
+      "time": 217.887965,
+      "image": "previews/1920-rescue-cue-5.png"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "rescue",
+      "cue": 6,
+      "time": 223.03931425000002,
+      "image": "previews/1920-rescue-cue-6.png"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "rescue",
+      "cue": 7,
+      "time": 227.81755125,
+      "image": "previews/1920-rescue-cue-7.png"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "rescue",
+      "cue": 8,
+      "time": 232.99506825,
+      "image": "previews/1920-rescue-cue-8.png"
+    },
+    {
+      "viewport": {
+        "width": 1920,
+        "height": 1080
+      },
+      "scene": "rescue",
+      "cue": 9,
+      "time": 240.43874725,
+      "image": "previews/1920-rescue-cue-9.png"
+    }
+  ],
+  "sha256": {
+    "index.html": "a803086018e1682f1fe488d78b2b5c25c66b5017b74a46c322348fb74207e367",
+    "film.js": "50dad363f8143f0f4497c5faf2ad5fef0dbf7001d9d78f6316dd3cfe6b9b65ed",
+    "timeline.js": "35ca42d077e44e5c1c3200c54bdef06af18cc9ebed7e5e6df9a1a335124152c9",
+    "narration.mp3": "c2215562b7bdad75c0090dc8c70521833a5d4f8b55870a94bc6fe4872fa8b9af",
+    "alignment.json": "df77422b59ddc80f997076534ae33d4a90503be81334819b3aeed40493a4b425",
+    "dependencies.json": "de58d7695b78ef419d7105fdf8d3508008d6181315304c1b2bf0b06fba6df51e",
+    "font/chinese.woff": "8d76d7450b6d15ec26232b6a6583b3024a5dab402132936e413c1b10fac540ba",
+    "font/OFL.txt": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2",
+    "../film-v3/m1/media.js": "59f0dc3ea1a07940280570580a262f438f300a7e2908b07dabf9b52d9cc2e3ca",
+    "../film-v3/m1/resource.webm": "90243b4bee863f9a5cdb227d73884358cac02973617aef401d7601d077626afb",
+    "../film-v3/m1/reply.webm": "b6b708af13318257fe5530313e4f444aaa0b2ce19f21003f1f38ee8ac68ce92c",
+    "../film-v3/m1/opening-purpose.png": "be24ae645cc6574c044e42e03ae3632f86199e09a4f8abad216921af7c619a0b",
+    "../film-v3/m1/opening-map.png": "7622a1e15f27edae2937577e40204f45a0c30eea205702473b18896c2befe220",
+    "../film-v3/m1/thaw-before.png": "aa921c464947e92cbabc7ab9c7c9815614f23a08971e424c25f2becb5055cd2c",
+    "../film-v3/m1/thaw-after.png": "83430c2aabf36a5750b06406f812fb6c2bcebb11d08b4ffb6b8bdb89ce6fa568",
+    "../film-v3/m1/reply-before.png": "3cae3ae1fa0030679f735467645edac8d3df5941a7330ecdfdbb10c0da90b06b",
+    "../film-v3/m1/reply-after.png": "f2c214f2a8995f60acf88d5dace34e102b4ca785cbc69deb491d9c59b1dd865f"
+  }
+}

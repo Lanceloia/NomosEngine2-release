@@ -1,0 +1,41 @@
+{
+  "kind": "Narrated project introduction; saved experiment diagrams and previously recorded real M1 browser interactions",
+  "voice": "Provided narration MP3",
+  "duration_seconds": 319.44,
+  "video": {
+    "width": 1280,
+    "height": 720,
+    "fps": 20,
+    "frames": 6389,
+    "codec": "H.264",
+    "encoder_threads": 2,
+    "audio": "AAC"
+  },
+  "synchronization": "Deterministic frame timestamps share the audio clock; sentence alignment remains a speech-pause estimate. Listening acceptance pending.",
+  "page_errors": [],
+  "media_preload_aborts": [
+    "narration.mp3",
+    "resource.webm"
+  ],
+  "decoded_both_streams": true,
+  "sha256": {
+    "index.html": "a803086018e1682f1fe488d78b2b5c25c66b5017b74a46c322348fb74207e367",
+    "film.js": "50dad363f8143f0f4497c5faf2ad5fef0dbf7001d9d78f6316dd3cfe6b9b65ed",
+    "timeline.js": "35ca42d077e44e5c1c3200c54bdef06af18cc9ebed7e5e6df9a1a335124152c9",
+    "narration.mp3": "c2215562b7bdad75c0090dc8c70521833a5d4f8b55870a94bc6fe4872fa8b9af",
+    "alignment.json": "df77422b59ddc80f997076534ae33d4a90503be81334819b3aeed40493a4b425",
+    "dependencies.json": "de58d7695b78ef419d7105fdf8d3508008d6181315304c1b2bf0b06fba6df51e",
+    "font/chinese.woff": "8d76d7450b6d15ec26232b6a6583b3024a5dab402132936e413c1b10fac540ba",
+    "font/OFL.txt": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2",
+    "../film-v3/m1/media.js": "59f0dc3ea1a07940280570580a262f438f300a7e2908b07dabf9b52d9cc2e3ca",
+    "../film-v3/m1/resource.webm": "90243b4bee863f9a5cdb227d73884358cac02973617aef401d7601d077626afb",
+    "../film-v3/m1/reply.webm": "b6b708af13318257fe5530313e4f444aaa0b2ce19f21003f1f38ee8ac68ce92c",
+    "../film-v3/m1/opening-purpose.png": "be24ae645cc6574c044e42e03ae3632f86199e09a4f8abad216921af7c619a0b",
+    "../film-v3/m1/opening-map.png": "7622a1e15f27edae2937577e40204f45a0c30eea205702473b18896c2befe220",
+    "../film-v3/m1/thaw-before.png": "aa921c464947e92cbabc7ab9c7c9815614f23a08971e424c25f2becb5055cd2c",
+    "../film-v3/m1/thaw-after.png": "83430c2aabf36a5750b06406f812fb6c2bcebb11d08b4ffb6b8bdb89ce6fa568",
+    "../film-v3/m1/reply-before.png": "3cae3ae1fa0030679f735467645edac8d3df5941a7330ecdfdbb10c0da90b06b",
+    "../film-v3/m1/reply-after.png": "f2c214f2a8995f60acf88d5dace34e102b4ca785cbc69deb491d9c59b1dd865f",
+    "introduction.mp4": "b94f6c8ef572e32f6d837548956e7300e5a189130724a32b7109c0951c6cc25d"
+  }
+}

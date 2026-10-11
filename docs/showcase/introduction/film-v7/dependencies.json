@@ -1,0 +1,8 @@
+[
+  "index.html", "film.js", "timeline.js", "narration.mp3", "alignment.json",
+  "dependencies.json", "font/chinese.woff", "font/OFL.txt",
+  "../film-v3/m1/media.js", "../film-v3/m1/resource.webm", "../film-v3/m1/reply.webm",
+  "../film-v3/m1/opening-purpose.png", "../film-v3/m1/opening-map.png",
+  "../film-v3/m1/thaw-before.png", "../film-v3/m1/thaw-after.png",
+  "../film-v3/m1/reply-before.png", "../film-v3/m1/reply-after.png"
+]

@@ -36,11 +36,11 @@ def test_homepage_has_direct_reading_paths_and_current_media():
         assert any(link.endswith(name) for link in parsed.links)
     for repo in ("NomosEngine2-release", "nomos-m1-web"):
         assert f"https://github.com/Lanceloia/{repo}/tree/showcase-2026-10-11" in parsed.links
-    assert "showcase/introduction/film-v6/index.html" in parsed.links
+    assert "showcase/introduction/film-v7/index.html" in parsed.links
     assert parsed.assets
     for asset in parsed.assets:
         assert (page.parent / asset).is_file()
-    assert (page.parent / "showcase/introduction/film-v6/font/site-chinese.woff").is_file()
+    assert (page.parent / "showcase/introduction/film-v7/font/site-chinese.woff").is_file()
     assert any(link.endswith("NOMOS_PRODUCT_PROPOSITION.md") for link in parsed.links)
 
 
