@@ -22,6 +22,9 @@
 [代码地图](docs/CODE_MAP.md)用于继续检查实现。
 全部使用与维护文档见[文档导航](docs/README.md)。
 
+[项目演进](docs/PROJECT_EVOLUTION.md)介绍从 TRPG 创作愿望到沙盒工具链的探索：
+具体世界怎样推动规则作者化、语义 IR 和当前 C0 / K0 / T0 的形成。
+
 先看[约三分钟中文项目介绍](docs/showcase/introduction/film-v1/introduction.mp4)：
 有旁白和字幕，讲清动机、方法、当前成果与未来愿景；[讲解页面与讲稿](docs/showcase/introduction/README.md)可选章核对。
 
