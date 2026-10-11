@@ -13,7 +13,8 @@ C0 将已检查的 IR 编成专用 Python 执行计划。它优化的是规则�
 | `_execution_emission.py` | 编译期常量绑定、局部名称、AST 片段和 Python 发射 |
 
 前三类计划各自保留语义责任；共同发射工具只处理生成代码的机械组织。
-常量按 identity 绑定，不调用原生 equality 去重；作者字段名作为字符串，不注入代码。
+常量按 identity 绑定，不调用原生 equality 去重；作者字段名直接成为 AST 属性名，
+不解析为代码模板、不做 Unicode 名称规范化。读取仍经过当前 getter/descriptor。
 生成函数直接使用自己的 namespace，不经运行期万能 dispatcher。
 
 ## 正确性边界
