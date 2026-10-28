@@ -1,57 +1,10 @@
 <!doctype html>
-<html lang="zh-CN">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="NomosEngine2：规则驱动自由探索世界的创作与验证工具链。作者声明世界，玩家选择行动，系统依据规则结算，让故事从游玩中形成。">
-<title>NomosEngine2 · 规则驱动自由探索世界</title>
-<style>
-@font-face{font-family:NomosChinese;src:url('showcase/introduction/film-v7/font/site-chinese.woff') format('woff');font-display:swap}
-*{box-sizing:border-box}body{margin:0;background:#fafbfc;color:#20252a;font:17px/1.7 NomosChinese,'Microsoft YaHei',sans-serif;letter-spacing:0}a{color:#12675e;text-underline-offset:4px}a:hover{color:#934027}a:focus-visible{outline:3px solid #12675e;outline-offset:5px}main{max-width:1080px;margin:auto;padding:32px 32px 56px}header{border-bottom:1px solid #d5dce0;padding-bottom:28px}nav{display:flex;flex-wrap:wrap;gap:12px 26px;font-size:15px}h1{font-size:40px;line-height:1.25;margin:30px 0 12px}h2{font-size:24px;margin:0 0 12px}h3{font-size:18px;margin:0 0 6px}p{margin:10px 0}.lead{font-size:22px;line-height:1.55;max-width:800px}.sub{color:#505b63;max-width:850px}.watch{display:flex;flex-wrap:wrap;gap:12px 24px;margin:20px 0 0}.band{padding:28px 0;border-bottom:1px solid #d5dce0}.film{display:block;width:100%;aspect-ratio:16/9;background:#111214;margin:16px 0 0}.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}.step{border-left:3px solid #d2b85e;padding-left:16px}.step:nth-child(2){border-color:#369687}.step:nth-child(3){border-color:#b15b50}.step p{color:#505b63;font-size:16px}.links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 36px}.links p{font-size:15px;color:#505b63}footer{font-size:14px;color:#505b63;padding-top:20px}@media(max-width:680px){main{padding:24px 20px}h1{font-size:32px}.lead{font-size:20px}.steps,.links{grid-template-columns:1fr}}
-</style>
-</head>
-<body><main>
-<header>
-<nav aria-label="项目入口"><a href="https://github.com/Lanceloia/NomosEngine2-release/tree/showcase-2026-10-11">引擎源码</a><a href="#experiments">三个实验</a><a href="#read">代码与设计</a><a href="https://github.com/Lanceloia/nomos-m1-web/tree/showcase-2026-10-11">M1 Web</a></nav>
-<h1>NomosEngine2</h1>
-<p class="lead">声明世界，让行动形成故事。</p>
-<p class="sub">玩家总会想到剧情分支之外的新尝试。受 TRPG 启发，NomosEngine2 希望让作者声明人物、物件、能力与世界规律，让系统回应玩家的选择，逐步建立可以自由探索的规则世界。</p>
-<div class="watch"><a href="showcase/introduction/film-v7/index.html">中文有声介绍 · 可选章</a><a href="https://github.com/Lanceloia/NomosEngine2-release/blob/main/docs/NOMOS_PRODUCT_PROPOSITION.md">项目定位与北极星</a><a href="https://github.com/Lanceloia/NomosEngine2-release/blob/main/docs/PROJECT_TOUR.md">阅读项目导览</a></div>
-</header>
-<section class="band" aria-labelledby="video-title">
-<h2 id="video-title">为什么从剧情走向规则？</h2>
-<p>作者创作世界允许发生什么，玩家选择实际发生什么，系统依据规则结算。约五分钟的中文介绍串起这一愿望、工具职责与狼人杀实验，再走进 M1 冰宫，看看有限永焰、地面观察与居民回应怎样改变下一步选择。</p>
-<video class="film" controls preload="metadata" poster="showcase/introduction/film-v7/poster.png" src="showcase/introduction/film-v7/introduction.mp4" aria-label="中文有声项目介绍"></video>
-</section>
-<section class="band" aria-labelledby="purpose-title">
-<h2 id="purpose-title">从创作愿望到可运行的工具</h2>
-<p>预写剧情难以覆盖不断出现的选择。TRPG 通过规则、世界设定、主持人的判断与玩家即兴，形成不同经历。我们希望把世界规则和结算建立为可维护的系统，让创作者逐步减少穷举剧情分支的负担。</p>
-<p>目前已建立声明式作者语言、C0 编译器、K0 执行内核和 T0 行动见证检查器。狼人杀与 M1 是检验这套方法的世界；快速设计与验证游戏原型，是工具当前的实际用途。</p>
-<h3>也可以先写一个精彩故事</h3>
-<p>直接设计完整规则并不容易，但作者可以先描述一次营救、反转或险境脱身。T0 的长期目标，是帮助作者从这些故事探索支持它们的事实、能力与规则，再用真实运行检验。当前已实现行动见证检查；故事理解与规则推导是后续方向。故事为创作提供样例，玩家仍能选择自己的行动。</p>
-</section>
-<section class="band" id="experiments" aria-labelledby="experiment-title">
-<h2 id="experiment-title">三个实验，从不同方向检验创作能力</h2>
-<div class="steps">
-<article class="step"><h3>改一条限制</h3><p>只加入女巫不能自救。相同开局和路线，前九步来源一致，第十步由发布变为拒绝。</p><a href="https://github.com/Lanceloia/NomosEngine2-release/blob/showcase-2026-10-11/docs/SHOWCASE.md">查看声明与拒绝诊断</a></article>
-<article class="step"><h3>换一种结算</h3><p>共同袭击从全票一致改为多数票。十次行动均获准，清晨的死亡结果改变。</p><a href="https://github.com/Lanceloia/NomosEngine2-release/blob/showcase-2026-10-11/docs/showcase/wolf-vote/README.md">查看投票规则对照</a></article>
-<article class="step"><h3>编辑开局人物</h3><p>女巫 B 换到 E，六席扩到八席。选项、独立视图与实际行动来源一起变化。</p><a href="https://github.com/Lanceloia/NomosEngine2-release/blob/showcase-2026-10-11/docs/showcase/world-edits/README.md">查看换职业与扩人数</a></article>
-</div>
-</section>
-<section class="band" id="read" aria-labelledby="read-title">
-<h2 id="read-title">继续了解实现</h2>
-<div class="links">
-<div><h3><a href="https://github.com/Lanceloia/NomosEngine2-release/blob/showcase-2026-10-11/docs/CODE_MAP.md">代码地图</a></h3><p>C0 编译声明，K0 准入与原子结算，T0 用同一产物检查给定行动见证。</p></div>
-<div><h3><a href="https://github.com/Lanceloia/NomosEngine2-release/blob/showcase-2026-10-11/docs/PERSONAL_CONTRIBUTION.md">个人贡献与设计案例</a></h3><p>世界源码与预期剧情为什么分离？人类负责方向、语义与验收，AI 协作者承担后期实现。</p></div>
-<div><h3><a href="https://github.com/Lanceloia/nomos-m1-web/tree/showcase-2026-10-11">M1 冰宫冒险</a></h3><p>取得独立 Web 应用，本地体验永焰、寒冷、观察与居民行动的共同运行。</p></div>
-<div><h3><a href="https://github.com/Lanceloia/NomosEngine2-release/blob/main/docs/PROJECT_EVOLUTION.md">从 TRPG 愿望到规则世界创作</a></h3><p>具体世界怎样暴露问题，并推动规则作者化、语义 IR 与当前架构。</p></div>
-</div>
-</section>
-<section class="band" aria-labelledby="evidence-title">
-<h2 id="evidence-title">验证记录与早期代码</h2>
-<p><a href="https://github.com/Lanceloia/NomosEngine2-release/actions/runs/38135299619">展示版本 CI · 327 项合同通过</a>：Python 3.14.4，干净 wheel 安装、两个世界和三个规则编辑实验。</p>
-<p>本人课程代码与中文导览：<a href="https://github.com/Lanceloia/cp2020/tree/1cf28947cc4beef5d9bd2f87274e036b8fb15766">C-- 编译器</a> · <a href="https://github.com/Lanceloia/os2019/tree/b86451574242d3eaded3baae354c1102d710ac72">OS 系统实验</a> · <a href="https://github.com/Lanceloia/ics2018/tree/fd881ab8ef2b87dd55030a07bc69479d07feddff">ICS 系统链路</a>。各仓库说明课程框架、个人模块与实现入口。</p>
-</section>
-<footer>展示版本：showcase-2026-10-11 · <a href="https://github.com/Lanceloia/NomosEngine2-release/blob/showcase-2026-10-11/docs/M1_WEB.md">匹配版本与运行方式</a> · <a href="https://github.com/Lanceloia/NomosEngine2-release/blob/showcase-2026-10-11/RIGHTS.md">权利与素材署名</a> · <a href="https://github.com/Lanceloia/NomosEngine2-release">最新维护版</a></footer>
-</main></body>
-</html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="NomosEngine2：把声明式游戏规则编译为可执行世界，连接合法局部观测、神经策略与实际行动验证。"><title>NomosEngine2 · 规则成为可执行世界</title><link rel="stylesheet" href="homepage-v2/style.css"></head>
+<body><header><a class="brand" href="#">NE<span>2</span> <small>NomosEngine2</small></a><nav aria-label="主导航"><a href="#case">规则实验</a><a href="#learning">策略学习</a><a href="#engineering">工程设计</a><a href="#evidence">验证证据</a></nav></header>
+<main><section class="hero"><div><p class="eyebrow">GAME RULES / TOOLS / AGENT RESEARCH</p><h1>作者写下规则。<br>世界回应选择。</h1><p class="intro">把声明式游戏规则编译为Python执行程序，让玩家、电脑策略与验证工具，共用行动准入、信息边界和结算。</p><p class="muted">从TRPG式自由行动出发，当前聚焦规则创作、真实行为验证与游戏策略研究。</p><div class="actions"><a class="primary" href="#case">看一个规则修改实验 ↗</a><a href="#learning">了解神经策略怎样接入 →</a></div></div><div class="hero-diagram" aria-label="规则与选择的关系"><p>ONE WORLD · SHARED RULES</p><div>作者声明 <b>规则与能力</b></div><span>↓ C0检查并生成</span><div>Python Program <b>运行时准入与结算</b></div><span>↑ 玩家选择 / 策略决策 / 验证见证</span><footer>实际行动 → 状态变化 → 本人可见信息</footer></div></section>
+<section class="section" id="case"><div class="section-title"><p class="eyebrow">01 / CHANGE A RULE</p><h2>只改“女巫能否自救”，<br>检查选择与后果是否一起改变。</h2></div><div class="case-grid"><div><p>同一开局，狼人夜袭女巫E。两份生成世界只改变已有的自救配置，核查脚本提交行动并读取天亮状态。</p><pre class="diff"><code><span class="remove">− allow_self_save: true</span>
+<span class="add">+ allow_self_save: false</span></code></pre><p class="caption">运行记录对照：选择配置，查看对应的已记录结果。</p><div class="switch" role="group" aria-label="选择已记录规则配置"><button data-variant="allow" aria-pressed="true">允许自救</button><button data-variant="forbid" aria-pressed="false">禁止自救</button></div><dl id="case-result" aria-live="polite"></dl><p class="caption">save_choices：false＝不救自己，true＝救自己。legal_save记录已选并成功发布的输入；alive与antidote来自行动后读取。</p></div><div class="raw"><div class="raw-title"><span>原始核查摘要</span><a href="homepage-v2/evidence/self-save.json">打开JSON ↗</a></div><pre id="raw-json"></pre><p class="caption">字段来源：rejection_snapshot_unchanged记录前后诊断快照的相等检查；occurrences记录历史条数。</p></div></div><div class="takeaway">这条实验贯穿：规则配置 → 合法选项 → 提交准入 → 天亮后果。</div></section>
+<section class="section" id="engineering"><div class="section-title"><p class="eyebrow">02 / ENGINEERING BOUNDARIES</p><h2>把世界规则与消费者分开。</h2></div><div class="columns"><article><span class="number">A</span><h3>作者语言与代码生成</h3><p>C0检查高级声明并生成Python。规则定义、开局数据与预期行动序列分别维护；验证工具将同一行动序列用于不同规则配置。</p></article><article><span class="number">B</span><h3>运行时执行与局部信息</h3><p>nomos_runtime处理行动准入和状态结算，信息沿许可读取进入本人视角。策略基于本人信息评分，所选行动在提交时检查准入。</p></article><article><span class="number">C</span><h3>同产物行动见证</h3><p>T0使用同一生成世界检查给定行动序列，保留已成立的前缀与第一个失败位置，帮助作者定位规则修改带来的行为差异。</p></article></div></section>
+<section class="section learning" id="learning"><div class="section-title"><p class="eyebrow">03 / LEARNING IN THE WORLD</p><h2>让策略学习，<br>再回到真实对局核对。</h2></div><div class="pipeline"><span>本人许可观测<br><b>与合法行动</b></span><i>→</i><span>领域编码<br><b>前馈神经策略</b></span><i>→</i><span>实际提交<br><b>规则重新准入</b></span><i>→</i><span>运行反馈<br><b>保留测量</b></span></div><div class="learning-grid"><div><h3>五人阿瓦隆的投票策略训练</h3><p>冻结红方及其余行为，轮流更新梅林、帕西瓦尔与普通蓝方的投票策略。研究工具对兼容隐藏身份的后续结果进行后验加权，得到各行动的训练收益。</p><p>可训练残差采用两个32宽Tanh隐藏层，输出赞成／反对评分；基础网络冻结。用收益差加权margin与旧选择保持损失更新参数。前馈策略读取当前局势与本局历史摘要，每局按输入作出决策。</p><p class="caption">每批标签与完整教师版本绑定，更新策略后重新计算后续收益。</p></div><div class="results"><p class="eyebrow">FIXED PAIRED SAMPLE / 30 CONFIGURATIONS</p><div class="score"><span id="parent-score">—</span><i>→</i><strong id="candidate-score">—</strong></div><p>30配置样本中的蓝方胜场：课程起点 → 最终模型</p><table><caption>已封存的正常对局测量</caption><thead><tr><th>指标</th><th>起点</th><th>最终</th></tr></thead><tbody id="training-rows"></tbody></table><p class="caption">抽样口径：从600种配置按座位分层抽取30种，允许历史训练配置。上方数字表示该固定样本的配对结果。</p><a href="homepage-v2/evidence/training-summary.json">核对完整测量摘要 ↗</a></div></div><p class="takeaway">从合法观测到行动评分，再到实际提交与反馈，学习流程复用同一套世界执行与准入接口。</p></section>
+<section class="section" id="evidence"><div class="section-title"><p class="eyebrow">04 / EVIDENCE</p><h2>从运行记录核对结果。</h2></div><div class="people-grid"><div><h3>规则修改与实际后果</h3><p>两份生成世界使用同一开局，仅改变自救配置。记录保留合法候选、请求拒绝、诊断快照检查，以及天亮后的存活和药剂状态。</p><a href="homepage-v2/evidence/self-save.json">查看原始核查摘要 ↗</a></div><div><h3>策略训练与固定测量</h3><p>最终模型冻结后，分别对12配置保持表与30配置抽样表运行两臂对照，共84个正常终局。测量轨迹与训练数据分开保存，训练分支诊断另行记录。</p><a href="homepage-v2/evidence/training-summary.json">查看完整测量摘要 ↗</a></div></div><div class="takeaway"><a href="homepage-v2/evidence/manifest.json">证据来源与文件摘要 ↗</a> · <a href="https://github.com/Lanceloia/NomosEngine2-release/tree/showcase-2026-10-11">历史发行源码 ↗</a><p class="caption">版本索引：公开源码快照为2026年10月11日；本页运行与测量记录为2026年10月28日。</p></div></section>
+</main><footer class="page-footer"><span>NomosEngine2 · 规则创作与验证工具链</span><span>研究版介绍 · 2026.10 · 运行记录 10.28</span></footer><script src="homepage-v2/app.js"></script></body></html>

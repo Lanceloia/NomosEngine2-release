@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-28",
+  "scope": "static presentation of existing real runs; no browser-side world simulation",
+  "sources": {
+    "self-save.json": "NomosEngine2/docs/evidence/ten-minute-demo-v1/runtime.json",
+    "training-summary.json": "NomosEngine2/docs/evidence/avalon-training-campaign-v216/measurements/summary.json"
+  },
+  "sha256": {
+    "self-save.json": "58a8bdf2466f8ef3d56aba60bacdf2d1fe23b259faf2ccc784fad24b34fcba98",
+    "training-summary.json": "39cf82215ab8c4aeca5d7e6013205d4f69d730f2377f0f1951ea4bd718b4ea4e"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "checks": {
+    "variants": "both match source JSON",
+    "table": "10/30 to 12/30",
+    "generalization": "not proven",
+    "pageTitle": "NomosEngine2 · 规则成为可执行世界"
+  },
+  "layouts": [
+    {
+      "label": "desktop",
+      "width": 823,
+      "content": 814
+    },
+    {
+      "label": "mobile",
+      "width": 390,
+      "content": 390
+    }
+  ],
+  "http": 200,
+  "no_application_actions": true
+}
