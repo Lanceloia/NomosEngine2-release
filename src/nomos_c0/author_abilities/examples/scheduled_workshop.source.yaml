@@ -1,0 +1,17 @@
+schema: nomos.author.source
+name: scheduled_workshop
+actors: {alice: Worker, bob: Worker}
+objects: []
+contexts:
+  room: {definition: Workshop, with: {people: {opening_domain: Worker}}}
+time:
+  mechanism: event_jump
+  due_order: [pulse]
+  scheduling:
+    actors: {Worker: {definition: BySpeed, with: {initial: 6}}}
+    wait: next_world_change
+use:
+  work: {definition: Work, with: {effort: 6}}
+  rest: {definition: Rest}
+  sleep: {definition: Sleep}
+  pulse: {definition: WorkshopPulse, context: room}

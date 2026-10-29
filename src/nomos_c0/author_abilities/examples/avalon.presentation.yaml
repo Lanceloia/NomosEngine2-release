@@ -1,0 +1,193 @@
+schema: nomos.tabletop.presentation
+title: 阿瓦隆
+result_label: 获胜阵营
+description: 善良方争取三次任务成功并保护梅林；邪恶方破坏任务、连续否决队伍或找出梅林。
+rules:
+  title: 阿瓦隆 · 本局规则与流程
+  sections:
+    - title: 阵营与胜利
+      text: '善良方争取三次任务成功，并躲过刺客的指认。邪恶方让三次任务失败，或连续五次否决队伍，或在最后指认梅林。梅林、帕西瓦尔、忠臣属于善良方；莫甘娜、刺客、爪牙、莫德雷德属于邪恶方。角色数量由本局配置决定。'
+    - title: 组队与表决
+      text: '队长选择本轮规定人数的队伍，也可选择自己。启用公开发言时，先讨论一轮，再回应一轮；每轮每人可选择一次表达或主动让过，每次提队可自称身份一次。可以信任或质疑已听见的自称；被评论者可在回应轮维护自己的说法。两轮结束后全体秘密表决，严格过半赞成才出发；否决后轮换队长。各轮组队人数与完成情况见顶部任务总览。'
+    - title: 任务与刺杀
+      text: '队员各交一张任务牌。善良方只能成功，邪恶方可成功或破坏。五、六人局每轮一张失败牌即失败；七人及以上的第四轮是保护轮，至少两张失败牌才失败。任务总览按本局配置显示人数与门槛。三次成功后，刺客选择一名目标；命中梅林则邪恶方胜利。'
+    - title: 你掌握的信息
+      text: '邪恶成员认识邪恶同伴；梅林认识邪恶人物，莫德雷德例外。帕西瓦尔知道梅林与莫甘娜这组候选，但不知道谁是谁。自己的身份、已知线索和本轮队伍分别显示；他人的秘密牌在集体结算前保密。'
+  sources:
+    - {title: 阿瓦隆原版规则书（英文 PDF）, url: 'https://avalon.fun/pdfs/rules.pdf'}
+labels:
+  a: 1号
+  b: 2号
+  c: 3号
+  d: 4号
+  e: 5号
+  f: 6号
+  g: 7号
+  h: 8号
+  i: 9号
+  j: 10号
+  merlin: 梅林
+  percival: 帕西瓦尔
+  servant: 忠臣
+  morgana: 莫甘娜
+  assassin: 刺客
+  minion: 爪牙
+  mordred: 莫德雷德
+  good: 善良方获胜
+  evil: 邪恶方获胜
+  proposal: 队长组队
+  discussion: 第一轮讨论
+  response: 第二轮回应
+  approval: 队伍表决
+  quest: 执行任务
+  assassination: 刺客出手
+  finished: 对局结束
+  mission: 任务轮次
+  leader: 队长
+  team: 远征队
+  epoch: 本局累计提队
+  approve: 赞成
+  reject: 反对
+  passed: 是否通过
+  fails: 失败牌数
+  failed: 任务失败
+  subjects: 候选人物
+  labels: 可能身份
+  assignment: 对应关系
+  winner: 获胜阵营
+  reason: 结束原因
+  three_failed_tasks: 三次任务失败，邪恶方获胜。
+  five_rejected_teams: 连续五次否决队伍，邪恶方获胜。
+  merlin_found: 刺客指认了梅林，邪恶方获胜。
+  merlin_survived: 三次任务成功，梅林躲过刺杀，善良方获胜。
+  identities: 身份揭晓
+  player: 玩家
+  role: 身份
+  accusation: 刺客指认
+  full_bijection: 两位人物分别是梅林与莫甘娜，具体对应未知
+  claim_identity: 公开自称身份
+  claimed_role: 你想自称的身份
+  advise_team: 公开表达队伍建议
+  support_team: 是否建议赞成这支队伍
+  rationale: 发言理由
+  Judgment: 基于我的判断
+  FailureOverlap: 与失败任务的成员重叠
+  SuccessCore: 保留零失败牌队伍的成员
+  TestTeam: 希望验证这支新组合
+  TrustSpeaker: 我采信这位玩家的发言
+  EvilExhausted: 引用任务记录，推断这支队伍全好
+  ClaimAssessment: 对身份自称的看法
+  claim_epoch: 自称发生的提队
+  credible: 是否采信
+  suggest_team: 提出替代队伍
+  pass_speech: 让过本轮发言
+  Candidate: 梅林候选
+  Evil: 邪恶身份
+  Claimed: 身份说法
+  Advice: 队伍建议
+  speaker: 发言人
+  person: 人物
+  beliefs: 本人收到的说法
+  appraisals: 本人评价
+  analysis: 有限身份分析
+  models: 相容身份配置
+  QuestOutcome: 任务结果记录
+  AdviceReview: 建议结果回顾
+  aligned: 建议与任务结果一致
+  ReviewAdvice: 根据实际结果回顾建议
+  inferences: 由本人线索推导的判断
+  local: 局部人数判断
+  bounds: 人物与队伍约束
+  members: 成员
+  category: 判断维度
+  minimum: 至少
+  maximum: 至多
+  complete: 本轮完成
+  evil_count: 邪恶人数
+  merlin_count: 梅林人数
+components:
+  QuestStep:
+    kind: table
+    columns:
+      mission: 任务
+      members: 组队人数
+      threshold: 失败所需票数
+      protected: {label: 保护轮, values: {'true': 是, 'false': '—'}}
+      status: {label: 进展, values: {pending: 待进行, current: 正在进行, succeeded: 成功, failed: 失败, unplayed: 未进行}}
+      fails: 已揭示失败票
+  FinalResult: {kind: record, fields: {winner: {label: 获胜阵营}, reason: {label: 结束原因}, identities: {label: 身份揭晓}, accusation: {label: 刺客指认, omit_empty: true}}}
+  FinalIdentity: {kind: table, columns: {player: 玩家, role: 身份}}
+  ApprovalRecord:
+    kind: table
+    columns: {mission: 任务, epoch: 本局提队, leader: 队长, team: 队伍, approve: 赞成, reject: 反对, passed: {label: 结果, values: {'true': 通过, 'false': 否决}}}
+  QuestRecord:
+    kind: table
+    columns: {mission: 任务, epoch: 本局提队, team: 队伍, fails: 失败牌数, failed: {label: 结果, values: {'true': 失败, 'false': 成功}}}
+  PlayerRef: {kind: badge, icon: user}
+  Role:
+    kind: badge
+    items:
+      merlin: {icon: crown, color: '#497d9b', label: 梅林 · 善良方, description: '利用你掌握的邪恶线索帮助任务成功，同时隐藏身份以躲过刺客。'}
+      percival: {icon: eye, color: '#497d9b', label: 帕西瓦尔 · 善良方, description: '你看见的候选中有梅林与莫甘娜。结合提议与任务结果辨认，并帮助保护梅林。'}
+      servant: {icon: shield, color: '#397862', label: 忠臣 · 善良方, description: '结合公开提队、表决与任务结果寻找可靠队伍，协助完成三次任务并保护梅林。'}
+      morgana: {icon: moon, color: '#a24f70', label: 莫甘娜 · 邪恶方, description: '你会与梅林共同出现在帕西瓦尔的候选中。可以利用发言影响判断，协助邪恶方获胜。'}
+      assassin: {icon: sword, color: '#a24f70', label: 刺客 · 邪恶方, description: '与邪恶同伴协作。即使善良方完成三次任务，你仍可通过指认梅林赢下对局。'}
+      minion: {icon: user, color: '#a24f70', label: 爪牙 · 邪恶方}
+      mordred: {icon: crown, color: '#a24f70', label: 莫德雷德 · 邪恶方}
+seats:
+  self_badge: {information: own_role, field: role}
+  reveal: {source: {ending: identities}, reference: player, badge: role}
+  marks:
+  - {source: {context: match.team}, label: 最近提出的队伍, icon: flag, tone: positive}
+  - {source: {projection: leader}, label: 队长, icon: crown, tone: attention}
+  - {source: {information: evil_peers}, label: 已知邪恶同伴, icon: moon, tone: danger}
+  - {source: {information: merlin_suspects}, label: 已知邪恶人物, icon: eye, tone: danger}
+  - {source: {information: percival_candidates}, field: subjects, label: 梅林／莫甘娜候选, icon: eye, tone: attention}
+timeline:
+- {source: {context: match.team}, title: 队长提出远征队伍, mode: change, icon: users, category: 提队, group_by: {label: 本局提队, source: {context: match.epoch}}}
+- {source: {context: match.approval_history}, title: 队伍表决结果, mode: append, icon: check, category: 表决, group_by: {label: 本局提队, field: epoch}}
+- {source: {context: match.quest_history}, title: 任务结算, mode: append, icon: flag, emphasis: true, category: 任务, group_by: {label: 本局提队, field: epoch}}
+- {source: {context: match.phase}, title: 当前阶段, mode: change, icon: flag, category: 阶段, group_by: {label: 本局提队, source: {context: match.epoch}}}
+- {source: {ending: accusation}, title: 刺客指认, mode: change, icon: sword, nonempty: true, emphasis: true, category: 终局}
+panels:
+- {title: 五轮任务总览, zone: overview, source: {projection: quest_board}}
+- {title: 当前阶段, zone: board, source: {context: match.phase}}
+- {title: 第几次任务, zone: board, source: {context: match.mission}}
+- {title: 本局累计提队, zone: board, source: {context: match.epoch}}
+- {title: 当前队长, zone: board, source: {projection: leader}}
+- {title: 最近提出的队伍, zone: board, source: {context: match.team}}
+- {title: 成功任务, zone: board, source: {context: match.successes}, display: {kind: track, steps: 3, icon: shield, tone: positive}}
+- {title: 失败任务, zone: board, source: {context: match.failures}, display: {kind: track, steps: 3, icon: sword, tone: danger}}
+- {title: 连续否决, zone: board, source: {context: match.rejections}, display: {kind: track, steps: 5, icon: x, tone: attention}}
+- {title: 你的身份, zone: private, source: {information: own_role}, field: role}
+- {title: 你认识的邪恶同伴, zone: private, source: {information: evil_peers}}
+- {title: 梅林察觉的邪恶人物, zone: private, source: {information: merlin_suspects}}
+- {title: 帕西瓦尔的身份线索, zone: private, source: {information: percival_candidates}}
+- {title: 表决记录, zone: history, source: {context: match.approval_history}}
+- {title: 任务记录, zone: history, source: {context: match.quest_history}}
+actions:
+  propose:
+    surface: seats
+    icon: users
+    title: 组建远征队
+    description: 选择本轮出发的人物，然后确认队伍。你也可以选择自己。
+    inputs: {members: {label: 远征队成员}}
+  approve:
+    surface: buttons
+    icon: check
+    title: 表决这支队伍
+    description: 全员选择后，公开表决结果；严格过半赞成才能出发。
+    preview: {本轮队伍: team}
+    inputs: {approve: {label: 你的表决, options: {'true': 赞成, 'false': 反对}, icons: {'true': check, 'false': x}}}
+  quest:
+    surface: inline
+    icon: flag
+    title: 提交任务牌
+    description: 全队提交后，公布任务结果与失败牌数。
+    inputs: {sabotage: {label: 你的任务牌, options: {'true': 破坏任务, 'false': 完成任务}, icons: {'true': sword, 'false': shield}}}
+  assassinate:
+    surface: seats
+    icon: sword
+    title: 指认梅林
+    description: 善良方已完成三次任务。找出梅林，为邪恶方赢得最后的胜利。
+    inputs: {target: {label: 你认为谁是梅林}}

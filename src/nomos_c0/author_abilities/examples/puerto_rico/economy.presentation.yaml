@@ -1,0 +1,200 @@
+schema: nomos.tabletop.presentation
+title: 波多黎各 · 经济阶段
+description: >
+  从田地到商品：先建生产设施，在市长阶段安排人员，再用工匠生产、商人卖货挣钱。
+  选择一个角色会让全体依序行动，选择者有特权。你控制一席，其余由电脑决策。
+  目标是建立自己的生产与交易链，发展岛屿的经济。
+result_label: 经济阶段收束 · 最终个人板
+rules:
+  title: 波多黎各 · 本桌规则与流程
+  sections:
+    - title: 本桌目标与收束
+      text: >
+        建立田地、生产建筑与交易的经济链。你控制一席，其他席位由电脑行动。
+        本桌采用三人开局，开放拓殖、市长、建筑师、工匠和商人；勘探者随开局角色配置提供。
+        人员供给不足以补船，或有人填满城市后，在本轮结束展示全体个人板。
+        船运、紫色特殊建筑和最终胜利分属于后续完整对局内容；本桌以经济阶段展示收束。
+    - title: 一轮怎样进行
+      text: >
+        总督先选角色，领取牌上积累的金币，并取得该角色特权。
+        从选择者开始，所有人依席位顺序各行动一次；然后下一席选择尚未选过的角色。
+        每人选过一个角色后，本轮结束。未选角色增加一金，总督移至下一席。
+    - title: 拓殖与市长
+      text: >
+        拓殖阶段取得一块公开田地，选择者也可取采石场。岛屿最多十二格。
+        市长阶段从殖民船依序领取人员，选择者可额外从公共供给领取一人。
+        重新安排自己的全部人员：每块田地一个工位，建筑容量见牌面。
+        能安置的人员须安置，其余留在圣胡安。已配置人员的采石场可降低建造费用。
+    - title: 建造与生产
+      text: >
+        建筑师阶段可建一座当前买得起的生产设施，也可放弃。
+        建筑具有原价和生产工位，本次实际费用取决于特权与已启用的采石场。
+        建筑师选择者少付一金，已启用的采石场进一步减价。
+        新建筑工位为空，需要在市长阶段安排人员。
+        工匠阶段，玉米由有人员的田地直接生产；其他货种需要同货种田地和生产建筑同时有人。
+        产量还受公共商品供给限制。全体生产后，工匠选择者可再领取一桶本人本阶段生产过且仍有供给的商品。
+    - title: 交易与放弃
+      text: >
+        商人阶段可卖一桶商品，交易所最多四桶，已有货种通常不再收取。
+        选择商人者卖货时多得一金。
+        交易阶段结束时，已满的交易所清空。普通角色行动可放弃，机会转给下一席。
+    - title: 完整原版规则
+      text: >
+        下方链接是 Rio Grande 发布的经典英文规则书，包含船长、特殊建筑和胜利计分。
+        本桌的可执行范围以以上说明为准，阅读原版可了解后续完整对局的玩法。
+  sources:
+    - {title: 经典版官方规则书（英文 PDF）, url: 'https://www.riograndegames.com/wp-content/uploads/2013/02/Puerto-Rico-Rules.pdf'}
+labels:
+  setup: 准备开局
+  choose_role: 选择本轮角色
+  extra_good: 工匠选择额外商品
+  round: 当前轮次
+  governor: 本轮总督
+  chooser: 接下来选择角色
+  selector: 角色选择者
+  acting: 当前行动者
+  role: 当前角色
+  money: 金币
+  colonists: 总人员
+  reserve: 圣胡安待命人员
+  stock: 所持商品
+  island: 田地与采石场
+  city: 城市建筑
+  key: 棋具编号
+  crop: 作物
+  workers: 已安排人员
+  reward: 积累金币
+  kind: 类型
+  settle: 拓殖
+  assign: 安排人员
+  build: 建造
+  produce: 生产
+  trade: 交易
+  decline: 本次不行动
+  bonus: 额外商品
+  player: 玩家
+  'null': 暂无
+  corn: 玉米
+  indigo: 靛蓝
+  sugar: 糖
+  tobacco: 烟草
+  coffee: 咖啡
+  small_indigo_plant: 小型靛蓝厂
+  small_sugar_mill: 小型糖厂
+  indigo_plant: 靛蓝厂
+  sugar_mill: 糖厂
+  tobacco_storage: 烟草加工厂
+  coffee_roaster: 咖啡烘焙厂
+components:
+  PlayerRef: {kind: badge, icon: user}
+  Role:
+    kind: badge
+    items:
+      settler: {label: 拓殖者, icon: flag, description: '全体取得田地；你也可选择采石场。'}
+      mayor: {label: 市长, icon: users, description: '全体领取并重新安排人员；你可额外领取一人。'}
+      builder: {label: 建筑师, icon: crown, description: '全体可建一座设施；你少付一金。'}
+      craftsman: {label: 工匠, icon: diamond, description: '全体生产商品；你可再领取一桶。'}
+      trader: {label: 商人, icon: coins, description: '全体可卖一桶商品；你卖出时多得一金。'}
+      captain: {label: 船长, icon: flag}
+      prospector: {label: 勘探者, icon: coins, description: '你额外领取一金，随即转到下一席选角色。'}
+  Goods:
+    kind: resources
+    fields:
+      corn: {label: 玉米, color: '#b58321', symbol: circle}
+      indigo: {label: 靛蓝, color: '#3d75b3', symbol: diamond}
+      sugar: {label: 糖, color: '#998f7f', symbol: square}
+      tobacco: {label: 烟草, color: '#8a6345', symbol: triangle}
+      coffee: {label: 咖啡, color: '#684352', symbol: hexagon}
+  Good: {kind: resource_choice, resources: Goods}
+  Allocation: {kind: allocation, fields: {rows: rows, target: target, quantity: count, reserve: reserve}}
+  RoleSlot: {kind: record, fields: {kind: {label: 角色}, reward: {label: 选择时领取金币}}}
+  TileCard: {kind: record, fields: {key: {label: 编号}, crop: {label: 作物}}}
+  Land: {kind: table, columns: {key: 编号, crop: 作物, workers: 人员}}
+  Building: {kind: table, columns: {key: 编号, kind: 建筑, workers: 人员}}
+  BuildingSpec: {kind: record, fields: {label: {label: 建筑}, cost: {label: 原价}, workers: {label: 生产工位}, production: {label: 产出货种}}}
+  PublicBoard: {kind: record, fields: {player: {label: 玩家}, money: {label: 金币}, colonists: {label: 总人员}, reserve: {label: 待命人员}, island: {label: 田地}, city: {label: 建筑}, stock: {label: 商品}}}
+  Stage: {kind: record, fields: {round: {label: 轮次}, governor: {label: 总督}, chooser: {label: 选择角色者}, selector: {label: 本阶段特权}, acting: {label: 当前行动者}, role: {label: 当前角色}}}
+  MoveRecord: {kind: table, columns: {round: 轮次, player: 玩家, role: 角色, kind: 行动}}
+panels:
+  - {title: 当前阶段, zone: board, source: {projection: current_stage}}
+  - {title: 角色牌与积累金币, zone: board, source: {context: catalog.role_cards}, fold: true}
+  - {title: 你的金币, zone: private, source: {self: money}}
+  - {title: 你的田地, zone: private, source: {self: island}}
+  - {title: 你的建筑, zone: private, source: {self: city}}
+  - {title: 你的商品, zone: private, source: {self: stock}}
+  - {title: 全体个人板, zone: board, source: {projection: public_boards}, fold: true}
+  - {title: 当前可选种植园, zone: board, source: {context: catalog.plantation_row}}
+  - {title: 公共商品供给, zone: board, source: {context: catalog.supply}}
+  - {title: 交易所商品, zone: board, source: {context: catalog.trading}}
+  - {title: 行动历史, zone: history, source: {context: catalog.history}}
+boards:
+  personnel:
+    title: 人员与生产工位
+    source: {projection: public_boards}
+    owner: player
+    reserve: reserve
+    unit: 人员
+    icon: user
+    motion: conserved
+    groups:
+      island: {title: 田地, key: key, label: crop, quantity: workers, labels: {'null': 采石场}}
+      city: {title: 城市生产设施, key: key, label: kind, quantity: workers}
+    pools:
+      ship: {title: 殖民船, source: {context: catalog.colonist_ship}}
+      supply: {title: 公共人员供给, source: {context: catalog.colonist_supply}}
+seats:
+  marks:
+    - {source: {projection: current_stage}, field: acting, label: 当前行动者, icon: flag, tone: attention}
+actions:
+  prepare: {title: 按三人规则开局, icon: flag, description: 配发起始金币、公开种植园和人员船。初始田地尚无人员。}
+  choose_role:
+    title: 选择角色
+    surface: choices
+    description: 领取角色牌上的金币，从你开始让全体依序行动。市长安排人员；建筑师建厂；工匠生产；商人卖货；拓殖者增加田地。
+    preview: {领取积累金币: role.reward}
+    inputs:
+      role: {label: 本轮采用哪种角色}
+      bonus: {label: 市长特权, options: {'true': 从公共供给额外领取一名人员, 'false': 放弃额外人员}, fixed_label: 本次无需选择额外人员}
+  settle:
+    title: 取得田地或采石场
+    description: 新田地占一个岛屿格，需在市长阶段安排人员。玉米直接生产，其他作物需要同货种生产建筑。采石场安排人员后降低建造费用。
+    inputs: {tile: {label: 选择地块}}
+    preview: {取得作物: tile.crop, 岛屿剩余空格: '11-size(player.island)'}
+  assign_workers:
+    title: 安排人员
+    surface: {board: personnel}
+    description: 把人员分到田地与建筑。靛蓝等货种需要两边都有人员；玉米只需要田地。可安置的人员须安置。若产量为零，可在之后的市长阶段补充人员并重新配置。
+    inputs:
+      layout:
+        label: 本人的全部工位
+        allocation: {targets: 'worker_sites(player,buildings)', key: key, label: label, capacity: capacity, total: player.colonists, minimum: 'minimum(player.colonists,allocation_capacity(worker_sites(player,buildings)))'}
+        suggest: 'current_allocation(player)'
+        suggest_label: 恢复当前配置
+    preview: {当前供给下本配置的产量: 'production_after_allocation(player,buildings,layout,supply)'}
+  build:
+    title: 建造生产设施
+    surface: choices
+    description: 建好后工位为空，在市长阶段安排人员才能生产。建筑师选择者少付一金，已启用的采石场再减价。
+    inputs: {building: {label: 选择建筑}}
+    preview: {本次实际费用: 'build_price(player,building,player==at(order,selector_index))', 支付后金币: 'player.money-build_price(player,building,player==at(order,selector_index))', 最大生产工位: building.workers, 产出货种: building.production}
+  produce:
+    title: 生产商品
+    description: 按已配置的田地与生产建筑领取实际可用商品。公共供给不足时产量相应减少。
+    preview: {本次领取: 'production(player,buildings,supply)'}
+  sell:
+    title: 卖出一桶商品
+    description: 交易所最多四桶，同货种通常只收一桶。商人选择者额外获得一金。
+    inputs: {kind: {label: 卖出哪种商品}}
+    preview: {本次收入: 'sale_price(goods,kind,player==at(order,selector_index))', 交易后金币: 'player.money+sale_price(goods,kind,player==at(order,selector_index))'}
+  decline: {title: 本次不行动, description: 保留当前资源，让下一席取得角色行动机会。}
+  extra_good:
+    title: 领取工匠额外商品
+    description: 全体生产完毕后，选择一种本人本阶段实际生产过且仍有公共供给的货种，额外领取一桶。
+    inputs: {kind: {label: 额外领取哪种商品}}
+  decline_extra: {title: 放弃额外商品, description: 结束工匠阶段，转向下一个角色选择。}
+timeline:
+  - {source: {context: catalog.history}, title: 角色行动, mode: append, icon: flag}
+  - {source: {context: catalog.round}, title: 新一轮, mode: change, icon: flag}
+  - {source: {self: colonists}, title: 你收到的人员, mode: change, icon: users}
+  - {source: {self: money}, title: 你的金币, mode: change, icon: coins}
+  - {source: {self: stock}, title: 你的商品, mode: change, icon: diamond}

@@ -1,0 +1,8 @@
+schema: nomos.author.source
+name: random_workshop
+actors: {alice: Worker, bob: Worker}
+objects: []
+random: {mechanism: replayable_seed}
+use:
+  check: {definition: Check, with: {threshold: 10}}
+  success: {definition: RecordSuccess, after: check}

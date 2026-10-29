@@ -1,0 +1,55 @@
+# Neutral budget probe: distinct nominal keys and record field names.
+schema: nomos.author.lib
+values:
+  Amount: {int: [0, null]}
+  ProjectKey: {enum: [research, equipment, training]}
+  Title: {text: {max_chars: 64}}
+  Project: {record: {code: ProjectKey, title: Title, ceiling: Amount}}
+  Projects: {sequence: Project}
+  Expense: {record: {project: ProjectKey, amount: Amount}}
+  Expenses: {sequence: Expense}
+  Budget: {record: {expenses: Expenses, saved: Amount}}
+  PlayerRef: {ref: Player}
+  Players: {set: PlayerRef}
+entities:
+  Player:
+    kind: person
+    reference: public
+    fields: {}
+    view: [id]
+    public: [id]
+queries:
+  valid_budget:
+    parameters: {projects: Projects, total: Amount, budget: Budget}
+    returns: Bool
+    expression: >
+      size(budget.expenses) == size(projects) and
+      forall(projects, p => exactly_one(budget.expenses, e => e.project == p.code)) and
+      forall(budget.expenses, e => exactly_one(projects, p => p.code == e.project and e.amount <= p.ceiling)) and
+      sum_by(budget.expenses, e => e.amount) + budget.saved == total
+contexts:
+  Workshop:
+    parameters: {players: Players, projects: Projects, total: Amount}
+    state:
+      fields: {completed: Players, last_budget: Budget}
+      public: [completed, last_budget]
+    require_opening: size(completed) == 0 and forall(projects, p => exactly_one(projects, q => q.code == p.code))
+abilities:
+  AllocateBudget:
+    context: Workshop
+    actor: {player: PlayerRef}
+    inputs: {budget: {type: Budget, enter: typed, constraint: 'valid_budget(projects, total, budget)'}}
+    where: player in players and player not in completed
+    results: Budget
+    resolve:
+      result: budget
+      effects: ['set(last_budget, budget)', 'set(completed, union(completed, Players([player])))']
+terminals:
+  AllAssigned:
+    context: Workshop
+    when: completed == players
+    stop: {boundary: action, pending: freeze}
+    returns: Budget
+    value: last_budget
+    to: players
+    access: public_status

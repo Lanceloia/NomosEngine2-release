@@ -1,0 +1,12 @@
+schema: nomos.author.source
+name: periodic_workshop
+actors: {alice: Worker, bob: Worker}
+objects: []
+time: {mechanism: event_jump, due_order: [alice_practice, bob_practice]}
+use:
+  sleep: {definition: Sleep}
+  alice_practice: {definition: PracticePulse, with: {worker: {actor: alice}, interval: 3}}
+  bob_practice: {definition: PracticePulse, with: {worker: {actor: bob}, interval: 5}}
+  recognize:
+    definition: Recognition
+    after: [alice_practice, bob_practice]

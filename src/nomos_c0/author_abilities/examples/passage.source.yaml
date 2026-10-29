@@ -1,0 +1,6 @@
+schema: nomos.author.source
+name: Passage
+actors: {traveler: Person}
+objects: [Route]
+use:
+  TryPass: {definition: TryPass, with: {fee: 1}}

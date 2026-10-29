@@ -1,0 +1,33 @@
+# Type-only author sample; abilities and world binding follow in A1/A2.
+schema: nomos.author.lib
+values:
+  Color: {enum: [red, blue, green]}
+  Rank: {int: [1, 5]}
+  Text: {text: {max_chars: 64}}
+  Face: {record: {color: Color, rank: Rank}}
+  FaceAlias: Face
+  Answer:
+    variant:
+      ByColor: {color: Color}
+      ByRank: {rank: Rank}
+      NoAnswer: {}
+  Hand: {set: Face}
+  Order: {sequence: Face}
+  MaybeFace: {optional: Face}
+  PersonRef: {ref: Person}
+  ItemRef: {ref: Item}
+  Selection: {record: {person: PersonRef, items: ItemRefs}}
+  ItemRefs: {set: ItemRef}
+entities:
+  Person:
+    kind: person
+    reference: public
+    fields: {}
+    view: [id]
+    public: [id]
+  Item:
+    kind: object
+    reference: public
+    fields: {}
+    view: [id]
+abilities: {}

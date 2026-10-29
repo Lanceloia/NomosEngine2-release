@@ -1,0 +1,40 @@
+schema: nomos.author.ai
+queries:
+  ai_before:
+    parameters: {sites: AllocationTargets, key: ComponentKey}
+    returns: Count
+    expression: sum_by(filter(sites,s=>s.key<key),s=>s.capacity)
+  ai_layout:
+    parameters: {sites: AllocationTargets, total: Count}
+    returns: Allocation
+    expression: >
+      Allocation(rows=map(sites,s=>AllocationRow(target=s.key,count=0 if total<=ai_before(sites,s.key) else minimum(s.capacity,total-ai_before(sites,s.key)))),
+      reserve=0 if total<=allocation_capacity(sites) else total-allocation_capacity(sites))
+  ai_role_value:
+    parameters: {person: PlayerRef, role: RoleSlot, buildings: BuildingCatalog, supply: Goods}
+    returns: Count
+    expression: >
+      role.reward*20 + (80 if role.kind==Role.mayor and person.colonists<allocation_capacity(worker_sites(person,buildings)) else
+      70 if role.kind==Role.builder and size(person.city)==0 else
+      60 if role.kind==Role.craftsman and has_production(person,buildings,supply) else
+      55 if role.kind==Role.trader and exists(all_good_kinds(),g=>goods_count(person.stock,g)>0) else
+      20 if role.kind==Role.settler and size(person.island)<3 else 1)
+strategies:
+  Planter:
+    actor: {self: PlayerRef}
+    candidates:
+      - {definition: PrepareEconomy, score: '100'}
+      - {definition: ChooseRole, inputs: {bonus: 'role.kind==Role.mayor and colonist_supply>0'}, score: 'ai_role_value(self,role,buildings,supply)'}
+      - {definition: Settle, score: '30 if tile.crop==at(self.island,0).crop else 15 if tile.crop==Good.corn else 10'}
+      - {definition: AssignWorkers, inputs: {layout: 'ai_layout(worker_sites(self,buildings),self.colonists)'}, score: '100'}
+      - {definition: Build, score: '70 if building.production==at(self.island,0).crop else 20-building.cost'}
+      - {definition: Produce, score: '100'}
+      - {definition: Sell, score: '50+sale_price(goods,kind,self==at(order,selector_index))'}
+      - {definition: ExtraGood, score: '50+sale_price(goods,kind,False)'}
+      - {definition: DeclinePhase, score: '0'}
+      - {definition: DeclineExtra, score: '0'}
+    minimum: '0'
+    tie: canonical
+    wait: no_candidate
+control:
+  planters: {kind: Player, definition: Planter}

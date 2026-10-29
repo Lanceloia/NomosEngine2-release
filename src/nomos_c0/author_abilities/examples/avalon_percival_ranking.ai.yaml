@@ -1,0 +1,33 @@
+# Overlapping event probabilities; applicability uses only the observer's own role.
+schema: nomos.author.ai
+imports: [avalon_policy.ai.yaml]
+rankings:
+  percival_team:
+    model: percival_joint
+    label: 本队全为好人的概率
+    subject: members
+    when: has_role(reports(identity), Role.percival)
+    views:
+      census: {reports: PopulationReports, channel: population}
+      peers: {reports: PlayerReports, channel: evil_peers}
+      suspects: {reports: PlayerReports, channel: merlin_suspects}
+      pairs: {reports: CandidateGroups, channel: percival_candidates}
+      tasks: {reports: QuestHistory, channel: reveal_quest.result}
+      claims: {reports: IdentitySpeeches, channel: claim_identity.said}
+      suggestions: {reports: TeamSpeeches, channel: advise_team.said}
+      current_leader: {projection: PlayerRef, channel: leader}
+    inputs:
+      observer: person
+      population: reports(census)
+      identity: reports(identity)
+      peers: reports(peers)
+      suspects: reports(suspects)
+      pairs: reports(pairs)
+      approvals: approval_history
+      epoch: epoch
+      leader: projected(current_leader)
+      team: team
+      quests: reports(tasks)
+      claims: filter(reports(claims), c => c.role != Role.merlin)
+      advice: reports(suggestions)
+      team_size: at(setup(size(players), population).team_sizes, mission - 1)

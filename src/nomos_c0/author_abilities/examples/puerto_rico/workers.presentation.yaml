@@ -1,0 +1,23 @@
+schema: nomos.tabletop.presentation
+title: 人员分配试验
+description: 把四名人员分配到田地和建筑。每个工位有独立容量，可安排的人员须安排。
+components:
+  Allocation:
+    kind: allocation
+    fields: {rows: rows, target: target, quantity: count, reserve: reserve}
+panels:
+  - {title: 最近分配, zone: board, source: {context: workshop.last_layout}}
+actions:
+  assign_workers:
+    title: 分配人员
+    inputs:
+      layout:
+        label: 工位分配
+        invalid_label: 请按工位容量安排人员，可安排的人员须安排。
+        allocation:
+          targets: sites
+          key: key
+          label: label
+          capacity: capacity
+          total: total
+          minimum: minimum(total, allocation_capacity(sites))

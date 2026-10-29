@@ -1,0 +1,77 @@
+# A deliberately small subjective policy: speak, listen, yield a real slot, then vote.
+schema: nomos.author.scenario_planning
+name: DiscussThenVote
+actor: {person: PlayerRef}
+goal: Unit
+local:
+  type: DialogueLocal
+  views:
+    roster_view: {projection: Players, channel: roster}
+    round_view: {projection: PlanningRound, channel: planning_round}
+    statements: {reports: DiscussionStatements, channel: publish_discussion.said}
+  value: >
+    DialogueLocal(self=person, players=projected(roster_view), round=projected(round_view),
+      heard=reports(statements), spoken=planning_spoken(reports(statements), person, projected(round_view).epoch),
+      can_speak=can_speak(projected(round_view).discussion.phase, projected(round_view).discussion.serial, person.speech_epoch),
+      can_vote=projected(round_view).discussion.phase == Phase.approval and person.approval_epoch != projected(round_view).epoch,
+      voted=projected(round_view).epoch > 0 and person.approval_epoch == projected(round_view).epoch)
+state: Bool
+observation: Unit
+hypotheses:
+  - {probability: [1, 1], value: local.voted}
+consistent: 'True'
+terminal: state
+assumptions:
+  window: 本问题只处理同一次提队的讨论与本人表决；新的提队需要新的续行。
+  hearing: 只处理本人实际听到、指向本人当前条件立场的回复；未知或无关回应不变成反对证据。
+  value: 默认支持；每份当前有效赞同加2、质疑减2，超过默认倾向可改投反对。这只是本样例的软策略。
+  control: 等待不发布行动。第二轮有本人发言机会时可自愿发布原有pass_speech；其余玩家由各自控制者选择。
+continuation:
+  scope: {type: Epoch, value: local.round.epoch}
+  ready: local.can_speak or local.can_vote
+  complete: local.voted
+  closed: >
+    local.round.discussion.kind != DiscussionKind.proposal and
+    local.round.discussion.phase != Phase.approval
+actions:
+  speak:
+    inputs:
+      clauses:
+        type: DiscussionContents
+        construct:
+          sequence:
+            min: 1
+            max: 1
+            item:
+              cases:
+                Conditional:
+                  fields:
+                    position:
+                      fields:
+                        mission: {value: local.round.discussion.mission}
+                        require_all:
+                          set:
+                            min: 1
+                            max: 1
+                            item:
+                              cases:
+                                Contains:
+                                  fields:
+                                    members: {value: local.round.discussion.members}
+                        satisfied: {value: Stance.support}
+                        otherwise: {value: Stance.oppose}
+    where: local.can_speak and not local.spoken and not state
+    predict: {state: 'True', observation: None, utility: '1'}
+  pass_speech:
+    inputs: {}
+    where: local.can_speak and local.spoken and not state
+    predict: {state: 'True', observation: None, utility: '1'}
+  approve:
+    inputs:
+      approve: {type: Bool, choose: 'Flags([True, False])'}
+    where: local.can_vote and not state
+    predict:
+      state: 'True'
+      observation: None
+      utility: >
+        (1 if approve else -1) * (1 + 2 * planning_reply_signal(local.heard, local.self, local.round))

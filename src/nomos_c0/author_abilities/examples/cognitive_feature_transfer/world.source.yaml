@@ -1,0 +1,7 @@
+# Non-canon probe only; no production world or gameplay content.
+schema: nomos.author.source
+name: NonCanonFeatureTransfer
+actors: {a: Person}
+objects: []
+use:
+  choose: {definition: Choose}

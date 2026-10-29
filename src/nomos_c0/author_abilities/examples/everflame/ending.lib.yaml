@@ -1,0 +1,21 @@
+# The world ends on actual player state; invitations are not rescue receipts.
+schema: nomos.author.lib
+values:
+  AdventureOutcome: {enum: [escaped, frozen, dead]}
+  AdventureSummary:
+    record: {outcome: AdventureOutcome, rescued: Count, residents_alive: Count, ritual: RitualStatus, flame_charge: Count, reservoir_charge: Count}
+terminals:
+  AdventureFinished:
+    context: Palace
+    when: not player.alive or player.frozen or player.position == Site.palace_exit
+    stop: {boundary: action, pending: freeze}
+    returns: AdventureSummary
+    value: >
+      AdventureSummary(
+        outcome=AdventureOutcome.dead if not player.alive else AdventureOutcome.frozen if player.frozen else AdventureOutcome.escaped,
+        rescued=size(filter(known(Resident), r => r.alive and r.position == Site.palace_exit)),
+        residents_alive=size(filter(known(Resident), r => r.alive)),
+        ritual=ritual_status, flame_charge=sum_by(flames, f => f.charges),
+        reservoir_charge=sum_by(reservoirs, r => r.charges))
+    to: Beings([player])
+    access: public_status

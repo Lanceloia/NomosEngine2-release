@@ -1,0 +1,45 @@
+schema: nomos.author.ai
+strategies:
+  ResidentChoice:
+    actor: {resident: ResidentRef}
+    candidates:
+      - definition: ReplyEscort
+        score: >
+          11 if readiness == Readiness.unable_now or
+          (resident.escape_drive > 0 and readiness == Readiness.ready_now) or
+          (resident.escape_drive <= 0 and readiness == Readiness.not_ready_now) else 0
+      - definition: CrossIce
+        score: >
+          resident.escape_drive if size(reports(invites)) > 0 and
+          (exists(resident.exit_steps, step => step.start == resident.position and step.end == route.intended) or
+            (route.start == route.collision and exists(resident.exit_steps, step => step.end == route.intended))) else 0
+      - definition: TryDirectPassage
+        score: >
+          resident.escape_drive if size(reports(invites)) > 0 and
+          exists(resident.exit_steps, step => step.start == resident.position and step.end == route.end) else 0
+      - definition: CrossBridgeSlowly
+        score: >
+          resident.escape_drive if size(reports(invites)) > 0 and
+          exists(resident.exit_steps, step => step.start == resident.position and step.end == route.end) else 0
+    minimum: '0'
+    tie: canonical
+    wait: no_candidate
+  BokoldChoice:
+    actor: {person: BokoldRef}
+    candidates: [{definition: RitualAdvance, score: person.ritual_drive}]
+    minimum: '0'
+    tie: canonical
+    wait: no_candidate
+  ElementalChoice:
+    actor: {creature: IceElementalRef}
+    candidates:
+    - {definition: ElementalBreath, score: '3'}
+    - {definition: ElementalObserve, score: '2 if creature.observed_origin != creature.position else 0'}
+    - {definition: ElementalAdvance, score: '1'}
+    minimum: '0'
+    tie: canonical
+    wait: no_candidate
+control:
+  residents: {kind: Resident, definition: ResidentChoice}
+  bokolds: {kind: Bokold, definition: BokoldChoice}
+  elementals: {kind: IceElemental, definition: ElementalChoice}

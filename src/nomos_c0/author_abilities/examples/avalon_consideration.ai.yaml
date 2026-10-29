@@ -1,0 +1,69 @@
+# Cheap search priorities. These shortlist hypotheses; full appraisal decides among them.
+schema: nomos.author.ai
+queries:
+  proposal_value:
+    parameters: {members: Players, perspective: DiscussionPerspective, epoch: Epoch, results: QuestHistory, claims: IdentitySpeeches}
+    returns: ExperienceScore
+    expression: >
+      discussion_preference(members, perspective) +
+      suggestion_signal(perspective.mind, members, epoch, perspective.person, results, perspective.goals.census, claims) +
+      deliberation_signal(perspective.mind, members, perspective.goals.mission, perspective.person, results, perspective.goals.census)
+  advice_search_group:
+    parameters: {support: Bool, argument: TeamArgument}
+    returns: ExperienceScore
+    # Four strata: each stance keeps a bare judgment and a cited/testing alternative.
+    expression: >
+      (2 if support else 0) + match(argument, Judgment() => 0, TestTeam() => 1,
+      FailureOverlap() => 1, SuccessCore() => 1, TrustSpeaker() => 1, EvilExhausted() => 1,
+      ClaimAssessment() => 1, ClaimConflict() => 1)
+  consider_comparison:
+    parameters: {preferred: Players, alternative: Players, grounds: TeamArguments, perspective: DiscussionPerspective, fresh: Bool}
+    returns: ExperienceScore
+    # Reuse the same finite team judgment and actual cited evidence as full appraisal.
+    # Count of citations alone says nothing about whether they support the comparison.
+    expression: >
+      ((discussion_preference(preferred, perspective) - discussion_preference(alternative, perspective)) // 10
+      if fresh else 0) + comparison_argument_value(grounds, preferred, perspective.history, perspective.goals.census) +
+      (1 if fresh else 0)
+  consider_known_team:
+    parameters: {enemies: ExperienceScore, evil: Bool}
+    returns: ExperienceScore
+    expression: (8 if enemies == 1 else -4 * enemies) if evil else -12 * enemies
+  consider_team:
+    parameters: {members: Players, self: PlayerRef, own: RoleReports, peers: PlayerReports, suspects: PlayerReports, history: QuestHistory}
+    returns: ExperienceScore
+    expression: >
+      consider_known_team(enemy_count(members, self, own, peers, suspects), evil_role(current_role(own))) +
+      (2 if self in members else 0) + (3 if exists(history, q => q.team == members and not q.failed) else 0)
+  consider_condition:
+    parameters: {conditions: TeamConditions, satisfied: Stance, otherwise: Stance, perspective: DiscussionPerspective, width: Count, fresh: Bool}
+    returns: ExperienceScore
+    # Both branches concern complete legal-width teams, not isolated included/excluded people.
+    expression: >
+      (condition_policy_value(conditions, satisfied, otherwise, perspective, width) // 10 +
+      (1 if size(position_examples(conditions, perspective.order, width, True)) > 0 else -2) +
+      (1 if size(conditions) > 0 else 0)) if fresh else 0
+  consider_argument:
+    parameters: {argument: TeamArgument}
+    returns: ExperienceScore
+    expression: >
+      match(argument, Judgment() => 0, TestTeam() => 1, FailureOverlap() => 2, SuccessCore() => 3,
+      TrustSpeaker() => 1, EvilExhausted() => 3, ClaimAssessment() => 1, ClaimConflict() => 2)
+  consider_assertion:
+    parameters: {assertion: PublicAssertion, team: Players}
+    returns: ExperienceScore
+    expression: >
+      match(assertion, RoleOf(r) => 3 if r.subject in team else 0,
+      SideOf(r) => 3 if r.subject in team else 0,
+      GroupCount(r) => 2 * overlap_count(r.members, team),
+      PercivalPair(r) => overlap_count(r.members, team))
+  consider_question:
+    parameters: {subject: QuestionSubject, recipient: PlayerRef, team: Players}
+    returns: ExperienceScore
+    expression: >
+      (2 if recipient in team else 0) + match(subject, Citation() => 3,
+      Proposition(p) => consider_assertion(p.assertion, team))
+  consider_answer:
+    parameters: {reply: PublicAnswer}
+    returns: ExperienceScore
+    expression: match(reply, Explanation(a) => 4 + size(a.grounds), Reserve() => 1, Unknown() => 1, Decline() => 0)

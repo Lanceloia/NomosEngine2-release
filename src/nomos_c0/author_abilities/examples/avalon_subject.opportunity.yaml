@@ -1,0 +1,38 @@
+# A current proposal recipe; Subject memory supplies the action's subjective value.
+schema: nomos.author.opportunity_planning
+name: SubjectProposal
+actor: {person: PlayerRef}
+local:
+  type: ProposalLocal
+  views:
+    roster_view: {projection: Players, channel: roster}
+    leader_view: {projection: PlayerRef, channel: leader}
+    board_view: {projection: QuestSteps, channel: quest_board}
+    window_view: {projection: ProposalWindow, channel: planning_window}
+    suspect_reports: {reports: PlayerReports, channel: merlin_suspects}
+    past_quests: {reports: QuestHistory, channel: reveal_quest.result}
+  value: >
+    ProposalLocal(self=person, players=projected(roster_view),
+      required=at(filter(projected(board_view), s => s.status == QuestStatus.current), 0).members
+        if exists(projected(board_view), s => s.status == QuestStatus.current) else 0,
+      ready=projected(window_view).phase == Phase.proposal and projected(leader_view) == person,
+      finished=projected(window_view).phase != Phase.proposal,
+      suspects=filter(projected(roster_view), p => exists(reports(suspect_reports), group => p in group)))
+guidance:
+  recall: [past_quests]
+  exploration: 3
+  actions:
+    propose:
+      inputs:
+        members:
+          member: candidate
+          priority: >
+            sum_by(reports(past_quests), q =>
+              (1 if q.fails == 0 else -1) if candidate in q.team else 0)
+actions:
+  propose:
+    inputs:
+      members:
+        type: Players
+        choose: {subset: local.players, min: local.required, max: local.required}
+    where: local.ready

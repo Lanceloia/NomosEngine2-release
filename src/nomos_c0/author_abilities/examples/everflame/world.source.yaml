@@ -1,0 +1,107 @@
+schema: nomos.author.source
+imports: [map.source.yaml]
+name: m1_core
+actors:
+  adventurer: Adventurer
+  ritual_resident: Resident
+  huddled_one: Resident
+  huddled_two: Resident
+  bokold_one: Bokold
+  bokold_two: Bokold
+actor_kinds: [IceElemental]
+play: {mechanism: player_turn, player: {context: palace, parameter: player}, others: local_strategy}
+objects: [Flame, Reservoir, Chandelier]
+random:
+  mechanism: replayable_seed
+  streams: [cold_adventurer, cold_ritual_resident, cold_huddled_one,
+    cold_huddled_two, cold_bokold_one, cold_bokold_two]
+time:
+  mechanism: event_jump
+  due_order: [cold_adventurer, cold_ritual_resident, cold_huddled_one,
+    cold_huddled_two, cold_bokold_one, cold_bokold_two]
+  scheduling:
+    actors:
+      Adventurer: {definition: ByTempo, priority: 0}
+      Resident: {definition: ByTempo, priority: 1}
+      Bokold: {definition: ByTempo, priority: 4}
+      IceElemental: {definition: ByTempo, priority: 6}
+    wait: next_world_change
+use:
+  adventure_finished: {definition: AdventureFinished, context: palace}
+  observe_routes: {definition: ObserveRoutes, context: palace}
+  direct_passage: {definition: TryDirectPassage, context: palace, views: {invites: invite_escort.heard}}
+  cross_ice: {definition: CrossIce, context: palace, views: {invites: invite_escort.heard}}
+  slow_bridge: {definition: CrossBridgeSlowly, context: palace, views: {invites: invite_escort.heard}}
+  presence: {definition: LocalPeople, context: palace}
+  visible_flames: {definition: LocalFlames, context: palace}
+  visible_chandeliers: {definition: LocalChandeliers, context: palace}
+  held_flames: {definition: CarriedFlames, context: palace}
+  held_reservoirs: {definition: CarriedReservoirs, context: palace}
+  protection: {definition: CurrentProtection, context: palace}
+  observe_person: {definition: ObservePerson, views: {nearby: presence}}
+  observe_chandelier: {definition: ObserveChandelier, views: {mounts: visible_chandeliers}}
+  observe_ground: {definition: ObserveGround, context: palace}
+  detach_reservoir: {definition: DetachReservoir, views: {findings: observe_chandelier.sighting}}
+  load_charge: {definition: LoadCharge, views: {lamp_view: held_flames, stores: held_reservoirs}}
+  thaw_ground: {definition: ThawGround, context: palace, views: {lamp_view: held_flames}}
+  thaw_person: {definition: ThawPerson, views: {lamp_view: held_flames, findings: observe_person.sighting}}
+  drop_lamp: {definition: DropLamp, views: {lamp_view: held_flames}}
+  take_lamp: {definition: TakeLamp, views: {lamps: visible_flames}}
+  offer_lamp: {definition: OfferLamp, views: {lamp_view: held_flames, nearby: presence}}
+  receive_lamp: {definition: ReceiveLamp, views: {offers: offer_lamp.offer}}
+  notice_motion:
+    definition: NoticeMovement
+    context: palace
+    after: [direct_passage, cross_ice, slow_bridge, elemental_advance]
+  invite_escort: {definition: InviteEscort}
+  reply_escort: {definition: ReplyEscort, views: {invites: invite_escort.heard, nearby: presence}}
+  prepared_sacrifice: {definition: PreparedSacrifice, context: palace}
+  opening_chant: {definition: OpeningChant, context: palace}
+  ritual_advance:
+    definition: RitualAdvance
+    context: palace
+    views: {prepared: prepared_sacrifice, chants: hear_ritual_change.chant}
+  interrupt_ritual:
+    definition: InterruptRitual
+    context: palace
+    after: [thaw_person, direct_passage, cross_ice, slow_bridge, carry_ritual_patient]
+  hear_ritual_change:
+    definition: HearRitualChange
+    context: palace
+    after: [ritual_advance, interrupt_ritual]
+  hear_ritual_arrival:
+    definition: HearRitualOnArrival
+    context: palace
+    after: [direct_passage, cross_ice, slow_bridge, elemental_advance, carry_ritual_patient]
+  ritual_sacrifice: {definition: RitualSacrifice, context: palace, after: ritual_advance}
+  form_elemental: {definition: FormIceElemental, context: palace, after: ritual_advance}
+  register_born: {definition: RegisterBornPeople, context: palace, after: form_elemental}
+  elemental_advance: {definition: ElementalAdvance, context: palace}
+  elemental_observe: {definition: ElementalObserve, context: palace}
+  elemental_breath: {definition: ElementalBreath, context: palace, views: {findings: elemental_observe.sighting}}
+  carry_ritual_patient: {definition: CarryFromRitual, context: palace, views: {findings: observe_person.sighting}}
+  notice_carried: {definition: NoticeCarriedMovement, context: palace, after: carry_ritual_patient}
+  cold_adventurer:
+    definition: ColdPulse
+    context: palace
+    with: {person: {actor: adventurer}, stream: cold_adventurer, interval: 100, difficulty: 10, save_bonus: 0, loss: 1}
+  cold_ritual_resident:
+    definition: ColdPulse
+    context: palace
+    with: {person: {actor: ritual_resident}, stream: cold_ritual_resident, interval: 100, difficulty: 10, save_bonus: 0, loss: 1}
+  cold_huddled_one:
+    definition: ColdPulse
+    context: palace
+    with: {person: {actor: huddled_one}, stream: cold_huddled_one, interval: 100, difficulty: 10, save_bonus: 0, loss: 1}
+  cold_huddled_two:
+    definition: ColdPulse
+    context: palace
+    with: {person: {actor: huddled_two}, stream: cold_huddled_two, interval: 100, difficulty: 10, save_bonus: 0, loss: 1}
+  cold_bokold_one:
+    definition: ColdPulse
+    context: palace
+    with: {person: {actor: bokold_one}, stream: cold_bokold_one, interval: 100, difficulty: 10, save_bonus: 0, loss: 1}
+  cold_bokold_two:
+    definition: ColdPulse
+    context: palace
+    with: {person: {actor: bokold_two}, stream: cold_bokold_two, interval: 100, difficulty: 10, save_bonus: 0, loss: 1}

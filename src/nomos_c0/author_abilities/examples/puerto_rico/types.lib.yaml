@@ -1,0 +1,14 @@
+# Read-only catalog and allocation probes select this empty player schema.
+schema: nomos.author.lib
+imports: [component_types.lib.yaml]
+values:
+  PlayerRef: {ref: Player}
+  Players: {set: PlayerRef}
+entities:
+  Player:
+    kind: person
+    reference: public
+    fields: {}
+    view: [id]
+    public: [id]
+abilities: {}

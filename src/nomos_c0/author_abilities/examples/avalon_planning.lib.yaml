@@ -1,0 +1,14 @@
+# Planning-only value types and a projection of already-public match state.
+schema: nomos.author.lib
+imports: [avalon.lib.yaml]
+values:
+  ProposalWindow: {record: {phase: Phase, epoch: Epoch, team: Players}}
+  ProposalLocal:
+    record: {self: PlayerRef, players: Players, required: Count, ready: Bool, finished: Bool, suspects: Players}
+projections:
+  ProposalWindowView:
+    context: Match
+    viewer: {player: PlayerRef}
+    audience: player in players
+    returns: ProposalWindow
+    value: ProposalWindow(phase=phase, epoch=epoch, team=team)

@@ -1,0 +1,26 @@
+# Pure author definitions; this example has no world, assets or scripted trace.
+schema: nomos.author.lib
+values:
+  Rank: {int: [1, 5]}
+  Score: {int: [0, 100]}
+  Mark: {enum: [red, blue]}
+  Token: {record: {rank: Rank, mark: Mark}}
+  Hand: {set: Token}
+  Reply: {variant: {Total: {score: Score}, Pass: {}}}
+queries:
+  total:
+    parameters: {cards: Hand}
+    returns: Score
+    expression: sum_by(cards, card => card.rank)
+  red_cards:
+    parameters: {cards: Hand}
+    returns: Hand
+    expression: filter(cards, card => card.mark == Mark.red)
+  reply:
+    parameters: {cards: Hand}
+    returns: Reply
+    expression: Reply.Total(score=total(cards)) if size(cards) > 0 else Reply.Pass()
+  reply_score:
+    parameters: {answer: Reply}
+    returns: Score
+    expression: match(answer, Total(value) => value.score, Pass() => 0)

@@ -1,0 +1,294 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+schema: nomos.author.assets
+actors:
+  adventurer:
+    last_damage: null
+    position: ballroom_entrance
+    alive: true
+    awake: true
+    endurance: 3
+    speed: 5
+    max_speed: 5
+    balance_bonus: 0
+    cold_immune: false
+    known_sites:
+    - ballroom_entrance
+    known_paths: !table
+      columns: [start, end]
+      rows:
+        - [ballroom_entrance, halls_ballroom_door]
+        - [ritual_passage_entry, ritual_threshold]
+        - [ritual_threshold, ritual_passage_entry]
+        - [ritual_threshold, ritual_ring]
+        - [ritual_ring, ritual_threshold]
+    known_crossings:
+    - entrance_to_ritual
+    - entrance_to_chandelier
+    known_bridges: []
+    frozen: false
+    ground_sighting: null
+    invitation_epoch: 0
+    answered_invitations: []
+  ritual_resident:
+    last_damage: null
+    position: ritual_ring
+    alive: true
+    awake: true
+    endurance: 3
+    speed: 0
+    max_speed: 5
+    balance_bonus: 0
+    cold_immune: false
+    known_sites:
+    - ritual_ring
+    known_paths: !table
+      columns: [start, end]
+      rows:
+        - [ritual_ring, ritual_threshold]
+        - [ritual_threshold, ritual_passage_entry]
+        - [ballroom_entrance, halls_ballroom_door]
+        - [halls_ballroom_door, halls_bridge_door]
+        - [halls_bridge_door, bridge_palace_landing]
+    known_crossings:
+    - ritual_ring_to_threshold
+    - ritual_to_entrance
+    - halls_to_bridge_door
+    known_bridges: !table
+      columns: [start, end]
+      rows:
+        - [bridge_palace_landing, bridge_midspan]
+        - [bridge_midspan, palace_exit]
+        - [bridge_midspan, bridge_palace_landing]
+        - [palace_exit, bridge_midspan]
+    frozen: true
+    ground_sighting: null
+    invitation_epoch: 0
+    answered_invitations: []
+    escape_drive: 3
+    exit_steps: !table
+      columns: [start, end]
+      rows:
+        - [ballroom_entrance, halls_ballroom_door]
+        - [halls_ballroom_door, halls_bridge_door]
+        - [halls_bridge_door, bridge_palace_landing]
+        - [bridge_palace_landing, bridge_midspan]
+        - [bridge_midspan, palace_exit]
+        - [ritual_ring, ritual_threshold]
+        - [ritual_threshold, ritual_passage_entry]
+        - [ritual_passage_entry, ballroom_entrance]
+        - [ballroom_chandelier_reach, ballroom_entrance]
+        - [ballroom_opposite_wall, ballroom_entrance]
+        - [ballroom_chandelier_far_wall, ballroom_entrance]
+        - [ballroom_bar_side_wall, ballroom_entrance]
+        - [ritual_side_wall, ritual_passage_entry]
+        - [ritual_collision_wall, ritual_threshold]
+        - [halls_collision_wall, halls_ballroom_door]
+  huddled_one:
+    last_damage: null
+    position: ballroom_chandelier_reach
+    alive: true
+    awake: true
+    endurance: 3
+    speed: 5
+    max_speed: 5
+    balance_bonus: 0
+    cold_immune: false
+    known_sites:
+    - ballroom_chandelier_reach
+    known_paths: !table
+      columns: [start, end]
+      rows:
+        - [ballroom_entrance, halls_ballroom_door]
+        - [halls_ballroom_door, halls_bridge_door]
+        - [halls_bridge_door, bridge_palace_landing]
+    known_crossings:
+    - chandelier_to_entrance
+    - halls_to_bridge_door
+    known_bridges: !table
+      columns: [start, end]
+      rows:
+        - [bridge_palace_landing, bridge_midspan]
+        - [bridge_midspan, palace_exit]
+        - [bridge_midspan, bridge_palace_landing]
+        - [palace_exit, bridge_midspan]
+    frozen: false
+    ground_sighting: null
+    invitation_epoch: 0
+    answered_invitations: []
+    escape_drive: 3
+    exit_steps: !table
+      columns: [start, end]
+      rows:
+        - [ballroom_entrance, halls_ballroom_door]
+        - [halls_ballroom_door, halls_bridge_door]
+        - [halls_bridge_door, bridge_palace_landing]
+        - [bridge_palace_landing, bridge_midspan]
+        - [bridge_midspan, palace_exit]
+        - [ritual_ring, ritual_threshold]
+        - [ritual_threshold, ritual_passage_entry]
+        - [ritual_passage_entry, ballroom_entrance]
+        - [ballroom_chandelier_reach, ballroom_entrance]
+        - [ballroom_opposite_wall, ballroom_entrance]
+        - [ballroom_chandelier_far_wall, ballroom_entrance]
+        - [ballroom_bar_side_wall, ballroom_entrance]
+        - [ritual_side_wall, ritual_passage_entry]
+        - [ritual_collision_wall, ritual_threshold]
+        - [halls_collision_wall, halls_ballroom_door]
+  huddled_two:
+    last_damage: null
+    position: ballroom_chandelier_reach
+    alive: true
+    awake: true
+    endurance: 3
+    speed: 5
+    max_speed: 5
+    balance_bonus: 0
+    cold_immune: false
+    known_sites:
+    - ballroom_chandelier_reach
+    known_paths: !table
+      columns: [start, end]
+      rows:
+        - [ballroom_entrance, halls_ballroom_door]
+        - [halls_ballroom_door, halls_bridge_door]
+        - [halls_bridge_door, bridge_palace_landing]
+    known_crossings:
+    - chandelier_to_entrance
+    - halls_to_bridge_door
+    known_bridges: !table
+      columns: [start, end]
+      rows:
+        - [bridge_palace_landing, bridge_midspan]
+        - [bridge_midspan, palace_exit]
+        - [bridge_midspan, bridge_palace_landing]
+        - [palace_exit, bridge_midspan]
+    frozen: false
+    ground_sighting: null
+    invitation_epoch: 0
+    answered_invitations: []
+    escape_drive: 3
+    exit_steps: !table
+      columns: [start, end]
+      rows:
+        - [ballroom_entrance, halls_ballroom_door]
+        - [halls_ballroom_door, halls_bridge_door]
+        - [halls_bridge_door, bridge_palace_landing]
+        - [bridge_palace_landing, bridge_midspan]
+        - [bridge_midspan, palace_exit]
+        - [ritual_ring, ritual_threshold]
+        - [ritual_threshold, ritual_passage_entry]
+        - [ritual_passage_entry, ballroom_entrance]
+        - [ballroom_chandelier_reach, ballroom_entrance]
+        - [ballroom_opposite_wall, ballroom_entrance]
+        - [ballroom_chandelier_far_wall, ballroom_entrance]
+        - [ballroom_bar_side_wall, ballroom_entrance]
+        - [ritual_side_wall, ritual_passage_entry]
+        - [ritual_collision_wall, ritual_threshold]
+        - [halls_collision_wall, halls_ballroom_door]
+  bokold_one:
+    last_damage: null
+    ritual_drive: 4
+    position: ritual_ring
+    alive: true
+    awake: true
+    endurance: 3
+    speed: 5
+    max_speed: 5
+    balance_bonus: 0
+    cold_immune: true
+    known_sites:
+    - ritual_ring
+    known_paths:
+    - start: ritual_ring
+      end: ritual_threshold
+    known_crossings: []
+    known_bridges: []
+    frozen: false
+    ground_sighting: null
+    invitation_epoch: 0
+    answered_invitations: []
+  bokold_two:
+    last_damage: null
+    ritual_drive: 4
+    position: ritual_ring
+    alive: true
+    awake: true
+    endurance: 3
+    speed: 5
+    max_speed: 5
+    balance_bonus: 0
+    cold_immune: true
+    known_sites:
+    - ritual_ring
+    known_paths:
+    - start: ritual_ring
+      end: ritual_threshold
+    known_crossings: []
+    known_bridges: []
+    frozen: false
+    ground_sighting: null
+    invitation_epoch: 0
+    answered_invitations: []
+objects:
+  everflame:
+    type: Flame
+    state:
+      ground_site: ballroom_entrance
+      holder:
+        actor: adventurer
+      charges: 5
+  chandelier:
+    type: Chandelier
+    state:
+      position: ballroom_chandelier_reach
+  reservoir:
+    type: Reservoir
+    state:
+      ground_site: ballroom_chandelier_reach
+      holder: null
+      charges: 2
+      mount:
+        object: chandelier
+      site: ballroom_chandelier_reach
+      mounted: true
+      pulse_visible: true
+contexts:
+  palace:
+    threat_target: {actor: adventurer}
+    ritual_target: {actor: ritual_resident}
+    ritual_progress: 0
+    ritual_status: active
+    elemental_born: false
+    frozen_floors:
+    - ballroom
+    population:
+    - actor: adventurer
+    - actor: ritual_resident
+    - actor: huddled_one
+    - actor: huddled_two
+    - actor: bokold_one
+    - actor: bokold_two
+    flames:
+    - object: everflame
+    reservoirs:
+    - object: reservoir
+    chandeliers:
+    - object: chandelier
+time:
+  at: 0
+  readiness:
+    adventurer: 0
+    ritual_resident: 0
+    huddled_one: 0
+    huddled_two: 0
+    bokold_one: 0
+    bokold_two: 0
+random:
+  seed: 13
+  streams:
+    cold_adventurer: 1
+    cold_ritual_resident: 2
+    cold_huddled_one: 3
+    cold_huddled_two: 4
+    cold_bokold_one: 5
+    cold_bokold_two: 6

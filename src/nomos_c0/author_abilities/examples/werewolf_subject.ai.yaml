@@ -1,0 +1,44 @@
+# Bounded seer consumer of the official Subject library; the table's other roles stay external.
+schema: nomos.author.ai
+semantics:
+  Investigation:
+    features: [inspect, abstain]
+    outcomes: [information, effort]
+    meanings:
+      Inspect:
+        features: {inspect: '1'}
+        prior:
+          information: '0 if exists(reports(sightings), seen => seen.subject == target) else 2'
+          effort: '-1'
+        known: {effort: 'True'}
+        target: {type: PlayerRef, value: target}
+        correlate:
+          round: {type: Round, value: round}
+          subject: {type: PlayerRef, value: target}
+      SkipInspection:
+        features: {abstain: '1'}
+        prior: {information: '0', effort: '0'}
+        known: {information: 'True', effort: 'True'}
+    feedback:
+      ReviewInspection:
+        definition: Inspect
+        receipts:
+          sighting:
+            channel: inspect.sighting
+            match: {round: sighting.round, subject: sighting.subject}
+        outcomes: {information: '1'}
+        personal: true
+strategies:
+  Investigator:
+    actor: {player: PlayerRef}
+    views: {sightings: {reports: Inspections}}
+    candidates: [{definition: Inspect}, {definition: SkipInspection}]
+    semantics: Investigation
+    participation: {personality: {}, goals: {information: 1}}
+    tie: canonical
+    wait: no_candidate
+control:
+  investigators:
+    kind: Player
+    definition: Investigator
+    views: {sightings: inspect.sighting}

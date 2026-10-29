@@ -1,0 +1,30 @@
+schema: nomos.author.ai
+semantics:
+  Construction:
+    features: [signal_count]
+    outcomes: [benefit]
+    meanings:
+      Choose:
+        features:
+          signal_count:
+            offset: 1
+            sum_by:
+              over: members
+              each: item
+              value: '1 if item.kind == ComponentKind.signal else 0'
+        prior:
+          benefit: '0 - sum_by(members, item => 1 if item.kind == ComponentKind.signal else 0)'
+    feedback:
+      ReviewSelection:
+        definition: Choose
+        receipts: {outcome: {channel: choose.result, match: {}}}
+        outcomes: {benefit: '10 if outcome.success else -3'}
+strategies:
+  Constructor:
+    actor: {person: PersonRef}
+    candidates: [{definition: Choose}]
+    semantics: Construction
+    tie: canonical
+    wait: no_candidate
+control:
+  primary: {actor: a, definition: Constructor}

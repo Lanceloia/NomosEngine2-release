@@ -1,0 +1,129 @@
+{
+  "head": "72a71adf21c81dde3345a9aa1a3fbeaa2a8e98fb7a2b3ca1f34943772791b51e",
+  "head_source": "docs/evidence/avalon-training-campaign-v216/trials/t044-merlin/run",
+  "freeze_commit": "0bb03c340a586f4a7b6e5bb8690b8445d3c57a47",
+  "training_completed": 44,
+  "tables": {
+    "retention": {
+      "policies": {
+        "parent": {
+          "games": 12,
+          "wins": 4,
+          "win_rate": 0.3333333333333333,
+          "task_pass": 7,
+          "assassinated": 3,
+          "mean_true_merlin_probability_task_pass": 0.3712051632697472,
+          "mean_soft_score": 0.12248286507418384,
+          "endings": {
+            "failed_round_4": 4,
+            "merlin_survived": 4,
+            "merlin_found": 3,
+            "failed_round_3": 1
+          }
+        },
+        "candidate": {
+          "games": 12,
+          "wins": 5,
+          "win_rate": 0.4166666666666667,
+          "task_pass": 7,
+          "assassinated": 2,
+          "mean_true_merlin_probability_task_pass": 0.28251581458475344,
+          "mean_soft_score": 0.2176204385400098,
+          "endings": {
+            "failed_round_4": 4,
+            "merlin_survived": 5,
+            "failed_round_3": 1,
+            "merlin_found": 2
+          }
+        }
+      },
+      "new_wins": 1,
+      "lost_wins": 0,
+      "overall35_proven": false,
+      "feedback_to_training": false,
+      "scope": "twelve predetermined training cases; cumulative retention, not population or independent validation",
+      "population_sample": false,
+      "sampling": null
+    },
+    "population": {
+      "policies": {
+        "parent": {
+          "games": 30,
+          "wins": 10,
+          "win_rate": 0.3333333333333333,
+          "task_pass": 15,
+          "assassinated": 5,
+          "mean_true_merlin_probability_task_pass": 0.3240079095790947,
+          "mean_soft_score": -0.13511902069020584,
+          "endings": {
+            "merlin_found": 5,
+            "failed_round_3": 9,
+            "merlin_survived": 10,
+            "failed_round_5": 3,
+            "failed_round_4": 3
+          }
+        },
+        "candidate": {
+          "games": 30,
+          "wins": 12,
+          "win_rate": 0.4,
+          "task_pass": 17,
+          "assassinated": 5,
+          "mean_true_merlin_probability_task_pass": 0.28747644119854837,
+          "mean_soft_score": 0.0736378110860896,
+          "endings": {
+            "merlin_found": 5,
+            "merlin_survived": 12,
+            "failed_round_3": 9,
+            "failed_round_5": 2,
+            "failed_round_4": 2
+          }
+        }
+      },
+      "new_wins": 3,
+      "lost_wins": 1,
+      "overall35_proven": false,
+      "feedback_to_training": false,
+      "scope": "S-seat stratified30 without replacement, six of each120; uniform finite600 target; descriptive measurement; historical exposure allowed; not independent generalization or census",
+      "population_sample": true,
+      "sampling": {
+        "universe": 600,
+        "sample": 30,
+        "seed": 20261027,
+        "method": "servant-seat strata, six without replacement from each120",
+        "replacement": false,
+        "strata": [
+          {
+            "servant_seat": 0,
+            "population": 120,
+            "sample": 6
+          },
+          {
+            "servant_seat": 1,
+            "population": 120,
+            "sample": 6
+          },
+          {
+            "servant_seat": 2,
+            "population": 120,
+            "sample": 6
+          },
+          {
+            "servant_seat": 3,
+            "population": 120,
+            "sample": 6
+          },
+          {
+            "servant_seat": 4,
+            "population": 120,
+            "sample": 6
+          }
+        ],
+        "target": "uniform configuration population600"
+      }
+    }
+  },
+  "feedback_to_training": false,
+  "overall35_proven": false,
+  "early_stop": null
+}

@@ -1,0 +1,11 @@
+schema: nomos.author.assets
+actors:
+  traveler: {position: suite, energy: 3, awake: true}
+  keeper: {position: suite, energy: 3, awake: true}
+objects:
+  brass_key:
+    type: Key
+    state: {ground_site: suite, holder: null}
+  true_horn:
+    type: Horn
+    state: {ground_site: suite, holder: {actor: keeper}}

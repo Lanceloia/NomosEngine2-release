@@ -1,0 +1,61 @@
+# Compose grounded local positions without a Cartesian product of speech acts.
+schema: nomos.author.ai
+queries:
+  concession_clauses:
+    parameters: {preferred: Players, current: Players, mission: Mission, grounds: TeamArguments}
+    returns: DiscussionContents
+    expression: >
+      DiscussionContents([comparison_content(preferred, current, grounds, mission),
+      condition_content(member_conditions(preferred, Players([])), Stance.support, Stance.oppose, mission)])
+  exclusion_clauses:
+    parameters: {subject: PlayerRef, mission: Mission}
+    returns: DiscussionContents
+    expression: >
+      DiscussionContents([DiscussionContent.Opinion(opinion=PublicOpinion(assertion=PublicAssertion.SideOf(subject=subject, side=Side.evil), stance=Stance.support)),
+      condition_content(member_conditions(Players([]), Players([subject])), Stance.support, Stance.oppose, mission)])
+  compound_alternative:
+    parameters: {current: Players, heard: TeamSuggestions, epoch: Epoch, perspective: DiscussionPerspective}
+    returns: MaybeTeamOption
+    expression: max_by(distinct(map(noncurrent_heard_options(current, heard, epoch), group => TeamOption(mission=perspective.goals.mission, members=group))), o => discussion_preference(o.members, perspective))
+  response_concession:
+    parameters: {target: StatementKey, alternative: TeamOption, current: Players, grounds: TeamArguments}
+    returns: DiscussionContents
+    expression: >
+      concat(DiscussionContents([DiscussionContent.Respond(response=StatementResponse(target=target, attitude=ResponseAttitude.challenge, grounds=TeamArguments([])))]),
+      concession_clauses(alternative.members, current, alternative.mission, grounds))
+  candidate_compositions:
+    parameters: {current: Players, heard: TeamSuggestions, advice: TeamSpeeches, expressions: DiscussionStatements, history: QuestHistory, epoch: Epoch, perspective: DiscussionPerspective}
+    returns: Compositions
+    expression: >
+      union(distinct(map(noncurrent_heard_options(current, heard, epoch), group => concession_clauses(group, current, perspective.goals.mission,
+      TeamArguments([TeamArgument.Judgment()])))),
+      union(distinct(map(filter(current, p => p != perspective.person and
+      public_assertion_verdict(PublicAssertion.SideOf(subject=p, side=Side.evil), perspective) != IdentityVerdict.excluded),
+      p => exclusion_clauses(p, perspective.goals.mission))),
+      response_concessions(compound_alternative(current, heard, epoch, perspective), current, expressions, history, advice, epoch, perspective)))
+  response_concessions:
+    parameters: {alternative: MaybeTeamOption, current: Players, expressions: DiscussionStatements, history: QuestHistory, advice: TeamSpeeches, epoch: Epoch, perspective: DiscussionPerspective}
+    returns: Compositions
+    expression: >
+      distinct(map(filter(reply_targets(expressions, perspective.goals.mission, perspective.person), key =>
+      reply_ground_relevant(quoted_statement(expressions, key), ResponseAttitude.endorse, TeamOption(mission=perspective.goals.mission, members=current))),
+      key => response_concession(key, alternative, current,
+      TeamArguments([TeamArgument.Judgment()]))))
+      if alternative is not None else Compositions([])
+  compound_fresh:
+    parameters: {clauses: DiscussionContents, heard: DiscussionStatements, speaker: PlayerRef, mission: Mission}
+    returns: Bool
+    expression: exists(clauses, c => expression_fresh(c, heard, speaker, mission))
+  compound_clause_value:
+    parameters: {content: DiscussionContent, perspective: DiscussionPerspective, width: Count, heard: DiscussionStatements}
+    returns: ExperienceScore
+    expression: >
+      match(content, Respond(r) => reply_value_local(quoted_statement(heard, r.response.target), r.response.attitude, perspective, width),
+      Opinion(o) => 1 if opinion_compatible(o.opinion, public_assertion_verdict(o.opinion.assertion, perspective)) else -2,
+      Compare() => local_content_preference(content, perspective, width) // 10,
+      Conditional() => local_content_preference(content, perspective, width) // 10,
+      Redirect() => 0, Plan() => 0, Participate() => 0, Retract() => 0, Question() => 0, Answer() => 0)
+  compound_value:
+    parameters: {clauses: DiscussionContents, perspective: DiscussionPerspective, width: Count, heard: DiscussionStatements}
+    returns: ExperienceScore
+    expression: sum_by(clauses, c => compound_clause_value(c, perspective, width, heard)) // size(clauses) if size(clauses) > 0 else 0

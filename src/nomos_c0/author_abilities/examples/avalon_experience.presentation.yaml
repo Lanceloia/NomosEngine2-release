@@ -1,0 +1,132 @@
+schema: nomos.tabletop.presentation
+imports: [avalon.presentation.yaml]
+recap: {cognition: true}
+labels:
+  reveal_approval.result: 提队表决结果
+  suggest_team.said: 替代队伍建议
+  own_role: 本人身份
+  evil_peers: 已知邪恶同伴
+  merlin_suspects: 梅林察觉的邪恶人物
+  percival_candidates: 梅林／莫甘娜候选组
+  population: 本局公开角色配置
+  advise_team.said: 队伍立场发言
+  claim_identity.said: 身份发言
+  reveal_quest.result: 任务结果
+  cast: 身份牌组
+  roster: 本局玩家
+  benefit: 局面收益
+  reception: 表态呼应
+  coordination: 目标协调
+  concealment: 身份掩护
+  credibility: 公开信誉
+  information: 了解局面
+  effort: 行动负担
+  evidence: 现场依据
+  opinion: 个人意见
+  verified: 本人已核验
+  insufficient: 现有前提不足
+  missing_evidence: 尚缺核验记录
+  recruit_support: 争取支持当前队伍
+  recruit_rejection: 争取否决当前队伍
+  offer_alternative: 争取改派推荐队伍
+  project_identity: 建立公开身份印象
+  yield_floor: 让过本轮发言
+components:
+  TeamSuggestion:
+    kind: record
+    sentence: [{field: speaker}, 建议改派, {field: members}, '。理由：', {field: rationale}]
+    fields: {speaker: {label: 建议者}, epoch: {label: 本局提队}, team: {label: 原队伍}, members: {label: 推荐队伍}, rationale: {label: 附带理由, omit_empty: true}}
+  ArgumentReview:
+    kind: record
+    sentence: [{field: speaker}, 的队伍建议, {field: verdict}]
+    fields:
+      speaker: {label: 发言人}
+      epoch: {label: 本局提队}
+      team: {label: 建议队伍}
+      rationale: {label: 引用理由}
+      verdict: {label: 核验结果}
+      premises: {label: 本人已收到的引用记录}
+      public_evil_count: {label: 公开邪恶人数}
+  EvilInterval:
+    kind: record
+    sentence: [邪恶成员, {field: minimum}, 至, {field: maximum}, 人]
+    fields: {minimum: {label: 至少}, maximum: {label: 至多}}
+  IdentitySpeech:
+    kind: record
+    sentence: [{field: speaker}, 自称, {field: role}]
+    fields: {speaker: {label: 发言人}, epoch: {label: 本局提队}, team: {label: 讨论队伍}, role: {label: 自称身份}}
+  TeamSpeech:
+    kind: record
+    sentence: [{field: speaker}, '：', {field: approve}, '这支队伍 ', {field: team}, '。理由：', {field: rationale}]
+    fields:
+      speaker: {label: 发言人}
+      epoch: {label: 本局提队}
+      team: {label: 讨论队伍}
+      approve: {label: 队伍建议, values: {'true': 建议派出, 'false': 建议否决}}
+      rationale: {label: 理由}
+  TeamArgument:
+    kind: variant
+    cases:
+      Judgment: {label: 按我的判断}
+      TestTeam: {label: 试试这支新组合}
+      FailureOverlap:
+        label: 失败任务重叠
+        sentence: ['这支队伍包含第', {field: mission}, '次失败任务的成员']
+        fields: {mission: 任务, epoch: 本局提队}
+      SuccessCore:
+        label: 保留成功队伍成员
+        sentence: ['保留第', {field: mission}, '次零失败牌任务的成员，再考察这支队伍']
+        fields: {mission: 引用任务, epoch: 引用提队}
+      TrustSpeaker:
+        label: 采信玩家
+        sentence: ['我采信', {field: speaker}, '对这支队伍的建议']
+        fields: {speaker: 发言人}
+      EvilExhausted:
+        label: 引用排除依据
+        sentence: ['根据第', {field: mission}, '次任务的失败牌，我认为这支队伍全好']
+        fields: {mission: 引用任务, epoch: 引用提队}
+      ClaimAssessment:
+        label: 评论身份说法
+        sentence: [{field: speaker}, '自称', {field: claimed_role}, '（第', {field: claim_epoch}, '次提队）。我是否采信：', {field: credible}]
+        fields: {speaker: 自称者, claimed_role: 自称身份, claim_epoch: 自称时的提队, credible: 我是否采信}
+      ClaimConflict:
+        label: 质疑冲突说法
+        sentence: [{field: first}, '；', {field: second}, '。这两次自称不能同时为真，我质疑他们的配合。']
+        fields: {first: 第一项自称, second: 第二项自称}
+actions:
+  pass_speech:
+    icon: back
+    title: 让过本轮发言
+    description: 把发言机会交给下一位。两轮讨论结束后，各自秘密表决。
+  suggest_team:
+    group: 可选发言
+    surface: seats
+    icon: users
+    title: 提出替代队伍
+    description: 选择你建议的另一组成员，让队长和同伴参考。随后仍可独立表决。
+    preview: {当前队伍: team}
+    inputs: {members: {label: 推荐成员}, rationale: {label: 附带理由, options: {'null': 不附加理由}}}
+  claim_identity:
+    group: 可选发言
+    surface: inline
+    icon: user
+    title: 公开自称身份
+    description: 每轮可选择一种表达，也可以让过。每次提队可自称身份一次。
+    inputs: {claimed_role: {label: 自称身份}}
+  advise_team:
+    group: 可选发言
+    surface: inline
+    icon: users
+    title: 建议或质疑这支队伍
+    description: 表达立场和理由，随后仍可独立表决。
+    inputs:
+      support_team: {label: 你的建议, options: {'true': 建议派出, 'false': 建议否决}}
+      rationale: {label: 理由}
+timeline:
+  - {source: {reports: suggest_team.said}, title: 有人提出替代队伍, mode: append, icon: users, category: 队伍讨论, group_by: {label: 本局提队, field: epoch}, actor_field: speaker}
+  - {source: {reports: claim_identity.said}, title: 有人公开自称身份, mode: append, icon: user, emphasis: true, category: 身份发言, group_by: {label: 本局提队, field: epoch}, actor_field: speaker}
+  - {source: {reports: advise_team.said}, title: 有人表达队伍建议, mode: append, icon: users, category: 队伍讨论, group_by: {label: 本局提队, field: epoch}, actor_field: speaker}
+panels:
+  - {title: 听见的替代队伍, zone: history, source: {reports: suggest_team.said}}
+  - {title: 听见的身份说法, zone: history, source: {reports: claim_identity.said}}
+  - {title: 听见的队伍建议, zone: history, source: {reports: advise_team.said}}

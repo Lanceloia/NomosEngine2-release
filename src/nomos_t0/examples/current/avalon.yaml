@@ -1,0 +1,16 @@
+# One approved team and one actual mission reveal, not a predetermined match.
+schema: nomos.witness
+budget: 8
+steps:
+- {actor: a, action: propose, inputs: {members: [{actor: a}, {actor: b}]}}
+- {actor: a, action: approve, inputs: {approve: true}}
+- {actor: b, action: approve, inputs: {approve: true}}
+- {actor: c, action: approve, inputs: {approve: true}}
+- {actor: d, action: approve, inputs: {approve: true}}
+- {actor: e, action: approve, inputs: {approve: true}}
+- {actor: a, action: quest, inputs: {sabotage: false}}
+- {actor: b, action: quest, inputs: {sabotage: false}}
+expect:
+- {actor: {name: a, fields: {quest_round: 1}}}
+- {published: {source: author.Avalon.reveal_quest.event, count: 1}}
+- {ending: {actor: a, status: active}}

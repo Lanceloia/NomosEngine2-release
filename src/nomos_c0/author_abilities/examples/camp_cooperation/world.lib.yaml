@@ -1,0 +1,173 @@
+# Non-canon experiment: voluntary cooperation and locally acquired feedback.
+schema: nomos.author.lib
+values:
+  Count: {int: [0, null]}
+  PersonRef: {ref: Person}
+  People: {set: PersonRef}
+  Flags: {set: Bool}
+  Request: {record: {sender: PersonRef, helper: PersonRef, ticket: Count, exchange: Bool}}
+  Requests: {set: Request}
+  RequestReports: {sequence: Request}
+  Reply: {record: {helper: PersonRef, ticket: Count, accepted: Bool, received: Count, paid: Count}}
+  Notice: {record: {sender: PersonRef, helper: PersonRef, accepted: Bool}}
+  Notices: {sequence: Notice}
+  ImpressionScore: {int: [-1, 1]}
+  SupportImpression:
+    record: {observed: Count, accepted: Count, refused: Count, signal: ImpressionScore, personal: Bool}
+  Replies: {sequence: Reply}
+  StockKnowledge: {enum: [unknown, empty, available]}
+  StockReport: {record: {subject: PersonRef, available: Bool}}
+  StockReports: {sequence: StockReport}
+  StockDisplay: {record: {observer: PersonRef, available: Bool}}
+  StockDisplays: {sequence: StockDisplay}
+entities:
+  Person:
+    kind: person
+    reference: public
+    fields: {supplies: Count, tokens: Count, energy: Count, ticket: Count, waiting: Bool, answered: Requests, completed: Count}
+    view: [id, supplies, tokens, energy, ticket, waiting, answered, completed]
+    public: [id, ticket, waiting]
+queries:
+  pending:
+    parameters: {requests: RequestReports, answered: Requests}
+    returns: Requests
+    expression: filter(distinct(requests), r => r not in answered)
+  accepted_count:
+    parameters: {notices: Notices, person: PersonRef}
+    returns: Count
+    expression: sum_by(notices, n => 1 if n.sender == person and n.accepted else 0)
+disclosures:
+  RequestHeard:
+    parameters: {person: PersonRef, helper: PersonRef, exchange: Bool}
+    sample: before
+    to: People([helper])
+    returns: Request
+    value: Request(sender=person, helper=helper, ticket=person.ticket, exchange=exchange)
+    access: acquired
+  ReplyHeard:
+    parameters: {person: PersonRef, request: Request, accepted: Bool}
+    sample: before
+    to: People([request.sender])
+    returns: Reply
+    value: Reply(helper=person, ticket=request.ticket, accepted=accepted, received=1 if accepted else 0, paid=1 if accepted and request.exchange else 0)
+    access: acquired
+  ActivityHeard:
+    parameters: {person: PersonRef, request: Request, accepted: Bool}
+    sample: after
+    to: known(Person)
+    returns: Notice
+    value: Notice(sender=request.sender, helper=person, accepted=accepted)
+    access: acquired
+  SuppliesShared:
+    parameters: {person: PersonRef, recipients: People}
+    sample: after
+    to: recipients
+    returns: People
+    value: recipients
+    access: acquired
+  SuppliesShown:
+    parameters: {person: PersonRef, observer: PersonRef}
+    sample: before
+    to: People([observer])
+    returns: StockReport
+    value: StockReport(subject=person, available=person.supplies > 0)
+    access: acquired
+  DisplayRecorded:
+    parameters: {person: PersonRef, observer: PersonRef}
+    sample: before
+    to: People([person])
+    returns: StockDisplay
+    value: StockDisplay(observer=observer, available=person.supplies > 0)
+    access: acquired
+abilities:
+  ShowSupplies:
+    actor: {person: PersonRef}
+    inputs:
+      observer: {type: PersonRef, choose: 'filter(known(Person), other => other != person)'}
+    where: person.energy > 0 and observer != person
+    cost: ['consume(person.energy, 1)']
+    results: Unit
+    resolve:
+      result: None
+      deliver:
+        stock: 'SuppliesShown(person, observer)'
+        shown: 'DisplayRecorded(person, observer)'
+  RequestSupport:
+    actor: {person: PersonRef}
+    inputs:
+      helper: {type: PersonRef, choose: 'filter(known(Person), other => other != person)'}
+      exchange: {type: Bool, choose: 'Flags([False, True]) if person.tokens > 0 else Flags([False])'}
+    where: not person.waiting and person.energy > 0 and helper != person and (not exchange or person.tokens > 0)
+    cost: ['consume(person.energy, 1)']
+    results: Unit
+    resolve:
+      result: None
+      effects: ['set(person.waiting, True)', 'set(person.ticket, person.ticket + 1)']
+      deliver: {request: 'RequestHeard(person, helper, exchange)'}
+  RespondSupport:
+    actor: {person: PersonRef}
+    views: {requests: {reports: RequestReports}}
+    inputs:
+      request: {type: Request, choose: 'pending(reports(requests), person.answered)'}
+      accepted: {type: Bool, choose: 'Flags([False, True]) if person.supplies > 0 else Flags([False])'}
+    where: >
+      person.energy > 0 and request.helper == person and request.sender.waiting and
+      request.sender.ticket == request.ticket + 1 and
+      (not accepted or person.supplies > 0)
+    cost: ['consume(person.energy, 1)']
+    results: Bool
+    resolve:
+      result: accepted
+      effects:
+        - set(person.answered, union(person.answered, Requests([request])))
+        - set(request.sender.waiting, False)
+        - set(person.supplies, person.supplies - (1 if accepted else 0))
+        - set(request.sender.supplies, request.sender.supplies + (1 if accepted else 0))
+        - set(request.sender.tokens, request.sender.tokens - (1 if accepted and request.exchange else 0))
+        - set(person.tokens, person.tokens + (1 if accepted and request.exchange else 0))
+      deliver: {reply: 'ReplyHeard(person, request, accepted)'}
+  Forage:
+    actor: {person: PersonRef}
+    where: person.energy >= 2
+    cost: ['consume(person.energy, 2)']
+    results: Count
+    resolve:
+      result: '1'
+      effects: ['set(person.supplies, person.supplies + 1)', 'set(person.tokens, person.tokens + 1)']
+  ReviewActivity:
+    actor: {person: PersonRef}
+    views: {notices: {reports: Notices}}
+    where: 'True'
+    results: Count
+    resolve: {result: 'accepted_count(reports(notices), person)'}
+  ShareSupplies:
+    actor: {person: PersonRef}
+    inputs:
+      recipients: {type: People, choose: {subset: 'filter(known(Person), other => other != person)', min: 1, max: 64}}
+    where: person.energy > 0 and person.supplies >= size(recipients)
+    cost: ['consume(person.energy, 1)']
+    results: Count
+    resolve:
+      result: size(recipients)
+      effects:
+        - set(person.supplies, person.supplies - size(recipients))
+        - for: recipient
+          in: recipients
+          effects: ['set(recipient.supplies, recipient.supplies + 1)']
+      deliver: {shared: 'SuppliesShared(person, recipients)'}
+reactions:
+  RecordReply:
+    on: {definition: RespondSupport, bind: {person: person, request: request, accepted: result}}
+    when: 'True'
+    results: Count
+    resolve:
+      result: person.completed + 1
+      effects: ['set(person.completed, person.completed + 1)']
+      deliver: {notice: 'ActivityHeard(person, request, accepted)'}
+  RecordSharing:
+    on: {definition: ShareSupplies, bind: {person: person, amount: result}}
+    when: 'True'
+    results: Count
+    resolve:
+      result: amount
+      effects: ['set(person.completed, person.completed + 1)']

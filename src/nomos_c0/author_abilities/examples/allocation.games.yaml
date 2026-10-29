@@ -1,0 +1,4 @@
+schema: nomos.play.catalog
+games:
+  - {id: workers, title: 人员分配试验, description: 波多黎各工位分配短样本, prefix: puerto_rico/workers}
+  - {id: budget, title: 预算分配试验, description: 允许保留预算的中性短样本, prefix: allocation_budget/world}

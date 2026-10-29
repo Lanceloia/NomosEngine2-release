@@ -1,0 +1,39 @@
+# Planning support for an existing discussion and ballot, without new game rules.
+schema: nomos.author.lib
+imports: [avalon.lib.yaml]
+values:
+  ReplySignal: {int: [null, null]}
+  PlanningRound: {record: {epoch: Epoch, discussion: DiscussionContext}}
+  DialogueLocal:
+    record: {self: PlayerRef, players: Players, round: PlanningRound, heard: DiscussionStatements, spoken: Bool, can_speak: Bool, can_vote: Bool, voted: Bool}
+queries:
+  planning_spoken:
+    parameters: {heard: DiscussionStatements, speaker: PlayerRef, epoch: Epoch}
+    returns: Bool
+    expression: exists(heard, s => s.key.speaker == speaker and s.key.epoch == epoch)
+  planning_supports_current_team:
+    parameters: {statement: DiscussionStatement, speaker: PlayerRef, round: PlanningRound}
+    returns: Bool
+    expression: >
+      statement.key.speaker == speaker and statement.key.epoch == round.epoch and
+      match(statement.content, Conditional(c) => position_stance(c.position,
+        TeamOption(mission=round.discussion.mission, members=round.discussion.members)) == Stance.support,
+        Compare() => False, Respond() => False, Redirect() => False, Plan() => False,
+        Participate() => False, Retract() => False, Opinion() => False, Question() => False, Answer() => False)
+  planning_reply_signal:
+    parameters: {heard: DiscussionStatements, speaker: PlayerRef, round: PlanningRound}
+    returns: ReplySignal
+    expression: >
+      sum_by(current_discussion(heard), s => match(s.content, Respond(r) =>
+        (1 if r.response.attitude == ResponseAttitude.endorse else -1 if r.response.attitude == ResponseAttitude.challenge else 0)
+        if s.key.speaker != speaker and exists(current_discussion(heard), own => own.key == r.response.target and
+          planning_supports_current_team(own, speaker, round)) else 0,
+        Compare() => 0, Conditional() => 0, Redirect() => 0, Plan() => 0, Participate() => 0,
+        Retract() => 0, Opinion() => 0, Question() => 0, Answer() => 0))
+projections:
+  PlanningRoundView:
+    context: Match
+    viewer: {player: PlayerRef}
+    audience: player in players
+    returns: PlanningRound
+    value: PlanningRound(epoch=epoch, discussion=discussion_context(mission, at(order, leader_index), rejections, phase, team, approval_history, discussion_kind, speech_serial))

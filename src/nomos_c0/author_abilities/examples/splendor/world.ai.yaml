@@ -1,0 +1,63 @@
+schema: nomos.author.ai
+queries:
+  ai_distance:
+    parameters: {"person":"PlayerRef","candidate":"Card"}
+    returns: Count
+    expression: >
+      total(shortfall(person.tokens, discounted(candidate.cost, bonuses(person))))
+  ai_target:
+    parameters: {"person":"PlayerRef","market_cards":"Cards","catalog":"CardOrder"}
+    returns: MaybeCard
+    expression: >
+      min_by(filter(catalog, c => c in union(market_cards, person.reserved)),
+             c => ai_distance(person, c), c => c.id)
+  ai_greedy_return:
+    parameters: {"tokens":"Gems","excess":"Count"}
+    returns: Gems
+    expression: >
+      Gems(white=0 if excess <= (0) else tokens.white if tokens.white < excess - (0) else excess - (0), blue=0 if excess <= (tokens.white) else tokens.blue if tokens.blue < excess - (tokens.white) else excess - (tokens.white), green=0 if excess <= (tokens.white + tokens.blue) else tokens.green if tokens.green < excess - (tokens.white + tokens.blue) else excess - (tokens.white + tokens.blue), red=0 if excess <= (tokens.white + tokens.blue + tokens.green) else tokens.red if tokens.red < excess - (tokens.white + tokens.blue + tokens.green) else excess - (tokens.white + tokens.blue + tokens.green), black=0 if excess <= (tokens.white + tokens.blue + tokens.green + tokens.red) else tokens.black if tokens.black < excess - (tokens.white + tokens.blue + tokens.green + tokens.red) else excess - (tokens.white + tokens.blue + tokens.green + tokens.red), gold=0 if excess <= (tokens.white + tokens.blue + tokens.green + tokens.red + tokens.black) else tokens.gold if tokens.gold < excess - (tokens.white + tokens.blue + tokens.green + tokens.red + tokens.black) else excess - (tokens.white + tokens.blue + tokens.green + tokens.red + tokens.black))
+  ai_surplus_return:
+    parameters: {"tokens":"Gems","cost":"Gems","excess":"Count"}
+    returns: Gems
+    expression: >
+      ai_greedy_return(shortfall(cost, tokens), excess if excess < total(shortfall(cost, tokens)) else total(shortfall(cost, tokens)))
+  ai_return:
+    parameters: {"tokens":"Gems","cost":"Gems","excess":"Count"}
+    returns: Gems
+    expression: >
+      add(ai_surplus_return(tokens, cost, excess), ai_greedy_return(subtract(tokens, ai_surplus_return(tokens, cost, excess)), excess - total(ai_surplus_return(tokens, cost, excess))))
+  ai_return_for_target:
+    parameters: {"tokens":"Gems","discounts":"Gems","target":"MaybeCard","excess":"Count"}
+    returns: Gems
+    expression: >
+      ai_greedy_return(tokens, excess) if target is None else
+      ai_return(tokens, discounted(target.cost, discounts), excess)
+strategies:
+  Merchant:
+    actor: {self: PlayerRef}
+    candidates:
+      - {definition: PrepareTable, score: '100'}
+      - definition: Purchase
+        inputs: {payment: 'canonical_payment(self.tokens, discounted(card.cost, bonuses(self)))'}
+        score: '200 + card.points * 20'
+      - definition: TakeDifferent
+        score: >
+          30 + sum_by(union(market, self.reserved), c =>
+          total(shortfall(self.tokens, discounted(c.cost, bonuses(self)))) -
+          total(shortfall(add(self.tokens, pieces(colors, 1)), discounted(c.cost, bonuses(self)))))
+      - definition: TakePair
+        score: >
+          30 + sum_by(union(market, self.reserved), c =>
+          total(shortfall(self.tokens, discounted(c.cost, bonuses(self)))) -
+          total(shortfall(add(self.tokens, pieces(Colors([color]), 2)), discounted(c.cost, bonuses(self)))))
+      - {definition: ReserveFaceup, score: '10 + card.points'}
+      - {definition: ReserveBlind, score: '1'}
+      - definition: ReturnExcess
+        inputs: {returned: 'ai_return_for_target(self.tokens, bonuses(self), ai_target(self, market, catalog), total(self.tokens) - token_limit)'}
+        score: '100'
+      - {definition: ChooseNoble, score: '100'}
+    minimum: '0'
+    tie: canonical
+    wait: no_candidate
+control:
+  merchants: {kind: Player, definition: Merchant}

@@ -1,0 +1,7 @@
+# B initially cannot give supplies; C has a small reserve.
+schema: nomos.author.assets
+actors:
+  a: {supplies: 0, tokens: 0, energy: 40, ticket: 0, waiting: false, answered: [], completed: 0}
+  b: {supplies: 0, tokens: 0, energy: 40, ticket: 0, waiting: false, answered: [], completed: 0}
+  c: {supplies: 2, tokens: 0, energy: 40, ticket: 0, waiting: false, answered: [], completed: 0}
+objects: {}

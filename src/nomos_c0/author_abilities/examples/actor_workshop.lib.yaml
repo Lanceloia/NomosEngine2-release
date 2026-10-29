@@ -1,0 +1,68 @@
+# Non-canon: birth identity, local knowledge and control are separate contracts.
+schema: nomos.author.lib
+values:
+  Count: {int: [0, 100]}
+  CreatureRef: {ref: Creature}
+  Creatures: {set: CreatureRef}
+  WorkerRef: {ref: Worker}
+  Workers: {set: WorkerRef}
+  SpiritRef: {ref: Spirit}
+entities:
+  Creature:
+    kind: person
+    reference: projected
+    fields: {awake: Bool, energy: Count, done: Count}
+    view: [id, awake, energy, done]
+    public: []
+  Worker:
+    kind: person
+    extends: Creature
+    reference: projected
+    fields: {}
+    view: [id, awake, energy, done]
+    public: []
+  Spirit:
+    kind: person
+    extends: Creature
+    reference: projected
+    fields: {bright: Bool}
+    view: [id, awake, energy, done, bright]
+    public: []
+abilities:
+  Summon:
+    actor: {maker: WorkerRef}
+    where: maker.awake and maker.energy > 0
+    cost: ['consume(maker.energy, 1)']
+    results: Bool
+    resolve:
+      form:
+        - type: Spirit
+          fields: {awake: 'True', energy: '3', done: '0', bright: 'True'}
+      result: 'True'
+  Act:
+    actor: {creature: CreatureRef}
+    where: creature.awake and creature.energy > 0
+    cost: ['consume(creature.energy, 1)']
+    results: Count
+    resolve:
+      effects: ['set(creature.done, creature.done + 1)']
+      result: creature.done + 1
+  Sleep:
+    actor: {creature: CreatureRef}
+    where: creature.awake
+    results: Bool
+    resolve: {effects: ['set(creature.awake, False)'], result: 'True'}
+disclosures:
+  Born:
+    parameters: {maker: WorkerRef, people: Creatures}
+    sample: after
+    to: Workers([maker])
+    returns: Creatures
+    value: people
+    access: acquired
+reactions:
+  NoticeBirth:
+    on: {definition: Summon, bind: {maker: maker, born: {formed: Creature}}}
+    when: 'True'
+    results: Bool
+    resolve: {result: 'True', deliver: {people: 'Born(maker, born)'}}

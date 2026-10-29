@@ -1,0 +1,11 @@
+# Explicit experimental entry; no default catalog is changed.
+schema: nomos.author.ai
+imports: [avalon_percival_ranking.ai.yaml, avalon_percival.model.ai.yaml]
+control:
+  council:
+    kind: Player
+    definition: LocalChoice
+    views: {mind: council, identity: own_role}
+    tunable: [style]
+    with: {style: {label: 均衡派, risk: 100, concealment: 100, speech: 100, trust: 100}}
+    rankings: {ProposeTeam: percival_team}

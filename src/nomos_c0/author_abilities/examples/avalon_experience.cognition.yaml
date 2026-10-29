@@ -1,0 +1,112 @@
+# Sourced impressions and acquired guarantees remain distinct in one committed view.
+schema: nomos.author.cognition
+models:
+  PlayerUnderstanding:
+    actor: {player: PlayerRef}
+    propositions: PlayerThought
+    appraisal_keys: PlayerAssessmentTarget
+    slots: PlayerThoughtSlot
+    view: PlayerJudgment
+    prior_view: PlayerPrior
+    evidence:
+      population_reports: {reports: PopulationReports}
+      own: {reports: RoleReports}
+      pair: {reports: CandidateGroups}
+      allies: {reports: PlayerReports}
+      suspects: {reports: PlayerReports}
+      claims: {reports: IdentitySpeeches}
+      advice: {reports: TeamSpeeches}
+      alternatives: {reports: TeamSuggestions}
+      tasks: {reports: QuestHistory}
+      ballots: {reports: ApprovalHistory}
+      expressions: {reports: DiscussionStatements}
+    rules:
+      CurrentExpression:
+        on: expressions
+        item: message
+        policy: latest
+        slot: PlayerThoughtSlot.Expression(topic=discussion_topic(message))
+        where: not is_retraction(message.content)
+        believe: {proposition: 'PlayerThought.Deliberation(statement=message)', support: '1', opposition: '0'}
+      CurrentClaim:
+        on: claims
+        item: message
+        policy: latest
+        slot: PlayerThoughtSlot.Speaker(person=message.speaker)
+        believe: {proposition: 'PlayerThought.Identity(person=message.speaker, role=message.role, epoch=message.epoch)', support: '0 if message.speaker == player else 1', opposition: '0'}
+      CurrentAdvice:
+        on: advice
+        item: message
+        policy: latest
+        slot: PlayerThoughtSlot.Discussion(person=message.speaker, epoch=message.epoch)
+        believe: {proposition: 'PlayerThought.Advice(statement=message, listener=player)', support: '1', opposition: '0'}
+      CurrentAlternative:
+        on: alternatives
+        item: message
+        policy: latest
+        slot: PlayerThoughtSlot.Discussion(person=message.speaker, epoch=message.epoch)
+        believe: {proposition: 'PlayerThought.Alternative(statement=message)', support: '1', opposition: '0'}
+      IdentityOpinion:
+        on: advice
+        item: message
+        policy: latest
+        accept: match(message.rationale, ClaimAssessment() => True, Judgment() => False, TestTeam() => False, FailureOverlap() => False, SuccessCore() => False, TrustSpeaker() => False, EvilExhausted() => False, ClaimConflict() => False)
+        slot: match(message.rationale, ClaimAssessment(r) => PlayerThoughtSlot.Opinion(speaker=message.speaker, subject=r.speaker, role=r.claimed_role, claim_epoch=r.claim_epoch), Judgment() => PlayerThoughtSlot.Discussion(person=message.speaker, epoch=message.epoch), TestTeam() => PlayerThoughtSlot.Discussion(person=message.speaker, epoch=message.epoch), SuccessCore() => PlayerThoughtSlot.Discussion(person=message.speaker, epoch=message.epoch), FailureOverlap() => PlayerThoughtSlot.Discussion(person=message.speaker, epoch=message.epoch), TrustSpeaker() => PlayerThoughtSlot.Discussion(person=message.speaker, epoch=message.epoch), EvilExhausted() => PlayerThoughtSlot.Discussion(person=message.speaker, epoch=message.epoch), ClaimConflict() => PlayerThoughtSlot.Discussion(person=message.speaker, epoch=message.epoch))
+        believe: {proposition: 'PlayerThought.IdentityOpinion(statement=message, listener=player)', support: '1', opposition: '0'}
+      DirectForecast:
+        on: advice
+        item: message
+        policy: latest
+        accept: task_advice(message.rationale)
+        where: task_statement(message.rationale)
+        slot: PlayerThoughtSlot.Discussion(person=message.speaker, epoch=message.epoch)
+        believe: {proposition: 'PlayerThought.Forecast(statement=message)', support: '1', opposition: '0'}
+      ObservedTask:
+        on: tasks
+        item: message
+        policy: latest
+        slot: PlayerThoughtSlot.Task(epoch=message.epoch)
+        believe: {proposition: 'PlayerThought.Task(record=message)', support: '1', opposition: '0'}
+      TeamImpression:
+        on: tasks
+        item: message
+        policy: latest
+        slot: PlayerThoughtSlot.Task(epoch=message.epoch)
+        believe:
+          proposition: PlayerThought.SafeTeam(members=message.team)
+          support: '1 if message.fails == 0 else 0'
+          opposition: '3 * message.fails'
+        appraise:
+          key: PlayerAssessmentTarget.Team(members=message.team)
+          score: '10 if message.fails == 0 else -45 * message.fails'
+      SharedChoice:
+        on: ballots
+        item: message
+        policy: latest
+        slot: PlayerThoughtSlot.Task(epoch=message.epoch)
+        believe: {proposition: 'PlayerThought.Ballot(record=message, listener=player)', support: '1', opposition: '0'}
+    local:
+      period: fixed_roles
+      assumptions:
+        FixedIdentity: 本局各人的角色在这些通知和任务之间保持不变。
+      universe: population
+      inputs:
+        population: {on: population_reports, constraint: RolePopulation, history: opening}
+        own: {on: own, constraint: KnownIdentity, history: opening}
+        pair: {on: pair, constraint: CandidatePair, history: opening, required: false}
+        allies: {on: allies, constraint: KnownEvilMembers, history: opening, required: false}
+        suspects: {on: suspects, constraint: KnownEvilMembers, history: opening, required: false}
+        tasks: {on: tasks, constraint: QuestEligibility, history: all, required: false}
+      categories:
+        merlin: {key: Role.merlin, matching: 'Roles([Role.merlin])'}
+        servant: {key: Role.servant, matching: 'Roles([Role.servant])'}
+        assassin: {key: Role.assassin, matching: 'Roles([Role.assassin])'}
+        minion: {key: Role.minion, matching: 'Roles([Role.minion])'}
+        percival: {key: Role.percival, matching: 'Roles([Role.percival])'}
+        morgana: {key: Role.morgana, matching: 'Roles([Role.morgana])'}
+        mordred: {key: Role.mordred, matching: 'Roles([Role.mordred])'}
+bindings:
+  player_understanding:
+    kind: Player
+    definition: PlayerUnderstanding
+    views: {population_reports: population, own: own_role, pair: percival_candidates, allies: evil_peers, suspects: merlin_suspects, claims: claim_identity.said, advice: advise_team.said, alternatives: suggest_team.said, tasks: reveal_quest.result, ballots: reveal_approval.result, expressions: publish_discussion.said}

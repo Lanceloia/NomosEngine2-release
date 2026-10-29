@@ -1,0 +1,9 @@
+schema: nomos.author.source
+name: Custody
+actors: {traveler: Person, keeper: Person}
+objects: [Key, Horn]
+use:
+  Take: {definition: Take, with: {fee: 1}}
+  Drop: {definition: Drop, with: {fee: 1}}
+  OfferTransfer: {definition: OfferTransfer, with: {fee: 1}}
+  TryReceive: {definition: TryReceive, with: {fee: 1}}

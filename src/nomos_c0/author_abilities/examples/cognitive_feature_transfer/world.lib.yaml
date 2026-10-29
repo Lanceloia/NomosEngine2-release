@@ -1,0 +1,39 @@
+# Non-canon probe: identity changes while an authored semantic feature remains.
+schema: nomos.author.lib
+values:
+  Number: {int: [1, null]}
+  ComponentKind: {enum: [ordinary, signal]}
+  Component: {record: {identity: Number, kind: ComponentKind}}
+  Components: {set: Component}
+  PersonRef: {ref: Person}
+  People: {set: PersonRef}
+  Outcome: {record: {success: Bool}}
+  Local: {record: {pool: Components, required: Number, done: Bool}}
+entities:
+  Person:
+    kind: person
+    reference: public
+    fields: {pool: Components, required: Number, chosen: Components, done: Bool}
+    view: [pool, required, chosen, done]
+    public: [pool]
+disclosures:
+  SelectionResult:
+    parameters: {who: PersonRef, members: Components}
+    sample: before
+    to: People([who])
+    returns: Outcome
+    value: Outcome(success=exists(members, item => item.kind == ComponentKind.signal))
+    access: acquired
+abilities:
+  Choose:
+    actor: {person: PersonRef}
+    inputs:
+      members:
+        type: Components
+        choose: {subset: person.pool, min: person.required, max: person.required}
+    where: not person.done
+    results: Unit
+    resolve:
+      result: None
+      effects: ['set(person.chosen, members)', 'set(person.done, True)']
+      deliver: {result: 'SelectionResult(person, members)'}

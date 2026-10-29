@@ -1,0 +1,31 @@
+# Only the terminal choice uses the model; all earlier behavior is unchanged.
+schema: nomos.author.ai
+imports: [avalon_policy.ai.yaml, avalon_red.model.ai.yaml]
+rankings:
+  red_assassination:
+    model: red_merlin
+    label: 学习到的梅林概率
+    subject: target
+    views:
+      census: {reports: PopulationReports, channel: population}
+      peers: {reports: PlayerReports, channel: evil_peers}
+      suspects: {reports: PlayerReports, channel: merlin_suspects}
+      pairs: {reports: CandidateGroups, channel: percival_candidates}
+      tasks: {reports: QuestHistory, channel: reveal_quest.result}
+      claims: {reports: IdentitySpeeches, channel: claim_identity.said}
+      suggestions: {reports: TeamSpeeches, channel: advise_team.said}
+      current_leader: {projection: PlayerRef, channel: leader}
+    inputs:
+      observer: person
+      population: reports(census)
+      identity: reports(identity)
+      peers: reports(peers)
+      suspects: reports(suspects)
+      pairs: reports(pairs)
+      approvals: approval_history
+      epoch: epoch
+      leader: projected(current_leader)
+      team: team
+      quests: reports(tasks)
+      claims: filter(reports(claims), c => c.role != Role.merlin)
+      advice: reports(suggestions)

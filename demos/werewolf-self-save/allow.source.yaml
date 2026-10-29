@@ -1,0 +1,42 @@
+schema: nomos.author.source
+name: Werewolf
+actors: {a: Player, b: Player, c: Player, d: Player, e: Player, f: Player}
+objects: []
+play:
+  mechanism: tabletop
+  seats: {kind: Player}
+  others: local_strategy
+  joint_decisions:
+    attack:
+      projection: wolf_plans
+      participant: voter
+      locked: locked
+      epoch: {context: match, field: round}
+      actions: [wolf_vote, wolf_lock]
+contexts:
+  match:
+    definition: Match
+    with:
+      players: {opening_domain: Player}
+      public_cast: [seer, villager, wolf, wolf, witch, villager]
+      day_policy: strict_majority
+      wolf_policy: unanimous
+      allow_self_save: true
+      allow_two_potions: true
+use:
+  own_role: {definition: OwnRole, context: match}
+  wolf_peers: {definition: WolfPeers, context: match}
+  roster: {definition: Roster, context: match}
+  living: {definition: LivingPlayers, context: match}
+  dead: {definition: DeadPlayers, context: match}
+  wolf_plans: {definition: CurrentWolfPlans, context: match}
+  vote: {definition: DayVote, context: match}
+  wolf_vote: {definition: WolfVote, context: match, views: {identity: own_role, allies: wolf_peers, plans: wolf_plans}}
+  wolf_lock: {definition: LockWolfVote, context: match, views: {identity: own_role, plans: wolf_plans}}
+  inspect: {definition: Inspect, context: match, views: {identity: own_role}}
+  skip: {definition: SkipInspection, context: match, views: {identity: own_role}}
+  potions: {definition: ChoosePotions, context: match, views: {identity: own_role, notices: night_ready.notice}}
+  close_day: {definition: CloseDay, context: match, after: vote}
+  night_ready: {definition: NightReady, context: match, after: [close_day, wolf_lock, inspect, skip]}
+  dawn: {definition: Dawn, context: match, after: [night_ready, potions]}
+  finish: {definition: GameFinished, context: match}

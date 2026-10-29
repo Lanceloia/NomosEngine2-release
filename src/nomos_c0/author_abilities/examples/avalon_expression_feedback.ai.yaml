@@ -1,0 +1,148 @@
+# Sourced dialogue feedback over saved utterances and acquired public replies.
+schema: nomos.author.ai
+queries:
+  feedback_utterance:
+    parameters: {speaker: PlayerRef, epoch: Epoch, serial: Epoch, mission: Mission, clauses: DiscussionContents, heard: DiscussionStatements}
+    returns: DiscussionStatements
+    expression: filter(expression_parts(speaker, epoch, serial, mission, clauses), s => expression_fresh(s.content, heard, speaker, mission))
+  feedback_target:
+    parameters: {content: DiscussionContent, include_withdrawal: Bool}
+    returns: MaybeStatementKey
+    expression: >
+      match(content, Respond(r) => r.response.target, Answer(a) => a.answer.question,
+      Participate(p) => p.decision.target,
+      Question(q) => match(q.question.subject, Citation(c) => match(c.citation, Discussion(d) => d.key,
+      IdentityClaim() => None, TeamAdvice() => None, Alternative() => None, Ballot() => None), Proposition() => None),
+      Retract(r) => r.retraction.target if include_withdrawal else None,
+      Compare() => None, Conditional() => None, Redirect() => None, Plan() => None, Opinion() => None)
+  feedback_related:
+    parameters: {message: DiscussionStatement, utterance: DiscussionStatements, listeners: Players, candidates: DiscussionStatements}
+    returns: Bool
+    expression: >
+      message.key.speaker in listeners and (feedback_direct(message, utterance) or
+      match(message.content, Retract(r) => exists(candidates, m => m.key == r.retraction.target and
+      m.key.speaker == message.key.speaker and feedback_direct(m, utterance)),
+      Compare() => False, Conditional() => False, Respond() => False, Redirect() => False, Plan() => False,
+      Participate() => False, Opinion() => False, Question() => False, Answer() => False))
+  feedback_direct:
+    parameters: {message: DiscussionStatement, utterance: DiscussionStatements}
+    returns: Bool
+    expression: >
+      exists(utterance, s => feedback_target(message.content, False) == s.key and
+      match(message.content, Question(q) => q.question.recipient == s.key.speaker, Compare() => True,
+      Conditional() => True, Respond() => True, Redirect() => True, Plan() => True, Participate() => True,
+      Retract() => True, Opinion() => True, Answer() => True))
+  feedback_reply_kind:
+    parameters: {original: DiscussionContent, reply: DiscussionContent}
+    returns: ExperienceScore
+    expression: >
+      match(original, Question() => match(reply, Answer() => 3, Respond() => 1, Compare() => 0, Conditional() => 0, Redirect() => 0,
+      Plan() => 0, Participate() => 0, Retract() => 0, Opinion() => 0, Question() => 0),
+      Plan() => match(reply, Participate() => 3, Respond() => 1, Compare() => 0, Conditional() => 0, Redirect() => 0,
+      Plan() => 0, Retract() => 0, Opinion() => 0, Question() => 0, Answer() => 0),
+      Compare() => 0, Conditional() => 0, Respond() => 0, Redirect() => 0, Participate() => 0,
+      Retract() => 0, Opinion() => 0, Answer() => 0) +
+      match(reply, Respond() => 1, Question() => 1, Compare() => 0, Conditional() => 0, Redirect() => 0,
+      Plan() => 0, Participate() => 0, Retract() => 0, Opinion() => 0, Answer() => 0)
+  feedback_reply:
+    parameters: {statement: DiscussionStatement, listener: PlayerRef, messages: DiscussionStatements}
+    returns: MaybeDiscussionStatement
+    expression: feedback_latest_reply(filter(current_discussion(messages), m => m.key.speaker == listener and feedback_target(m.content, False) == statement.key and not is_retraction(m.content)), statement.content)
+  feedback_latest_reply:
+    parameters: {messages: DiscussionStatements, original: DiscussionContent}
+    returns: MaybeDiscussionStatement
+    expression: feedback_latest_kind(messages, original, max_by(map(messages, m => feedback_reply_kind(original, m.content)), n => n))
+  feedback_latest_kind:
+    parameters: {messages: DiscussionStatements, original: DiscussionContent, priority: MaybeEvidenceCount}
+    returns: MaybeDiscussionStatement
+    expression: max_by(filter(messages, m => feedback_reply_kind(original, m.content) == priority), m => m.key.turn * 3 + m.key.part) if priority is not None else None
+  feedback_reception:
+    parameters: {reply: MaybeDiscussionStatement}
+    returns: ExperienceScore
+    expression: >
+      match(reply.content, Respond(r) => 4 if r.response.attitude == ResponseAttitude.endorse else -4 if r.response.attitude == ResponseAttitude.challenge else 0,
+      Participate(p) => 4 if p.decision.choice == PlanParticipation.join else -4 if p.decision.choice == PlanParticipation.decline or p.decision.choice == PlanParticipation.leave else 0,
+      Answer() => 0, Question() => 0, Compare() => 0, Conditional() => 0, Redirect() => 0, Plan() => 0, Retract() => 0, Opinion() => 0) if reply is not None else 0
+  feedback_information:
+    parameters: {reply: MaybeDiscussionStatement}
+    returns: ExperienceScore
+    expression: >
+      match(reply.content, Answer(a) => match(a.answer.reply, Explanation() => 4, Reserve() => 0, Unknown() => 0, Decline() => 0),
+      Respond(r) => 1 if r.response.attitude == ResponseAttitude.undecided else 2,
+      Participate(p) => 1 if p.decision.choice == PlanParticipation.undecided else 2,
+      Question() => 2, Compare() => 0, Conditional() => 0, Redirect() => 0, Plan() => 0, Retract() => 0, Opinion() => 0) if reply is not None else 0
+  feedback_average:
+    parameters: {total: ExperienceScore, count: Count}
+    returns: ExperienceScore
+    expression: (total // count if total >= 0 else -((-total) // count)) if count > 0 else 0
+  utterance_reception:
+    parameters: {utterance: DiscussionStatements, listeners: Players, messages: DiscussionStatements}
+    returns: ExperienceScore
+    expression: feedback_average(sum_by(utterance, s => sum_by(listeners, p => feedback_reception(feedback_reply(s, p, messages)))), size(utterance))
+  utterance_information:
+    parameters: {utterance: DiscussionStatements, listeners: Players, messages: DiscussionStatements}
+    returns: ExperienceScore
+    expression: feedback_average(sum_by(utterance, s => sum_by(listeners, p => feedback_information(feedback_reply(s, p, messages)))), size(utterance))
+  dialogue_window:
+    parameters: {kind: DiscussionKind}
+    returns: ExperienceScore
+    expression: 1 if kind == DiscussionKind.proposal else 2 if kind == DiscussionKind.review else 3 if kind == DiscussionKind.final else 0
+  dialogue_kind:
+    parameters: {content: DiscussionContent}
+    returns: ExperienceScore
+    expression: match(content, Compare() => 1, Conditional() => 2, Respond() => 4, Redirect() => 8, Plan() => 16, Participate() => 32, Retract() => 64, Opinion() => 128, Question() => 256, Answer() => 512)
+  dialogue_shape:
+    parameters: {clauses: DiscussionContents}
+    returns: ExperienceScore
+    expression: sum_by(distinct(map(clauses, c => dialogue_kind(c))), k => k)
+  dialogue_content_position:
+    parameters: {content: DiscussionContent}
+    returns: ExperienceScore
+    expression: >
+      match(content, Opinion(o) => 1 if o.opinion.stance == Stance.support else 2 if o.opinion.stance == Stance.oppose else 3,
+      Respond(r) => 1 if r.response.attitude == ResponseAttitude.endorse else 2 if r.response.attitude == ResponseAttitude.challenge else 3,
+      Participate(p) => 1 if p.decision.choice == PlanParticipation.join else 2 if p.decision.choice == PlanParticipation.decline else 3 if p.decision.choice == PlanParticipation.undecided else 4,
+      Conditional(c) => dialogue_stance(c.position.satisfied) * 4 + dialogue_stance(c.position.otherwise),
+      Answer() => dialogue_opinion_position(content_opinion(content)),
+      Compare() => 0, Redirect() => 0, Plan() => 0, Retract() => 0, Question() => 0)
+  dialogue_stance:
+    parameters: {stance: Stance}
+    returns: ExperienceScore
+    expression: 1 if stance == Stance.support else 2 if stance == Stance.oppose else 3
+  dialogue_opinion_position:
+    parameters: {opinion: MaybePublicOpinion}
+    returns: ExperienceScore
+    expression: dialogue_stance(opinion.stance) if opinion is not None else 0
+  dialogue_slot:
+    parameters: {index: ClauseIndex}
+    returns: ExperienceScore
+    # Three authored parts; each property's code fits one hexadecimal digit.
+    expression: 1 if index == 0 else 16 if index == 1 else 256
+  dialogue_position:
+    parameters: {clauses: DiscussionContents}
+    returns: ExperienceScore
+    expression: sum_by(clauses, c => dialogue_content_position(c) * dialogue_slot(index_of(clauses, c)))
+  dialogue_assertion_kind:
+    parameters: {opinion: MaybePublicOpinion}
+    returns: ExperienceScore
+    expression: match(opinion.assertion, RoleOf() => 1, SideOf() => 2, GroupCount() => 3, PercivalPair() => 4) if opinion is not None else 0
+  dialogue_subject:
+    parameters: {clauses: DiscussionContents}
+    returns: ExperienceScore
+    expression: sum_by(clauses, c => dialogue_assertion_kind(content_opinion(c)) * dialogue_slot(index_of(clauses, c)))
+  dialogue_question_kind:
+    parameters: {content: DiscussionContent}
+    returns: ExperienceScore
+    expression: match(content, Question(q) => 1 if q.question.purpose == QuestionPurpose.explain_basis else 2 if q.question.purpose == QuestionPurpose.explain_choice else 3 if q.question.purpose == QuestionPurpose.clarify else 4, Compare() => 0, Conditional() => 0, Respond() => 0, Redirect() => 0, Plan() => 0, Participate() => 0, Retract() => 0, Opinion() => 0, Answer() => 0)
+  dialogue_intent:
+    parameters: {clauses: DiscussionContents}
+    returns: ExperienceScore
+    expression: sum_by(clauses, c => dialogue_question_kind(c) * dialogue_slot(index_of(clauses, c)))
+  dialogue_answer_kind:
+    parameters: {content: DiscussionContent}
+    returns: ExperienceScore
+    expression: match(content, Answer(a) => match(a.answer.reply, Explanation() => 1, Reserve() => 2, Unknown() => 3, Decline() => 4), Compare() => 0, Conditional() => 0, Respond() => 0, Redirect() => 0, Plan() => 0, Participate() => 0, Retract() => 0, Opinion() => 0, Question() => 0)
+  dialogue_reply_form:
+    parameters: {clauses: DiscussionContents}
+    returns: ExperienceScore
+    expression: sum_by(clauses, c => dialogue_answer_kind(c) * dialogue_slot(index_of(clauses, c)))

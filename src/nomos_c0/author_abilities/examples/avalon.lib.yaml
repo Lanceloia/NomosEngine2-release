@@ -1,0 +1,644 @@
+# Avalon core v1: rules produce the play trace, not a preselected route.
+schema: nomos.author.lib
+imports: [avalon_deliberation.lib.yaml]
+values:
+  Role: {enum: [merlin, servant, assassin, minion, percival, morgana, mordred]}
+  Roles: {sequence: Role}
+  RoleNotice: {record: {subject: PlayerRef, role: Role}}
+  RoleReports: {sequence: RoleNotice}
+  PopulationNotice: {record: {roster: Players, cast: Roles}}
+  PopulationReports: {sequence: PopulationNotice}
+  Side: {enum: [good, evil]}
+  Winner: {optional: Side}
+  Phase: {enum: [proposal, discussion, response, approval, quest, assassination, finished]}
+  DiscussionKind: {enum: [none, proposal, review, final]}
+  Count: {int: [0, 10]}
+  Epoch: {int: [0, null]}
+  SpeechEpoch: {optional: Epoch}
+  ClaimedRole: {optional: Role}
+  Opinion: {optional: Bool}
+  TeamArgument:
+    variant:
+      Judgment: {}
+      FailureOverlap: {mission: Mission, epoch: Epoch}
+      SuccessCore: {mission: Mission, epoch: Epoch}
+      TestTeam: {}
+      TrustSpeaker: {speaker: PlayerRef}
+      EvilExhausted: {mission: Mission, epoch: Epoch}
+      ClaimAssessment: {speaker: PlayerRef, claim_epoch: Epoch, claimed_role: Role, credible: Bool}
+      ClaimConflict: {first: IdentitySpeech, second: IdentitySpeech}
+  TeamArguments: {set: TeamArgument}
+  MaybeTeamArgument: {optional: TeamArgument}
+  MaybeTeamArguments: {set: MaybeTeamArgument}
+  IdentitySpeech: {record: {speaker: PlayerRef, epoch: Epoch, team: Players, role: Role}}
+  IdentitySpeeches: {sequence: IdentitySpeech}
+  TeamSpeech: {record: {speaker: PlayerRef, epoch: Epoch, team: Players, approve: Bool, rationale: TeamArgument}}
+  TeamSpeeches: {sequence: TeamSpeech}
+  TeamSuggestion: {record: {speaker: PlayerRef, epoch: Epoch, team: Players, members: Players, rationale: MaybeTeamArgument}}
+  TeamSuggestions: {sequence: TeamSuggestion}
+  Counts: {sequence: Count}
+  Mission: {int: [1, 5]}
+  PlayerRef: {ref: Player}
+  Players: {set: PlayerRef}
+  PlayerOrder: {sequence: PlayerRef}
+  PlayerReports: {sequence: Players}
+  Flags: {set: Bool}
+  Assignment: {enum: [full_bijection]}
+  CandidateGroup:
+    record: {subjects: Players, labels: Roles, assignment: Assignment}
+  Setup:
+    record: {good: Count, evil: Count, team_sizes: Counts, fourth_fail_threshold: Count}
+  SetupTable:
+    record: {five: Setup, six: Setup, seven: Setup, eight: Setup, nine: Setup, ten: Setup}
+  ApprovalRecord:
+    record: {epoch: Epoch, mission: Mission, leader: PlayerRef, team: Players, approve: Players, reject: Players, passed: Bool}
+  ApprovalHistory: {sequence: ApprovalRecord}
+  QuestRecord:
+    record: {epoch: Epoch, mission: Mission, leader: PlayerRef, team: Players, fails: Count, failed: Bool}
+  QuestHistory: {sequence: QuestRecord}
+  QuestStatus: {enum: [pending, current, succeeded, failed, unplayed]}
+  RevealedFailures: {optional: Count}
+  QuestStep:
+    record: {mission: Mission, members: Count, threshold: Count, protected: Bool, status: QuestStatus, fails: RevealedFailures}
+  QuestSteps: {sequence: QuestStep}
+  FinalIdentity: {record: {player: PlayerRef, role: Role}}
+  FinalIdentities: {set: FinalIdentity}
+  EndingReason: {enum: [three_failed_tasks, five_rejected_teams, merlin_found, merlin_survived]}
+  FinalResult: {record: {winner: Winner, reason: EndingReason, identities: FinalIdentities, accusation: Players}}
+entities:
+  Player:
+    kind: person
+    reference: public
+    fields:
+      role: Role
+      approval_epoch: Epoch
+      approve: Bool
+      quest_round: Epoch
+      sabotage: Bool
+      speech_epoch: SpeechEpoch
+    # Own submissions can be read by their owner; other players' cards stay private.
+    view: [approval_epoch, approve, quest_round, sabotage, speech_epoch]
+    public: []
+queries:
+  direct_argument:
+    parameters: {argument: TeamArgument}
+    returns: Bool
+    expression: match(argument, Judgment() => True, FailureOverlap() => True, SuccessCore() => True, TestTeam() => True, TrustSpeaker() => False, EvilExhausted() => True, ClaimAssessment() => True, ClaimConflict() => True)
+  claim_arguments:
+    parameters: {claims: IdentitySpeeches, heard: TeamSpeeches, epoch: Epoch, speaker: PlayerRef, responding: Bool}
+    returns: TeamArguments
+    expression: >
+      union(distinct(map(filter(claims, c => can_comment_claim(c, heard, epoch, speaker, responding)),
+      c => TeamArgument.ClaimAssessment(speaker=c.speaker, claim_epoch=c.epoch, claimed_role=c.role, credible=True))),
+      distinct(map(filter(claims, c => can_comment_claim(c, heard, epoch, speaker, responding)),
+      c => TeamArgument.ClaimAssessment(speaker=c.speaker, claim_epoch=c.epoch, claimed_role=c.role, credible=False))))
+  conflicting_claims:
+    parameters: {claims: IdentitySpeeches, cast: Roles}
+    returns: TeamArguments
+    expression: latest_conflicts(filter(claims, c => not exists(claims, n => n.speaker == c.speaker and n.epoch > c.epoch)), cast)
+  latest_conflicts:
+    parameters: {claims: IdentitySpeeches, cast: Roles}
+    returns: TeamArguments
+    # Quote two actual latest public claims about a uniquely configured role.
+    expression: >
+      distinct(map(filter(claims, b => sum_by(cast, r => 1 if r == b.role else 0) == 1 and
+      exists(claims, a => a.speaker != b.speaker and a.role == b.role and
+      index_of(claims, a) < index_of(claims, b))),
+      b => TeamArgument.ClaimConflict(first=at(filter(claims, a => a.speaker != b.speaker and a.role == b.role and
+      index_of(claims, a) < index_of(claims, b)), 0), second=b)))
+  can_comment_claim:
+    parameters: {claim: IdentitySpeech, heard: TeamSpeeches, epoch: Epoch, speaker: PlayerRef, responding: Bool}
+    returns: Bool
+    expression: >
+      claim.epoch <= epoch and (claim.speaker != speaker or
+      (responding and exists(heard, s => s.epoch == epoch and s.speaker != speaker and
+      match(s.rationale, ClaimAssessment(r) => r.speaker == speaker and r.claim_epoch == claim.epoch,
+      Judgment() => False, FailureOverlap() => False, SuccessCore() => False, TestTeam() => False, TrustSpeaker() => False, EvilExhausted() => False, ClaimConflict() => False))))
+  can_speak:
+    parameters: {phase: Phase, serial: Epoch, previous: SpeechEpoch}
+    returns: Bool
+    expression: (phase == Phase.discussion or phase == Phase.response) and (previous is None or previous != serial)
+  current_direct_advice:
+    parameters: {heard: TeamSpeeches, approve: Bool}
+    returns: Bool
+    expression: size(heard) > 0 and at(heard, size(heard) - 1).approve == approve and direct_argument(at(heard, size(heard) - 1).rationale)
+  speech_arguments:
+    parameters: {history: QuestHistory, members: Players, heard: TeamSpeeches, epoch: Epoch, speaker: PlayerRef, approve: Bool}
+    returns: TeamArguments
+    expression: >
+      union(union(distinct(map(history, r => TeamArgument.EvilExhausted(mission=r.mission, epoch=r.epoch))),
+      distinct(map(filter(history, r => r.fails == 0 and forall(r.team, p => p in members)),
+      r => TeamArgument.SuccessCore(mission=r.mission, epoch=r.epoch)))) if approve else TeamArguments([]),
+      union(union(TeamArguments([TeamArgument.Judgment()]),
+      TeamArguments([TeamArgument.TestTeam()]) if approve and not exists(history, r => r.team == members) else TeamArguments([])),
+      union(distinct(map(filter(history, r => r.failed and exists(r.team, p => p in members)),
+      r => TeamArgument.FailureOverlap(mission=r.mission, epoch=r.epoch))) if not approve else TeamArguments([]),
+      distinct(map(filter(distinct(map(filter(heard, m => m.epoch == epoch and m.team == members and m.speaker != speaker), m => m.speaker)),
+      p => current_direct_advice(filter(heard, m => m.epoch == epoch and m.team == members and m.speaker == p), approve)),
+      p => TeamArgument.TrustSpeaker(speaker=p))))))
+  role_of:
+    parameters: {person: PlayerRef}
+    returns: Role
+    expression: person.role
+  suggestion_arguments:
+    parameters: {history: QuestHistory, members: Players, heard: TeamSpeeches, epoch: Epoch, speaker: PlayerRef, claims: IdentitySpeeches, responding: Bool, cast: Roles}
+    returns: MaybeTeamArguments
+    expression: >
+      union(MaybeTeamArguments([None]), union(union(speech_arguments(history, members, heard, epoch, speaker, True),
+      claim_arguments(claims, heard, epoch, speaker, responding)), conflicting_claims(claims, cast)))
+  evil_role:
+    parameters: {role: Role}
+    returns: Bool
+    expression: role == Role.assassin or role == Role.minion or role == Role.morgana or role == Role.mordred
+  evil_roles:
+    parameters: {}
+    returns: Roles
+    expression: filter(Roles([Role.merlin, Role.servant, Role.assassin, Role.minion, Role.percival, Role.morgana, Role.mordred]), r => evil_role(r))
+  setup:
+    parameters: {count: Count, table: SetupTable}
+    returns: Setup
+    expression: >
+      table.five if count == 5 else table.six if count == 6 else
+      table.seven if count == 7 else table.eight if count == 8 else
+      table.nine if count == 9 else table.ten
+  cast_consistent:
+    parameters: {players: Players, cast: Roles, table: SetupTable}
+    returns: Bool
+    expression: >
+      size(players) >= 5 and size(players) <= 10 and size(players) == size(cast) and
+      forall(players, p => size(filter(players, q => q.role == p.role)) == sum_by(cast, r => 1 if r == p.role else 0)) and
+      sum_by(cast, r => 1 if evil_role(r) else 0) == setup(size(players), table).evil and
+      sum_by(cast, r => 0 if evil_role(r) else 1) == setup(size(players), table).good and
+      sum_by(cast, r => 1 if r == Role.merlin else 0) == 1 and
+      sum_by(cast, r => 1 if r == Role.assassin else 0) == 1 and
+      forall(Roles([Role.percival, Role.morgana, Role.mordred]), r => sum_by(cast, x => 1 if x == r else 0) <= 1)
+  candidate_group:
+    parameters: {players: Players, cast: Roles}
+    returns: CandidateGroup
+    expression: >
+      CandidateGroup(subjects=filter(players, p => p.role == Role.merlin or p.role == Role.morgana),
+      labels=filter(cast, r => r == Role.merlin or r == Role.morgana), assignment=Assignment.full_bijection)
+  approvals:
+    parameters: {players: Players}
+    returns: Players
+    expression: filter(players, p => p.approve)
+  approval_result:
+    parameters: {players: Players, team: Players, epoch: Epoch, mission: Mission, leader: PlayerRef}
+    returns: ApprovalRecord
+    expression: >
+      ApprovalRecord(epoch=epoch, mission=mission, leader=leader, team=team,
+      approve=approvals(players), reject=difference(players, approvals(players)),
+      passed=size(approvals(players)) * 2 > size(players))
+  fail_count:
+    parameters: {team: Players}
+    returns: Count
+    expression: sum_by(team, p => 1 if p.sabotage else 0)
+  failed_quest:
+    parameters: {team: Players, mission: Mission, count: Count, table: SetupTable}
+    returns: Bool
+    expression: fail_count(team) >= (setup(count, table).fourth_fail_threshold if mission == 4 else 1)
+  quest_step:
+    parameters: {number: Mission, configuration: Setup, history: QuestHistory, current: Mission, phase: Phase}
+    returns: QuestStep
+    expression: >
+      QuestStep(mission=number, members=at(configuration.team_sizes, number - 1),
+      threshold=configuration.fourth_fail_threshold if number == 4 else 1,
+      protected=number == 4 and configuration.fourth_fail_threshold > 1,
+      status=(QuestStatus.failed if exists(history, r => r.mission == number and r.failed) else QuestStatus.succeeded)
+      if exists(history, r => r.mission == number) else
+      QuestStatus.unplayed if phase == Phase.finished or phase == Phase.assassination else
+      QuestStatus.current if number == current else QuestStatus.pending,
+      fails=sum_by(history, r => r.fails if r.mission == number else 0) if exists(history, r => r.mission == number) else None)
+facts:
+  TrueRole:
+    parameters: {identity: RoleNotice}
+    holds: identity.subject.role == identity.role
+  EvilMembership:
+    parameters: {members: Players}
+    holds: forall(members, p => evil_role(p.role))
+  ActualQuestFailures:
+    parameters: {notice: QuestRecord}
+    holds: notice.fails == fail_count(notice.team)
+constraints:
+  KnownIdentity:
+    parameters: {identity: RoleNotice}
+    variables: {identities: FinalIdentities}
+    allocation:
+      classification: role_of
+      entries: identities
+      subject: player
+      label: role
+      members: Players([identity.subject])
+      labels: Roles([identity.role])
+    realize: {identities: 'FinalIdentities([FinalIdentity(player=identity.subject, role=role_of(identity.subject))])'}
+  KnownEvilMembers:
+    parameters: {members: Players}
+    variables: {identities: FinalIdentities}
+    cardinality:
+      classification: role_of
+      entries: identities
+      subject: player
+      label: role
+      members: members
+      matching: evil_roles()
+      minimum: size(members)
+    realize: {identities: 'map(members, p => FinalIdentity(player=p, role=role_of(p)))'}
+  RolePopulation:
+    parameters: {roster: Players, cast: Roles}
+    variables: {identities: FinalIdentities}
+    allocation:
+      classification: role_of
+      entries: identities
+      subject: player
+      label: role
+      members: roster
+      labels: cast
+      exact_entries: true
+    realize: {identities: 'map(roster, p => FinalIdentity(player=p, role=p.role))'}
+  CandidatePair:
+    parameters: {group: CandidateGroup}
+    variables: {identities: FinalIdentities}
+    allocation:
+      classification: role_of
+      entries: identities
+      subject: player
+      label: role
+      members: group.subjects
+      labels: group.labels
+    realize: {identities: 'map(group.subjects, p => FinalIdentity(player=p, role=p.role))'}
+  QuestEligibility:
+    parameters: {notice: QuestRecord}
+    variables: {identities: FinalIdentities}
+    # Evil players may submit success: only the failure count gives this lower bound.
+    cardinality:
+      classification: role_of
+      entries: identities
+      subject: player
+      label: role
+      members: notice.team
+      matching: evil_roles()
+      minimum: notice.fails
+    realize: {identities: 'map(notice.team, p => FinalIdentity(player=p, role=p.role))'}
+disclosures:
+  IdentityStatement:
+    parameters: {speaker: PlayerRef, listeners: Players, epoch: Epoch, team: Players, role: Role}
+    sample: before
+    to: listeners
+    returns: IdentitySpeech
+    value: IdentitySpeech(speaker=speaker, epoch=epoch, team=team, role=role)
+    access: acquired
+  TeamStatement:
+    parameters: {speaker: PlayerRef, listeners: Players, epoch: Epoch, team: Players, approve: Bool, rationale: TeamArgument}
+    sample: before
+    to: listeners
+    returns: TeamSpeech
+    value: TeamSpeech(speaker=speaker, epoch=epoch, team=team, approve=approve, rationale=rationale)
+    access: acquired
+  AlternativeStatement:
+    parameters: {speaker: PlayerRef, listeners: Players, epoch: Epoch, team: Players, members: Players, rationale: MaybeTeamArgument}
+    sample: before
+    to: listeners
+    returns: TeamSuggestion
+    value: TeamSuggestion(speaker=speaker, epoch=epoch, team=team, members=members, rationale=rationale)
+    access: acquired
+  ApprovalResolved:
+    parameters: {roster: Players, team: Players, epoch: Epoch, mission: Mission, leader: PlayerRef}
+    sample: before
+    to: roster
+    returns: ApprovalRecord
+    value: approval_result(roster, team, epoch, mission, leader)
+    access: acquired
+  QuestResolved:
+    parameters: {roster: Players, team: Players, epoch: Epoch, mission: Mission, leader: PlayerRef, threshold: Count}
+    sample: before
+    to: roster
+    returns: QuestRecord
+    value: >
+      QuestRecord(epoch=epoch, mission=mission, leader=leader, team=team, fails=fail_count(team),
+      failed=fail_count(team) >= threshold)
+    access: acquired
+    assure: {ActualQuestFailures: {notice: content}}
+    assure_constraints: {QuestEligibility: {notice: content}}
+contexts:
+  Match:
+    parameters: {players: Players, order: PlayerOrder, public_cast: Roles, population: SetupTable}
+    state:
+      fields:
+        phase: Phase
+        discussion_kind: DiscussionKind
+        speech_serial: Epoch
+        mission: Mission
+        leader_index: Count
+        epoch: Epoch
+        team: Players
+        rejections: Count
+        successes: Count
+        failures: Count
+        assassin: Players
+        winner: Winner
+        approval_history: ApprovalHistory
+        quest_history: QuestHistory
+        accusation: Players
+      public: [phase, discussion_kind, speech_serial, mission, leader_index, epoch, team, rejections, successes, failures, assassin, winner, approval_history, quest_history]
+    require_opening: >
+      cast_consistent(players, public_cast, population) and
+      size(order) == size(players) and forall(order, p => p in players) and
+      forall(players, p => sum_by(order, q => 1 if q == p else 0) == 1) and
+      leader_index < size(order) and phase == Phase.proposal and discussion_kind == DiscussionKind.none and speech_serial == 0 and mission == 1 and epoch == 0 and
+      rejections == 0 and successes == 0 and failures == 0 and winner is None and
+      size(team) == 0 and size(assassin) == 0 and size(accusation) == 0 and size(approval_history) == 0 and size(quest_history) == 0 and
+      size(setup(size(players), population).team_sizes) == 5 and
+      forall(setup(size(players), population).team_sizes, n => n > 0 and n <= size(players)) and
+      setup(size(players), population).fourth_fail_threshold > 0 and
+      forall(players, p => p.approval_epoch == 0 and p.quest_round == 0 and p.speech_epoch is None)
+information:
+  OwnRole:
+    context: Match
+    viewer: {player: PlayerRef}
+    trigger: opening
+    audience: player in players
+    returns: RoleNotice
+    value: RoleNotice(subject=player, role=player.role)
+    access: acquired
+    assure: {TrueRole: {identity: content}}
+    assure_constraints: {KnownIdentity: {identity: content}}
+  PublicPopulation:
+    context: Match
+    viewer: {player: PlayerRef}
+    trigger: opening
+    audience: player in players
+    returns: PopulationNotice
+    value: PopulationNotice(roster=players, cast=public_cast)
+    access: acquired
+    assure_constraints: {RolePopulation: {roster: content.roster, cast: content.cast}}
+  EvilPeers:
+    context: Match
+    viewer: {player: PlayerRef}
+    trigger: opening
+    audience: player in players and evil_role(player.role)
+    returns: Players
+    value: filter(players, p => p != player and evil_role(p.role))
+    access: acquired
+    assure: {EvilMembership: {members: content}}
+    assure_constraints: {KnownEvilMembers: {members: content}}
+  MerlinSuspects:
+    context: Match
+    viewer: {player: PlayerRef}
+    trigger: opening
+    audience: player in players and player.role == Role.merlin
+    returns: Players
+    value: filter(players, p => evil_role(p.role) and p.role != Role.mordred)
+    access: acquired
+    assure: {EvilMembership: {members: content}}
+    assure_constraints: {KnownEvilMembers: {members: content}}
+  PercivalCandidates:
+    context: Match
+    viewer: {player: PlayerRef}
+    trigger: opening
+    audience: player in players and player.role == Role.percival
+    returns: CandidateGroup
+    value: candidate_group(players, public_cast)
+    access: acquired
+    assure_constraints: {CandidatePair: {group: content}}
+projections:
+  QuestBoard:
+    context: Match
+    viewer: {player: PlayerRef}
+    audience: player in players
+    returns: QuestSteps
+    value: map(Counts([1, 2, 3, 4, 5]), n => quest_step(n, setup(size(players), population), quest_history, mission, Phase.assassination if discussion_kind == DiscussionKind.final else phase))
+  CurrentLeader:
+    context: Match
+    viewer: {player: PlayerRef}
+    audience: player in players
+    returns: PlayerRef
+    value: at(order, leader_index)
+  Roster:
+    context: Match
+    viewer: {player: PlayerRef}
+    audience: player in players
+    returns: Players
+    value: players
+abilities:
+  ClaimIdentity:
+    context: Match
+    actor: {player: PlayerRef}
+    views: {own_statements: {reports: IdentitySpeeches}}
+    inputs: {claimed_role: {type: Role, choose: 'distinct(public_cast)'}}
+    where: player in players and can_speak(phase, speech_serial, player.speech_epoch) and not exists(reports(own_statements), s => s.speaker == player and s.epoch == epoch) and discussion_kind == DiscussionKind.proposal
+    results: Unit
+    resolve:
+      result: None
+      effects: ['set(player.speech_epoch, speech_serial)']
+      deliver: {said: 'IdentityStatement(player, players, epoch, team, claimed_role)'}
+  AdviseTeam:
+    context: Match
+    actor: {player: PlayerRef}
+    views: {heard: {reports: TeamSpeeches}, identity_statements: {reports: IdentitySpeeches}}
+    inputs:
+      support_team: {type: Bool, choose: 'Flags([True, False])'}
+      rationale: {type: TeamArgument, choose: 'union(union(speech_arguments(quest_history, team, reports(heard), epoch, player, support_team), claim_arguments(reports(identity_statements), reports(heard), epoch, player, phase == Phase.response)), conflicting_claims(reports(identity_statements), public_cast))'}
+    where: player in players and can_speak(phase, speech_serial, player.speech_epoch) and discussion_kind == DiscussionKind.proposal
+    results: Unit
+    resolve:
+      result: None
+      effects: ['set(player.speech_epoch, speech_serial)']
+      deliver: {said: 'TeamStatement(player, players, epoch, team, support_team, rationale)'}
+  SuggestTeam:
+    context: Match
+    actor: {player: PlayerRef}
+    views: {heard: {reports: TeamSpeeches}, identity_statements: {reports: IdentitySpeeches}}
+    inputs:
+      members:
+        type: Players
+        choose: {subset: players, min: 'at(setup(size(players), population).team_sizes, mission - 1)', max: 'at(setup(size(players), population).team_sizes, mission - 1)'}
+        constraint: members != team
+      rationale: {type: MaybeTeamArgument, choose: 'suggestion_arguments(quest_history, members, reports(heard), epoch, player, reports(identity_statements), phase == Phase.response, public_cast)'}
+    where: player in players and can_speak(phase, speech_serial, player.speech_epoch) and discussion_kind == DiscussionKind.proposal
+    results: Unit
+    resolve:
+      result: None
+      effects: ['set(player.speech_epoch, speech_serial)']
+      deliver: {said: 'AlternativeStatement(player, players, epoch, team, members, rationale)'}
+  PassSpeech:
+    context: Match
+    actor: {player: PlayerRef}
+    where: player in players and can_speak(phase, speech_serial, player.speech_epoch)
+    results: Unit
+    resolve:
+      result: None
+      effects: ['set(player.speech_epoch, speech_serial)']
+  ProposeTeam:
+    context: Match
+    actor: {player: PlayerRef}
+    inputs:
+      members:
+        type: Players
+        choose: {subset: players, min: 'at(setup(size(players), population).team_sizes, mission - 1)', max: 'at(setup(size(players), population).team_sizes, mission - 1)'}
+    where: phase == Phase.proposal and player == at(order, leader_index)
+    results: Unit
+    resolve:
+      result: None
+      effects: ['set(team, members)', 'set(epoch, epoch + 1)', 'set(phase, Phase.approval)']
+  ApproveTeam:
+    context: Match
+    actor: {player: PlayerRef}
+    inputs:
+      approve: {type: Bool, choose: 'Flags([True, False])'}
+    where: phase == Phase.approval and player in players and player.approval_epoch != epoch
+    results: Unit
+    resolve:
+      result: None
+      effects: ['set(player.approve, approve)', 'set(player.approval_epoch, epoch)']
+  MissionCard:
+    context: Match
+    actor: {player: PlayerRef}
+    views: {role: {reports: RoleReports}}
+    inputs:
+      sabotage:
+        type: Bool
+        choose: 'Flags([True, False]) if exists(reports(role), r => evil_role(r.role)) else Flags([False])'
+    where: phase == Phase.quest and player in team and player.quest_round != mission
+    results: Unit
+    resolve:
+      result: None
+      effects: ['set(player.sabotage, sabotage)', 'set(player.quest_round, mission)']
+  Assassinate:
+    context: Match
+    actor: {player: PlayerRef}
+    views: {allies: {reports: PlayerReports}}
+    inputs:
+      target:
+        type: PlayerRef
+        choose: 'filter(players, p => p != player and not exists(reports(allies), group => p in group))'
+    where: phase == Phase.assassination and player in assassin
+    results: Side
+    resolve:
+      when: target.role == Role.merlin
+      then: {result: Side.evil, effects: ['set(accusation, Players([target]))', 'set(winner, Side.evil)', 'set(phase, Phase.finished)']}
+      else: {result: Side.good, effects: ['set(accusation, Players([target]))', 'set(winner, Side.good)', 'set(phase, Phase.finished)']}
+reactions:
+  BeginDiscussion:
+    context: Match
+    on: {definition: ProposeTeam, bind: {}}
+    when: phase == Phase.approval
+    results: Unit
+    resolve: {result: None, effects: ['set(phase, Phase.discussion)', 'set(discussion_kind, DiscussionKind.proposal)', 'set(speech_serial, speech_serial + 1)']}
+  BeginReview:
+    context: Match
+    on: {definition: RevealQuest, bind: {}}
+    when: phase == Phase.proposal or phase == Phase.assassination
+    results: Unit
+    resolve:
+      result: None
+      effects:
+        - set(discussion_kind, DiscussionKind.final if phase == Phase.assassination else DiscussionKind.review)
+        - set(phase, Phase.discussion)
+        - set(speech_serial, speech_serial + 1)
+        - set(team, Players([]))
+        - set(assassin, Players([]))
+  AdvanceDiscussion:
+    context: Match
+    on: {definition: [ClaimIdentity, AdviseTeam, SuggestTeam, PassSpeech, CompareTeams, StateCondition, RespondStatement, RedirectDiscussion, ProposePlan, DecidePlan, RetractStatement, StateOpinion, AskQuestion, AnswerQuestion, Speak], bind: {}}
+    when: (phase == Phase.discussion or phase == Phase.response) and forall(players, p => p.speech_epoch == speech_serial)
+    results: Unit
+    resolve:
+      when: phase == Phase.discussion
+      then: {result: None, effects: ['set(phase, Phase.response)', 'set(speech_serial, speech_serial + 1)']}
+      else:
+        result: None
+        effects:
+          - set(phase, Phase.approval if discussion_kind == DiscussionKind.proposal else Phase.proposal if discussion_kind == DiscussionKind.review else Phase.assassination)
+          - set(assassin, filter(players, p => p.role == Role.assassin) if discussion_kind == DiscussionKind.final else assassin)
+          - set(discussion_kind, DiscussionKind.none)
+  RevealApproval:
+    context: Match
+    on: {definition: ApproveTeam, bind: {}}
+    when: phase == Phase.approval and forall(players, p => p.approval_epoch == epoch)
+    results: Unit
+    resolve:
+      when: size(approvals(players)) * 2 > size(players)
+      then:
+        result: None
+        effects:
+          - set(approval_history, append(approval_history, approval_result(players, team, epoch, mission, at(order, leader_index))))
+          - set(rejections, 0)
+          - set(phase, Phase.quest)
+        deliver: {result: 'ApprovalResolved(players, team, epoch, mission, at(order, leader_index))'}
+      else:
+        when: rejections + 1 >= 5
+        then:
+          result: None
+          effects:
+            - set(approval_history, append(approval_history, approval_result(players, team, epoch, mission, at(order, leader_index))))
+            - set(rejections, rejections + 1)
+            - set(winner, Side.evil)
+            - set(phase, Phase.finished)
+          deliver: {result: 'ApprovalResolved(players, team, epoch, mission, at(order, leader_index))'}
+        else:
+          result: None
+          effects:
+            - set(approval_history, append(approval_history, approval_result(players, team, epoch, mission, at(order, leader_index))))
+            - set(rejections, rejections + 1)
+            - set(leader_index, (leader_index + 1) % size(order))
+            - set(phase, Phase.proposal)
+          deliver: {result: 'ApprovalResolved(players, team, epoch, mission, at(order, leader_index))'}
+  RevealQuest:
+    context: Match
+    on: {definition: MissionCard, bind: {}}
+    when: phase == Phase.quest and forall(team, p => p.quest_round == mission)
+    results: Unit
+    resolve:
+      when: failed_quest(team, mission, size(players), population)
+      then:
+        when: failures + 1 >= 3
+        then:
+          result: None
+          deliver: {result: 'QuestResolved(players, team, epoch, mission, at(order, leader_index), setup(size(players), population).fourth_fail_threshold if mission == 4 else 1)'}
+          effects:
+            - set(quest_history, append(quest_history, QuestRecord(epoch=epoch, mission=mission, leader=at(order, leader_index), team=team, fails=fail_count(team), failed=True)))
+            - set(failures, failures + 1)
+            - set(winner, Side.evil)
+            - set(phase, Phase.finished)
+        else:
+          result: None
+          deliver: {result: 'QuestResolved(players, team, epoch, mission, at(order, leader_index), setup(size(players), population).fourth_fail_threshold if mission == 4 else 1)'}
+          effects:
+            - set(quest_history, append(quest_history, QuestRecord(epoch=epoch, mission=mission, leader=at(order, leader_index), team=team, fails=fail_count(team), failed=True)))
+            - set(failures, failures + 1)
+            - set(mission, mission + 1)
+            - set(leader_index, (leader_index + 1) % size(order))
+            - set(phase, Phase.proposal)
+      else:
+        when: successes + 1 >= 3
+        then:
+          result: None
+          deliver: {result: 'QuestResolved(players, team, epoch, mission, at(order, leader_index), setup(size(players), population).fourth_fail_threshold if mission == 4 else 1)'}
+          effects:
+            - set(quest_history, append(quest_history, QuestRecord(epoch=epoch, mission=mission, leader=at(order, leader_index), team=team, fails=fail_count(team), failed=False)))
+            - set(successes, successes + 1)
+            - set(assassin, filter(players, p => p.role == Role.assassin))
+            - set(phase, Phase.assassination)
+        else:
+          result: None
+          deliver: {result: 'QuestResolved(players, team, epoch, mission, at(order, leader_index), setup(size(players), population).fourth_fail_threshold if mission == 4 else 1)'}
+          effects:
+            - set(quest_history, append(quest_history, QuestRecord(epoch=epoch, mission=mission, leader=at(order, leader_index), team=team, fails=fail_count(team), failed=False)))
+            - set(successes, successes + 1)
+            - set(mission, mission + 1)
+            - set(leader_index, (leader_index + 1) % size(order))
+            - set(phase, Phase.proposal)
+terminals:
+  GameFinished:
+    context: Match
+    when: phase == Phase.finished
+    stop: {boundary: action, pending: freeze}
+    returns: FinalResult
+    value: >
+      FinalResult(winner=winner,
+      reason=EndingReason.three_failed_tasks if failures >= 3 else
+      EndingReason.five_rejected_teams if rejections >= 5 else
+      EndingReason.merlin_found if winner == Side.evil else EndingReason.merlin_survived,
+      identities=map(players, p => FinalIdentity(player=p, role=p.role)), accusation=accusation)
+    to: players
+    access: public_status

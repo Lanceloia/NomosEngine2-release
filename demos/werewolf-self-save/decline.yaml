@@ -1,0 +1,34 @@
+schema: nomos.witness
+budget: 6
+steps:
+- actor: c
+  action: wolf_vote
+  inputs:
+    target:
+      actor: e
+- actor: d
+  action: wolf_vote
+  inputs:
+    target:
+      actor: e
+- actor: c
+  action: wolf_lock
+- actor: d
+  action: wolf_lock
+- actor: a
+  action: skip
+- actor: e
+  action: potions
+  inputs:
+    save: false
+    poison_target: []
+expect:
+- actor:
+    name: e
+    fields:
+      alive: false
+      antidote: true
+      poison: true
+- published:
+    source: author.Werewolf.dawn.event
+    count: 1

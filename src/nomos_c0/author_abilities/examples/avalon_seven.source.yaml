@@ -1,0 +1,20 @@
+# Four good players, three evil players; shared rules, dialogue and private deal.
+schema: nomos.author.source
+imports: [avalon_table.source.yaml, avalon_discussion.source.yaml, avalon_deal.source.yaml]
+name: AvalonSeven
+actors: {a: Player, b: Player, c: Player, d: Player, e: Player, f: Player, g: Player}
+contexts:
+  match:
+    definition: Match
+    with:
+      players: {opening_domain: Player}
+      order: [{actor: a}, {actor: b}, {actor: c}, {actor: d}, {actor: e}, {actor: f}, {actor: g}]
+      public_cast: [merlin, percival, servant, servant, morgana, assassin, minion]
+      # Author-selected population table; the shared laws read the current size.
+      population:
+        five: {good: 3, evil: 2, team_sizes: [2, 3, 2, 3, 3], fourth_fail_threshold: 1}
+        six: {good: 4, evil: 2, team_sizes: [2, 3, 4, 3, 4], fourth_fail_threshold: 1}
+        seven: {good: 4, evil: 3, team_sizes: [2, 3, 3, 4, 4], fourth_fail_threshold: 2}
+        eight: {good: 5, evil: 3, team_sizes: [3, 4, 4, 5, 5], fourth_fail_threshold: 2}
+        nine: {good: 6, evil: 3, team_sizes: [3, 4, 4, 5, 5], fourth_fail_threshold: 2}
+        ten: {good: 6, evil: 4, team_sizes: [3, 4, 4, 5, 5], fourth_fail_threshold: 2}

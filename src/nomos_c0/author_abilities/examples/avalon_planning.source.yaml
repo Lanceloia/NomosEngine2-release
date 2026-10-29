@@ -1,0 +1,5 @@
+# The existing five-player world and real ProposeTeam ability remain authoritative.
+schema: nomos.author.source
+imports: [avalon.source.yaml]
+use:
+  planning_window: {definition: ProposalWindowView, context: match}

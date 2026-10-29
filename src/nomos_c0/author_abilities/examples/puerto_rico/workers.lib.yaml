@@ -1,0 +1,30 @@
+# Non-canon allocation capability probe; full Mayor phases follow separately.
+schema: nomos.author.lib
+imports: [types.lib.yaml, allocation.lib.yaml]
+contexts:
+  Workshop:
+    parameters: {players: Players, sites: AllocationTargets, total: Count}
+    state:
+      fields: {completed: Players, last_layout: Allocation}
+      public: [completed, last_layout]
+    require_opening: valid_allocation_targets(sites) and size(completed) == 0
+abilities:
+  AssignWorkers:
+    context: Workshop
+    actor: {player: PlayerRef}
+    inputs:
+      layout: {type: Allocation, enter: typed, constraint: 'valid_allocation(sites, total, layout)'}
+    where: player in players and player not in completed
+    results: Allocation
+    resolve:
+      result: layout
+      effects: ['set(last_layout, layout)', 'set(completed, union(completed, Players([player])))']
+terminals:
+  AllAssigned:
+    context: Workshop
+    when: completed == players
+    stop: {boundary: action, pending: freeze}
+    returns: Allocation
+    value: last_layout
+    to: players
+    access: public_status

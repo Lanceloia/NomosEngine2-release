@@ -1,0 +1,128 @@
+# Public statements revise soft judgments; checked acquisitions constrain identities.
+schema: nomos.author.cognition
+models:
+  CouncilReasoning:
+    actor: {player: PlayerRef}
+    propositions: CandidateThought
+    appraisal_keys: PlayerRef
+    slots: SpeechSlot
+    view: CandidateFiniteView
+    prior_view: CandidatePrior
+    evidence:
+      population_reports: {reports: PopulationReports}
+      own: {reports: RoleReports}
+      pair: {reports: CandidateGroups}
+      quests: {reports: QuestHistory}
+      allies: {reports: PlayerReports}
+      suspects: {reports: PlayerReports}
+      claims: {reports: IdentitySpeeches}
+      advice: {reports: TeamSpeeches}
+    rules:
+      HeardClaim:
+        on: claims
+        item: message
+        policy: latest
+        slot: SpeechSlot(speaker=message.speaker, epoch=message.epoch)
+        believe:
+          proposition: CandidateThought.Claimed(speaker=message.speaker, role=message.role)
+          support: '1'
+          opposition: '0'
+      HeardAdvice:
+        on: advice
+        item: message
+        policy: latest
+        slot: SpeechSlot(speaker=message.speaker, epoch=message.epoch)
+        believe:
+          proposition: CandidateThought.Advice(speaker=message.speaker, epoch=message.epoch, team=message.team, approve=message.approve, rationale=message.rationale)
+          support: '1'
+          opposition: '0'
+      ReceivedOutcome:
+        on: quests
+        item: notice
+        policy: latest
+        slot: SpeechSlot(speaker=player, epoch=notice.epoch)
+        believe:
+          proposition: CandidateThought.QuestOutcome(epoch=notice.epoch, team=notice.team, failed=notice.failed)
+          support: '1'
+          opposition: '0'
+    derive:
+      ReviewAdvice:
+        variables: {speaker: PlayerRef, epoch: Epoch, team: Players, approve: Opinion, rationale: TeamArgument, failed: Bool}
+        premises:
+          - supports(base, CandidateThought.Advice(speaker=speaker, epoch=epoch, team=team, approve=approve, rationale=rationale))
+          - supports(base, CandidateThought.QuestOutcome(epoch=epoch, team=team, failed=failed))
+        where: approve is not None
+        # Alignment is a subjective track-record heuristic, not a proof of identity.
+        conclude: support(CandidateThought.AdviceReview(speaker=speaker, epoch=epoch, aligned=approve != failed))
+    finite:
+      assumptions:
+        FixedIdentity: 本局身份在开局与各次任务之间保持不变；这些样本置于同一个身份配置中。
+        RoleInterpretation: 配置中的人物和角色字段表示收到的身份保证所描述的对应关系。
+      inputs:
+        population:
+          on: population_reports
+          constraint: RolePopulation
+          history: opening
+          expose:
+            roster: {as: rosters, type: PlayerReports}
+            cast: {as: casts, type: CastReports}
+          bind: {identities: identities}
+        own:
+          on: own
+          fact: TrueRole
+          history: opening
+          interpret: exists(identities, i => i.player == identity.subject and i.role == identity.role)
+        pair:
+          on: pair
+          constraint: CandidatePair
+          history: opening
+          required: false
+          bind: {identities: identities}
+        allies:
+          on: allies
+          fact: EvilMembership
+          history: opening
+          required: false
+          interpret: forall(members, p => exists(identities, i => i.player == p and evil_role(i.role)))
+        suspects:
+          on: suspects
+          fact: EvilMembership
+          history: opening
+          required: false
+          interpret: forall(members, p => exists(identities, i => i.player == p and evil_role(i.role)))
+        quests:
+          on: quests
+          constraint: QuestEligibility
+          history: all
+          required: false
+          bind: {identities: identities}
+      variables:
+        identities:
+          type: FinalIdentities
+          each: {subject: 'at(rosters, 0)'}
+          choices: {role: 'at(casts, 0)'}
+          allocation: without_replacement
+          value: FinalIdentity(player=subject, role=role)
+      model: IdentityModel(identities=identities)
+      queries:
+        merlin:
+          each: {subject: 'at(rosters, 0)'}
+          key: CandidateThought.Candidate(person=subject)
+          holds: exists(identities, i => i.player == subject and i.role == Role.merlin)
+        evil:
+          each: {subject: 'at(rosters, 0)'}
+          key: CandidateThought.Evil(person=subject)
+          holds: exists(identities, i => i.player == subject and evil_role(i.role))
+bindings:
+  council:
+    kind: Player
+    definition: CouncilReasoning
+    views:
+      population_reports: population
+      own: own_role
+      pair: percival_candidates
+      quests: reveal_quest.result
+      allies: evil_peers
+      suspects: merlin_suspects
+      claims: claim_identity.said
+      advice: advise_team.said

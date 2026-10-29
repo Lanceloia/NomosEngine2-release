@@ -1,0 +1,3 @@
+# A planning-only public window; existing dialogue permissions remain authoritative.
+schema: nomos.author.lib
+imports: [avalon.lib.yaml, avalon_speech_support.lib.yaml]

@@ -1,0 +1,944 @@
+# Local beliefs and empirical preferences. No private role solver or seat lookup.
+schema: nomos.author.ai
+imports: [avalon_judgment.ai.yaml, avalon_deliberation.ai.yaml, avalon_planning.ai.yaml, avalon_ballot_goals.ai.yaml, avalon_dialogue.ai.yaml, avalon_compound.ai.yaml, avalon_expression_feedback.ai.yaml, avalon_consideration.ai.yaml, avalon_experience_context.ai.yaml]
+queries:
+  success_core_argument:
+    parameters: {argument: TeamArgument}
+    returns: Bool
+    expression: match(argument, SuccessCore() => True, Judgment() => False, TestTeam() => False, FailureOverlap() => False, TrustSpeaker() => False, EvilExhausted() => False, ClaimAssessment() => False, ClaimConflict() => False)
+  current_role:
+    parameters: {own: RoleReports}
+    returns: Role
+    expression: at(own, size(own) - 1).role
+  familiar_enemy:
+    parameters: {person: PlayerRef, self: PlayerRef, own: RoleReports, peers: PlayerReports, suspects: PlayerReports}
+    returns: Bool
+    expression: exists(peers, group => person in group) or exists(suspects, group => person in group) or (person == self and evil_role(current_role(own)))
+  enemy_count:
+    parameters: {members: Players, self: PlayerRef, own: RoleReports, peers: PlayerReports, suspects: PlayerReports}
+    returns: ExperienceScore
+    expression: sum_by(members, p => 1 if familiar_enemy(p, self, own, peers, suspects) else 0)
+  overlap_count:
+    parameters: {left: Players, right: Players}
+    returns: ExperienceScore
+    expression: sum_by(left, p => 1 if p in right else 0)
+  outside_failure_capacity:
+    parameters: {original: Players, members: Players, self: PlayerRef, own: RoleReports}
+    returns: ExperienceScore
+    # An already-known good self cannot explain a failure outside this team.
+    expression: sum_by(difference(original, members), p => 0 if p == self and not evil_role(current_role(own)) else 1)
+  evidence_peak:
+    parameters: {selected: MaybeEvidenceCount}
+    returns: ExperienceScore
+    expression: selected if selected is not None else 0
+  stronger_evidence:
+    parameters: {left: ExperienceScore, right: ExperienceScore}
+    returns: ExperienceScore
+    expression: left if left > right else right
+  historical_minimum:
+    parameters: {members: Players, self: PlayerRef, own: RoleReports, history: QuestHistory}
+    returns: ExperienceScore
+    expression: >
+      evidence_peak(max_by(map(history, q => q.fails - outside_failure_capacity(q.team, members, self, own)
+      if q.fails > outside_failure_capacity(q.team, members, self, own) else 0), n => n))
+  team_evil_minimum:
+    parameters: {members: Players, self: PlayerRef, own: RoleReports, peers: PlayerReports, suspects: PlayerReports, pairs: CandidateGroups, history: QuestHistory}
+    returns: ExperienceScore
+    # Take the strongest individual bound; overlapping histories are never added.
+    expression: >
+      stronger_evidence(enemy_count(members, self, own, peers, suspects),
+      stronger_evidence(1 if exists(pairs, g => forall(g.subjects, p => p in members) and exists(g.labels, r => evil_role(r))) else 0,
+      historical_minimum(members, self, own, history)))
+  limited_interval:
+    parameters: {minimum: ExperienceScore, maximum: ExperienceScore, capacity: ExperienceScore}
+    returns: EvilInterval
+    expression: EvilInterval(minimum=minimum, maximum=maximum if maximum < capacity else capacity)
+  team_evil_interval:
+    parameters: {members: Players, self: PlayerRef, own: RoleReports, peers: PlayerReports, suspects: PlayerReports, pairs: CandidateGroups, history: QuestHistory, census: PopulationReports}
+    returns: EvilInterval
+    # Public population bounds the complement; an unknown count never means zero.
+    expression: >
+      limited_interval(team_evil_minimum(members, self, own, peers, suspects, pairs, history),
+      sum_by(at(census, size(census) - 1).cast, r => 1 if evil_role(r) else 0) -
+      team_evil_minimum(difference(at(census, size(census) - 1).roster, members), self, own, peers, suspects, pairs, history),
+      size(members) - (1 if self in members and not evil_role(current_role(own)) else 0))
+      if size(census) > 0 else
+      EvilInterval(minimum=team_evil_minimum(members, self, own, peers, suspects, pairs, history),
+      maximum=size(members) - (1 if self in members and not evil_role(current_role(own)) else 0))
+  known_team_clean:
+    parameters: {members: Players, self: PlayerRef, own: RoleReports, peers: PlayerReports, suspects: PlayerReports, pairs: CandidateGroups, history: QuestHistory, census: PopulationReports}
+    returns: Bool
+    expression: team_evil_interval(members, self, own, peers, suspects, pairs, history, census).maximum == 0
+  known_team_risk:
+    parameters: {members: Players, self: PlayerRef, own: RoleReports, peers: PlayerReports, suspects: PlayerReports, pairs: CandidateGroups, history: QuestHistory}
+    returns: Bool
+    # This establishes an evil member, not a guaranteed future failure card.
+    expression: team_evil_minimum(members, self, own, peers, suspects, pairs, history) > 0
+  known_good_members:
+    parameters: {members: Players, self: PlayerRef, own: RoleReports, mind: PlayerJudgment}
+    returns: Players
+    # Only acquired guarantees exclude suspicion; public claims never establish roles.
+    expression: >
+      filter(members, p => (p == self and not evil_role(current_role(own))) or
+      (mind.complete and mind.local.complete and mind.local.status == JudgmentAnalysisStatus.complete and
+      forall(Roles([Role.assassin, Role.minion, Role.morgana, Role.mordred]), r =>
+      exists(mind.local.bounds, b => b.members == Players([p]) and b.category == r and b.maximum == 0))))
+  candidate_risk:
+    parameters: {members: Players, self: PlayerRef, own: RoleReports, peers: PlayerReports, suspects: PlayerReports, pairs: CandidateGroups, mind: PlayerJudgment}
+    returns: ExperienceScore
+    expression: 100 * enemy_count(members, self, own, peers, suspects) + sum_by(pairs, g => 100 if forall(g.subjects, p => p in members) and size(g.subjects) > 1 else 0) + judged_team_risk(mind, members, known_good_members(members, self, own, mind))
+  team_preference:
+    parameters: {members: Players, self: PlayerRef, own: RoleReports, peers: PlayerReports, suspects: PlayerReports, pairs: CandidateGroups, history: QuestHistory, mind: PlayerJudgment}
+    returns: ExperienceScore
+    # A weak impression for unresolved tasks; leader affinity is evaluated separately.
+    expression: (50 * enemy_count(members, self, own, peers, suspects) - 10 if exists(history, q => q.failed) or enemy_count(members, self, own, peers, suspects) > 0 else 20) if evil_role(current_role(own)) else 35 - candidate_risk(members, self, own, peers, suspects, pairs, mind) + (3 if self in members else 0)
+  cited_results:
+    parameters: {argument: TeamArgument, results: QuestHistory}
+    returns: QuestHistory
+    expression: >
+      match(argument, Judgment() => QuestHistory([]), TestTeam() => QuestHistory([]),
+      FailureOverlap() => QuestHistory([]), SuccessCore(r) => filter(results, q => q.mission == r.mission and q.epoch == r.epoch), TrustSpeaker() => QuestHistory([]), ClaimAssessment() => QuestHistory([]), ClaimConflict() => QuestHistory([]),
+      EvilExhausted(r) => filter(results, q => q.mission == r.mission and q.epoch == r.epoch))
+  public_evil_count:
+    parameters: {census: PopulationReports}
+    returns: MaybeEvidenceCount
+    expression: sum_by(at(census, size(census) - 1).cast, r => 1 if evil_role(r) else 0) if size(census) > 0 else None
+  check_exclusion:
+    parameters: {premises: QuestHistory, census: PopulationReports, members: Players, approve: Bool}
+    returns: ArgumentVerdict
+    expression: >
+      (ArgumentVerdict.verified if approve and at(premises, 0).fails > 0 and
+      at(premises, 0).fails == sum_by(at(census, size(census) - 1).cast, r => 1 if evil_role(r) else 0) and
+      forall(members, p => p in at(census, size(census) - 1).roster) and
+      not exists(at(premises, 0).team, p => p in members) else ArgumentVerdict.insufficient)
+      if size(premises) == 1 and size(census) > 0 else ArgumentVerdict.missing_evidence
+  argument_verdict:
+    parameters: {argument: TeamArgument, members: Players, approve: Bool, results: QuestHistory, census: PopulationReports}
+    returns: ArgumentVerdict
+    expression: >
+      match(argument, Judgment() => ArgumentVerdict.opinion, TestTeam() => ArgumentVerdict.opinion, SuccessCore() => ArgumentVerdict.opinion,
+      FailureOverlap() => ArgumentVerdict.opinion, TrustSpeaker() => ArgumentVerdict.opinion, ClaimAssessment() => ArgumentVerdict.opinion, ClaimConflict() => ArgumentVerdict.opinion,
+      EvilExhausted() => check_exclusion(cited_results(argument, results), census, members, approve))
+  argument_review:
+    parameters: {speech: TeamSpeech, results: QuestHistory, census: PopulationReports}
+    returns: ArgumentReview
+    expression: >
+      ArgumentReview(speaker=speech.speaker, epoch=speech.epoch, team=speech.team, rationale=speech.rationale,
+      verdict=argument_verdict(speech.rationale, speech.team, speech.approve, results, census),
+      premises=cited_results(speech.rationale, results), public_evil_count=public_evil_count(census))
+  current_reviews:
+    parameters: {heard: TeamSpeeches, results: QuestHistory, census: PopulationReports, members: Players, epoch: Epoch}
+    returns: ArgumentReviews
+    expression: map(filter(heard, s => s.epoch == epoch and s.team == members), s => argument_review(s, results, census))
+  opinion_argument:
+    parameters: {argument: TeamArgument}
+    returns: Bool
+    expression: match(argument, Judgment() => True, TestTeam() => True, FailureOverlap() => True, SuccessCore() => True, TrustSpeaker() => False, EvilExhausted() => False, ClaimAssessment() => True, ClaimConflict() => True)
+  heard_signal:
+    parameters: {mind: PlayerJudgment, heard: TeamSpeeches, members: Players, epoch: Epoch, self: PlayerRef, results: QuestHistory, census: PopulationReports}
+    returns: ExperienceScore
+    # Repeated references and echoes do not multiply a public exclusion proof.
+    expression: >
+      sum_by(mind.beliefs, b => judged_opinion(mind, b.proposition, members, epoch, self)) +
+      (2 if exists(heard, s => s.epoch == epoch and s.team == members and s.speaker != self and
+      argument_verdict(s.rationale, members, s.approve, results, census) == ArgumentVerdict.verified) else 0)
+  vote_preference:
+    parameters: {approve: Bool, members: Players, perspective: DiscussionPerspective, heard: TeamSpeeches, epoch: Epoch, results: QuestHistory}
+    returns: ExperienceScore
+    expression: (discussion_preference(members, perspective) + (heard_signal(perspective.mind, heard, members, epoch, perspective.person, results, perspective.goals.census) if perspective.goals.rejections < 4 else 0)) * (1 if approve else -1)
+  argument_value:
+    parameters: {argument: TeamArgument, members: Players, support: Bool, results: QuestHistory, census: PopulationReports}
+    returns: ExperienceScore
+    expression: >
+      match(argument, Judgment() => 0, TestTeam() => 0, FailureOverlap() => 0, TrustSpeaker() => 0, ClaimAssessment() => 0, ClaimConflict() => 0,
+      SuccessCore(r) => 1 if support and exists(results, q => q.mission == r.mission and q.epoch == r.epoch and q.fails == 0 and forall(q.team, p => p in members)) else 0,
+      EvilExhausted() => 3 if argument_verdict(argument, members, support, results, census) == ArgumentVerdict.verified else -2)
+  cited_claims:
+    parameters: {argument: TeamArgument, claims: IdentitySpeeches}
+    returns: IdentitySpeeches
+    expression: >
+      match(argument, Judgment() => IdentitySpeeches([]), TestTeam() => IdentitySpeeches([]),
+      FailureOverlap() => IdentitySpeeches([]), SuccessCore() => IdentitySpeeches([]), TrustSpeaker() => IdentitySpeeches([]), EvilExhausted() => IdentitySpeeches([]),
+      ClaimAssessment(r) => filter(claims, c => c.speaker == r.speaker and c.epoch == r.claim_epoch and c.role == r.claimed_role),
+      ClaimConflict(r) => filter(claims, c => c == r.first or c == r.second))
+  claim_assessment:
+    parameters: {claims: IdentitySpeeches, credible: Bool, mind: PlayerJudgment}
+    returns: ExperienceScore
+    # Evaluate the quoted hypothesis against the listener's current acquired bounds.
+    expression: >
+      constrained_claim_value(judged_identity(mind, at(claims, 0).speaker, at(claims, 0).role), credible)
+      if size(claims) == 1 else 0
+  identity_argument_value:
+    parameters: {argument: TeamArgument, claims: IdentitySpeeches, mind: PlayerJudgment}
+    returns: ExperienceScore
+    expression: >
+      match(argument, Judgment() => 0, TestTeam() => 0, FailureOverlap() => 0, SuccessCore() => 0, TrustSpeaker() => 0, EvilExhausted() => 0,
+      ClaimAssessment(r) => claim_assessment(cited_claims(argument, claims), r.credible, mind),
+      ClaimConflict() => 0)
+  determined_claim:
+    parameters: {claims: IdentitySpeeches, mind: PlayerJudgment}
+    returns: Bool
+    expression: exists(claims, c => identity_verdict(mind, identity_bound(mind, c.speaker, c.role)) == IdentityVerdict.established or identity_verdict(mind, identity_bound(mind, c.speaker, c.role)) == IdentityVerdict.excluded) if size(claims) == 1 else False
+  identity_argument_known:
+    parameters: {argument: TeamArgument, claims: IdentitySpeeches, mind: PlayerJudgment}
+    returns: Bool
+    expression: match(argument, ClaimAssessment() => determined_claim(cited_claims(argument, claims), mind), Judgment() => False, TestTeam() => False, FailureOverlap() => False, SuccessCore() => False, TrustSpeaker() => False, EvilExhausted() => False, ClaimConflict() => False)
+  cited_identity_judgments:
+    parameters: {argument: TeamArgument, claims: IdentitySpeeches, mind: PlayerJudgment}
+    returns: IdentityJudgments
+    expression: map(cited_claims(argument, claims), c => judged_identity(mind, c.speaker, c.role))
+  suggestion_signal:
+    parameters: {mind: PlayerJudgment, members: Players, epoch: Epoch, self: PlayerRef, results: QuestHistory, census: PopulationReports, claims: IdentitySpeeches}
+    returns: ExperienceScore
+    expression: >
+      sum_by(mind.beliefs, b => judged_alternative(mind, b.proposition, members, epoch, self, results, census, claims))
+  suggestion_argument_value:
+    parameters: {argument: MaybeTeamArgument, members: Players, results: QuestHistory, census: PopulationReports, claims: IdentitySpeeches, mind: PlayerJudgment}
+    returns: ExperienceScore
+    expression: >
+      argument_value(argument, members, True, results, census) + identity_argument_value(argument, claims, mind)
+      if argument is not None else 0
+  intended_listeners:
+    parameters: {self: PlayerRef, census: PopulationReports, peers: PlayerReports, suspects: PlayerReports}
+    returns: Players
+    # An intended audience is a subjective target, not a prediction of agreement.
+    expression: filter(at(census, size(census) - 1).roster, p => p != self and not exists(peers, g => p in g) and not exists(suspects, g => p in g)) if size(census) > 0 else Players([])
+  reply_value:
+    parameters: {argument: TeamArgument, heard: TeamSpeeches, epoch: Epoch, self: PlayerRef}
+    returns: ExperienceScore
+    # Maintain a public claim after actual criticism; this does not affirm its truth.
+    expression: >
+      match(argument, ClaimAssessment(r) => 4 if r.speaker == self and r.credible and
+      exists(heard, s => s.epoch == epoch and s.speaker != self and
+      match(s.rationale, ClaimAssessment(c) => c.speaker == self and c.claim_epoch == r.claim_epoch and not c.credible,
+      Judgment() => False, TestTeam() => False, FailureOverlap() => False, SuccessCore() => False, TrustSpeaker() => False, EvilExhausted() => False, ClaimConflict() => False)) else 0,
+      Judgment() => 0, TestTeam() => 0, FailureOverlap() => 0, SuccessCore() => 0, TrustSpeaker() => 0, EvilExhausted() => 0, ClaimConflict() => 0)
+  listener_needs_stance:
+    parameters: {listener: PlayerRef, heard: TeamSpeeches, members: Players, epoch: Epoch, support: Bool}
+    returns: Bool
+    expression: latest_stance_differs(filter(heard, s => s.speaker == listener and s.epoch == epoch and s.team == members), support)
+  latest_stance_differs:
+    parameters: {heard: TeamSpeeches, support: Bool}
+    returns: Bool
+    expression: at(heard, size(heard) - 1).approve != support if size(heard) > 0 else True
+  audience_gap:
+    parameters: {listeners: Players, heard: TeamSpeeches, members: Players, epoch: Epoch, support: Bool}
+    returns: ExperienceScore
+    # Missing or opposing public stances are opportunities, not predicted conversions.
+    expression: sum_by(listeners, p => 1 if listener_needs_stance(p, heard, members, epoch, support) else 0)
+  audience_snapshot:
+    parameters: {listeners: Players, heard: TeamSpeeches, members: Players, epoch: Epoch, support: Bool}
+    returns: AudienceSnapshot
+    expression: >
+      AudienceSnapshot(listeners=listeners,
+      aligned=filter(listeners, p => not listener_needs_stance(p, heard, members, epoch, support)),
+      opposed=filter(listeners, p => not listener_needs_stance(p, heard, members, epoch, not support)))
+  audience_reception:
+    parameters: {before: AudienceSnapshot, support: Bool, ballot: ApprovalRecord}
+    returns: ExperienceScore
+    # Later public alignment is an observed association, not persuasion causality.
+    expression: >
+      sum_by(before.listeners, p =>
+      (0 if p in before.aligned else 2 if p in before.opposed else 1)
+      if (p in ballot.approve) == support else
+      (-2 if p in before.aligned else 0 if p in before.opposed else -1))
+  audience_has_unvoiced:
+    parameters: {before: AudienceSnapshot}
+    returns: Bool
+    expression: size(union(before.aligned, before.opposed)) < size(before.listeners)
+  fresh_advice:
+    parameters: {self: PlayerRef, argument: TeamArgument, support: Bool, heard: TeamSpeeches, members: Players, epoch: Epoch}
+    returns: Bool
+    # Cosmetic reason changes do not make the same personal stance new.
+    expression: >
+      match(argument,
+      ClaimConflict() => not exists(heard, s => s.speaker == self and s.rationale == argument and s.team == members and s.approve == support),
+      ClaimAssessment(r) => changed_claim_opinion(filter(heard, s => s.speaker == self and comments_identity(s.rationale, r.speaker, r.claimed_role, r.claim_epoch)), argument) or
+      (r.speaker == self and r.credible and reply_value(argument, heard, epoch, self) > 0 and
+      not exists(heard, s => s.speaker == self and s.epoch == epoch and s.rationale == argument)),
+      EvilExhausted() => not exists(heard, s => s.epoch == epoch and s.team == members and s.approve == support and s.rationale == argument),
+      Judgment() => not exists(heard, s => s.speaker == self and s.epoch == epoch and s.team == members and s.approve == support),
+      TestTeam() => not exists(heard, s => s.speaker == self and s.epoch == epoch and s.team == members and s.approve == support),
+      FailureOverlap() => not exists(heard, s => s.speaker == self and s.epoch == epoch and s.team == members and s.approve == support),
+      SuccessCore() => not exists(heard, s => s.speaker == self and s.epoch == epoch and s.team == members and s.approve == support and s.rationale == argument),
+      TrustSpeaker() => not exists(heard, s => s.speaker == self and s.epoch == epoch and s.team == members and s.approve == support))
+  changed_claim_opinion:
+    parameters: {previous: TeamSpeeches, argument: TeamArgument}
+    returns: Bool
+    expression: at(previous, size(previous) - 1).rationale != argument if size(previous) > 0 else True
+  coordination_value:
+    parameters: {fresh: Bool, gap: ExperienceScore, preference: ExperienceScore}
+    returns: ExperienceScore
+    expression: (gap if preference > 0 else -gap if preference < 0 else 0) if fresh else 0
+  goal_direction:
+    parameters: {preference: ExperienceScore}
+    returns: GoalDirection
+    expression: 1 if preference > 0 else -1 if preference < 0 else 0
+  expression_preference:
+    parameters: {support: Bool, members: Players, perspective: DiscussionPerspective}
+    returns: ExperienceScore
+    # Intended direction comes from the local board judgment, not audience approval.
+    expression: discussion_preference(members, perspective) * (1 if support else -1)
+  advice_information:
+    parameters: {fresh: Bool, gap: ExperienceScore, argument: TeamArgument, members: Players, support: Bool, results: QuestHistory, census: PopulationReports}
+    returns: ExperienceScore
+    expression: >
+      (3 if argument_verdict(argument, members, support, results, census) == ArgumentVerdict.verified else
+      match(argument, ClaimAssessment() => 2, ClaimConflict() => 2, Judgment() => (1 if gap > 0 else 0), TestTeam() => (1 if gap > 0 else 0),
+      FailureOverlap() => (1 if gap > 0 else 0), SuccessCore() => (1 if gap > 0 else 0), TrustSpeaker() => 0, EvilExhausted() => 0)) if fresh else 0
+  fresh_alternative:
+    parameters: {members: Players, suggestions: TeamSuggestions, epoch: Epoch, self: PlayerRef, rationale: MaybeTeamArgument}
+    returns: Bool
+    expression: changed_alternative(filter(suggestions, s => s.epoch == epoch and s.speaker == self), members, rationale)
+  changed_alternative:
+    parameters: {previous: TeamSuggestions, members: Players, rationale: MaybeTeamArgument}
+    returns: Bool
+    expression: at(previous, size(previous) - 1).members != members or at(previous, size(previous) - 1).rationale != rationale if size(previous) > 0 else True
+  alternative_arguments:
+    parameters: {history: QuestHistory, members: Players, current: Players, heard: TeamSpeeches, epoch: Epoch, self: PlayerRef, claims: IdentitySpeeches, responding: Bool, cast: Roles, results: QuestHistory, census: PopulationReports}
+    returns: MaybeTeamArguments
+    # Keep distinct relevant intentions, without multiplying unrelated identity commentary by teams.
+    expression: >
+      filter(suggestion_arguments(history, members, heard, epoch, self,
+      filter(claims, c => not exists(claims, n => n.speaker == c.speaker and n.epoch > c.epoch)), responding, cast),
+      a => relevant_alternative_argument(a, members, current, results, census))
+  relevant_alternative_argument:
+    parameters: {argument: MaybeTeamArgument, members: Players, current: Players, results: QuestHistory, census: PopulationReports}
+    returns: Bool
+    expression: >
+      match(argument, Judgment() => False, TestTeam() => True, SuccessCore() => True, FailureOverlap() => False,
+      TrustSpeaker() => True, EvilExhausted() => argument_verdict(argument, members, True, results, census) == ArgumentVerdict.verified,
+      ClaimAssessment(r) => r.speaker in difference(members, current) if r.credible else r.speaker in difference(current, members),
+      ClaimConflict(r) => (r.first.speaker in members) != (r.second.speaker in members)) if argument is not None else True
+  alternative_value:
+    parameters: {fresh: Bool, listeners: Players, rejections: Count, current_preference: ExperienceScore, gain: ExperienceScore}
+    returns: ExperienceScore
+    # A contingent opportunity to replace a rejected team, not the team's task utility.
+    expression: (4 if gain >= 75 else 3 if gain >= 50 else 2 if gain >= 25 else 1) if fresh and size(listeners) > 0 and rejections < 4 and current_preference < 0 and gain > 0 else 0
+  fresh_identity:
+    parameters: {self: PlayerRef, claim: Role, claims: IdentitySpeeches}
+    returns: Bool
+    expression: not exists(claims, s => s.speaker == self and s.role == claim)
+  identity_projection_value:
+    parameters: {fresh: Bool, self: PlayerRef, own: RoleReports, claim: Role, claims: IdentitySpeeches, listeners: Players}
+    returns: ExperienceScore
+    # Cover and decoy motives are subjective; a public claim never certifies a role.
+    expression: >
+      ((-6 if current_role(own) == Role.merlin else
+      (3 if evil_role(current_role(own)) or exists(claims, s => s.speaker != self and s.role == Role.merlin) else 0))
+      if claim == Role.merlin else
+      (2 if current_role(own) == Role.merlin or current_role(own) == Role.assassin else 0)
+      if claim == Role.servant else -2) if fresh and size(listeners) > 0 else 0
+  merlin_signal:
+    parameters: {target: PlayerRef, self: PlayerRef, own: RoleReports, peers: PlayerReports, suspects: PlayerReports, votes: ApprovalHistory, mind: PlayerJudgment}
+    returns: ExperienceScore
+    expression: judged_merlin_claim(mind, target) + sum_by(votes, v => ((8 if target in v.reject else -2) if enemy_count(v.team, self, own, peers, suspects) > 0 else (2 if target in v.approve else 0)))
+semantics:
+  ExperientialAvalon:
+    features: [failure_threshold, failure_overlap_none, failure_overlap_less_than_half, failure_overlap_at_least_half, failure_overlap_full, zero_fail_retention_none, zero_fail_retention_less_than_half, zero_fail_retention_at_least_half, zero_fail_retention_full, team_direct_alignment_aligned, team_direct_alignment_divergent, team_direct_alignment_mixed, leader_direct_alignment_aligned, leader_direct_alignment_divergent, leader_direct_alignment_mixed, proposal, vote, speech, claim, mission, assassination, support, oppose, danger, good, evil, clean, tainted, capacity_safe, capacity_risk, final_rejection, grounded, claim_discussion, claim_trust, alternative, yield_floor, novel, pressured, success_core, testing, audience_unvoiced, audience_opposed, goal_aligned, goal_opposed, comparison, conditional, response, redirection, planning, plan_participation, withdrawal, coordinating, public_opinion, questioning, answering, compound, dialogue_window, dialogue_shape, dialogue_position, dialogue_subject, dialogue_intent, dialogue_reply_form]
+    outcomes: [benefit, reception, coordination, concealment, credibility, information, effort, evidence]
+    # These are subjective preferences over already checked candidate features,
+    # not world facts or hidden-role inference.
+    appraisal:
+      caution: {avoid: [danger]}
+      curiosity: {seek: [novel, testing]}
+      evidence_sensitivity: {seek: [grounded]}
+    # Utility transfers only within the same goal alignment and certainty context.
+    applicability:
+      benefit: [failure_threshold, proposal, vote, speech, claim, mission, assassination, support, oppose, good, evil, clean, tainted, capacity_safe, capacity_risk, final_rejection, alternative, claim_discussion, claim_trust, yield_floor, novel, pressured, audience_unvoiced, audience_opposed, comparison, conditional, response, redirection, planning, plan_participation, withdrawal, coordinating, public_opinion, questioning, answering, compound]
+      credibility: [failure_threshold, proposal, vote, speech, claim, mission, assassination, support, oppose, clean, tainted, capacity_safe, capacity_risk, final_rejection, grounded, alternative, claim_discussion, claim_trust, yield_floor, novel, pressured, success_core, testing, comparison, conditional, response, redirection, planning, plan_participation, withdrawal, coordinating, public_opinion, questioning, answering, compound]
+      reception: [speech, support, oppose, good, evil, clean, tainted, capacity_safe, capacity_risk, final_rejection, claim_discussion, alternative, novel, audience_unvoiced, audience_opposed, comparison, conditional, response, redirection, planning, plan_participation, withdrawal, coordinating, public_opinion, questioning, answering, compound, dialogue_window, dialogue_shape, dialogue_position, dialogue_subject, dialogue_intent, dialogue_reply_form]
+      information: [speech, public_opinion, questioning, answering, compound, comparison, conditional, response, redirection, planning, plan_participation, withdrawal, novel, dialogue_window, dialogue_shape, dialogue_position, dialogue_subject, dialogue_intent, dialogue_reply_form]
+      coordination: [speech, support, oppose, good, evil, clean, tainted, capacity_safe, capacity_risk, final_rejection, claim_discussion, alternative, novel, pressured, audience_unvoiced, audience_opposed, goal_aligned, goal_opposed, comparison, conditional, response, redirection, planning, plan_participation, withdrawal, coordinating, public_opinion, questioning, answering, compound]
+    feedback:
+      ReviewDialogue:
+        definition: [Speak, CompareTeams, StateCondition, RespondStatement, RedirectDiscussion, ProposePlan, DecidePlan, RetractStatement, StateOpinion, AskQuestion, AnswerQuestion]
+        receipts:
+          replies:
+            channel: publish_discussion.said
+            collect: {type: DiscussionStatements, item: heard_reply, until: ending}
+            related:
+              key: heard_reply.key
+              link: feedback_target(heard_reply.content, True)
+              roots: map(utterance, s => s.key)
+              depth: 2
+            where: feedback_related(heard_reply, utterance, listeners, replies)
+          ending: {terminal: finish, boundary: true}
+        when: size(utterance) > 0
+        outcomes:
+          reception: utterance_reception(utterance, listeners, replies)
+          information: utterance_information(utterance, listeners, replies)
+      ReviewProposal:
+        definition: ProposeTeam
+        receipts:
+          outcome: {channel: reveal_quest.result, match: {epoch: outcome.epoch, group: outcome.team}}
+        outcomes: {benefit: '48 if outcome.failed == evil_role(perspective) else -48'}
+      ReviewVote:
+        definition: ApproveTeam
+        receipts:
+          outcome: {channel: reveal_quest.result, match: {epoch: outcome.epoch, group: outcome.team}}
+        outcomes:
+          benefit: '48 if approve == (outcome.failed == evil_role(perspective)) else -48'
+          credibility: '16 if approve != outcome.failed else -16'
+      ReviewSpeech:
+        definition: AdviseTeam
+        receipts:
+          outcome: {channel: reveal_quest.result, match: {epoch: outcome.epoch, group: outcome.team}}
+        when: first_expression and task_rationale
+        # Task agreement is weak retrospective consistency, not persuasion success.
+        outcomes: {credibility: '3 if support_team != outcome.failed else -3'}
+      ReviewAudience:
+        definition: AdviseTeam
+        receipts:
+          ballot: {channel: reveal_approval.result, match: {epoch: ballot.epoch, group: ballot.team}}
+        when: first_expression and task_rationale and size(audience.listeners) > 0
+        outcomes:
+          reception: audience_reception(audience, support_team, ballot)
+          coordination: expression_direction * audience_reception(audience, support_team, ballot)
+      ReviewMission:
+        definition: MissionCard
+        receipts:
+          outcome: {channel: reveal_quest.result, match: {epoch: outcome.epoch, group: outcome.team}}
+        outcomes: {benefit: '48 if outcome.failed == evil_role(perspective) else -48'}
+      ReviewSuggestion:
+        definition: SuggestTeam
+        receipts:
+          outcome: {channel: reveal_quest.result, match: {epoch: outcome.epoch, group: outcome.team}}
+        when: first_expression
+        outcomes: {credibility: '3 if not outcome.failed else -3'}
+    meanings:
+      Speak:
+        features: {speech: '2', compound: '1', novel: '1 if compound_fresh(clauses, reports(expressions), person, mission) else 0', dialogue_window: 'dialogue_window(discussion_kind)', dialogue_shape: 'dialogue_shape(clauses)', dialogue_position: 'dialogue_position(clauses)', dialogue_subject: 'dialogue_subject(clauses)', dialogue_intent: 'dialogue_intent(clauses)', dialogue_reply_form: 'dialogue_reply_form(clauses)'}
+        prior:
+          benefit: '0'
+          reception: '0'
+          coordination: 'compound_value(clauses, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))), size(team), reports(expressions)) if compound_fresh(clauses, reports(expressions), person, mission) else 0'
+          concealment: '0'
+          credibility: '0'
+          information: '1 if compound_fresh(clauses, reports(expressions), person, mission) else 0'
+          effort: '-2'
+          evidence: '0'
+        known: {benefit: 'True', effort: 'True'}
+        target: {type: DiscussionContents, value: clauses}
+        capture:
+          utterance: {type: DiscussionStatements, value: 'feedback_utterance(person, epoch, speech_serial, mission, clauses, reports(expressions))'}
+          listeners: {type: Players, value: 'difference(distinct(order), Players([person]))'}
+      ProposePlan:
+        features: {speech: '2', planning: '1', novel: '1 if expression_fresh(plan_content(target_leader, rejection_limit), reports(expressions), person, mission) else 0', dialogue_window: 'dialogue_window(discussion_kind)', dialogue_shape: 'dialogue_shape(DiscussionContents([plan_content(target_leader, rejection_limit)]))', dialogue_position: 'dialogue_position(DiscussionContents([plan_content(target_leader, rejection_limit)]))', dialogue_subject: 'dialogue_subject(DiscussionContents([plan_content(target_leader, rejection_limit)]))', dialogue_intent: 'dialogue_intent(DiscussionContents([plan_content(target_leader, rejection_limit)]))', dialogue_reply_form: 'dialogue_reply_form(DiscussionContents([plan_content(target_leader, rejection_limit)]))'}
+        prior:
+          benefit: '0'
+          reception: '0'
+          coordination: 'plan_prospect(LeaderPlan(leader=target_leader, rejection_limit=rejection_limit), discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))), discussion_context(mission, at(order, leader_index), rejections, phase, team, approval_history, discussion_kind, speech_serial)) if expression_fresh(plan_content(target_leader, rejection_limit), reports(expressions), person, mission) else 0'
+          concealment: '0'
+          credibility: '0'
+          information: '1 if expression_fresh(plan_content(target_leader, rejection_limit), reports(expressions), person, mission) else 0'
+          effort: '-2'
+          evidence: '0'
+        known: {benefit: 'True', effort: 'True'}
+        target: {type: LeaderPlan, value: 'LeaderPlan(leader=target_leader, rejection_limit=rejection_limit)'}
+        capture:
+          utterance: {type: DiscussionStatements, value: 'feedback_utterance(person, epoch, speech_serial, mission, DiscussionContents([plan_content(target_leader, rejection_limit)]), reports(expressions))'}
+          listeners: {type: Players, value: 'difference(distinct(order), Players([person]))'}
+      DecidePlan:
+        features: {speech: '2', plan_participation: '1', novel: '1 if expression_fresh(participation_content(target, participation), reports(expressions), person, mission) else 0', dialogue_window: 'dialogue_window(discussion_kind)', dialogue_shape: 'dialogue_shape(DiscussionContents([participation_content(target, participation)]))', dialogue_position: 'dialogue_position(DiscussionContents([participation_content(target, participation)]))', dialogue_subject: 'dialogue_subject(DiscussionContents([participation_content(target, participation)]))', dialogue_intent: 'dialogue_intent(DiscussionContents([participation_content(target, participation)]))', dialogue_reply_form: 'dialogue_reply_form(DiscussionContents([participation_content(target, participation)]))'}
+        prior:
+          benefit: '0'
+          reception: '0'
+          coordination: 'plan_participation_value(reports(expressions), target, participation, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))), discussion_context(mission, at(order, leader_index), rejections, phase, team, approval_history, discussion_kind, speech_serial)) if expression_fresh(participation_content(target, participation), reports(expressions), person, mission) else 0'
+          concealment: '0'
+          credibility: '0'
+          information: '1 if expression_fresh(participation_content(target, participation), reports(expressions), person, mission) else 0'
+          effort: '-2'
+          evidence: '0'
+        known: {benefit: 'True', effort: 'True'}
+        target: {type: StatementKey, value: target}
+        capture:
+          utterance: {type: DiscussionStatements, value: 'feedback_utterance(person, epoch, speech_serial, mission, DiscussionContents([participation_content(target, participation)]), reports(expressions))'}
+          listeners: {type: Players, value: 'difference(distinct(order), Players([person]))'}
+      RetractStatement:
+        features: {speech: '2', withdrawal: '1', novel: '1', dialogue_window: 'dialogue_window(discussion_kind)', dialogue_shape: 'dialogue_shape(DiscussionContents([DiscussionContent.Retract(retraction=StatementRetraction(target=target, topic=discussion_topic(at(filter(reports(expressions), s => s.key == target), 0))))]))', dialogue_position: 'dialogue_position(DiscussionContents([DiscussionContent.Retract(retraction=StatementRetraction(target=target, topic=discussion_topic(at(filter(reports(expressions), s => s.key == target), 0))))]))', dialogue_subject: 'dialogue_subject(DiscussionContents([DiscussionContent.Retract(retraction=StatementRetraction(target=target, topic=discussion_topic(at(filter(reports(expressions), s => s.key == target), 0))))]))', dialogue_intent: 'dialogue_intent(DiscussionContents([DiscussionContent.Retract(retraction=StatementRetraction(target=target, topic=discussion_topic(at(filter(reports(expressions), s => s.key == target), 0))))]))', dialogue_reply_form: 'dialogue_reply_form(DiscussionContents([DiscussionContent.Retract(retraction=StatementRetraction(target=target, topic=discussion_topic(at(filter(reports(expressions), s => s.key == target), 0))))]))'}
+        prior:
+          benefit: '0'
+          reception: '0'
+          coordination: 'withdrawal_value(quoted_statement(reports(expressions), target), reports(expressions), discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))), discussion_context(mission, at(order, leader_index), rejections, phase, team, approval_history, discussion_kind, speech_serial), size(team))'
+          concealment: '0'
+          credibility: '0'
+          information: '1'
+          effort: '-2'
+          evidence: '0'
+        known: {benefit: 'True', effort: 'True'}
+        target: {type: StatementKey, value: target}
+        capture:
+          utterance: {type: DiscussionStatements, value: 'feedback_utterance(person, epoch, speech_serial, mission, DiscussionContents([DiscussionContent.Retract(retraction=StatementRetraction(target=target, topic=discussion_topic(at(filter(reports(expressions), s => s.key == target), 0))))]), reports(expressions))'}
+          listeners: {type: Players, value: 'difference(distinct(order), Players([person]))'}
+      CompareTeams:
+        features: {speech: '2', comparison: '1', novel: '1 if expression_fresh(comparison_content(preferred, alternative, grounds, mission), reports(expressions), person, mission) else 0', dialogue_window: 'dialogue_window(discussion_kind)', dialogue_shape: 'dialogue_shape(DiscussionContents([comparison_content(preferred, alternative, grounds, mission)]))', dialogue_position: 'dialogue_position(DiscussionContents([comparison_content(preferred, alternative, grounds, mission)]))', dialogue_subject: 'dialogue_subject(DiscussionContents([comparison_content(preferred, alternative, grounds, mission)]))', dialogue_intent: 'dialogue_intent(DiscussionContents([comparison_content(preferred, alternative, grounds, mission)]))', dialogue_reply_form: 'dialogue_reply_form(DiscussionContents([comparison_content(preferred, alternative, grounds, mission)]))'}
+        prior:
+          benefit: '0'
+          reception: '0'
+          concealment: '0'
+          evidence: '0'
+          coordination: '(discussion_preference(preferred, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census)))) - discussion_preference(alternative, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))))) // 10 if expression_fresh(comparison_content(preferred, alternative, grounds, mission), reports(expressions), person, mission) else 0'
+          credibility: comparison_argument_value(grounds, preferred, reports(results), reports(census))
+          information: '1 if expression_fresh(comparison_content(preferred, alternative, grounds, mission), reports(expressions), person, mission) else 0'
+          effort: '-2'
+        known: {benefit: 'True', effort: 'True'}
+        target: {type: TeamOptions, value: 'TeamOptions([TeamOption(mission=mission, members=preferred), TeamOption(mission=mission, members=alternative)])'}
+        capture:
+          utterance: {type: DiscussionStatements, value: 'feedback_utterance(person, epoch, speech_serial, mission, DiscussionContents([comparison_content(preferred, alternative, grounds, mission)]), reports(expressions))'}
+          listeners: {type: Players, value: 'difference(distinct(order), Players([person]))'}
+      StateCondition:
+        features: {speech: '2', conditional: '1', novel: '1 if expression_fresh(condition_content(conditions, satisfied, otherwise, mission), reports(expressions), person, mission) else 0', dialogue_window: 'dialogue_window(discussion_kind)', dialogue_shape: 'dialogue_shape(DiscussionContents([condition_content(conditions, satisfied, otherwise, mission)]))', dialogue_position: 'dialogue_position(DiscussionContents([condition_content(conditions, satisfied, otherwise, mission)]))', dialogue_subject: 'dialogue_subject(DiscussionContents([condition_content(conditions, satisfied, otherwise, mission)]))', dialogue_intent: 'dialogue_intent(DiscussionContents([condition_content(conditions, satisfied, otherwise, mission)]))', dialogue_reply_form: 'dialogue_reply_form(DiscussionContents([condition_content(conditions, satisfied, otherwise, mission)]))'}
+        prior:
+          benefit: '0'
+          reception: '0'
+          concealment: '0'
+          evidence: '0'
+          coordination: 'condition_policy_value(conditions, satisfied, otherwise, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))), size(team)) // 10 if expression_fresh(condition_content(conditions, satisfied, otherwise, mission), reports(expressions), person, mission) else 0'
+          credibility: '(1 if size(position_examples(conditions, order, size(team), True)) > 0 else -2) if expression_fresh(condition_content(conditions, satisfied, otherwise, mission), reports(expressions), person, mission) else 0'
+          information: '1 if size(conditions) > 0 and expression_fresh(condition_content(conditions, satisfied, otherwise, mission), reports(expressions), person, mission) else 0'
+          effort: '-2'
+        known: {benefit: 'True', effort: 'True'}
+        target: {type: ConditionalPosition, value: 'ConditionalPosition(mission=mission, require_all=conditions, satisfied=satisfied, otherwise=otherwise)'}
+        capture:
+          utterance: {type: DiscussionStatements, value: 'feedback_utterance(person, epoch, speech_serial, mission, DiscussionContents([condition_content(conditions, satisfied, otherwise, mission)]), reports(expressions))'}
+          listeners: {type: Players, value: 'difference(distinct(order), Players([person]))'}
+      RespondStatement:
+        features: {speech: '2', response: '1', novel: '1 if expression_fresh(DiscussionContent.Respond(response=StatementResponse(target=target, attitude=attitude, grounds=grounds)), reports(expressions), person, mission) else 0', dialogue_window: 'dialogue_window(discussion_kind)', dialogue_shape: 'dialogue_shape(DiscussionContents([DiscussionContent.Respond(response=StatementResponse(target=target, attitude=attitude, grounds=grounds))]))', dialogue_position: 'dialogue_position(DiscussionContents([DiscussionContent.Respond(response=StatementResponse(target=target, attitude=attitude, grounds=grounds))]))', dialogue_subject: 'dialogue_subject(DiscussionContents([DiscussionContent.Respond(response=StatementResponse(target=target, attitude=attitude, grounds=grounds))]))', dialogue_intent: 'dialogue_intent(DiscussionContents([DiscussionContent.Respond(response=StatementResponse(target=target, attitude=attitude, grounds=grounds))]))', dialogue_reply_form: 'dialogue_reply_form(DiscussionContents([DiscussionContent.Respond(response=StatementResponse(target=target, attitude=attitude, grounds=grounds))]))'}
+        prior:
+          benefit: '0'
+          reception: '0'
+          concealment: '0'
+          credibility: '0'
+          evidence: '0'
+          coordination: 'reply_value_local(quoted_statement(reports(expressions), target), attitude, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))), size(team)) if expression_fresh(DiscussionContent.Respond(response=StatementResponse(target=target, attitude=attitude, grounds=grounds)), reports(expressions), person, mission) else 0'
+          information: '1 if attitude == ResponseAttitude.undecided else 0'
+          effort: '-2'
+        known: {benefit: 'True', effort: 'True'}
+        target: {type: StatementKey, value: target}
+        capture:
+          utterance: {type: DiscussionStatements, value: 'feedback_utterance(person, epoch, speech_serial, mission, DiscussionContents([DiscussionContent.Respond(response=StatementResponse(target=target, attitude=attitude, grounds=grounds))]), reports(expressions))'}
+          listeners: {type: Players, value: 'difference(distinct(order), Players([person]))'}
+      RedirectDiscussion:
+        features: {speech: '2', redirection: '1', novel: '1 if expression_fresh(DiscussionContent.Redirect(topic=topic), reports(expressions), person, mission) else 0', dialogue_window: 'dialogue_window(discussion_kind)', dialogue_shape: 'dialogue_shape(DiscussionContents([DiscussionContent.Redirect(topic=topic)]))', dialogue_position: 'dialogue_position(DiscussionContents([DiscussionContent.Redirect(topic=topic)]))', dialogue_subject: 'dialogue_subject(DiscussionContents([DiscussionContent.Redirect(topic=topic)]))', dialogue_intent: 'dialogue_intent(DiscussionContents([DiscussionContent.Redirect(topic=topic)]))', dialogue_reply_form: 'dialogue_reply_form(DiscussionContents([DiscussionContent.Redirect(topic=topic)]))'}
+        prior:
+          benefit: '0'
+          reception: '0'
+          coordination: '0'
+          credibility: '0'
+          evidence: '0'
+          concealment: 'redirect_value(topic, reports(identity), known_team_risk(team, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history)) if expression_fresh(DiscussionContent.Redirect(topic=topic), reports(expressions), person, mission) else 0'
+          information: '1 if expression_fresh(DiscussionContent.Redirect(topic=topic), reports(expressions), person, mission) else 0'
+          effort: '-2'
+        known: {benefit: 'True', effort: 'True'}
+        target: {type: AttentionTopic, value: topic}
+        capture:
+          utterance: {type: DiscussionStatements, value: 'feedback_utterance(person, epoch, speech_serial, mission, DiscussionContents([DiscussionContent.Redirect(topic=topic)]), reports(expressions))'}
+          listeners: {type: Players, value: 'difference(distinct(order), Players([person]))'}
+      StateOpinion:
+        features: {speech: '2', public_opinion: '2', novel: '1 if expression_fresh(DiscussionContent.Opinion(opinion=PublicOpinion(assertion=assertion, stance=stance)), reports(expressions), person, mission) else 0', dialogue_window: 'dialogue_window(discussion_kind)', dialogue_shape: 'dialogue_shape(DiscussionContents([DiscussionContent.Opinion(opinion=PublicOpinion(assertion=assertion, stance=stance))]))', dialogue_position: 'dialogue_position(DiscussionContents([DiscussionContent.Opinion(opinion=PublicOpinion(assertion=assertion, stance=stance))]))', dialogue_subject: 'dialogue_subject(DiscussionContents([DiscussionContent.Opinion(opinion=PublicOpinion(assertion=assertion, stance=stance))]))', dialogue_intent: 'dialogue_intent(DiscussionContents([DiscussionContent.Opinion(opinion=PublicOpinion(assertion=assertion, stance=stance))]))', dialogue_reply_form: 'dialogue_reply_form(DiscussionContents([DiscussionContent.Opinion(opinion=PublicOpinion(assertion=assertion, stance=stance))]))'}
+        prior: {benefit: '0', reception: '0', coordination: '0', concealment: '0', credibility: '0', information: '1 if expression_fresh(DiscussionContent.Opinion(opinion=PublicOpinion(assertion=assertion, stance=stance)), reports(expressions), person, mission) else 0', effort: '-2', evidence: '0'}
+        known: {benefit: 'True', effort: 'True'}
+        target: {type: PublicAssertion, value: assertion}
+        capture:
+          utterance: {type: DiscussionStatements, value: 'feedback_utterance(person, epoch, speech_serial, mission, DiscussionContents([DiscussionContent.Opinion(opinion=PublicOpinion(assertion=assertion, stance=stance))]), reports(expressions))'}
+          listeners: {type: Players, value: 'difference(distinct(order), Players([person]))'}
+      AskQuestion:
+        features: {speech: '2', questioning: '2', novel: '1 if expression_fresh(DiscussionContent.Question(question=PublicQuestion(recipient=recipient, subject=subject, purpose=purpose)), reports(expressions), person, mission) else 0', dialogue_window: 'dialogue_window(discussion_kind)', dialogue_shape: 'dialogue_shape(DiscussionContents([DiscussionContent.Question(question=PublicQuestion(recipient=recipient, subject=subject, purpose=purpose))]))', dialogue_position: 'dialogue_position(DiscussionContents([DiscussionContent.Question(question=PublicQuestion(recipient=recipient, subject=subject, purpose=purpose))]))', dialogue_subject: 'dialogue_subject(DiscussionContents([DiscussionContent.Question(question=PublicQuestion(recipient=recipient, subject=subject, purpose=purpose))]))', dialogue_intent: 'dialogue_intent(DiscussionContents([DiscussionContent.Question(question=PublicQuestion(recipient=recipient, subject=subject, purpose=purpose))]))', dialogue_reply_form: 'dialogue_reply_form(DiscussionContents([DiscussionContent.Question(question=PublicQuestion(recipient=recipient, subject=subject, purpose=purpose))]))'}
+        prior: {benefit: '0', reception: '0', coordination: '0', concealment: '0', credibility: '0', information: '1 if expression_fresh(DiscussionContent.Question(question=PublicQuestion(recipient=recipient, subject=subject, purpose=purpose)), reports(expressions), person, mission) else 0', effort: '-2', evidence: '0'}
+        known: {benefit: 'True', effort: 'True'}
+        target: {type: PlayerRef, value: recipient}
+        capture:
+          utterance: {type: DiscussionStatements, value: 'feedback_utterance(person, epoch, speech_serial, mission, DiscussionContents([DiscussionContent.Question(question=PublicQuestion(recipient=recipient, subject=subject, purpose=purpose))]), reports(expressions))'}
+          listeners: {type: Players, value: 'difference(distinct(order), Players([person]))'}
+      AnswerQuestion:
+        features: {speech: '2', response: '1', answering: '2', novel: '1 if expression_fresh(DiscussionContent.Answer(answer=QuestionAnswer(question=question, reply=reply)), reports(expressions), person, mission) else 0', dialogue_window: 'dialogue_window(discussion_kind)', dialogue_shape: 'dialogue_shape(DiscussionContents([DiscussionContent.Answer(answer=QuestionAnswer(question=question, reply=reply))]))', dialogue_position: 'dialogue_position(DiscussionContents([DiscussionContent.Answer(answer=QuestionAnswer(question=question, reply=reply))]))', dialogue_subject: 'dialogue_subject(DiscussionContents([DiscussionContent.Answer(answer=QuestionAnswer(question=question, reply=reply))]))', dialogue_intent: 'dialogue_intent(DiscussionContents([DiscussionContent.Answer(answer=QuestionAnswer(question=question, reply=reply))]))', dialogue_reply_form: 'dialogue_reply_form(DiscussionContents([DiscussionContent.Answer(answer=QuestionAnswer(question=question, reply=reply))]))'}
+        prior: {benefit: '0', reception: '0', coordination: 'answer_local_value(reply, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census)))) if expression_fresh(DiscussionContent.Answer(answer=QuestionAnswer(question=question, reply=reply)), reports(expressions), person, mission) else 0', concealment: '0', credibility: '0', information: '0', effort: '-2', evidence: '0'}
+        known: {benefit: 'True', effort: 'True'}
+        target: {type: StatementKey, value: question}
+        capture:
+          utterance: {type: DiscussionStatements, value: 'feedback_utterance(person, epoch, speech_serial, mission, DiscussionContents([DiscussionContent.Answer(answer=QuestionAnswer(question=question, reply=reply))]), reports(expressions))'}
+          listeners: {type: Players, value: 'difference(distinct(order), Players([person]))'}
+      ProposeTeam:
+        features:
+          failure_threshold: 'task_failure_threshold(mission, size(order), population)'
+          failure_overlap_none: '1 if team_experience(members, person, observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).failure_overlap == ExperienceOverlap.none else 0'
+          failure_overlap_less_than_half: '1 if team_experience(members, person, observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).failure_overlap == ExperienceOverlap.less_than_half else 0'
+          failure_overlap_at_least_half: '1 if team_experience(members, person, observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).failure_overlap == ExperienceOverlap.at_least_half else 0'
+          failure_overlap_full: '1 if team_experience(members, person, observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).failure_overlap == ExperienceOverlap.full else 0'
+          zero_fail_retention_none: '1 if team_experience(members, person, observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).zero_fail_retention == ExperienceOverlap.none else 0'
+          zero_fail_retention_less_than_half: '1 if team_experience(members, person, observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).zero_fail_retention == ExperienceOverlap.less_than_half else 0'
+          zero_fail_retention_at_least_half: '1 if team_experience(members, person, observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).zero_fail_retention == ExperienceOverlap.at_least_half else 0'
+          zero_fail_retention_full: '1 if team_experience(members, person, observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).zero_fail_retention == ExperienceOverlap.full else 0'
+          team_direct_alignment_aligned: '1 if team_experience(members, person, observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).team_direct_alignment == DirectAlignment.aligned else 0'
+          team_direct_alignment_divergent: '1 if team_experience(members, person, observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).team_direct_alignment == DirectAlignment.divergent else 0'
+          team_direct_alignment_mixed: '1 if team_experience(members, person, observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).team_direct_alignment == DirectAlignment.mixed else 0'
+          leader_direct_alignment_aligned: '1 if team_experience(members, person, observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).leader_direct_alignment == DirectAlignment.aligned else 0'
+          leader_direct_alignment_divergent: '1 if team_experience(members, person, observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).leader_direct_alignment == DirectAlignment.divergent else 0'
+          leader_direct_alignment_mixed: '1 if team_experience(members, person, observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).leader_direct_alignment == DirectAlignment.mixed else 0'
+          proposal: '2'
+          danger: '1 if candidate_risk(members, person, reports(identity), reports(peers), reports(suspects), reports(pair), cognition(mind)) > 30 else 0'
+          good: '0 if evil_role(current_role(reports(identity))) else 1'
+          evil: '1 if evil_role(current_role(reports(identity))) else 0'
+          clean: '1 if known_team_clean(members, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, reports(census)) else 0'
+          tainted: '1 if known_team_risk(members, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history) else 0'
+          capacity_safe: '1 if task_capacity_basis(team_evil_interval(members, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, reports(census)), task_failure_threshold(mission, size(order), population)) == BallotGoalBasis.safe else 0'
+          capacity_risk: '1 if task_capacity_basis(team_evil_interval(members, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, reports(census)), task_failure_threshold(mission, size(order), population)) == BallotGoalBasis.risk else 0'
+          final_rejection: '1 if rejections >= 4 else 0'
+        prior: {benefit: 'proposal_value(members, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))), epoch, reports(results), reports(claims))', reception: '0', coordination: 'recommendation_coordination(ballot_goal_context(discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))), reports(ballot_receipts), reports(census), population), members, epoch, mission)', concealment: '0', credibility: '0', information: '1 if not exists(quest_history, q => q.team == members) else 0', effort: '-1', evidence: 'task_capacity_evidence(team_evil_interval(members, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, reports(census)), task_failure_threshold(mission, size(order), population), evil_role(current_role(reports(identity))))'}
+        known: {reception: 'True', concealment: 'True', effort: 'True', evidence: 'True'}
+        target: {type: Players, value: members}
+        correlate: {epoch: {type: Epoch, value: epoch + 1}, group: {type: Players, value: members}}
+        capture:
+          perspective: {type: Role, value: current_role(reports(identity))}
+          experience_context: {type: TeamExperienceContext, value: 'team_experience(members, person, observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts)))'}
+      ApproveTeam:
+        features:
+          failure_threshold: 'task_failure_threshold(mission, size(order), population)'
+          failure_overlap_none: '1 if team_experience(team, at(order, leader_index), observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).failure_overlap == ExperienceOverlap.none else 0'
+          failure_overlap_less_than_half: '1 if team_experience(team, at(order, leader_index), observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).failure_overlap == ExperienceOverlap.less_than_half else 0'
+          failure_overlap_at_least_half: '1 if team_experience(team, at(order, leader_index), observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).failure_overlap == ExperienceOverlap.at_least_half else 0'
+          failure_overlap_full: '1 if team_experience(team, at(order, leader_index), observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).failure_overlap == ExperienceOverlap.full else 0'
+          zero_fail_retention_none: '1 if team_experience(team, at(order, leader_index), observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).zero_fail_retention == ExperienceOverlap.none else 0'
+          zero_fail_retention_less_than_half: '1 if team_experience(team, at(order, leader_index), observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).zero_fail_retention == ExperienceOverlap.less_than_half else 0'
+          zero_fail_retention_at_least_half: '1 if team_experience(team, at(order, leader_index), observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).zero_fail_retention == ExperienceOverlap.at_least_half else 0'
+          zero_fail_retention_full: '1 if team_experience(team, at(order, leader_index), observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).zero_fail_retention == ExperienceOverlap.full else 0'
+          team_direct_alignment_aligned: '1 if team_experience(team, at(order, leader_index), observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).team_direct_alignment == DirectAlignment.aligned else 0'
+          team_direct_alignment_divergent: '1 if team_experience(team, at(order, leader_index), observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).team_direct_alignment == DirectAlignment.divergent else 0'
+          team_direct_alignment_mixed: '1 if team_experience(team, at(order, leader_index), observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).team_direct_alignment == DirectAlignment.mixed else 0'
+          leader_direct_alignment_aligned: '1 if team_experience(team, at(order, leader_index), observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).leader_direct_alignment == DirectAlignment.aligned else 0'
+          leader_direct_alignment_divergent: '1 if team_experience(team, at(order, leader_index), observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).leader_direct_alignment == DirectAlignment.divergent else 0'
+          leader_direct_alignment_mixed: '1 if team_experience(team, at(order, leader_index), observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts))).leader_direct_alignment == DirectAlignment.mixed else 0'
+          vote: '2'
+          coordinating: '1 if plan_vote_pressure(cognition(mind), reports(expressions), discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))), discussion_context(mission, at(order, leader_index), rejections, phase, team, approval_history, discussion_kind, speech_serial)) > 0 else 0'
+          support: '1 if approve else 0'
+          oppose: '0 if approve else 1'
+          danger: '1 if candidate_risk(team, person, reports(identity), reports(peers), reports(suspects), reports(pair), cognition(mind)) > 30 else 0'
+          good: '0 if evil_role(current_role(reports(identity))) else 1'
+          evil: '1 if evil_role(current_role(reports(identity))) else 0'
+          clean: '1 if known_team_clean(team, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, reports(census)) else 0'
+          tainted: '1 if known_team_risk(team, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history) else 0'
+          capacity_safe: '1 if task_capacity_basis(team_evil_interval(team, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, reports(census)), task_failure_threshold(mission, size(order), population)) == BallotGoalBasis.safe else 0'
+          capacity_risk: '1 if task_capacity_basis(team_evil_interval(team, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, reports(census)), task_failure_threshold(mission, size(order), population)) == BallotGoalBasis.risk else 0'
+          final_rejection: '1 if rejections >= 4 else 0'
+        prior: {benefit: 'vote_preference(approve, team, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))), reports(discussion), epoch, reports(results)) + (1 if approve else -1) * deliberation_signal(cognition(mind), team, mission, person, reports(results), reports(census))', reception: '0', coordination: '(1 if not approve else -1) * plan_vote_pressure(cognition(mind), reports(expressions), discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))), discussion_context(mission, at(order, leader_index), rejections, phase, team, approval_history, discussion_kind, speech_serial))', concealment: '0', credibility: '0', information: '0', effort: '-1', evidence: '(task_capacity_evidence(team_evil_interval(team, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, reports(census)), task_failure_threshold(mission, size(order), population), evil_role(current_role(reports(identity)))) * (1 if approve else -1)) if rejections < 4 else 0'}
+        known: {reception: 'True', concealment: 'True', effort: 'True', evidence: 'True'}
+        target: {type: Players, value: team}
+        correlate: {epoch: {type: Epoch, value: epoch}, group: {type: Players, value: team}}
+        capture:
+          perspective: {type: Role, value: current_role(reports(identity))}
+          experience_context: {type: TeamExperienceContext, value: 'team_experience(team, at(order, leader_index), observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts)))'}
+      AdviseTeam:
+        features:
+          speech: '2'
+          support: '1 if support_team else 0'
+          oppose: '0 if support_team else 1'
+          danger: '1 if candidate_risk(team, person, reports(identity), reports(peers), reports(suspects), reports(pair), cognition(mind)) > 30 else 0'
+          good: '0 if evil_role(current_role(reports(identity))) else 1'
+          evil: '1 if evil_role(current_role(reports(identity))) else 0'
+          clean: '1 if known_team_clean(team, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, reports(census)) else 0'
+          tainted: '1 if known_team_risk(team, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history) else 0'
+          capacity_safe: '1 if task_capacity_basis(team_evil_interval(team, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, reports(census)), task_failure_threshold(mission, size(order), population)) == BallotGoalBasis.safe else 0'
+          capacity_risk: '1 if task_capacity_basis(team_evil_interval(team, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, reports(census)), task_failure_threshold(mission, size(order), population)) == BallotGoalBasis.risk else 0'
+          final_rejection: '1 if rejections >= 4 else 0'
+          grounded: '1 if argument_verdict(rationale, team, support_team, reports(results), reports(census)) == ArgumentVerdict.verified else 0'
+          claim_discussion: 'match(rationale, ClaimAssessment() => 1, ClaimConflict() => 1, Judgment() => 0, TestTeam() => 0, FailureOverlap() => 0, SuccessCore() => 0, TrustSpeaker() => 0, EvilExhausted() => 0)'
+          claim_trust: 'match(rationale, ClaimAssessment(r) => (1 if r.credible else 0), ClaimConflict() => 0, Judgment() => 0, TestTeam() => 0, FailureOverlap() => 0, SuccessCore() => 0, TrustSpeaker() => 0, EvilExhausted() => 0)'
+          novel: '1 if fresh_advice(person, rationale, support_team, reports(discussion), team, epoch) else 0'
+          pressured: '1 if reply_value(rationale, reports(discussion), epoch, person) > 0 else 0'
+          success_core: '1 if success_core_argument(rationale) else 0'
+          testing: '1 if rationale == TeamArgument.TestTeam() else 0'
+          audience_unvoiced: '1 if audience_has_unvoiced(audience_snapshot(intended_listeners(person, reports(census), reports(peers), reports(suspects)), reports(discussion), team, epoch, support_team)) else 0'
+          audience_opposed: '1 if size(audience_snapshot(intended_listeners(person, reports(census), reports(peers), reports(suspects)), reports(discussion), team, epoch, support_team).opposed) > 0 else 0'
+          goal_aligned: '1 if expression_preference(support_team, team, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census)))) > 0 else 0'
+          goal_opposed: '1 if expression_preference(support_team, team, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census)))) < 0 else 0'
+        prior:
+          benefit: '0'
+          reception: audience_gap(intended_listeners(person, reports(census), reports(peers), reports(suspects)), reports(discussion), team, epoch, support_team) if fresh_advice(person, rationale, support_team, reports(discussion), team, epoch) else 0
+          coordination: coordination_value(fresh_advice(person, rationale, support_team, reports(discussion), team, epoch), audience_gap(intended_listeners(person, reports(census), reports(peers), reports(suspects)), reports(discussion), team, epoch, support_team), expression_preference(support_team, team, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census)))))
+          concealment: '0'
+          credibility: (argument_value(rationale, team, support_team, reports(results), reports(census)) + identity_argument_value(rationale, reports(claims), cognition(mind)) + reply_value(rationale, reports(discussion), epoch, person)) if fresh_advice(person, rationale, support_team, reports(discussion), team, epoch) else 0
+          information: advice_information(fresh_advice(person, rationale, support_team, reports(discussion), team, epoch), audience_gap(intended_listeners(person, reports(census), reports(peers), reports(suspects)), reports(discussion), team, epoch, support_team), rationale, team, support_team, reports(results), reports(census))
+          effort: '-2'
+          evidence: '0'
+        known: {benefit: 'True', credibility: 'identity_argument_known(rationale, reports(claims), cognition(mind))', concealment: 'True', effort: 'True', evidence: 'True'}
+        target: {type: Players, value: team}
+        correlate: {epoch: {type: Epoch, value: epoch}, group: {type: Players, value: team}}
+        capture:
+          first_expression: {type: Bool, value: 'fresh_advice(person, rationale, support_team, reports(discussion), team, epoch)'}
+          task_rationale: {type: Bool, value: 'match(rationale, ClaimAssessment() => False, ClaimConflict() => False, Judgment() => True, TestTeam() => True, FailureOverlap() => True, SuccessCore() => True, TrustSpeaker() => True, EvilExhausted() => True)'}
+          audience: {type: AudienceSnapshot, value: 'audience_snapshot(intended_listeners(person, reports(census), reports(peers), reports(suspects)), reports(discussion), team, epoch, support_team)'}
+          expression_direction: {type: GoalDirection, value: 'goal_direction(expression_preference(support_team, team, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census)))))'}
+      SuggestTeam:
+        features:
+          speech: '2'
+          alternative: '1'
+          success_core: '1 if rationale is not None and success_core_argument(rationale) else 0'
+          testing: '1 if rationale == TeamArgument.TestTeam() else 0'
+          grounded: '1 if rationale is not None and argument_verdict(rationale, members, True, reports(results), reports(census)) == ArgumentVerdict.verified else 0'
+          claim_discussion: 'match(rationale, ClaimAssessment() => 1, ClaimConflict() => 1, Judgment() => 0, TestTeam() => 0, FailureOverlap() => 0, SuccessCore() => 0, TrustSpeaker() => 0, EvilExhausted() => 0) if rationale is not None else 0'
+          claim_trust: 'match(rationale, ClaimAssessment(r) => (1 if r.credible else 0), ClaimConflict() => 0, Judgment() => 0, TestTeam() => 0, FailureOverlap() => 0, SuccessCore() => 0, TrustSpeaker() => 0, EvilExhausted() => 0) if rationale is not None else 0'
+          good: '0 if evil_role(current_role(reports(identity))) else 1'
+          evil: '1 if evil_role(current_role(reports(identity))) else 0'
+          clean: '1 if known_team_clean(members, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, reports(census)) else 0'
+          tainted: '1 if known_team_risk(members, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history) else 0'
+          capacity_safe: '1 if task_capacity_basis(team_evil_interval(members, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, reports(census)), task_failure_threshold(mission, size(order), population)) == BallotGoalBasis.safe else 0'
+          capacity_risk: '1 if task_capacity_basis(team_evil_interval(members, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, reports(census)), task_failure_threshold(mission, size(order), population)) == BallotGoalBasis.risk else 0'
+          final_rejection: '1 if rejections >= 4 else 0'
+          novel: '1 if fresh_alternative(members, reports(alternatives), epoch, person, rationale) else 0'
+        prior:
+          benefit: '0'
+          reception: '0'
+          coordination: alternative_value(fresh_alternative(members, reports(alternatives), epoch, person, rationale), intended_listeners(person, reports(census), reports(peers), reports(suspects)), rejections, vote_preference(True, team, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))), reports(discussion), epoch, reports(results)), discussion_preference(members, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census)))) - discussion_preference(team, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census)))))
+          concealment: '0'
+          credibility: 'suggestion_argument_value(rationale, members, reports(results), reports(census), reports(claims), cognition(mind)) if fresh_alternative(members, reports(alternatives), epoch, person, rationale) else 0'
+          information: '1 if fresh_alternative(members, reports(alternatives), epoch, person, rationale) else 0'
+          effort: '-2'
+          evidence: '0'
+        known: {benefit: 'True', reception: 'True', concealment: 'True', effort: 'True', evidence: 'True'}
+        target: {type: Players, value: members}
+        correlate: {epoch: {type: Epoch, value: epoch + 1}, group: {type: Players, value: members}}
+        capture: {first_expression: {type: Bool, value: 'fresh_alternative(members, reports(alternatives), epoch, person, rationale)'}}
+      ClaimIdentity:
+        features: {claim: '2', good: '0 if evil_role(current_role(reports(identity))) else 1', evil: '1 if evil_role(current_role(reports(identity))) else 0', novel: '1 if fresh_identity(person, claimed_role, reports(claims)) else 0'}
+        prior: {benefit: '0', reception: '0', coordination: '0', concealment: 'identity_projection_value(fresh_identity(person, claimed_role, reports(claims)), person, reports(identity), claimed_role, reports(claims), intended_listeners(person, reports(census), reports(peers), reports(suspects)))', credibility: '1 if fresh_identity(person, claimed_role, reports(claims)) else -1', information: '0', effort: '-2', evidence: '0'}
+        known: {benefit: 'True', reception: 'True', coordination: 'True', effort: 'True', evidence: 'True'}
+        target: {type: ClaimedRole, value: claimed_role}
+      PassSpeech:
+        features: {yield_floor: '1'}
+        prior: {benefit: '0', reception: '0', coordination: '0', concealment: '0', credibility: '0', information: '0', effort: '0', evidence: '0'}
+        known: {benefit: 'True', reception: 'True', coordination: 'True', concealment: 'True', credibility: 'True', information: 'True', effort: 'True', evidence: 'True'}
+      MissionCard:
+        features:
+          mission: '2'
+          support: '0 if sabotage else 1'
+          oppose: '1 if sabotage else 0'
+          good: '0 if evil_role(current_role(reports(identity))) else 1'
+          evil: '1 if evil_role(current_role(reports(identity))) else 0'
+          capacity_safe: '1 if task_capacity_basis(team_evil_interval(team, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, reports(census)), task_failure_threshold(mission, size(order), population)) == BallotGoalBasis.safe else 0'
+          capacity_risk: '1 if task_capacity_basis(team_evil_interval(team, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, reports(census)), task_failure_threshold(mission, size(order), population)) == BallotGoalBasis.risk else 0'
+        prior: {benefit: '100 if sabotage == evil_role(current_role(reports(identity))) else -20', reception: '0', coordination: '0', concealment: '0', credibility: '15 if not sabotage and failures == 0 and successes == 0 else 0', information: '0', effort: '-1', evidence: '0'}
+        known: {reception: 'True', coordination: 'True', concealment: 'True', effort: 'True', evidence: 'True'}
+        target: {type: Players, value: team}
+        correlate: {epoch: {type: Epoch, value: epoch}, group: {type: Players, value: team}}
+        capture: {perspective: {type: Role, value: current_role(reports(identity))}}
+      Assassinate:
+        features: {assassination: '2', evil: '1'}
+        prior: {benefit: 'merlin_signal(target, person, reports(identity), reports(peers), reports(suspects), approval_history, cognition(mind)) + 12 * public_role_signal(cognition(mind), target, Role.merlin, mission, person)', reception: '0', coordination: '0', concealment: '0', credibility: '0', information: '0', effort: '-1', evidence: '0'}
+        known: {reception: 'True', coordination: 'True', concealment: 'True', effort: 'True', evidence: 'True'}
+        target: {type: PlayerRef, value: target}
+strategies:
+  ExperientialPlayer:
+    actor: {person: PlayerRef}
+    views:
+      mind: {cognition: PlayerJudgment}
+      identity: {reports: RoleReports}
+      peers: {reports: PlayerReports}
+      suspects: {reports: PlayerReports}
+      pair: {reports: CandidateGroups}
+      discussion: {reports: TeamSpeeches}
+      claims: {reports: IdentitySpeeches}
+      census: {reports: PopulationReports}
+      results: {reports: QuestHistory}
+      alternatives: {reports: TeamSuggestions}
+      expressions: {reports: DiscussionStatements}
+      ballot_receipts: {reports: ApprovalHistory}
+    explain:
+      information:
+        当前主观看法: {type: PlayerJudgment, value: cognition(mind)}
+        本局本人身份: {type: RoleReports, value: reports(identity)}
+        已有任务记录: {type: QuestHistory, value: quest_history}
+        已听见的建议: {type: TeamSpeeches, value: reports(discussion)}
+        当前任务阈值与否决局势: {type: DiscussionGoals, value: 'discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))'}
+        当前建议核验: {type: ArgumentReviews, value: 'current_reviews(reports(discussion), reports(results), reports(census), team, epoch)'}
+        已听见的替代队伍: {type: TeamSuggestions, value: reports(alternatives)}
+      motive:
+        当前任务: {type: Mission, value: mission}
+    candidates:
+      - definition: ProposePlan
+        screen: '-leader_distance(order, at(order, leader_index), target_leader) - rejection_limit'
+        diversify: target_leader
+        choices: {rejection_limit: 'filter(RejectionLimits([1, 2, 3, 4]), limit => limit > rejections)'}
+        explain:
+          judgment:
+            等待目标队长的轮转步数: {type: Count, value: 'leader_distance(order, at(order, leader_index), target_leader)'}
+            本人对等待计划的评价: {type: ExperienceScore, value: 'plan_prospect(LeaderPlan(leader=target_leader, rejection_limit=rejection_limit), discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))), discussion_context(mission, at(order, leader_index), rejections, phase, team, approval_history, discussion_kind, speech_serial))'}
+      - definition: DecidePlan
+        screen: target.turn
+        diversify: participation
+        explain:
+          judgment:
+            所回应的计划: {type: MaybeDiscussionStatement, value: 'quoted_statement(reports(expressions), target)'}
+            当前计划状态: {type: PlanStatus, value: 'plan_status(reports(expressions), target, discussion_context(mission, at(order, leader_index), rejections, phase, team, approval_history, discussion_kind, speech_serial))'}
+            已表达参加的人物: {type: Players, value: 'plan_supporters(reports(expressions), target, mission)'}
+            本人对参加或退出的评价: {type: ExperienceScore, value: 'plan_participation_value(reports(expressions), target, participation, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))), discussion_context(mission, at(order, leader_index), rejections, phase, team, approval_history, discussion_kind, speech_serial))'}
+      - definition: RetractStatement
+        screen: target.turn
+        choices: {target: 'withdrawal_targets(reports(expressions), discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))), discussion_context(mission, at(order, leader_index), rejections, phase, team, approval_history, discussion_kind, speech_serial), size(team))'}
+        explain:
+          judgment:
+            撤回的原始表达: {type: MaybeDiscussionStatement, value: 'quoted_statement(reports(expressions), target)'}
+      - definition: CompareTeams
+        screen: >
+          consider_comparison(preferred, alternative, grounds,
+          discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history,
+          cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))),
+          expression_fresh(comparison_content(preferred, alternative, grounds, mission), reports(expressions), person, mission))
+        diversify: preferred
+        choices:
+          alternative: 'union(PlayerSets([team]), noncurrent_heard_options(team, reports(alternatives), epoch))'
+          grounds: 'comparison_ground_sets(quest_history, preferred, reports(discussion), epoch, person) if alternative == team or preferred in noncurrent_heard_options(team, reports(alternatives), epoch) else ArgumentSets([])'
+        explain:
+          judgment:
+            相对方案价值: {type: ExperienceScore, value: 'discussion_preference(preferred, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census)))) - discussion_preference(alternative, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))))'}
+      - definition: StateCondition
+        screen: >
+          consider_condition(conditions, satisfied, otherwise,
+          discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history,
+          cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))),
+          size(team), expression_fresh(condition_content(conditions, satisfied, otherwise, mission), reports(expressions), person, mission))
+        diversify: otherwise
+        inputs: {satisfied: 'Stance.oppose if otherwise == Stance.support else Stance.support'}
+        choices:
+          conditions: 'candidate_conditions(quest_history, team, person, order, reports(alternatives), epoch)'
+          otherwise: 'condition_otherwise_options(conditions, order, person)'
+        explain:
+          motive:
+            条件明确排除本人: {type: Bool, value: 'person in condition_members(conditions, order, False)'}
+          judgment:
+            符合条件的有限假设队伍: {type: PlayerSets, value: 'position_examples(conditions, order, size(team), True)'}
+            条件成立时的本人评价: {type: ExperienceScore, value: 'condition_value(position_examples(conditions, order, size(team), True), satisfied, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))))'}
+      - definition: RespondStatement
+        screen: 'target.turn + 3 * size(grounds) + (1 if attitude == ResponseAttitude.undecided else 2)'
+        diversify: attitude
+        choices:
+          grounds: 'reply_ground_sets(attitude, quest_history, team, reports(discussion), epoch, person, reports(census))'
+          target: 'grounded_reply_targets(reports(expressions), mission, person, grounds, attitude, team, discussion_kind)'
+        explain:
+          judgment:
+            回应的原始表达: {type: MaybeDiscussionStatement, value: 'quoted_statement(reports(expressions), target)'}
+            回应引用的公开依据: {type: TeamArguments, value: grounds}
+            本人对表达的回应评价: {type: ExperienceScore, value: 'reply_value_local(quoted_statement(reports(expressions), target), attitude, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))), size(team))'}
+      - definition: RedirectDiscussion
+        screen: '0'
+        explain:
+          motive:
+            私下掩护价值: {type: ExperienceScore, value: 'redirect_value(topic, reports(identity), known_team_risk(team, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history))'}
+      - definition: StateOpinion
+        screen: 'consider_assertion(assertion, team)'
+        diversify: stance
+        choices: {assertion: 'candidate_public_assertions(order, team, public_cast, person, reports(pair), reports(results))'}
+        explain:
+          judgment:
+            公开说法与本地证据的关系: {type: IdentityVerdict, value: 'public_assertion_verdict(assertion, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))))'}
+            当前公开观点核验: {type: PublicOpinionReviews, value: 'public_opinion_reviews(reports(expressions), discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))))'}
+      - definition: Speak
+        screen: size(clauses)
+        diversify: size(clauses)
+        choices: {clauses: 'candidate_compositions(team, reports(alternatives), reports(discussion), reports(expressions), quest_history, epoch, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))))'}
+        explain:
+          judgment:
+            一次发言中的各项内容: {type: DiscussionContents, value: clauses}
+            本人对整句的评价: {type: ExperienceScore, value: 'compound_value(clauses, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))), size(team), reports(expressions))'}
+      - definition: AskQuestion
+        screen: 'consider_question(subject, recipient, team)'
+        diversify: purpose
+        choices:
+          purpose: 'QuestionPurposes([QuestionPurpose.explain_choice, QuestionPurpose.explain_basis, QuestionPurpose.clarify])'
+          subject: 'candidate_question_subjects(recipient, purpose, reports(claims), reports(discussion), reports(alternatives), reports(expressions), reports(ballot_receipts), epoch, mission, discussion_kind)'
+      - definition: AnswerQuestion
+        screen: 'question.turn + consider_answer(reply)'
+        diversify: question
+        choices: {reply: 'candidate_public_answers(question_assertion(quoted_statement(reports(expressions), question), reports(expressions), reports(ballot_receipts)))'}
+        explain:
+          judgment:
+            实际收到的问题: {type: MaybeDiscussionStatement, value: 'quoted_statement(reports(expressions), question)'}
+      - definition: ProposeTeam
+        screen: 'proposal_value(members, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))), epoch, reports(results), reports(claims))'
+        # Keep a representative safe and risky team before later personality appraisal.
+        diversify: 'candidate_risk(members, person, reports(identity), reports(peers), reports(suspects), reports(pair), cognition(mind)) > 30'
+        explain:
+          judgment:
+            经验匹配情境: {type: TeamExperienceContext, value: 'team_experience(members, person, observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts)))'}
+            候选队伍风险: {type: ExperienceScore, value: 'candidate_risk(members, person, reports(identity), reports(peers), reports(suspects), reports(pair), cognition(mind))'}
+            已有线索确认包含邪恶成员: {type: Bool, value: 'known_team_risk(members, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history)'}
+            队伍邪恶人数范围: {type: EvilInterval, value: 'team_evil_interval(members, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, reports(census))'}
+            任务所需失败票数: {type: Count, value: 'task_failure_threshold(mission, size(order), population)'}
+            任务破坏能力判断: {type: BallotGoalBasis, value: 'task_capacity_basis(team_evil_interval(members, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, reports(census)), task_failure_threshold(mission, size(order), population))'}
+            推荐者表决的当前利益评价: {type: PersonGoalReviews, value: 'recommendation_goal_reviews(ballot_goal_context(discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))), reports(ballot_receipts), reports(census), population), members, epoch)'}
+      - definition: ApproveTeam
+        screen: '0'
+        explain:
+          judgment:
+            经验匹配情境: {type: TeamExperienceContext, value: 'team_experience(team, at(order, leader_index), observer_experience(person, order, reports(identity), cognition(mind), reports(results), reports(discussion), reports(ballot_receipts)))'}
+            当前队伍风险: {type: ExperienceScore, value: 'candidate_risk(team, person, reports(identity), reports(peers), reports(suspects), reports(pair), cognition(mind))'}
+            已有线索确认包含邪恶成员: {type: Bool, value: 'known_team_risk(team, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history)'}
+            再否决就会输局: {type: Bool, value: 'rejections >= 4'}
+            队伍邪恶人数范围: {type: EvilInterval, value: 'team_evil_interval(team, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, reports(census))'}
+            任务所需失败票数: {type: Count, value: 'task_failure_threshold(mission, size(order), population)'}
+            任务破坏能力判断: {type: BallotGoalBasis, value: 'task_capacity_basis(team_evil_interval(team, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, reports(census)), task_failure_threshold(mission, size(order), population))'}
+      - definition: AdviseTeam
+        screen: 'consider_argument(rationale)'
+        diversify: 'advice_search_group(support_team, rationale)'
+        explain:
+          motive:
+            希望影响的听众: {type: Players, value: 'intended_listeners(person, reports(census), reports(peers), reports(suspects))'}
+            希望促成的选择: {type: CommunicationAim, value: 'CommunicationAim.recruit_support if support_team else CommunicationAim.recruit_rejection'}
+          judgment:
+            本人对队伍的判断: {type: ExperienceScore, value: 'discussion_preference(team, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))))'}
+            本人表决偏好: {type: ExperienceScore, value: 'vote_preference(support_team, team, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census))), reports(discussion), epoch, reports(results))'}
+            本次主张符合本人倾向: {type: Bool, value: 'expression_preference(support_team, team, discussion_perspective(person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, cognition(mind), order, discussion_goals(mission, rejections, task_failure_threshold(mission, size(order), population), reports(census)))) > 0'}
+            本次表达有新内容: {type: Bool, value: 'fresh_advice(person, rationale, support_team, reports(discussion), team, epoch)'}
+            尚未同意此立场的预期听众数: {type: ExperienceScore, value: 'audience_gap(intended_listeners(person, reports(census), reports(peers), reports(suspects)), reports(discussion), team, epoch, support_team)'}
+            公开表达的立场: {type: Bool, value: support_team}
+            回应本人受到的质疑: {type: ExperienceScore, value: 'reply_value(rationale, reports(discussion), epoch, person)'}
+            这项理由的核验: {type: ArgumentVerdict, value: 'argument_verdict(rationale, team, support_team, reports(results), reports(census))'}
+            引用的本人身份说法: {type: IdentitySpeeches, value: 'cited_claims(rationale, reports(claims))'}
+            身份说法评价: {type: ExperienceScore, value: 'identity_argument_value(rationale, reports(claims), cognition(mind))'}
+            对该身份说法的当前看法: {type: IdentityJudgments, value: 'cited_identity_judgments(rationale, reports(claims), cognition(mind))'}
+            已有线索确认包含邪恶成员: {type: Bool, value: 'known_team_risk(team, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history)'}
+            再否决就会输局: {type: Bool, value: 'rejections >= 4'}
+            队伍邪恶人数范围: {type: EvilInterval, value: 'team_evil_interval(team, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, reports(census))'}
+      - definition: SuggestTeam
+        screen: 'consider_team(members, person, reports(identity), reports(peers), reports(suspects), quest_history) + (consider_argument(rationale) if rationale is not None else 0)'
+        diversify: members
+        choices:
+          rationale: alternative_arguments(quest_history, members, team, reports(discussion), epoch, person, reports(claims), phase == Phase.response, public_cast, reports(results), reports(census))
+        explain:
+          motive:
+            希望影响的听众: {type: Players, value: 'intended_listeners(person, reports(census), reports(peers), reports(suspects))'}
+            希望促成的选择: {type: CommunicationAim, value: CommunicationAim.offer_alternative}
+          judgment:
+            推荐队伍: {type: Players, value: members}
+            附带的推荐理由: {type: MaybeTeamArgument, value: rationale}
+            本次建议包含新的本人观点: {type: Bool, value: 'fresh_alternative(members, reports(alternatives), epoch, person, rationale)'}
+            推荐队伍风险: {type: ExperienceScore, value: 'candidate_risk(members, person, reports(identity), reports(peers), reports(suspects), reports(pair), cognition(mind))'}
+            队伍邪恶人数范围: {type: EvilInterval, value: 'team_evil_interval(members, person, reports(identity), reports(peers), reports(suspects), reports(pair), quest_history, reports(census))'}
+      - definition: ClaimIdentity
+        screen: '1 if claimed_role == Role.merlin else 0'
+        explain:
+          motive:
+            希望影响的听众: {type: Players, value: 'intended_listeners(person, reports(census), reports(peers), reports(suspects))'}
+            希望促成的选择: {type: CommunicationAim, value: CommunicationAim.project_identity}
+          judgment:
+            本人尚未作过这个身份声明: {type: Bool, value: 'fresh_identity(person, claimed_role, reports(claims))'}
+      - {definition: PassSpeech, screen: '0'}
+      - {definition: MissionCard, screen: '0'}
+      - definition: Assassinate
+        screen: '0'
+        explain:
+          judgment:
+            目标梅林假设: {type: IdentityJudgment, value: 'judged_identity(cognition(mind), target, Role.merlin)'}
+            当前公开观点的软影响: {type: ExperienceScore, value: 'public_role_signal(cognition(mind), target, Role.merlin, mission, person)'}
+    semantics: ExperientialAvalon
+    consideration: {per_ability: 6}
+    participation:
+      personality: {credibility: 1, information: 1}
+      goals: {benefit: 1, coordination: 1, concealment: 1, effort: 1, evidence: 1}
+    tie: canonical
+    wait: no_candidate
+control:
+  table:
+    kind: Player
+    definition: ExperientialPlayer
+    views: {mind: player_understanding, identity: own_role, peers: evil_peers, suspects: merlin_suspects, pair: percival_candidates, discussion: advise_team.said, claims: claim_identity.said, census: population, results: reveal_quest.result, alternatives: suggest_team.said, expressions: publish_discussion.said, ballot_receipts: reveal_approval.result}

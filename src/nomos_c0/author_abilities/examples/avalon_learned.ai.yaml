@@ -1,0 +1,10 @@
+# All evidence is acquired by this controller or already public in Match.
+schema: nomos.author.ai
+imports: [avalon_red_ranking.ai.yaml]
+control:
+  council:
+    kind: Player
+    definition: LocalChoice
+    views: {mind: council, identity: own_role}
+    with: {style: {label: 均衡派, risk: 100, concealment: 100, speech: 100, trust: 100}}
+    rankings: {Assassinate: red_assassination}

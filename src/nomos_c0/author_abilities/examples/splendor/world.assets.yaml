@@ -1,0 +1,8 @@
+schema: nomos.author.assets
+actors:
+  a: {"tokens":{"white":0,"blue":0,"green":0,"red":0,"black":0,"gold":0},"purchased":[],"reserved":[],"nobles":[],"turns":0}
+  b: {"tokens":{"white":0,"blue":0,"green":0,"red":0,"black":0,"gold":0},"purchased":[],"reserved":[],"nobles":[],"turns":0}
+objects: {}
+random: {seed: 41}
+contexts:
+  match: {"phase":"setup","turn_index":0,"bank":{"white":0,"blue":0,"green":0,"red":0,"black":0,"gold":0},"decks":{"low":[],"middle":[],"high":[]},"market":[],"visitors":[],"final_round":false,"last_move":"take_different","history":[]}

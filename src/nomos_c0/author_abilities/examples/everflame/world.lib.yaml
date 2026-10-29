@@ -1,0 +1,3 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+schema: nomos.author.lib
+imports: [types.lib.yaml, movement.lib.yaml, perception.lib.yaml, everflame.lib.yaml, residents.lib.yaml, cold.lib.yaml, ritual.lib.yaml, threat.lib.yaml, ending.lib.yaml]

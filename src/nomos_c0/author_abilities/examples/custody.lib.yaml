@@ -1,0 +1,109 @@
+schema: nomos.author.lib
+values:
+  Energy: {int: [0, 10]}
+  Site: {enum: [suite, counter]}
+  PersonRef: {ref: Person}
+  PortableRef: {ref: Portable}
+  Holder: {optional: PersonRef}
+  TakeOutcome: {variant: {Taken: {}, Unavailable: {}}}
+  DropOutcome: {variant: {Dropped: {}, Unavailable: {}}}
+  OfferOutcome: {variant: {Offered: {}, Unavailable: {}}}
+  ReceiveOutcome: {variant: {Received: {}, Unavailable: {}}}
+entities:
+  Person:
+    kind: person
+    reference: public
+    fields: {position: Site, energy: Energy, awake: Bool}
+    view: [id, position, energy, awake]
+    public: [id, position, awake]
+  Portable:
+    kind: object
+    reference: public
+    fields: {ground_site: Site, holder: Holder}
+    view: [id, ground_site, holder]
+  Key:
+    kind: object
+    extends: Portable
+    reference: public
+    fields: {}
+    view: [id, ground_site, holder]
+  Horn:
+    kind: object
+    extends: Portable
+    reference: public
+    fields: {}
+    view: [id, ground_site, holder]
+relations:
+  custody:
+    kind: carrying
+    item: Portable
+    person: Person
+    holder: holder
+    ground: ground_site
+    position: position
+queries:
+  nearby:
+    parameters: {item: PortableRef, person: PersonRef}
+    returns: Bool
+    expression: custody.position(item) == person.position
+  can_try_take:
+    parameters: {item: PortableRef, person: PersonRef}
+    returns: Bool
+    expression: person.awake and nearby(item, person)
+abilities:
+  Take:
+    actor: {person: PersonRef}
+    parameters: {fee: Energy}
+    inputs:
+      item: {type: PortableRef, choose: 'known(Portable)'}
+    where: can_try_take(item, person)
+    cost: ['consume(person.energy, fee)']
+    results: TakeOutcome
+    resolve:
+      attempt: custody.take(item, person)
+      success: {result: 'TakeOutcome.Taken()'}
+      failure: {result: 'TakeOutcome.Unavailable()'}
+  Drop:
+    actor: {person: PersonRef}
+    parameters: {fee: Energy}
+    inputs:
+      item: {type: PortableRef, choose: 'known(Portable)'}
+    where: person.awake and custody.held_by(item, person)
+    cost: ['consume(person.energy, fee)']
+    results: DropOutcome
+    resolve:
+      attempt: custody.drop(item, person)
+      success: {result: 'DropOutcome.Dropped()'}
+      failure: {result: 'DropOutcome.Unavailable()'}
+  OfferTransfer:
+    actor: {person: PersonRef}
+    parameters: {fee: Energy}
+    inputs:
+      item: {type: PortableRef, choose: 'known(Portable)'}
+      recipient:
+        type: PersonRef
+        choose: known(Person)
+        constraint: recipient != person
+    where: person.awake and recipient.awake and custody.held_by(item, person) and nearby(item, recipient)
+    cost: ['consume(person.energy, fee)']
+    results: OfferOutcome
+    resolve:
+      attempt: custody.offer(item, person, recipient)
+      success: {result: 'OfferOutcome.Offered()'}
+      failure: {result: 'OfferOutcome.Unavailable()'}
+  TryReceive:
+    actor: {person: PersonRef}
+    parameters: {fee: Energy}
+    inputs:
+      item: {type: PortableRef, choose: 'known(Portable)'}
+      giver:
+        type: PersonRef
+        choose: known(Person)
+        constraint: giver != person
+    where: person.awake and giver.awake and custody.held_by(item, giver) and nearby(item, person)
+    cost: ['consume(person.energy, fee)']
+    results: ReceiveOutcome
+    resolve:
+      attempt: custody.transfer(item, giver, person)
+      success: {result: 'ReceiveOutcome.Received()'}
+      failure: {result: 'ReceiveOutcome.Unavailable()'}

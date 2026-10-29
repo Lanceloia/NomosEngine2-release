@@ -1,0 +1,2 @@
+schema: nomos.author.lib
+imports: [economy_types.lib.yaml, allocation.lib.yaml, shipping.lib.yaml, catalog_queries.lib.yaml, economy_queries.lib.yaml, roles.lib.yaml, turns.lib.yaml]

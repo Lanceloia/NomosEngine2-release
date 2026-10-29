@@ -1,0 +1,76 @@
+# One observed target and one shared attack roll; damage is not cold exposure.
+schema: nomos.author.lib
+values:
+  BreathResult: {variant: {Blocked: {}, Released: {roll: DieRoll, aim: Site}}}
+queries:
+  endurance_after_hit:
+    parameters: {victim: BeingRef, damage: Count}
+    returns: Count
+    expression: '0 if victim.endurance <= damage else victim.endurance - damage'
+disclosures:
+  ElementalTargetObserved:
+    parameters: {observer: IceElementalRef}
+    sample: after
+    to: Beings([observer])
+    returns: TargetFindings
+    value: 'TargetFindings([observer.target_sighting]) if observer.target_sighting is not None else TargetFindings([])'
+    access: acquired
+abilities:
+  ElementalObserve:
+    actor: {person: IceElementalRef}
+    context: Palace
+    where: mobile(person)
+    time_cost: '10000'
+    results: Bool
+    resolve:
+      when: >
+        threat_target.alive and (threat_target.position == person.position or
+          exactly_one(breath_zones, z => z.origin == person.position and z.aim == threat_target.position))
+      then:
+        effects: ['set(person.observed_origin, person.position)', 'set(person.target_sighting, TargetFinding(subject=threat_target, origin=person.position, site=threat_target.position))']
+        result: 'True'
+        deliver: {sighting: 'ElementalTargetObserved(person)'}
+      else:
+        effects: ['set(person.observed_origin, person.position)', 'set(person.target_sighting, None)']
+        result: 'False'
+  ElementalBreath:
+    actor: {person: IceElementalRef}
+    context: Palace
+    views: {findings: {reports: TargetReports}}
+    inputs:
+      aim:
+        type: TargetFinding
+        choose: >
+          TargetFindings([person.target_sighting]) if person.target_sighting is not None and
+          exists(reports(findings), observations => person.target_sighting in observations)
+          else TargetFindings([])
+    where: >
+      mobile(person) and person.target_sighting is not None and
+      person.target_sighting.origin == person.position and
+      exactly_one(breath_zones, z => z.origin == person.position and z.aim == person.target_sighting.site)
+    time_cost: '10000'
+    results: BreathResult
+    resolve:
+      when: >
+        aim.origin == person.position and aim.subject == threat_target and threat_target.alive and
+        threat_target.position == aim.site and
+        exactly_one(breath_zones, z => z.origin == person.position and z.aim == aim.site)
+      then:
+        draw: {rolled: {type: DieRoll, sides: '20'}}
+        then:
+          effects:
+          - for: victim
+            in: >
+              filter(population, p => p.alive and breath_damage > 0 and rolled >= breath_threshold and
+                exists(breath_zones, z => z.origin == person.position and z.aim == aim.site and p.position in z.affected_sites))
+            effects:
+            - set(victim.endurance, endurance_after_hit(victim, breath_damage))
+            - set(victim.alive, victim.endurance > 0)
+            - set(victim.awake, victim.awake and endurance_after_hit(victim, breath_damage) > 0)
+            - set(victim.last_damage, DamageFinding(site=victim.position, roll=rolled, endurance=endurance_after_hit(victim, breath_damage), alive=victim.endurance > 0))
+          - set(person.target_sighting, None)
+          - set(person.observed_origin, None)
+          result: 'BreathResult.Released(roll=rolled, aim=aim.site)'
+      else:
+        effects: ['set(person.target_sighting, None)', 'set(person.observed_origin, None)']
+        result: 'BreathResult.Blocked()'

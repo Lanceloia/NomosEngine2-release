@@ -1,0 +1,23 @@
+schema: nomos.author.ai
+semantics:
+  Construction:
+    features: [selection]
+    outcomes: [benefit]
+    meanings:
+      Choose:
+        features: {selection: '1'}
+        prior: {benefit: 'sum_by(members, n => n)'}
+    feedback:
+      ReviewSelection:
+        definition: Choose
+        receipts: {outcome: {channel: choose.result, match: {}}}
+        outcomes: {benefit: '10 if outcome.success else -3'}
+strategies:
+  Constructor:
+    actor: {person: PersonRef}
+    candidates: [{definition: Choose}]
+    semantics: Construction
+    tie: canonical
+    wait: no_candidate
+control:
+  primary: {actor: a, definition: Constructor}

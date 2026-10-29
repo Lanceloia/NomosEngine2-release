@@ -1,0 +1,5 @@
+schema: nomos.author.assets
+actors: {a: {}, b: {}}
+objects: {}
+contexts:
+  workshop: {completed: [], last_budget: {expenses: [], saved: 0}}

@@ -1,0 +1,47 @@
+# Hearing an invitation permits a reply; a reply does not bind later movement.
+schema: nomos.author.lib
+disclosures:
+  EscortInvitationHeard:
+    parameters: {speaker: BeingRef, destination: Site}
+    sample: after
+    to: filter(known(Being), p => p != speaker and can_speak(p) and p.position == speaker.position)
+    returns: Invitation
+    value: Invitation(speaker=speaker, destination=destination, epoch=speaker.invitation_epoch)
+    access: acquired
+  EscortReplyHeard:
+    parameters: {speaker: BeingRef, invitation: Invitation, readiness: Readiness}
+    sample: after
+    to: filter(known(Being), p => p == invitation.speaker and can_speak(p) and p.position == speaker.position)
+    returns: EscortReply
+    value: EscortReply(speaker=speaker, invitation=invitation, site=speaker.position, readiness=readiness)
+    access: acquired
+abilities:
+  InviteEscort:
+    actor: {person: BeingRef}
+    inputs:
+      destination: {type: Site, choose: 'Sites([Site.palace_exit])'}
+    where: can_speak(person) and person.position != Site.palace_exit
+    time_cost: '10000'
+    results: Bool
+    resolve:
+      effects: ['set(person.invitation_epoch, person.invitation_epoch + 1)']
+      result: 'True'
+      deliver: {heard: 'EscortInvitationHeard(person, destination)'}
+  ReplyEscort:
+    actor: {person: BeingRef}
+    views: {invites: {reports: InvitationReports}, nearby: {projection: Presences}}
+    inputs:
+      invitation:
+        type: Invitation
+        choose: 'filter(distinct(reports(invites)), i => i not in person.answered_invitations)'
+      readiness: {type: Readiness, choose: 'ReadinessChoices([Readiness.ready_now, Readiness.not_ready_now, Readiness.unable_now])'}
+    where: >
+      can_speak(person) and exists(projected(nearby), p => p.subject == invitation.speaker) and
+      ((mobile(person) and readiness != Readiness.unable_now) or
+        (not mobile(person) and readiness == Readiness.unable_now))
+    time_cost: '1000'
+    results: Bool
+    resolve:
+      effects: ['set(person.answered_invitations, union(person.answered_invitations, Invitations([invitation])))']
+      result: 'True'
+      deliver: {heard: 'EscortReplyHeard(person, invitation, readiness)'}

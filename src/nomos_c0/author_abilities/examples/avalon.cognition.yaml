@@ -1,0 +1,29 @@
+schema: nomos.author.cognition
+models:
+  CandidateReasoning:
+    actor: {player: PlayerRef}
+    propositions: CandidateThought
+    appraisal_keys: PlayerRef
+    slots: CandidateGroup
+    view: CandidateView
+    prior_view: CandidatePrior
+    evidence: {pairs: {reports: CandidateGroups}}
+    rules:
+      ReceivedPair:
+        on: pairs
+        item: notice
+        policy: latest
+        slot: notice
+        believe: {proposition: 'CandidateThought.Notice(pair=notice)', support: '1', opposition: '0'}
+    derive:
+      PossibleMerlin:
+        variables: {pair: CandidateGroup}
+        premises:
+          - supports(base, CandidateThought.Notice(pair=pair))
+        each: {person: pair.subjects}
+        conclude: support(CandidateThought.Candidate(person=person))
+bindings:
+  percival:
+    actor: b
+    definition: CandidateReasoning
+    views: {pairs: percival_candidates}

@@ -1,0 +1,2 @@
+schema: nomos.author.lib
+imports: [types.lib.yaml, allocation.lib.yaml, shipping.lib.yaml, catalog.lib.yaml]

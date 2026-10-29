@@ -1,0 +1,165 @@
+schema: nomos.tabletop.presentation
+title: 璀璨宝石
+result_label: 获胜者与最终排名
+description: 收集宝石，购入发展牌，用永久折扣建立你的引擎。达到目标分后完成最后一轮，争取贵族的青睐。
+rules:
+  title: 璀璨宝石 · 本局规则与流程
+  sections:
+    - title: 目标与回合
+      text: '购买发展牌，积累永久折扣与声望。本局两人，目标声望十五分；有人达到目标后，完成本轮，让每人拥有相同回合数，再比较声望。并列时发展牌较少者胜，仍相同则并列获胜。'
+    - title: 每回合选择一项行动
+      text: '拿三枚不同颜色的宝石；或拿两枚同色宝石，该色供给须至少四枚；或保留一张公开牌或牌堆顶牌；或购买一张公开牌或自己的保留牌。供给不足三种颜色时，不同色行动可少拿。'
+    - title: 保留与购买
+      text: '最多保留三张牌。保留时供给有黄金便获得一枚黄金，黄金可代替任意颜色付款。已有发展牌提供永久折扣；购买时先扣除折扣，再支付筹码。保留牌和个人筹码在自己的信息区查看。'
+    - title: 筹码上限与贵族
+      text: '回合结束筹码最多十枚，超出时必须归还到上限。若永久折扣满足贵族条件，贵族自动来访；同时满足多个贵族时选择其中一位。贵族提供声望，每回合最多一位。'
+  sources:
+    - {title: 基础版官方规则书（英文 PDF）, url: 'https://cdn.svc.asmodee.net/production-spacecowboys/uploads/2025/10/SCSPL01EN_SPLENDOR_RULES_LIGHT.pdf'}
+labels:
+  a: 商人 · A
+  b: 商人 · B
+  c: 商人 · C
+  d: 商人 · D
+  setup: 等待开桌
+  play: 采购阶段
+  cleanup: 整理筹码
+  nobles: 贵族来访
+  end_turn: 回合结束
+  finished: 对局结束
+  final_round: 最后一轮
+  white: 钻石
+  blue: 蓝宝石
+  green: 祖母绿
+  red: 红宝石
+  black: 缟玛瑙
+  gold: 黄金
+  low: 一级余牌
+  middle: 二级余牌
+  high: 三级余牌
+  player: 玩家
+  points: 声望
+  purchased: 发展牌
+  turns: 回合
+  winners: 胜者
+  standings: 排名
+  number: 回合
+  kind: 行动
+  take_different: 收集不同宝石
+  take_pair: 收集同色宝石
+  reserve_faceup: 保留公开牌
+  reserve_blind: 从牌堆保留
+  purchase: 购买发展牌
+  return_excess: 归还筹码
+components:
+  Gems:
+    kind: resources
+    fields:
+      white: {label: 钻石, color: '#e4e9ed', symbol: diamond}
+      blue: {label: 蓝宝石, color: '#4a90cf', symbol: hexagon}
+      green: {label: 祖母绿, color: '#45ac80', symbol: square}
+      red: {label: 红宝石, color: '#d75b72', symbol: triangle}
+      black: {label: 缟玛瑙, color: '#5a5369', symbol: circle}
+      gold: {label: 黄金, color: '#e6bd52', symbol: star}
+  Color: {kind: resource_choice, resources: Gems}
+  Card:
+    kind: card
+    label: 发展牌
+    resources: Gems
+    fields: {identity: id, group: tier, score: points, bonus: bonus, cost: cost}
+  Noble:
+    kind: card
+    label: 贵族
+    resources: Gems
+    fields: {identity: id, score: points, cost: requirement}
+  Standing:
+    kind: table
+    columns: {player: 玩家, points: 声望, purchased: 发展牌, turns: 回合}
+  PublicPlayerBoard:
+    kind: table
+    columns: {player: 玩家, points: 声望, tokens: 筹码, discounts: 永久折扣, reserved: 保留牌数}
+  ReserveCount:
+    kind: table
+    columns: {player: 玩家, count: 保留牌数}
+  Turn:
+    kind: table
+    columns: {player: 玩家, number: 回合, kind: 行动, points: 声望}
+seats:
+  marks:
+  - {source: {projection: current_player}, label: 当前行动者, icon: flag, tone: positive}
+panels:
+  - {title: 当前阶段, zone: board, source: {context: match.phase}}
+  - {title: 当前商人, zone: board, source: {projection: current_player}}
+  - {title: 目标声望, zone: board, source: {projection: target_score_view}}
+  - {title: 筹码供给, zone: board, source: {context: match.bank}}
+  - {title: 发展牌市场, zone: board, source: {context: match.market}}
+  - {title: 来访贵族, zone: board, source: {context: match.visitors}}
+  - {title: 商人们, zone: board, source: {projection: public_resources}}
+  - {title: 最后一轮, zone: private, source: {context: match.final_round}}
+  - {title: 你的筹码, zone: private, source: {self: tokens}}
+  - {title: 永久折扣, zone: private, source: {projection: bonuses_view}}
+  - {title: 你的保留牌, zone: private, source: {self: reserved}}
+  - {title: 你的发展牌, zone: private, source: {self: purchased}, fold: true}
+  - {title: 你的贵族, zone: private, source: {self: nobles}}
+  - {title: 牌堆余量, zone: private, source: {projection: deck_sizes}}
+  - {title: 保留牌数量, zone: history, source: {projection: reserve_counts}}
+  - {title: 回合记录, zone: history, source: {context: match.history}}
+actions:
+  prepare:
+    surface: inline
+    title: 开桌
+    description: 洗牌，摆出三个等级的发展牌和来访贵族。
+    inputs: {}
+  take_different:
+    surface: inline
+    title: 收集不同宝石
+    description: 选择不同颜色，每种获得一枚筹码。供给充足时选择三色，不足时可少拿。
+    inputs: {colors: {label: 选择宝石}}
+  take_pair:
+    surface: inline
+    title: 收集同色宝石
+    description: 选择供给至少有四枚的颜色，获得两枚该色筹码。
+    inputs: {color: {label: 选择颜色}}
+  reserve_faceup:
+    surface: inline
+    title: 保留公开牌
+    description: 将牌留给自己购买；供给有黄金时获得一枚黄金。
+    target: card
+    inputs: {card: {label: 保留哪张牌}}
+  reserve_blind:
+    surface: inline
+    title: 从牌堆保留
+    description: 选择等级，取得牌堆顶的一张私牌；供给有黄金时获得一枚黄金。
+    inputs: {tier: {label: 选择等级, options: {'1': 一级发展牌, '2': 二级发展牌, '3': 三级发展牌}}}
+  purchase:
+    surface: inline
+    title: 购买发展牌
+    description: 用永久折扣减免费用，再支付筹码；黄金可以替代任何颜色。
+    target: card
+    preview:
+      永久折扣: bonuses(player)
+      折扣后费用: discounted(card.cost, bonuses(player))
+      当前持有: player.tokens
+    inputs:
+      card: {label: 购买哪张牌}
+      payment:
+        label: 支付筹码
+        suggest: canonical_payment(player.tokens, discounted(card.cost, bonuses(player)))
+        suggest_label: 采用建议付款
+        limit: player.tokens
+        invalid_label: 请支付折扣后的费用；缺少的颜色可由黄金替代。
+  return_excess:
+    surface: inline
+    title: 归还超额筹码
+    description: 选择归还的颜色与数量，把库存降到上限。
+    preview: {持有筹码: player.tokens, 需要归还: 'total(player.tokens) - token_limit'}
+    inputs:
+      returned:
+        label: 归还筹码
+        limit: player.tokens
+        invalid_label: 归还数量须恰好等于超出的筹码数。
+  choose_noble:
+    surface: inline
+    title: 迎接贵族
+    description: 你的发展牌满足来访条件，本回合选择一位贵族。
+    target: noble
+    inputs: {noble: {label: 选择贵族}}

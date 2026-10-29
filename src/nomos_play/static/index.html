@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nomos 桌游</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/icons.js" defer></script>
+  <script src="/widgets.js" defer></script>
+  <script src="/feedback.js" defer></script>
+  <script src="/boards.js" defer></script>
+  <script src="/playback.js" defer></script>
+  <script src="/stream.js" defer></script>
+  <script src="/choices.js" defer></script>
+  <script src="/action_controls.js" defer></script>
+  <script src="/seat_choices.js" defer></script>
+  <script src="/coordination.js" defer></script>
+  <script src="/cognition.js" defer></script>
+  <script src="/experience_audit.js" defer></script>
+  <script src="/mental_audit.js" defer></script>
+  <script src="/information.js" defer></script>
+  <script src="/journal.js" defer></script>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header><span class="brand">NOMOS / TABLE</span><h1 id="title">正在准备桌面</h1><span id="operation-status" aria-live="off"></span><span id="seat"></span></header>
+  <main>
+    <section id="library" hidden><h2>选择一款桌游</h2><div id="game-list"></div><p id="library-status" role="status" aria-live="polite"></p></section>
+    <section id="setup" hidden><p id="intro"></p><p>单人对局 · 其余席位由电脑控制</p><button id="setup-rules" type="button" class="secondary" hidden>规则与流程</button><h2>选择你的席位</h2><div id="seats"></div><p id="setup-status" role="status" aria-live="polite"></p><button id="back-library" type="button" class="secondary" hidden>选择其他游戏</button></section>
+    <section id="table" hidden>
+      <div class="game-introduction"><details id="game-about"><summary>本局目标</summary><p id="game-description"></p></details><span id="status" role="status"></span><span id="experience-status" hidden></span><button id="open-rules" type="button" class="secondary" hidden>规则与流程</button></div>
+      <nav id="table-tabs" role="tablist" aria-label="对局页面">
+        <button id="tab-desk" type="button" role="tab" data-page="desk" data-local-control="true" aria-controls="page-desk" aria-selected="true">对局</button>
+        <button id="tab-information" type="button" role="tab" data-page="information" data-local-control="true" aria-controls="page-information" aria-selected="false" tabindex="-1">线索与判断</button>
+        <button id="tab-records" type="button" role="tab" data-page="records" data-local-control="true" aria-controls="page-records" aria-selected="false" tabindex="-1">对局记录 <span id="message-count" class="message-count" hidden></span></button>
+        <button id="tab-recap" type="button" role="tab" data-page="recap" data-local-control="true" aria-controls="page-recap" aria-selected="false" tabindex="-1" hidden>赛后复盘</button>
+      </nav>
+      <section id="page-desk" role="tabpanel" data-page="desk" aria-labelledby="tab-desk">
+      <div class="layout">
+        <div class="main-column">
+          <div id="table-summary" aria-label="当前局面摘要"></div>
+          <section id="inline-choice" hidden aria-label="桌面操作"></section>
+          <section id="seat-desktop" aria-label="桌边玩家"><h2>桌边玩家</h2><div id="player-seats" aria-label="玩家席位"></div></section>
+          <div id="overview-panels" aria-label="对局进展"></div>
+          <section id="key-messages" hidden aria-label="关键消息" aria-live="polite"><div class="key-message-heading"><h2>关键消息 <span id="unread-count"></span></h2><button id="read-messages" class="secondary" type="button" data-local-control="true">查看全部</button></div><div id="key-message-list"></div></section>
+          <section id="event-stage" hidden aria-label="结算过程"><div class="event-heading"><h2 id="event-stage-title">刚刚发生</h2><div class="playback-controls"><label>速度 <select id="playback-speed" aria-label="播放速度"><option value="1">1×</option><option value="2" selected>2×</option><option value="4">4×</option></select></label><button id="pause-playback" class="secondary icon-button" type="button" aria-label="暂停播放" title="暂停播放"></button><button id="skip-playback" class="secondary icon-button" type="button" aria-label="快进至当前局面" title="快进至当前局面"></button><button id="replay-playback" class="secondary icon-button" type="button" aria-label="回看本段过程" title="回看本段过程"></button></div></div><p id="playback-mode" role="status"></p><div id="current-events" aria-live="polite"></div><span id="playback-progress" role="status"></span></section>
+          <section id="resource-desktop" aria-label="棋具桌面"></section>
+          <div id="choice-desktop" aria-label="当前可选牌面"></div>
+          <section class="board"><div class="board-heading"><h2>公开桌面</h2></div><div id="board-panels"></div></section>
+        </div>
+        <aside><section class="action-area"><div class="action-heading"><h2>你的选择</h2><button id="ask-advice" class="secondary icon-button advice-command" type="button" aria-label="分析当前选择" title="分析当前选择" hidden></button><button id="sync-table" class="secondary icon-button" type="button" aria-label="刷新桌面" title="刷新桌面"></button></div><p id="action-context" role="status" hidden></p><p id="feedback" role="status" aria-live="polite"></p><div id="actions"></div><button id="open-discussion" class="secondary discussion-link" type="button" data-local-control="true" hidden></button></section><section id="strategy-advice" hidden aria-label="当前行动建议" aria-live="polite"></section><button id="restart" class="secondary" type="button">结束本局并重新开始</button></aside>
+      </div>
+      </section>
+      <section id="page-information" role="tabpanel" data-page="information" aria-labelledby="tab-information" hidden><div class="information-layout"><section class="personal-information"><h2>你的线索</h2><div id="private-panels"></div></section><section id="cognition-panel" hidden aria-label="我的判断"></section></div></section>
+      <section id="page-records" role="tabpanel" data-page="records" aria-labelledby="tab-records" hidden>
+        <div class="journal-heading"><h2>消息与记录 <span id="journal-count"></span></h2><button id="return-desk" class="secondary" type="button" data-local-control="true">返回对局</button></div>
+        <div class="journal-toolbar">
+          <label class="journal-search">搜索<input id="journal-query" type="search" placeholder="玩家、身份、发言理由…" data-local-control="true"></label>
+          <label>类型<select id="journal-category" data-local-control="true"><option value="">全部类型</option></select></label>
+          <label>涉及玩家<select id="journal-person" data-local-control="true"><option value="">所有玩家</option></select></label>
+          <label>发言人<select id="journal-speaker" data-local-control="true"><option value="">所有发言人</option></select></label>
+          <label>轮次／分组<select id="journal-group" data-local-control="true"><option value="">全部分组</option></select></label>
+          <label class="journal-unread"><input id="journal-unread" type="checkbox" data-local-control="true">只看未读</label>
+          <label class="journal-unread"><input id="journal-important" type="checkbox" data-local-control="true">只看关键</label>
+          <button id="clear-journal" class="secondary" type="button" data-local-control="true">清除筛选</button>
+          <button id="acknowledge-messages" class="secondary" type="button" data-local-control="true">标记筛选结果已读</button>
+        </div>
+        <div id="journal-list" aria-live="polite"></div>
+        <details class="history"><summary>汇总数据表</summary><div id="history-panels"></div></details>
+      </section>
+      <section id="page-recap" role="tabpanel" data-page="recap" aria-labelledby="tab-recap" hidden>
+        <section id="end-report" hidden>
+          <h2 id="end-report-title" tabindex="-1">本局复盘</h2>
+          <h3 id="end-report-label"></h3><div id="end-report-result"></div>
+          <section id="mental-audit" hidden>
+            <h3>赛后心理历程</h3>
+            <label>查看玩家 <select id="audit-actor"></select></label>
+            <button id="load-audit" class="secondary" type="button">查看心理历程</button>
+            <div id="audit-content" aria-live="polite"></div>
+          </section>
+          <h3>你的已确认选择</h3><div id="end-player-choices"></div>
+        </section>
+      </section>
+    </section>
+  </main>
+  <dialog id="choice-dialog"><form id="choice-form" hidden><h3 id="action-title"></h3><p id="action-description"></p><div id="draft-preview"></div><div id="fields"></div><p id="draft-validation" role="status" aria-live="polite"></p><div class="form-footer"><button id="confirm" type="submit">确认选择</button><button id="cancel" type="button" class="secondary">返回</button><button id="sync-choice" class="secondary icon-button" type="button" aria-label="刷新桌面" title="刷新桌面"></button><span id="request-status" role="status" aria-live="polite"></span></div></form></dialog>
+  <dialog id="ending"><h2>对局结束</h2><h3 id="ending-result-label"></h3><div id="ending-value"></div><div id="ending-progress" aria-label="终局进度"></div><div class="form-footer"><button id="show-end-report">查看本局复盘</button><button id="dismiss-ending" class="secondary">查看桌面</button></div></dialog>
+  <dialog id="rules-dialog" aria-labelledby="rules-title"><div class="rules-heading"><h2 id="rules-title"></h2><button id="close-rules" type="button" class="secondary">返回桌面</button></div><nav id="rules-index" aria-label="规则目录"></nav><div id="rules-sections"></div><div id="rules-sources"></div></dialog>
+  <dialog id="record-peek" aria-labelledby="record-peek-title"><div class="rules-heading"><h2 id="record-peek-title">相关记录</h2><button id="close-record-peek" type="button" class="secondary">返回选择</button></div><div id="record-peek-content"></div></dialog>
+</body>
+</html>

@@ -1,0 +1,118 @@
+# Value support for independent experiential policies; no extra world rules.
+schema: nomos.author.lib
+imports: [avalon_planning.lib.yaml]
+values:
+  ExperienceScore: {int: [null, null]}
+  ExperienceScores: {sequence: ExperienceScore}
+  ReplyInfluence: {record: {target: MaybeStatementKey, value: ExperienceScore}}
+  ReplyInfluences: {sequence: ReplyInfluence}
+  SpeakerInfluence: {record: {speaker: PlayerRef, value: ExperienceScore}}
+  SpeakerInfluences: {sequence: SpeakerInfluence}
+  GoalDirection: {int: [-1, 1]}
+  CandidateGroups: {sequence: CandidateGroup}
+  MaybeEvidenceCount: {optional: ExperienceScore}
+  EvilInterval: {record: {minimum: ExperienceScore, maximum: ExperienceScore}}
+  ArgumentVerdict: {enum: [opinion, verified, insufficient, missing_evidence]}
+  ArgumentReview:
+    record: {speaker: PlayerRef, epoch: Epoch, team: Players, rationale: TeamArgument, verdict: ArgumentVerdict, premises: QuestHistory, public_evil_count: MaybeEvidenceCount}
+  ArgumentReviews: {sequence: ArgumentReview}
+  CommunicationAim: {enum: [recruit_support, recruit_rejection, offer_alternative, project_identity, yield_floor]}
+  AudienceSnapshot: {record: {listeners: Players, aligned: Players, opposed: Players}}
+  JudgmentStrength: {int: [0, null]}
+  MaybeJudgmentStrength: {optional: JudgmentStrength}
+  JudgmentStatus: {enum: [unknown, supported, opposed, conflict]}
+  JudgmentPolarity: {enum: [support, opposition]}
+  JudgmentRelation: {text: {max_chars: 128}}
+  JudgmentArgument: {text: {max_chars: 64}}
+  PlayerThought:
+    variant:
+      Identity: {person: PlayerRef, role: Role, epoch: Epoch}
+      Advice: {statement: TeamSpeech, listener: PlayerRef}
+      IdentityOpinion: {statement: TeamSpeech, listener: PlayerRef}
+      Forecast: {statement: TeamSpeech}
+      Alternative: {statement: TeamSuggestion}
+      Task: {record: QuestRecord}
+      SafeTeam: {members: Players}
+      Ballot: {record: ApprovalRecord, listener: PlayerRef}
+      Deliberation: {statement: DiscussionStatement}
+  PlayerThoughtSlot:
+    variant:
+      Speaker: {person: PlayerRef}
+      Discussion: {person: PlayerRef, epoch: Epoch}
+      Task: {epoch: Epoch}
+      Opinion: {speaker: PlayerRef, subject: PlayerRef, role: Role, claim_epoch: Epoch}
+      Expression: {topic: DeliberationTopic}
+  PlayerAssessmentTarget:
+    variant:
+      Team: {members: Players}
+  PlayerBelief:
+    record: {proposition: PlayerThought, support: JudgmentStrength, opposition: JudgmentStrength, status: JudgmentStatus}
+  PlayerBeliefs: {sequence: PlayerBelief}
+  PlayerAssessment:
+    record: {key: PlayerAssessmentTarget, score: ExperienceScore}
+  PlayerAssessments: {sequence: PlayerAssessment}
+  PlayerInference:
+    record: {proposition: PlayerThought, polarity: JudgmentPolarity, relation: JudgmentRelation, argument: JudgmentArgument, conditional: Bool}
+  PlayerInferences: {sequence: PlayerInference}
+  PlayerPrior:
+    record: {beliefs: PlayerBeliefs, appraisals: PlayerAssessments, complete: Bool}
+  JudgmentBound:
+    record: {members: Players, category: Role, minimum: JudgmentStrength, maximum: JudgmentStrength}
+  JudgmentBounds: {sequence: JudgmentBound}
+  MaybeJudgmentBound: {optional: JudgmentBound}
+  JudgmentAnalysisStatus: {enum: [complete, conflict, pending]}
+  JudgmentAnalysis:
+    record: {status: JudgmentAnalysisStatus, complete: Bool, bounds: JudgmentBounds}
+  IdentityVerdict: {enum: [possible, excluded, established, pending, conflict]}
+  ClaimInfluence: {record: {opinion: PlayerThought, weight: JudgmentStrength}}
+  ClaimInfluences: {sequence: ClaimInfluence}
+  IdentityCommentReview:
+    record: {opinion: PlayerThought, verdict: IdentityVerdict, score: ExperienceScore}
+  IdentityCommentReviews: {sequence: IdentityCommentReview}
+  IdentitySourceReview:
+    record: {speaker: PlayerRef, weight: JudgmentStrength, evidence: IdentityCommentReviews, complete: Bool}
+  IdentityJudgment:
+    record: {person: PlayerRef, role: Role, support: JudgmentStrength, opposition: JudgmentStrength, opinions: ClaimInfluences, verdict: IdentityVerdict, bound: MaybeJudgmentBound}
+  IdentityJudgments: {sequence: IdentityJudgment}
+  PersonJudgment:
+    record: {person: PlayerRef, advice_reliability: ExperienceScore, cooperation: ExperienceScore, shared_choices: JudgmentStrength, complete: Bool}
+  PlayerJudgment:
+    record: {beliefs: PlayerBeliefs, appraisals: PlayerAssessments, inferences: PlayerInferences, complete: Bool, local: JudgmentAnalysis}
+  DiscussionGoals:
+    record: {mission: Mission, rejections: Count, required: Count, census: PopulationReports}
+  DiscussionPerspective:
+    record: {person: PlayerRef, own: RoleReports, peers: PlayerReports, suspects: PlayerReports, pair: CandidateGroups, history: QuestHistory, mind: PlayerJudgment, order: PlayerOrder, goals: DiscussionGoals}
+  PublicOpinionReview:
+    record: {key: StatementKey, mission: Mission, opinion: MaybePublicOpinion, verdict: IdentityVerdict}
+  PublicOpinionReviews: {sequence: PublicOpinionReview}
+  BallotGoalBasis: {enum: [unknown, safe, risk, final_rejection, pending]}
+  BallotGoalContext:
+    record: {perspective: DiscussionPerspective, ballots: ApprovalHistory, census: PopulationReports, configuration: SetupTable}
+  BallotGoalReview:
+    record: {record: ApprovalRecord, person: PlayerRef, same_vote: Bool, bounds: EvilInterval, required: Count, rejections: Count, basis: BallotGoalBasis, approval_value: GoalDirection, alignment: ExperienceScore, complete: Bool}
+  BallotGoalReviews: {sequence: BallotGoalReview}
+  PersonGoalReview:
+    record: {person: PlayerRef, observed: PersonJudgment, alignment: ExperienceScore, records: BallotGoalReviews, complete: Bool}
+  PersonGoalReviews: {sequence: PersonGoalReview}
+  ExperienceOverlap: {enum: [unobserved, none, less_than_half, at_least_half, full, conflict]}
+  DirectAlignment: {enum: [unobserved, aligned, divergent, mixed, self]}
+  ExperienceBallotKey: {record: {epoch: Epoch, team: Players}}
+  ExperienceBallotKeys: {set: ExperienceBallotKey}
+  MaybeExperienceBallot: {optional: ApprovalRecord}
+  DirectExperience:
+    record: {person: PlayerRef, alignment: DirectAlignment, versions: TeamSpeeches, ballot: MaybeExperienceBallot}
+  DirectExperiences: {sequence: DirectExperience}
+  ExperienceEpochs: {sequence: Epoch}
+  ObserverExperienceContext:
+    record: {person: PlayerRef, good: Players, failures: QuestHistory, zero_fails: QuestHistory, direct: DirectExperiences}
+  TeamExperienceContext:
+    record: {failure_overlap: ExperienceOverlap, zero_fail_retention: ExperienceOverlap, team_direct_alignment: DirectAlignment, leader_direct_alignment: DirectAlignment, good: Players, failure_epochs: ExperienceEpochs, zero_fail_epochs: ExperienceEpochs, direct: DirectExperiences}
+queries:
+  task_advice:
+    parameters: {argument: TeamArgument}
+    returns: Bool
+    expression: match(argument, ClaimAssessment() => False, ClaimConflict() => False, Judgment() => True, TestTeam() => True, FailureOverlap() => True, SuccessCore() => True, TrustSpeaker() => True, EvilExhausted() => True)
+  task_statement:
+    parameters: {argument: TeamArgument}
+    returns: Bool
+    expression: match(argument, ClaimAssessment() => False, ClaimConflict() => False, Judgment() => True, TestTeam() => True, FailureOverlap() => True, SuccessCore() => True, TrustSpeaker() => False, EvilExhausted() => True)

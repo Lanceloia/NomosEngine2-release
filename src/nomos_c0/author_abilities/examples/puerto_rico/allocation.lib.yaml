@@ -1,0 +1,33 @@
+# A complete allocation is one typed draft, not one world Action per worker.
+schema: nomos.author.lib
+queries:
+  minimum:
+    parameters: {left: Count, right: Count}
+    returns: Count
+    expression: left if left < right else right
+  valid_allocation_targets:
+    parameters: {targets: AllocationTargets}
+    returns: Bool
+    expression: forall(targets, t => exactly_one(targets, other => other.key == t.key))
+  allocation_capacity:
+    parameters: {targets: AllocationTargets}
+    returns: Count
+    expression: sum_by(targets, t => t.capacity)
+  allocated_count:
+    parameters: {allocation: Allocation}
+    returns: Count
+    expression: sum_by(allocation.rows, row => row.count)
+  allocation_at:
+    parameters: {allocation: Allocation, key: ComponentKey}
+    returns: Count
+    expression: sum_by(filter(allocation.rows, row => row.target == key), row => row.count)
+  valid_allocation:
+    parameters: {targets: AllocationTargets, total: Count, allocation: Allocation}
+    returns: Bool
+    expression: >
+      valid_allocation_targets(targets) and
+      size(allocation.rows) == size(targets) and
+      forall(targets, t => exactly_one(allocation.rows, row => row.target == t.key)) and
+      forall(allocation.rows, row => exactly_one(targets, t => t.key == row.target and row.count <= t.capacity)) and
+      allocated_count(allocation) == minimum(total, allocation_capacity(targets)) and
+      allocated_count(allocation) + allocation.reserve == total

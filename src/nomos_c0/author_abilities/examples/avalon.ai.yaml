@@ -1,0 +1,14 @@
+schema: nomos.author.ai
+strategies:
+  TableChoice:
+    actor: {person: PlayerRef}
+    candidates:
+    - {definition: ProposeTeam, score: '10 + (1 if person in members else 0)'}
+    - {definition: ApproveTeam, score: '10 if approve else 1'}
+    - {definition: MissionCard, score: '10 if sabotage else 5'}
+    - {definition: Assassinate, score: '10'}
+    minimum: '0'
+    tie: canonical
+    wait: no_candidate
+control:
+  table: {kind: Player, definition: TableChoice}

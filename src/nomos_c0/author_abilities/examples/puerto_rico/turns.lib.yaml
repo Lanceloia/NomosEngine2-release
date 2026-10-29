@@ -1,0 +1,113 @@
+schema: nomos.author.lib
+reactions:
+  DistributeColonists:
+    context: Catalog
+    on: {definition: ChooseRole, bind: {selector: player, take_bonus: bonus}}
+    when: phase==Phase.role and active.kind==Role.mayor
+    results: Unit
+    resolve:
+      result: None
+      effects:
+        - for: person
+          in: players
+          effects:
+            - set(person.colonists,person.colonists+received_colonists(order,person,selector_index,colonist_ship)+(1 if person==selector and take_bonus and colonist_supply>0 else 0))
+            - set(person.reserve,person.reserve+received_colonists(order,person,selector_index,colonist_ship)+(1 if person==selector and take_bonus and colonist_supply>0 else 0))
+        - set(colonist_supply,colonist_supply-(1 if take_bonus and colonist_supply>0 else 0))
+        - set(colonist_ship,0)
+  AfterStep:
+    context: Catalog
+    on: {definition: [Settle, AssignWorkers, Build, Produce, Sell, DeclinePhase], bind: {person: player, move: result}}
+    when: phase==Phase.advance
+    results: Unit
+    resolve:
+      result: None
+      effects:
+        - set(history,append(history,MoveRecord(player=person,round=round,role=active.kind,kind=move)))
+        - set(acted,acted+1)
+        - set(current_index,(current_index+1)%size(order))
+        - set(phase,Phase.extra_good if acted+1==size(order) and active.kind==Role.craftsman and size(produced_kinds)>0 else Phase.end_phase if acted+1==size(order) else Phase.role)
+  RefillFromDeck:
+    context: Catalog
+    on: {definition: AfterStep, bind: {}}
+    when: phase==Phase.end_phase and active.kind==Role.settler and size(plantation_deck)>=size(players)+1
+    results: Unit
+    resolve:
+      result: None
+      effects: ['set(plantation_discard,concat(plantation_discard,plantation_row))','set(plantation_row,take(plantation_deck,size(players)+1))','set(plantation_deck,drop(plantation_deck,size(players)+1))','set(phase,Phase.between)']
+  RecyclePlantations:
+    context: Catalog
+    on: {definition: AfterStep, bind: {}}
+    when: phase==Phase.end_phase and active.kind==Role.settler and size(plantation_deck)<size(players)+1
+    results: Unit
+    resolve:
+      draw:
+        recycled: {type: TileCards, shuffle: 'concat(plantation_discard,plantation_row)'}
+      then:
+        result: None
+        effects: ['set(plantation_row,take(concat(plantation_deck,recycled),size(players)+1))','set(plantation_deck,drop(concat(plantation_deck,recycled),size(players)+1))','set(plantation_discard,TileCards([]))','set(phase,Phase.between)']
+  RefillColonistShip:
+    context: Catalog
+    on: {definition: AfterStep, bind: {}}
+    when: phase==Phase.end_phase and active.kind==Role.mayor
+    results: Unit
+    resolve:
+      result: None
+      effects:
+        - set(colonist_ship,minimum(colonist_supply,size(players) if empty_building_slots(players,buildings)<size(players) else empty_building_slots(players,buildings)))
+        - set(colonist_supply,colonist_supply-minimum(colonist_supply,size(players) if empty_building_slots(players,buildings)<size(players) else empty_building_slots(players,buildings)))
+        - set(end_triggered,end_triggered or colonist_supply<(size(players) if empty_building_slots(players,buildings)<size(players) else empty_building_slots(players,buildings)))
+        - set(phase,Phase.between)
+  EmptyTradingHouse:
+    context: Catalog
+    on: {definition: AfterStep, bind: {}}
+    when: phase==Phase.end_phase and active.kind==Role.trader
+    results: Unit
+    resolve:
+      result: None
+      effects: ['set(supply,goods_add(supply,trading_goods(trading)) if size(trading)==4 else supply)','set(trading,GoodOrder([]) if size(trading)==4 else trading)','set(phase,Phase.between)']
+  FinishOrdinary:
+    context: Catalog
+    on: {definition: AfterStep, bind: {}}
+    when: phase==Phase.end_phase and (active.kind==Role.craftsman or active.kind==Role.builder)
+    results: Unit
+    resolve: {result: None, effects: ['set(phase,Phase.between)']}
+  AfterExtra:
+    context: Catalog
+    on: {definition: [ExtraGood, DeclineExtra], bind: {person: player, move: result}}
+    when: phase==Phase.end_phase and active.kind==Role.craftsman
+    results: Unit
+    resolve:
+      result: None
+      effects: ['set(history,append(history,MoveRecord(player=person,round=round,role=active.kind,kind=move)))','set(phase,Phase.between)']
+  NextRole:
+    context: Catalog
+    on: {definition: [RefillFromDeck, RecyclePlantations, RefillColonistShip, EmptyTradingHouse, FinishOrdinary, AfterExtra, ChooseRole], bind: {}}
+    when: phase==Phase.between
+    results: Unit
+    resolve:
+      result: None
+      effects: ['set(chooser_index,(chooser_index+1)%size(order))','set(phase,Phase.round_end if size(chosen_roles)==size(order) else Phase.choose_role)']
+  EndRound:
+    context: Catalog
+    on: {definition: NextRole, bind: {}}
+    when: phase==Phase.round_end
+    results: Unit
+    resolve:
+      result: None
+      effects:
+        - set(role_cards,map(role_cards,r=>RoleSlot(key=r.key,kind=r.kind,reward=r.reward+(1 if r.key not in chosen_roles else 0))))
+        - set(chosen_roles,RoleKeys([]))
+        - set(governor_index,(governor_index+1)%size(order))
+        - set(chooser_index,(governor_index+1)%size(order))
+        - set(round,round+1)
+        - set(phase,Phase.finished if end_triggered else Phase.choose_role)
+terminals:
+  EconomyCheckpoint:
+    context: Catalog
+    when: phase==Phase.finished
+    stop: {boundary: action, pending: freeze}
+    returns: PublicBoards
+    value: map(order,p=>PublicBoard(player=p,money=p.money,colonists=p.colonists,reserve=p.reserve,island=p.island,city=p.city,stock=p.stock))
+    to: players
+    access: public_status

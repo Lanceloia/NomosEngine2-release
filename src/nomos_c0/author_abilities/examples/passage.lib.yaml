@@ -1,0 +1,35 @@
+schema: nomos.author.lib
+values:
+  Energy: {int: [0, 10]}
+  Site: {enum: [threshold, ritual_circle]}
+  PersonRef: {ref: Person}
+  RouteRef: {ref: Route}
+  PassageOutcome: {variant: {Moved: {destination: Site}, Blocked: {}}}
+entities:
+  Person:
+    kind: person
+    reference: public
+    fields: {position: Site, energy: Energy, awake: Bool}
+    view: [id, position, energy, awake]
+    public: [id, position, awake]
+  Route:
+    kind: object
+    reference: public
+    fields: {origin: Site, destination: Site, passable: Bool}
+    view: [id, origin, destination]
+abilities:
+  TryPass:
+    actor: {person: PersonRef}
+    parameters: {fee: Energy}
+    inputs:
+      route: {type: RouteRef, choose: known(Route)}
+    where: person.awake and route.origin == person.position
+    cost: ['consume(person.energy, fee)']
+    results: PassageOutcome
+    resolve:
+      when: route.passable
+      then:
+        effects: ['set(person.position, route.destination)']
+        result: PassageOutcome.Moved(destination=route.destination)
+      else:
+        result: PassageOutcome.Blocked()

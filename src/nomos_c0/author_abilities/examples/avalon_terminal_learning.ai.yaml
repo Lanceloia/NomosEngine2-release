@@ -1,0 +1,41 @@
+# Non-canon repeated-position experiment: public seat features, terminal reward only.
+# Peers follow a fixed witness. This is not the default Avalon policy.
+schema: nomos.author.ai
+semantics:
+  TerminalChoice:
+    features: [first_target, second_target, third_target, fixed_vote]
+    outcomes: [victory]
+    applicability: {victory: [first_target, second_target, third_target, fixed_vote]}
+    feedback:
+      ReviewEnding:
+        definition: Assassinate
+        receipts: {ending: {terminal: finish}}
+        outcomes: {victory: '8 if ending.winner == Side.evil else -8'}
+    meanings:
+      ApproveTeam:
+        features: {fixed_vote: '1'}
+        prior: {victory: '0'}
+        known: {victory: 'True'}
+        correlate: {epoch: {type: Epoch, value: epoch}}
+      Assassinate:
+        features:
+          first_target: '1 if target == first else 0'
+          second_target: '1 if target == second else 0'
+          third_target: '1 if target == third else 0'
+        prior: {victory: '0 if target == first else (2 if target == second else 1)'}
+strategies:
+  RepeatedPosition:
+    actor: {person: PlayerRef}
+    parameters: {first: PlayerRef, second: PlayerRef, third: PlayerRef}
+    # Earlier approval is fixed, so only the final target is being learned.
+    candidates:
+      - {definition: ApproveTeam, inputs: {approve: 'True'}}
+      - {definition: Assassinate}
+    semantics: TerminalChoice
+    tie: canonical
+    wait: no_candidate
+control:
+  learner:
+    actor: e
+    definition: RepeatedPosition
+    with: {first: {actor: a}, second: {actor: b}, third: {actor: c}}

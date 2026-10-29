@@ -1,0 +1,23 @@
+# Appraisal may use past samples; this file declares no past-sample construction guidance.
+schema: nomos.author.scenario_planning
+name: NonCanonFeatureTransfer
+actor: {person: PersonRef}
+goal: Unit
+local:
+  type: Local
+  views: {}
+  value: Local(pool=person.pool, required=person.required, done=person.done)
+state: Bool
+observation: Unit
+hypotheses: [{probability: [1, 1], value: local.done}]
+consistent: 'True'
+terminal: state
+assumptions:
+  scope: Distinct component identities share only the explicitly declared kind feature.
+  reward: Subject appraisal supplies utility from sourced action feedback.
+actions:
+  choose:
+    inputs:
+      members: {type: Components, choose: {subset: local.pool, min: local.required, max: local.required}}
+    where: not state
+    predict: {state: 'True', observation: None, utility: '0'}

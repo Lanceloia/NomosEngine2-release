@@ -1,0 +1,13 @@
+schema: nomos.author.source
+name: non_canon_camp_cooperation
+actors: {a: Person, b: Person, c: Person}
+objects: []
+use:
+  show_stock: {definition: ShowSupplies}
+  request: {definition: RequestSupport}
+  respond: {definition: RespondSupport, views: {requests: request.request}}
+  forage: {definition: Forage}
+  review: {definition: ReviewActivity, views: {notices: activity.notice}}
+  activity: {definition: RecordReply, after: respond}
+  share: {definition: ShareSupplies}
+  sharing: {definition: RecordSharing, after: share}

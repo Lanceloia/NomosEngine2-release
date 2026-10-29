@@ -1,0 +1,35 @@
+# Shared classic component values, independent of a player's state schema.
+schema: nomos.author.lib
+values:
+  Count: {int: [0, null]}
+  ComponentKey: {int: [1, null]}
+  Label: {text: {max_chars: 64}}
+  Population: {int: [3, 5]}
+  Capacities: {sequence: Count}
+  Good: {enum: [corn, indigo, sugar, tobacco, coffee]}
+  MaybeGood: {optional: Good}
+  GoodOrder: {sequence: Good}
+  GoodKinds: {set: Good}
+  Goods: {record: {corn: Count, indigo: Count, sugar: Count, tobacco: Count, coffee: Count}}
+  GoodSpec: {record: {kind: Good, label: Label, barrels: Count, plantations: Count, price: Count}}
+  GoodCatalog: {sequence: GoodSpec}
+  Role: {enum: [settler, mayor, builder, craftsman, trader, captain, prospector]}
+  RoleCard: {record: {key: ComponentKey, kind: Role, copy: Count}}
+  RoleCards: {sequence: RoleCard}
+  Setup:
+    record: {players: Population, money: Count, colonist_supply: Count, colonist_ship: Count, vp_supply: Count, prospectors: Count, ships: Capacities, opening_crops: GoodOrder}
+  Setups: {sequence: Setup}
+  BuildingKind:
+    enum: [small_indigo_plant, small_sugar_mill, indigo_plant, sugar_mill, tobacco_storage, coffee_roaster, small_market, hacienda, construction_hut, small_warehouse, hospice, office, large_market, large_warehouse, factory, university, harbor, wharf, guild_hall, residence, fortress, customs_house, city_hall]
+  BuildingSpec:
+    record: {kind: BuildingKind, label: Label, cost: Count, points: Count, spaces: Count, workers: Count, stock: Count, quarry_limit: Count, production: MaybeGood}
+  BuildingCatalog: {sequence: BuildingSpec}
+  AllocationTarget: {record: {key: ComponentKey, label: Label, capacity: Count}}
+  AllocationTargets: {sequence: AllocationTarget}
+  AllocationRow: {record: {target: ComponentKey, count: Count}}
+  AllocationRows: {sequence: AllocationRow}
+  Allocation: {record: {rows: AllocationRows, reserve: Count}}
+  Ship: {record: {key: ComponentKey, capacity: Count, cargo: MaybeGood, loaded: Count}}
+  Fleet: {sequence: Ship}
+  TileCard: {record: {key: ComponentKey, crop: MaybeGood}}
+  TileCards: {sequence: TileCard}

@@ -1,0 +1,134 @@
+# Charge transfers and thaw outcomes are settled against current native owners.
+schema: nomos.author.lib
+disclosures:
+  LampOffered:
+    parameters: {giver: BeingRef, recipient: BeingRef, flame: FlameRef}
+    sample: after
+    to: Beings([recipient])
+    returns: TransferOffer
+    value: TransferOffer(flame=flame, giver=giver, recipient=recipient)
+    access: acquired
+abilities:
+  DetachReservoir:
+    actor: {person: BeingRef}
+    views: {findings: {reports: ChandelierReports}}
+    inputs:
+      reservoir:
+        type: ReservoirRef
+        choose: 'filter(known(Reservoir), r => exists(reports(findings), group => exists(group, f => f.reservoir == r and f.mounted and f.site == person.position)))'
+    where: mobile(person)
+    time_cost: '10000'
+    results: Bool
+    resolve:
+      when: reservoir.mounted and reservoir.site == person.position and reservoir.mount.position == person.position
+      then:
+        attempt: custody.take(reservoir, person)
+        success: {effects: ['set(reservoir.mounted, False)'], result: 'True'}
+        failure: {result: 'False'}
+      else: {result: 'False'}
+  LoadCharge:
+    actor: {person: BeingRef}
+    views: {lamp_view: {projection: FlameStatuses}, stores: {projection: ReservoirStatuses}}
+    inputs:
+      lamp: {type: FlameStatus, choose: 'filter(projected(lamp_view), f => f.charge < 5)'}
+      store: {type: ReservoirStatus, choose: 'filter(projected(stores), r => r.charge > 0)'}
+    where: mobile(person)
+    time_cost: '10000'
+    results: Bool
+    resolve:
+      when: custody.held_by(lamp.flame, person) and custody.held_by(store.reservoir, person) and not store.reservoir.mounted and lamp.flame.charges < 5 and store.reservoir.charges > 0
+      then:
+        effects: ['set(lamp.flame.charges, lamp.flame.charges + 1)', 'set(store.reservoir.charges, store.reservoir.charges - 1)']
+        result: 'True'
+      else: {result: 'False'}
+  ThawGround:
+    actor: {person: BeingRef}
+    context: Palace
+    views: {lamp_view: {projection: FlameStatuses}}
+    inputs:
+      lamp: {type: FlameStatus, choose: 'filter(projected(lamp_view), f => f.charge > 0)'}
+      footprint: {type: FloorArea, choose: 'filter(floor_areas, f => person.position in f.sites)'}
+    where: >
+      mobile(person) and person.ground_sighting is not None and
+      person.ground_sighting.site == person.position and person.ground_sighting.floor == footprint.key and
+      person.ground_sighting.frozen
+    time_cost: '10000'
+    results: Bool
+    resolve:
+      when: custody.held_by(lamp.flame, person) and lamp.flame.charges > 0 and footprint.key in frozen_floors
+      then:
+        effects:
+          - set(lamp.flame.charges, lamp.flame.charges - 1)
+          - set(frozen_floors, difference(frozen_floors, Floors([footprint.key])))
+          - set(person.ground_sighting, GroundFinding(floor=footprint.key, site=person.position, frozen=False))
+        result: 'True'
+      else: {result: 'False'}
+  ThawPerson:
+    actor: {person: BeingRef}
+    views: {lamp_view: {projection: FlameStatuses}, findings: {reports: PersonReports}}
+    inputs:
+      lamp: {type: FlameStatus, choose: 'filter(projected(lamp_view), f => f.charge > 0)'}
+      victim:
+        type: BeingRef
+        choose: 'filter(known(Being), v => exists(reports(findings), f => f.subject == v and f.site == person.position and f.alive and f.frozen))'
+    where: mobile(person)
+    time_cost: '10000'
+    results: Bool
+    resolve:
+      when: victim.position == person.position and victim.alive and victim.frozen and custody.held_by(lamp.flame, person) and lamp.flame.charges > 0
+      then:
+        effects: ['set(lamp.flame.charges, lamp.flame.charges - 1)', 'set(victim.frozen, False)', 'set(victim.speed, victim.max_speed)']
+        result: 'True'
+      else: {result: 'False'}
+  DropLamp:
+    actor: {person: BeingRef}
+    views: {lamp_view: {projection: FlameStatuses}}
+    inputs:
+      lamp: {type: FlameStatus, choose: projected(lamp_view)}
+    where: mobile(person)
+    time_cost: '10000'
+    results: Bool
+    resolve:
+      attempt: custody.drop(lamp.flame, person)
+      success: {result: 'True'}
+      failure: {result: 'False'}
+  TakeLamp:
+    actor: {person: BeingRef}
+    views: {lamps: {projection: Flames}}
+    inputs:
+      flame: {type: FlameRef, choose: projected(lamps)}
+    where: mobile(person)
+    time_cost: '10000'
+    results: Bool
+    resolve:
+      attempt: custody.take(flame, person)
+      success: {result: 'True'}
+      failure: {result: 'False'}
+  OfferLamp:
+    actor: {person: BeingRef}
+    views: {lamp_view: {projection: FlameStatuses}, nearby: {projection: Presences}}
+    inputs:
+      lamp: {type: FlameStatus, choose: projected(lamp_view)}
+      recipient: {type: BeingRef, choose: 'map(projected(nearby), p => p.subject)'}
+    where: mobile(person)
+    time_cost: '10000'
+    results: Bool
+    resolve:
+      when: recipient.alive and recipient.awake and not recipient.frozen
+      then:
+        attempt: custody.offer(lamp.flame, person, recipient)
+        success: {result: 'True', deliver: {offer: 'LampOffered(person, recipient, lamp.flame)'}}
+        failure: {result: 'False'}
+      else: {result: 'False'}
+  ReceiveLamp:
+    actor: {person: BeingRef}
+    views: {offers: {reports: TransferOffers}}
+    inputs:
+      offer: {type: TransferOffer, choose: 'filter(distinct(reports(offers)), o => o.recipient == person)'}
+    where: mobile(person)
+    time_cost: '10000'
+    results: Bool
+    resolve:
+      attempt: custody.transfer(offer.flame, offer.giver, person)
+      success: {result: 'True'}
+      failure: {result: 'False'}

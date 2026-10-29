@@ -1,0 +1,20 @@
+schema: nomos.author.source
+name: WorkerAllocationProbe
+actors: {a: Player, b: Player, c: Player}
+objects: []
+play: {mechanism: tabletop, seats: {kind: Player}, others: local_strategy}
+contexts:
+  workshop:
+    definition: Workshop
+    with:
+      players: {opening_domain: Player}
+      total: 4
+      sites: !table
+        columns: [key, label, capacity]
+        rows:
+          - [1, 玉米田, 1]
+          - [2, 大型靛蓝厂, 3]
+          - [3, 小市场, 1]
+use:
+  assign_workers: {definition: AssignWorkers, context: workshop}
+  finished: {definition: AllAssigned, context: workshop}

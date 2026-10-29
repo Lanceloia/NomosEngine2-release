@@ -1,0 +1,401 @@
+# Composable public expressions; motives and subsequent choices remain private/local.
+schema: nomos.author.lib
+imports: [avalon_dialogue.lib.yaml]
+values:
+  TeamOption: {record: {mission: Mission, members: Players}}
+  TeamOptions: {set: TeamOption}
+  PlayerSets: {set: Players}
+  ArgumentSets: {set: TeamArguments}
+  MaybeTeamOption: {optional: TeamOption}
+  TeamComparison:
+    record: {preferred: TeamOption, alternative: TeamOption, grounds: TeamArguments}
+  Stance: {enum: [support, oppose, undecided]}
+  Stances: {set: Stance}
+  TeamCondition:
+    variant:
+      Contains: {members: Players}
+      Excludes: {members: Players}
+      CountRange: {members: Players, minimum: Count, maximum: Count}
+  TeamConditions: {set: TeamCondition}
+  ConditionSets: {set: TeamConditions}
+  ConditionResult: {enum: [holds, not_holds, unknown]}
+  ConditionalPosition:
+    record: {mission: Mission, require_all: TeamConditions, satisfied: Stance, otherwise: Stance}
+  ClauseIndex: {int: [0, 2]}
+  StatementKey: {record: {speaker: PlayerRef, epoch: Epoch, turn: Epoch, part: ClauseIndex}}
+  MaybeStatementKey: {optional: StatementKey}
+  StatementKeys: {set: StatementKey}
+  ResponseAttitude: {enum: [endorse, challenge, undecided]}
+  ResponseAttitudes: {set: ResponseAttitude}
+  StatementResponse:
+    record: {target: StatementKey, attitude: ResponseAttitude, grounds: TeamArguments}
+  AttentionTopic:
+    variant:
+      CurrentProcess: {mission: Mission}
+      PublicBallot: {epoch: Epoch}
+      IdentityClaim: {statement: IdentitySpeech}
+  AttentionTopics: {set: AttentionTopic}
+  LeaderPlan: {record: {leader: PlayerRef, rejection_limit: Count}}
+  RejectionLimits: {set: Count}
+  PlanParticipation: {enum: [join, decline, undecided, leave]}
+  PlanParticipations: {set: PlanParticipation}
+  MaybePlanParticipation: {optional: PlanParticipation}
+  PlanDecision: {record: {target: StatementKey, choice: PlanParticipation}}
+  StatementRetraction: {record: {target: StatementKey, topic: DeliberationTopic}}
+  DiscussionContext: {record: {mission: Mission, leader: PlayerRef, rejections: Count, phase: Phase, members: Players, ballots: ApprovalHistory, kind: DiscussionKind, serial: Epoch}}
+  PlanStatus: {enum: [active, target_reached, risk_limit, expired, withdrawn, superseded, unknown]}
+  DiscussionContent:
+    variant:
+      Compare: {comparison: TeamComparison}
+      Conditional: {position: ConditionalPosition}
+      Respond: {response: StatementResponse}
+      Redirect: {topic: AttentionTopic}
+      Plan: {plan: LeaderPlan}
+      Participate: {decision: PlanDecision}
+      Retract: {retraction: StatementRetraction}
+      Opinion: {opinion: PublicOpinion}
+      Question: {question: PublicQuestion}
+      Answer: {answer: QuestionAnswer}
+  DiscussionStatement:
+    record: {key: StatementKey, mission: Mission, content: DiscussionContent}
+  DiscussionStatements: {sequence: DiscussionStatement}
+  DiscussionContents: {sequence: DiscussionContent}
+  Compositions: {set: DiscussionContents}
+  DiscussionEvidence: {record: {claims: IdentitySpeeches, advice: TeamSpeeches, alternatives: TeamSuggestions, expressions: DiscussionStatements, ballots: ApprovalHistory}}
+  MaybeDiscussionStatement: {optional: DiscussionStatement}
+  DeliberationTopic:
+    variant:
+      Comparison: {speaker: PlayerRef, mission: Mission, options: TeamOptions}
+      Condition: {speaker: PlayerRef, mission: Mission}
+      Reply: {speaker: PlayerRef, target: StatementKey}
+      Attention: {speaker: PlayerRef, mission: Mission}
+      Planning: {speaker: PlayerRef, mission: Mission}
+      Participation: {speaker: PlayerRef, target: StatementKey}
+      Opinion: {speaker: PlayerRef, mission: Mission, topic: AssertionTopic}
+      Question: {key: StatementKey}
+      Answer: {speaker: PlayerRef, target: StatementKey}
+queries:
+  discussion_context:
+    parameters: {mission: Mission, leader: PlayerRef, rejections: Count, phase: Phase, members: Players, ballots: ApprovalHistory, kind: DiscussionKind, serial: Epoch}
+    returns: DiscussionContext
+    expression: DiscussionContext(mission=mission, leader=leader, rejections=rejections, phase=phase, members=members, ballots=ballots, kind=kind, serial=serial)
+  discussion_reference_allowed:
+    parameters: {statement: DiscussionStatement, mission: Mission, kind: DiscussionKind}
+    returns: Bool
+    expression: statement.mission == mission or ((kind == DiscussionKind.review or kind == DiscussionKind.final) and statement.mission < mission)
+  team_clause:
+    parameters: {content: DiscussionContent}
+    returns: Bool
+    expression: match(content, Compare() => True, Conditional() => True, Plan() => True, Participate() => True, Respond() => False, Redirect() => False, Retract() => False, Opinion() => False, Question() => False, Answer() => False)
+  quoted_statement:
+    parameters: {heard: DiscussionStatements, target: StatementKey}
+    returns: MaybeDiscussionStatement
+    expression: at(filter(heard, s => s.key == target), 0) if exists(heard, s => s.key == target) else None
+  is_retraction:
+    parameters: {content: DiscussionContent}
+    returns: Bool
+    expression: match(content, Retract() => True, Compare() => False, Conditional() => False, Respond() => False, Redirect() => False, Plan() => False, Participate() => False, Opinion() => False, Question() => False, Answer() => False)
+  condition_result:
+    parameters: {conditions: TeamConditions, option: MaybeTeamOption}
+    returns: ConditionResult
+    expression: >
+      (ConditionResult.holds if forall(conditions, c => match(c,
+      Contains(r) => forall(r.members, p => p in option.members),
+      Excludes(r) => not exists(r.members, p => p in option.members),
+      CountRange(r) => exactly_one(r.members, p => p in option.members) if r.minimum == 1 and r.maximum == 1 else
+      count_within(size(filter(r.members, p => p in option.members)), r.minimum, r.maximum))) else ConditionResult.not_holds)
+      if option is not None else ConditionResult.unknown
+  count_within:
+    parameters: {count: Count, minimum: Count, maximum: Count}
+    returns: Bool
+    expression: count >= minimum and count <= maximum
+  conditions_valid:
+    parameters: {conditions: TeamConditions, players: Players}
+    returns: Bool
+    expression: >
+      size(conditions) > 0 and forall(conditions, c => match(c,
+      Contains(r) => forall(r.members, p => p in players),
+      Excludes(r) => forall(r.members, p => p in players),
+      CountRange(r) => size(r.members) > 0 and forall(r.members, p => p in players) and
+      r.minimum <= r.maximum and r.maximum <= size(r.members)))
+  position_stance:
+    parameters: {position: ConditionalPosition, option: MaybeTeamOption}
+    returns: Stance
+    expression: >
+      (position.satisfied if condition_result(position.require_all, option) == ConditionResult.holds
+      else position.otherwise) if option is not None and option.mission == position.mission else Stance.undecided
+  discussion_topic:
+    parameters: {statement: DiscussionStatement}
+    returns: DeliberationTopic
+    expression: >
+      match(statement.content,
+      Compare(c) => DeliberationTopic.Comparison(speaker=statement.key.speaker, mission=statement.mission,
+      options=TeamOptions([c.comparison.preferred, c.comparison.alternative])),
+      Conditional() => DeliberationTopic.Condition(speaker=statement.key.speaker, mission=statement.mission),
+      Respond(r) => DeliberationTopic.Reply(speaker=statement.key.speaker, target=r.response.target),
+      Redirect() => DeliberationTopic.Attention(speaker=statement.key.speaker, mission=statement.mission),
+      Plan() => DeliberationTopic.Planning(speaker=statement.key.speaker, mission=statement.mission),
+      Participate(p) => DeliberationTopic.Participation(speaker=statement.key.speaker, target=p.decision.target),
+      Opinion(o) => DeliberationTopic.Opinion(speaker=statement.key.speaker, mission=statement.mission, topic=assertion_topic(o.opinion.assertion)),
+      Question() => DeliberationTopic.Question(key=statement.key),
+      Answer(a) => DeliberationTopic.Answer(speaker=statement.key.speaker, target=a.answer.question),
+      Retract(r) => r.retraction.topic)
+  discussion_superseded:
+    parameters: {heard: DiscussionStatements, topic: DeliberationTopic, turn: Epoch}
+    returns: Bool
+    expression: exists(heard, n => n.key.turn > turn and discussion_topic(n) == topic)
+  current_discussion:
+    parameters: {heard: DiscussionStatements}
+    returns: DiscussionStatements
+    # Keep withdrawals until callers filter them, so old statements cannot reappear.
+    expression: latest_by(heard, s => discussion_topic(s), s => s.key.turn)
+  plan_statement_status:
+    parameters: {statement: DiscussionStatement, heard: DiscussionStatements, situation: DiscussionContext}
+    returns: PlanStatus
+    expression: >
+      match(statement.content, Plan(p) =>
+      PlanStatus.expired if statement.mission != situation.mission or situation.kind == DiscussionKind.review or situation.kind == DiscussionKind.final or situation.phase == Phase.quest or situation.phase == Phase.finished or situation.phase == Phase.assassination else
+      (PlanStatus.withdrawn if exists(heard, r => match(r.content, Retract(w) => w.retraction.target == statement.key, Compare() => False, Conditional() => False, Respond() => False, Redirect() => False, Plan() => False, Participate() => False, Opinion() => False, Question() => False, Answer() => False)) else PlanStatus.superseded)
+      if not exists(heard, s => s.key == statement.key and s.mission == situation.mission and
+      not is_retraction(s.content) and not discussion_superseded(heard, discussion_topic(s), s.key.turn)) else
+      PlanStatus.target_reached if situation.leader == p.plan.leader or exists(situation.ballots, b => b.epoch >= statement.key.epoch and b.leader == p.plan.leader) else
+      PlanStatus.risk_limit if situation.rejections >= p.plan.rejection_limit else PlanStatus.active,
+      Compare() => PlanStatus.unknown, Conditional() => PlanStatus.unknown, Respond() => PlanStatus.unknown,
+      Redirect() => PlanStatus.unknown, Participate() => PlanStatus.unknown, Retract() => PlanStatus.unknown,
+      Opinion() => PlanStatus.unknown, Question() => PlanStatus.unknown, Answer() => PlanStatus.unknown)
+  plan_status:
+    parameters: {heard: DiscussionStatements, target: StatementKey, situation: DiscussionContext}
+    returns: PlanStatus
+    expression: plan_statement_status(at(filter(heard, s => s.key == target), 0), heard, situation) if exists(heard, s => s.key == target) else PlanStatus.unknown
+  heard_plan_keys:
+    parameters: {heard: DiscussionStatements, mission: Mission}
+    returns: StatementKeys
+    expression: >
+      distinct(map(filter(current_discussion(heard), s => s.mission == mission and
+      match(s.content, Plan() => True, Compare() => False, Conditional() => False, Respond() => False,
+      Redirect() => False, Participate() => False, Retract() => False, Opinion() => False, Question() => False, Answer() => False)), s => s.key))
+  current_plan_choice:
+    parameters: {heard: DiscussionStatements, speaker: PlayerRef, target: StatementKey, mission: Mission}
+    returns: MaybePlanParticipation
+    expression: >
+      current_participation_choice(heard, max_by(filter(heard, s => s.mission == mission and s.key.speaker == speaker and
+      match(s.content, Participate(p) => p.decision.target == target, Compare() => False, Conditional() => False,
+      Respond() => False, Redirect() => False, Plan() => False, Retract() => False, Opinion() => False, Question() => False, Answer() => False)),
+      s => s.key.turn))
+  current_participation_choice:
+    parameters: {heard: DiscussionStatements, statement: MaybeDiscussionStatement}
+    returns: MaybePlanParticipation
+    expression: >
+      match(statement.content, Participate(p) => p.decision.choice, Compare() => None, Conditional() => None,
+      Respond() => None, Redirect() => None, Plan() => None, Retract() => None, Opinion() => None, Question() => None, Answer() => None)
+      if statement is not None and not discussion_superseded(heard, discussion_topic(statement), statement.key.turn) else None
+  participation_targets:
+    parameters: {heard: DiscussionStatements, speaker: PlayerRef, mission: Mission}
+    returns: StatementKeys
+    expression: >
+      union(heard_plan_keys(heard, mission), distinct(map(filter(heard, s => s.mission == mission and
+      match(s.content, Plan() => current_plan_choice(heard, speaker, s.key, mission) == PlanParticipation.join,
+      Compare() => False, Conditional() => False, Respond() => False, Redirect() => False, Participate() => False, Retract() => False, Opinion() => False, Question() => False, Answer() => False)), s => s.key)))
+  allowed_plan_choices:
+    parameters: {heard: DiscussionStatements, speaker: PlayerRef, target: StatementKey, situation: DiscussionContext}
+    returns: PlanParticipations
+    expression: >
+      plan_choices(current_plan_choice(heard, speaker, target, situation.mission), plan_status(heard, target, situation))
+  plan_choices:
+    parameters: {current: MaybePlanParticipation, status: PlanStatus}
+    returns: PlanParticipations
+    expression: >
+      union((PlanParticipations([PlanParticipation.join])
+      if current == PlanParticipation.join else
+      PlanParticipations([PlanParticipation.join, PlanParticipation.decline, PlanParticipation.undecided]))
+      if status == PlanStatus.active else PlanParticipations([]),
+      PlanParticipations([PlanParticipation.leave]) if current == PlanParticipation.join else PlanParticipations([]))
+  attention_topics:
+    parameters: {mission: Mission, ballots: ApprovalHistory, claims: IdentitySpeeches}
+    returns: AttentionTopics
+    expression: >
+      union(AttentionTopics([AttentionTopic.CurrentProcess(mission=mission)]),
+      union(distinct(map(ballots, b => AttentionTopic.PublicBallot(epoch=b.epoch))),
+      distinct(map(claims, c => AttentionTopic.IdentityClaim(statement=c)))))
+  expression_record:
+    parameters: {speaker: PlayerRef, epoch: Epoch, serial: Epoch, mission: Mission, content: DiscussionContent}
+    returns: DiscussionStatements
+    expression: DiscussionStatements([expression_part(speaker, epoch, serial, mission, content, 0)])
+  expression_part:
+    parameters: {speaker: PlayerRef, epoch: Epoch, serial: Epoch, mission: Mission, content: DiscussionContent, part: ClauseIndex}
+    returns: DiscussionStatement
+    expression: DiscussionStatement(key=StatementKey(speaker=speaker, epoch=epoch, turn=serial, part=part), mission=mission, content=content)
+  expression_parts:
+    parameters: {speaker: PlayerRef, epoch: Epoch, serial: Epoch, mission: Mission, clauses: DiscussionContents}
+    returns: DiscussionStatements
+    expression: map(clauses, c => expression_part(speaker, epoch, serial, mission, c, index_of(clauses, c)))
+  discussion_evidence:
+    parameters: {claims: IdentitySpeeches, advice: TeamSpeeches, alternatives: TeamSuggestions, expressions: DiscussionStatements, ballots: ApprovalHistory}
+    returns: DiscussionEvidence
+    expression: DiscussionEvidence(claims=claims, advice=advice, alternatives=alternatives, expressions=expressions, ballots=ballots)
+  clause_valid:
+    parameters: {content: DiscussionContent, speaker: PlayerRef, players: Players, cast: Roles, situation: DiscussionContext, evidence: DiscussionEvidence, history: QuestHistory, epoch: Epoch}
+    returns: Bool
+    expression: >
+      (not team_clause(content) or situation.kind == DiscussionKind.proposal) and match(content,
+      Compare(c) => c.comparison.preferred.mission == situation.mission and c.comparison.alternative.mission == situation.mission and
+      size(c.comparison.preferred.members) == size(situation.members) and size(c.comparison.alternative.members) == size(situation.members) and
+      c.comparison.preferred.members != c.comparison.alternative.members and
+      forall(union(c.comparison.preferred.members, c.comparison.alternative.members), p => p in players) and size(c.comparison.grounds) <= 2 and
+      forall(c.comparison.grounds, g => g in speech_arguments(history, c.comparison.preferred.members, evidence.advice, epoch, speaker, True)),
+      Conditional(c) => c.position.mission == situation.mission and conditions_valid(c.position.require_all, players),
+      Respond(r) => exists(evidence.expressions, s => s.key == r.response.target and discussion_reference_allowed(s, situation.mission, situation.kind)) and size(r.response.grounds) <= 2 and
+      forall(r.response.grounds, g => g in speech_arguments(history, situation.members, evidence.advice, epoch, speaker, True)),
+      Redirect(r) => r.topic in attention_topics(situation.mission, evidence.ballots, evidence.claims),
+      Plan(p) => p.plan.leader in players and p.plan.leader != situation.leader and p.plan.rejection_limit > situation.rejections and p.plan.rejection_limit <= 5,
+      Participate(p) => p.decision.target in participation_targets(evidence.expressions, speaker, situation.mission) and
+      p.decision.choice in allowed_plan_choices(evidence.expressions, speaker, p.decision.target, situation),
+      Retract(r) => exists(evidence.expressions, s => s.key == r.retraction.target and s.key.speaker == speaker and discussion_reference_allowed(s, situation.mission, situation.kind) and
+      not is_retraction(s.content) and not discussion_superseded(evidence.expressions, discussion_topic(s), s.key.turn) and discussion_topic(s) == r.retraction.topic),
+      Opinion(o) => assertion_valid(o.opinion.assertion, players, cast),
+      Question(q) => q.question.recipient in players and q.question.recipient != speaker and
+      question_subject_valid(q.question.subject, players, cast, evidence.claims, evidence.advice, evidence.alternatives, evidence.expressions, evidence.ballots),
+      Answer(a) => a.answer.question in addressed_questions(evidence.expressions, speaker, situation.mission) and
+      answer_valid(a.answer.reply, players, cast, evidence.claims, evidence.advice, evidence.alternatives, evidence.expressions, evidence.ballots))
+  clauses_valid:
+    parameters: {clauses: DiscussionContents, speaker: PlayerRef, players: Players, cast: Roles, situation: DiscussionContext, evidence: DiscussionEvidence, history: QuestHistory, epoch: Epoch}
+    returns: Bool
+    expression: >
+      size(clauses) > 0 and size(clauses) <= 3 and
+      forall(clauses, c => clause_valid(c, speaker, players, cast, situation, evidence, history, epoch)) and
+      forall(clauses, c => exactly_one(clauses, other => discussion_topic(expression_part(speaker, epoch, situation.serial, situation.mission, c, index_of(clauses, c))) ==
+      discussion_topic(expression_part(speaker, epoch, situation.serial, situation.mission, other, index_of(clauses, other)))))
+disclosures:
+  DeliberationMessage:
+    parameters: {statement: DiscussionStatement, listeners: Players}
+    sample: before
+    to: listeners
+    returns: DiscussionStatement
+    value: statement
+    access: acquired
+abilities:
+  Speak:
+    context: Match
+    actor: {player: PlayerRef}
+    views: {quoted_claims: {reports: IdentitySpeeches}, quoted_advice: {reports: TeamSpeeches}, quoted_alternatives: {reports: TeamSuggestions}, quoted_expressions: {reports: DiscussionStatements}, quoted_ballots: {reports: ApprovalHistory}}
+    inputs:
+      clauses:
+        type: DiscussionContents
+        enter: typed
+        constraint: clauses_valid(clauses, player, players, public_cast, discussion_context(mission, at(order, leader_index), rejections, phase, team, approval_history, discussion_kind, speech_serial), discussion_evidence(reports(quoted_claims), reports(quoted_advice), reports(quoted_alternatives), reports(quoted_expressions), reports(quoted_ballots)), quest_history, epoch)
+    where: player in players and can_speak(phase, speech_serial, player.speech_epoch)
+    results: DiscussionStatements
+    resolve:
+      result: expression_parts(player, epoch, speech_serial, mission, clauses)
+      effects: ['set(player.speech_epoch, speech_serial)']
+  CompareTeams:
+    context: Match
+    actor: {player: PlayerRef}
+    views: {heard: {reports: TeamSpeeches}}
+    inputs:
+      preferred:
+        type: Players
+        choose: {subset: players, min: 'at(setup(size(players), population).team_sizes, mission - 1)', max: 'at(setup(size(players), population).team_sizes, mission - 1)'}
+      alternative:
+        type: Players
+        choose: {subset: players, min: 'at(setup(size(players), population).team_sizes, mission - 1)', max: 'at(setup(size(players), population).team_sizes, mission - 1)'}
+        constraint: alternative != preferred
+      grounds:
+        type: TeamArguments
+        choose: {subset: 'speech_arguments(quest_history, preferred, reports(heard), epoch, player, True)', min: '0', max: '2'}
+    where: player in players and can_speak(phase, speech_serial, player.speech_epoch) and discussion_kind == DiscussionKind.proposal
+    results: DiscussionStatements
+    resolve:
+      result: >
+        expression_record(player, epoch, speech_serial, mission, DiscussionContent.Compare(comparison=TeamComparison(
+        preferred=TeamOption(mission=mission, members=preferred), alternative=TeamOption(mission=mission, members=alternative), grounds=grounds)))
+      effects: ['set(player.speech_epoch, speech_serial)']
+  StateCondition:
+    context: Match
+    actor: {player: PlayerRef}
+    inputs:
+      conditions: {type: TeamConditions, enter: typed, constraint: 'conditions_valid(conditions, players)'}
+      satisfied: {type: Stance, choose: 'Stances([Stance.support, Stance.oppose, Stance.undecided])'}
+      otherwise: {type: Stance, choose: 'Stances([Stance.support, Stance.oppose, Stance.undecided])'}
+    where: player in players and can_speak(phase, speech_serial, player.speech_epoch) and discussion_kind == DiscussionKind.proposal
+    results: DiscussionStatements
+    resolve:
+      result: >
+        expression_record(player, epoch, speech_serial, mission, DiscussionContent.Conditional(position=ConditionalPosition(
+        mission=mission, require_all=conditions,
+        satisfied=satisfied, otherwise=otherwise)))
+      effects: ['set(player.speech_epoch, speech_serial)']
+  RespondStatement:
+    context: Match
+    actor: {player: PlayerRef}
+    views: {received: {reports: DiscussionStatements}, heard: {reports: TeamSpeeches}}
+    inputs:
+      target: {type: StatementKey, choose: 'distinct(map(filter(reports(received), s => discussion_reference_allowed(s, mission, discussion_kind)), s => s.key))'}
+      attitude: {type: ResponseAttitude, choose: 'ResponseAttitudes([ResponseAttitude.endorse, ResponseAttitude.challenge, ResponseAttitude.undecided])'}
+      grounds:
+        type: TeamArguments
+        choose: {subset: 'speech_arguments(quest_history, team, reports(heard), epoch, player, True)', min: '0', max: '2'}
+    where: player in players and can_speak(phase, speech_serial, player.speech_epoch)
+    results: DiscussionStatements
+    resolve:
+      result: expression_record(player, epoch, speech_serial, mission, DiscussionContent.Respond(response=StatementResponse(target=target, attitude=attitude, grounds=grounds)))
+      effects: ['set(player.speech_epoch, speech_serial)']
+  RedirectDiscussion:
+    context: Match
+    actor: {player: PlayerRef}
+    views: {ballots: {reports: ApprovalHistory}, identity_statements: {reports: IdentitySpeeches}}
+    inputs:
+      topic: {type: AttentionTopic, choose: 'attention_topics(mission, reports(ballots), reports(identity_statements))'}
+    where: player in players and can_speak(phase, speech_serial, player.speech_epoch)
+    results: DiscussionStatements
+    resolve:
+      result: expression_record(player, epoch, speech_serial, mission, DiscussionContent.Redirect(topic=topic))
+      effects: ['set(player.speech_epoch, speech_serial)']
+  ProposePlan:
+    context: Match
+    actor: {player: PlayerRef}
+    inputs:
+      target_leader: {type: PlayerRef, choose: 'filter(players, p => p != at(order, leader_index))'}
+      rejection_limit: {type: Count, choose: 'RejectionLimits([1, 2, 3, 4, 5])', constraint: rejection_limit > rejections}
+    where: player in players and can_speak(phase, speech_serial, player.speech_epoch) and discussion_kind == DiscussionKind.proposal
+    results: DiscussionStatements
+    resolve:
+      result: expression_record(player, epoch, speech_serial, mission, DiscussionContent.Plan(plan=LeaderPlan(leader=target_leader, rejection_limit=rejection_limit)))
+      effects: ['set(player.speech_epoch, speech_serial)']
+  DecidePlan:
+    context: Match
+    actor: {player: PlayerRef}
+    views: {received: {reports: DiscussionStatements}}
+    inputs:
+      target: {type: StatementKey, choose: 'participation_targets(reports(received), player, mission)'}
+      participation: {type: PlanParticipation, choose: 'allowed_plan_choices(reports(received), player, target, discussion_context(mission, at(order, leader_index), rejections, phase, team, approval_history, discussion_kind, speech_serial))'}
+    where: player in players and can_speak(phase, speech_serial, player.speech_epoch) and discussion_kind == DiscussionKind.proposal
+    results: DiscussionStatements
+    resolve:
+      result: expression_record(player, epoch, speech_serial, mission, DiscussionContent.Participate(decision=PlanDecision(target=target, choice=participation)))
+      effects: ['set(player.speech_epoch, speech_serial)']
+  RetractStatement:
+    context: Match
+    actor: {player: PlayerRef}
+    views: {received: {reports: DiscussionStatements}}
+    inputs:
+      target:
+        type: StatementKey
+        choose: >
+          distinct(map(filter(current_discussion(filter(reports(received), s => s.key.speaker == player)), s => discussion_reference_allowed(s, mission, discussion_kind) and
+          not is_retraction(s.content)), s => s.key))
+    where: player in players and can_speak(phase, speech_serial, player.speech_epoch)
+    results: DiscussionStatements
+    resolve:
+      result: expression_record(player, epoch, speech_serial, mission, DiscussionContent.Retract(retraction=StatementRetraction(target=target, topic=discussion_topic(at(filter(reports(received), s => s.key == target), 0)))))
+      effects: ['set(player.speech_epoch, speech_serial)']
+reactions:
+  PublishDiscussion:
+    context: Match
+    on: {definition: [CompareTeams, StateCondition, RespondStatement, RedirectDiscussion, ProposePlan, DecidePlan, RetractStatement, StateOpinion, AskQuestion, AnswerQuestion, Speak], bind: {statements: result}}
+    when: 'True'
+    results: Unit
+    resolve:
+      result: None
+      deliver:
+        said: {for: statement, in: statements, value: 'DeliberationMessage(statement, players)'}

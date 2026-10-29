@@ -1,0 +1,52 @@
+# Compiler component example: native entity fields and read-only carrying queries.
+schema: nomos.author.lib
+values:
+  Site: {enum: [hall, workshop, gate]}
+  Energy: {int: [0, 10]}
+  PersonRef: {ref: Person}
+  ItemRef: {ref: Portable}
+  Holder: {optional: PersonRef}
+  Items: {set: ItemRef}
+entities:
+  Person:
+    kind: person
+    reference: public
+    fields: {position: Site, energy: Energy}
+    view: [id, position, energy]
+    public: [id, position]
+  Portable:
+    kind: object
+    reference: public
+    fields: {holder: Holder, ground: Site}
+    view: [id, holder, ground]
+  Key:
+    kind: object
+    extends: Portable
+    reference: public
+    fields: {}
+    view: [id, holder, ground]
+relations:
+  custody:
+    kind: carrying
+    item: Portable
+    person: Person
+    holder: holder
+    ground: ground
+    position: position
+queries:
+  location:
+    parameters: {item: ItemRef}
+    returns: Site
+    expression: custody.position(item)
+  carried_by:
+    parameters: {item: ItemRef, person: PersonRef}
+    returns: Bool
+    expression: custody.held_by(item, person)
+  at_same_site:
+    parameters: {items: Items, person: PersonRef}
+    returns: Items
+    expression: filter(items, item => location(item) == person.position)
+  available_energy:
+    parameters: {person: PersonRef}
+    returns: Energy
+    expression: person.energy

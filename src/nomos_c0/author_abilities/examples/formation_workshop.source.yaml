@@ -1,0 +1,14 @@
+schema: nomos.author.source
+name: formation_workshop
+actors: {alice: Worker, bob: Worker}
+objects: [Tool]
+random: {mechanism: replayable_seed}
+contexts:
+  catalog:
+    definition: Catalog
+    with: {recipient: {actor: alice}, tools: {opening_domain: Tool}}
+use:
+  initial: {definition: InitialTools, context: catalog}
+  forge: {definition: Forge, with: {threshold: 10}}
+  discovered: {definition: DiscoverProducts, after: forge}
+  use: {definition: Use}

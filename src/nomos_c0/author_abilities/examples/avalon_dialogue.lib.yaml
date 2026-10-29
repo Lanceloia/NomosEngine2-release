@@ -1,0 +1,141 @@
+# Public assertions and addressed dialogue authenticate speech, not hidden truth.
+schema: nomos.author.lib
+values:
+  PublicAssertion:
+    variant:
+      RoleOf: {subject: PlayerRef, role: Role}
+      SideOf: {subject: PlayerRef, side: Side}
+      GroupCount: {members: Players, side: Side, minimum: Count, maximum: Count}
+      PercivalPair: {observer: PlayerRef, members: Players}
+  PublicAssertions: {set: PublicAssertion}
+  MaybePublicAssertion: {optional: PublicAssertion}
+  AssertionTopic:
+    variant:
+      PersonRole: {subject: PlayerRef, role: Role}
+      PersonSide: {subject: PlayerRef, side: Side}
+      GroupSide: {members: Players, side: Side}
+      PrivateClue: {observer: PlayerRef}
+  PublicOpinion: {record: {assertion: PublicAssertion, stance: Stance}}
+  MaybePublicOpinion: {optional: PublicOpinion}
+  PublicCitation:
+    variant:
+      IdentityClaim: {statement: IdentitySpeech}
+      TeamAdvice: {statement: TeamSpeech}
+      Alternative: {statement: TeamSuggestion}
+      Discussion: {key: StatementKey}
+      Ballot: {epoch: Epoch, voter: PlayerRef}
+  PublicCitations: {set: PublicCitation}
+  QuestionSubject:
+    variant:
+      Citation: {citation: PublicCitation}
+      Proposition: {assertion: PublicAssertion}
+  QuestionSubjects: {set: QuestionSubject}
+  QuestionPurpose: {enum: [explain_choice, explain_basis, clarify, offer_alternative]}
+  QuestionPurposes: {set: QuestionPurpose}
+  PublicQuestion: {record: {recipient: PlayerRef, subject: QuestionSubject, purpose: QuestionPurpose}}
+  PublicAnswer:
+    variant:
+      Explanation: {opinion: MaybePublicOpinion, grounds: PublicCitations}
+      Reserve: {}
+      Unknown: {}
+      Decline: {}
+  PublicAnswers: {set: PublicAnswer}
+  QuestionAnswer: {record: {question: StatementKey, reply: PublicAnswer}}
+queries:
+  assertion_topic:
+    parameters: {assertion: PublicAssertion}
+    returns: AssertionTopic
+    expression: >
+      match(assertion, RoleOf(r) => AssertionTopic.PersonRole(subject=r.subject, role=r.role),
+      SideOf(r) => AssertionTopic.PersonSide(subject=r.subject, side=r.side),
+      GroupCount(r) => AssertionTopic.GroupSide(members=r.members, side=r.side),
+      PercivalPair(r) => AssertionTopic.PrivateClue(observer=r.observer))
+  assertion_valid:
+    parameters: {assertion: PublicAssertion, players: Players, cast: Roles}
+    returns: Bool
+    expression: >
+      match(assertion, RoleOf(r) => r.subject in players and r.role in distinct(cast),
+      SideOf(r) => r.subject in players,
+      GroupCount(r) => size(r.members) > 0 and forall(r.members, p => p in players) and
+      r.minimum <= r.maximum and r.maximum <= size(r.members),
+      PercivalPair(r) => r.observer in players and r.observer not in r.members and size(r.members) == 2 and
+      forall(r.members, p => p in players) and Role.percival in distinct(cast) and
+      Role.merlin in distinct(cast) and Role.morgana in distinct(cast))
+  citation_acquired:
+    parameters: {citation: PublicCitation, claims: IdentitySpeeches, advice: TeamSpeeches, alternatives: TeamSuggestions, expressions: DiscussionStatements, ballots: ApprovalHistory}
+    returns: Bool
+    expression: >
+      match(citation, IdentityClaim(c) => c.statement in distinct(claims), TeamAdvice(c) => c.statement in distinct(advice),
+      Alternative(c) => c.statement in distinct(alternatives), Discussion(c) => exists(expressions, s => s.key == c.key),
+      Ballot(c) => exists(ballots, b => b.epoch == c.epoch and c.voter in union(b.approve, b.reject)))
+  citation_speaker:
+    parameters: {citation: PublicCitation}
+    returns: PlayerRef
+    expression: >
+      match(citation, IdentityClaim(c) => c.statement.speaker, TeamAdvice(c) => c.statement.speaker,
+      Alternative(c) => c.statement.speaker, Discussion(c) => c.key.speaker, Ballot(c) => c.voter)
+  question_subject_valid:
+    parameters: {subject: QuestionSubject, players: Players, cast: Roles, claims: IdentitySpeeches, advice: TeamSpeeches, alternatives: TeamSuggestions, expressions: DiscussionStatements, ballots: ApprovalHistory}
+    returns: Bool
+    expression: >
+      match(subject, Proposition(p) => assertion_valid(p.assertion, players, cast),
+      Citation(c) => citation_acquired(c.citation, claims, advice, alternatives, expressions, ballots))
+  addressed_questions:
+    parameters: {heard: DiscussionStatements, recipient: PlayerRef, mission: Mission}
+    returns: StatementKeys
+    expression: >
+      distinct(map(filter(current_discussion(heard), s => s.mission == mission and
+      match(s.content, Question(q) => q.question.recipient == recipient,
+      Opinion() => False, Answer() => False, Compare() => False, Conditional() => False,
+      Respond() => False, Redirect() => False, Plan() => False, Participate() => False, Retract() => False)), s => s.key))
+  answer_valid:
+    parameters: {reply: PublicAnswer, players: Players, cast: Roles, claims: IdentitySpeeches, advice: TeamSpeeches, alternatives: TeamSuggestions, expressions: DiscussionStatements, ballots: ApprovalHistory}
+    returns: Bool
+    expression: >
+      match(reply, Explanation(a) => (a.opinion is not None or size(a.grounds) > 0) and
+      (assertion_valid(a.opinion.assertion, players, cast) if a.opinion is not None else True) and
+      size(a.grounds) <= 2 and forall(a.grounds, c => citation_acquired(c, claims, advice, alternatives, expressions, ballots)),
+      Reserve() => True, Unknown() => True, Decline() => True)
+abilities:
+  StateOpinion:
+    context: Match
+    actor: {player: PlayerRef}
+    inputs:
+      assertion: {type: PublicAssertion, enter: typed, constraint: 'assertion_valid(assertion, players, public_cast)'}
+      stance: {type: Stance, choose: 'Stances([Stance.support, Stance.oppose, Stance.undecided])'}
+    where: player in players and can_speak(phase, speech_serial, player.speech_epoch)
+    results: DiscussionStatements
+    resolve:
+      result: expression_record(player, epoch, speech_serial, mission, DiscussionContent.Opinion(opinion=PublicOpinion(assertion=assertion, stance=stance)))
+      effects: ['set(player.speech_epoch, speech_serial)']
+  AskQuestion:
+    context: Match
+    actor: {player: PlayerRef}
+    views: {quoted_claims: {reports: IdentitySpeeches}, quoted_advice: {reports: TeamSpeeches}, quoted_alternatives: {reports: TeamSuggestions}, quoted_expressions: {reports: DiscussionStatements}, quoted_ballots: {reports: ApprovalHistory}}
+    inputs:
+      recipient: {type: PlayerRef, choose: 'difference(players, Players([player]))'}
+      subject:
+        type: QuestionSubject
+        enter: typed
+        constraint: question_subject_valid(subject, players, public_cast, reports(quoted_claims), reports(quoted_advice), reports(quoted_alternatives), reports(quoted_expressions), reports(quoted_ballots))
+      purpose: {type: QuestionPurpose, choose: 'QuestionPurposes([QuestionPurpose.explain_choice, QuestionPurpose.explain_basis, QuestionPurpose.clarify, QuestionPurpose.offer_alternative])'}
+    where: player in players and can_speak(phase, speech_serial, player.speech_epoch)
+    results: DiscussionStatements
+    resolve:
+      result: expression_record(player, epoch, speech_serial, mission, DiscussionContent.Question(question=PublicQuestion(recipient=recipient, subject=subject, purpose=purpose)))
+      effects: ['set(player.speech_epoch, speech_serial)']
+  AnswerQuestion:
+    context: Match
+    actor: {player: PlayerRef}
+    views: {quoted_claims: {reports: IdentitySpeeches}, quoted_advice: {reports: TeamSpeeches}, quoted_alternatives: {reports: TeamSuggestions}, quoted_expressions: {reports: DiscussionStatements}, quoted_ballots: {reports: ApprovalHistory}}
+    inputs:
+      question: {type: StatementKey, choose: 'addressed_questions(reports(quoted_expressions), player, mission)'}
+      reply:
+        type: PublicAnswer
+        enter: typed
+        constraint: answer_valid(reply, players, public_cast, reports(quoted_claims), reports(quoted_advice), reports(quoted_alternatives), reports(quoted_expressions), reports(quoted_ballots))
+    where: player in players and can_speak(phase, speech_serial, player.speech_epoch)
+    results: DiscussionStatements
+    resolve:
+      result: expression_record(player, epoch, speech_serial, mission, DiscussionContent.Answer(answer=QuestionAnswer(question=question, reply=reply)))
+      effects: ['set(player.speech_epoch, speech_serial)']

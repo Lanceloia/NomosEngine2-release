@@ -1,0 +1,134 @@
+# All input choices and effects are author rules; the desktop does not advance roles.
+schema: nomos.author.lib
+abilities:
+  PrepareEconomy:
+    context: Catalog
+    actor: {player: PlayerRef}
+    where: phase==Phase.setup and player==at(order,0)
+    results: Unit
+    resolve:
+      draw:
+        shuffled: {type: TileCards, shuffle: 'filter(plantations,t=>not exists(players,p=>exists(p.island,l=>l.key==t.key)))'}
+      then:
+        result: None
+        effects:
+          - {for: person, in: players, effects: ['set(person.money,setup_for(setups,size(players)).money)']}
+          - set(colonist_supply,setup_for(setups,size(players)).colonist_supply)
+          - set(colonist_ship,setup_for(setups,size(players)).colonist_ship)
+          - set(supply,starting_supply(goods))
+          - set(role_cards,map(role_cards_for(roles,size(players)),r=>RoleSlot(key=r.key,kind=r.kind,reward=0)))
+          - set(quarries,quarry_tiles)
+          - set(plantation_row,take(shuffled,size(players)+1))
+          - set(plantation_deck,drop(shuffled,size(players)+1))
+          - set(phase,Phase.choose_role)
+  ChooseRole:
+    context: Catalog
+    actor: {player: PlayerRef}
+    parameters: {enabled: RoleKinds}
+    inputs:
+      role: {type: RoleSlot, choose: 'distinct(filter(role_cards,r=>r.kind in enabled and r.key not in chosen_roles))'}
+      bonus: {type: Bool, choose: 'Flags([True,False]) if role.kind==Role.mayor and colonist_supply>0 else Flags([False])'}
+    where: phase==Phase.choose_role and player==at(order,chooser_index)
+    results: Unit
+    resolve:
+      result: None
+      effects:
+        - set(player.money,player.money+role.reward+(1 if role.kind==Role.prospector else 0))
+        - set(active,role)
+        - set(chosen_roles,union(chosen_roles,RoleKeys([role.key])))
+        - set(role_cards,map(role_cards,r=>RoleSlot(key=r.key,kind=r.kind,reward=0 if r.key==role.key else r.reward)))
+        - set(selector_index,chooser_index)
+        - set(current_index,chooser_index)
+        - set(acted,0)
+        - set(produced_kinds,GoodKinds([]))
+        - set(phase,Phase.between if role.kind==Role.prospector else Phase.role)
+  Settle:
+    context: Catalog
+    actor: {player: PlayerRef}
+    inputs:
+      tile: {type: TileCard, choose: 'distinct(append(plantation_row,TileCard(key=next_key,crop=None)) if player==at(order,selector_index) and quarries>0 else plantation_row)'}
+    where: phase==Phase.role and active.kind==Role.settler and player==at(order,current_index) and size(player.island)<12 and (size(plantation_row)>0 or (player==at(order,selector_index) and quarries>0))
+    results: MoveKind
+    resolve:
+      result: MoveKind.settle
+      effects:
+        - set(player.island,append(player.island,Land(key=tile.key,crop=tile.crop,workers=0)))
+        - set(plantation_row,filter(plantation_row,t=>t.key!=tile.key))
+        - set(quarries,quarries-1 if tile.crop is None else quarries)
+        - set(next_key,next_key+1 if tile.crop is None else next_key)
+        - set(phase,Phase.advance)
+  AssignWorkers:
+    context: Catalog
+    actor: {player: PlayerRef}
+    inputs: {layout: {type: Allocation, enter: typed, constraint: 'valid_allocation(worker_sites(player,buildings),player.colonists,layout)'}}
+    where: phase==Phase.role and active.kind==Role.mayor and player==at(order,current_index)
+    results: MoveKind
+    resolve:
+      result: MoveKind.assign
+      effects:
+        - set(player.island,map(player.island,t=>Land(key=t.key,crop=t.crop,workers=allocation_at(layout,t.key))))
+        - set(player.city,map(player.city,b=>Building(key=b.key,kind=b.kind,workers=allocation_at(layout,b.key))))
+        - set(player.reserve,layout.reserve)
+        - set(phase,Phase.advance)
+  Build:
+    context: Catalog
+    actor: {player: PlayerRef}
+    parameters: {buildable: BuildingKinds}
+    inputs: {building: {type: BuildingSpec, choose: 'distinct(build_options(player,players,buildings,buildable,player==at(order,selector_index)))'}}
+    where: phase==Phase.role and active.kind==Role.builder and player==at(order,current_index) and size(build_options(player,players,buildings,buildable,player==at(order,selector_index)))>0
+    results: MoveKind
+    resolve:
+      result: MoveKind.build
+      effects:
+        - set(player.money,player.money-build_price(player,building,player==at(order,selector_index)))
+        - set(player.city,append(player.city,Building(key=next_key,kind=building.kind,workers=0)))
+        - set(next_key,next_key+1)
+        - set(end_triggered,end_triggered or city_size(player,buildings)+building.spaces==12)
+        - set(phase,Phase.advance)
+  Produce:
+    context: Catalog
+    actor: {player: PlayerRef}
+    inputs: {produced: {type: Goods, derive: 'production(player,buildings,supply)'}}
+    where: phase==Phase.role and active.kind==Role.craftsman and player==at(order,current_index) and has_production(player,buildings,supply)
+    results: MoveKind
+    resolve:
+      result: MoveKind.produce
+      effects:
+        - set(player.stock,goods_add(player.stock,produced))
+        - set(supply,goods_subtract(supply,produced))
+        - set(produced_kinds,filter(all_good_kinds(),g=>goods_count(produced,g)>0) if player==at(order,selector_index) else produced_kinds)
+        - set(phase,Phase.advance)
+  Sell:
+    context: Catalog
+    actor: {player: PlayerRef}
+    inputs: {kind: {type: Good, choose: 'sale_options(player,trading)'}}
+    where: phase==Phase.role and active.kind==Role.trader and player==at(order,current_index) and size(sale_options(player,trading))>0
+    results: MoveKind
+    resolve:
+      result: MoveKind.trade
+      effects:
+        - set(player.money,player.money+sale_price(goods,kind,player==at(order,selector_index)))
+        - set(player.stock,remaining_goods(player.stock,kind,1))
+        - set(trading,append(trading,kind))
+        - set(phase,Phase.advance)
+  DeclinePhase:
+    context: Catalog
+    actor: {player: PlayerRef}
+    where: phase==Phase.role and active.kind!=Role.mayor and player==at(order,current_index)
+    results: MoveKind
+    resolve: {result: MoveKind.decline, effects: ['set(phase,Phase.advance)']}
+  ExtraGood:
+    context: Catalog
+    actor: {player: PlayerRef}
+    inputs: {kind: {type: Good, choose: 'filter(produced_kinds,g=>goods_count(supply,g)>0)'}}
+    where: phase==Phase.extra_good and player==at(order,selector_index) and exists(produced_kinds,g=>goods_count(supply,g)>0)
+    results: MoveKind
+    resolve:
+      result: MoveKind.bonus
+      effects: ['set(player.stock,goods_add(player.stock,one_good(kind)))','set(supply,remaining_goods(supply,kind,1))','set(phase,Phase.end_phase)']
+  DeclineExtra:
+    context: Catalog
+    actor: {player: PlayerRef}
+    where: phase==Phase.extra_good and player==at(order,selector_index)
+    results: MoveKind
+    resolve: {result: MoveKind.decline, effects: ['set(phase,Phase.end_phase)']}

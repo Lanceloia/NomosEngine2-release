@@ -1,0 +1,219 @@
+# Heuristics over personal hypotheses; model counts are not calibrated probabilities.
+schema: nomos.author.ai
+queries:
+  council_alignment:
+    parameters: {own: RoleReports}
+    returns: Score
+    # Roles come from this Actor's acquired report, never another person's field.
+    expression: -1 if exists(own, r => evil_role(r.role)) else 1
+  council_required:
+    parameters: {mission: Mission, count: Count, population: SetupTable}
+    returns: Count
+    expression: setup(count, population).fourth_fail_threshold if mission == 4 else 1
+  council_magnitude:
+    parameters: {value: Score}
+    returns: Score
+    expression: value if value >= 0 else -value
+  council_evil_mass:
+    parameters: {models: IdentityModels, members: Players}
+    returns: Score
+    expression: sum_by(models, m => sum_by(m.identities, i => 1 if i.player in members and evil_role(i.role) else 0))
+  council_prefer_team:
+    parameters: {view: CandidateFiniteView, members: Players, epoch: Epoch, observer: PlayerRef, own: RoleReports, required: Count}
+    returns: Bool
+    expression: >
+      view.complete and view.analysis.status == AnalysisStatus.consistent and
+      (council_alignment(own) * council_certainty(view, members, True, required) > 0 or
+      (council_certainty(view, members, True, required) == 0 and
+      council_alignment(own) * (council_margin(view, members, required) +
+      council_advice(view, members, epoch, observer, required) +
+      council_claims(view, members, observer, required)) > 0))
+  council_unsafe:
+    parameters: {models: IdentityModels, members: Players, required: Count}
+    returns: Score
+    expression: sum_by(models, m => 1 if sum_by(m.identities, i => 1 if i.player in members and evil_role(i.role) else 0) >= required else 0)
+  council_margin:
+    parameters: {view: CandidateFiniteView, members: Players, required: Count}
+    returns: Score
+    expression: size(view.analysis.models) - 2 * council_unsafe(view.analysis.models, members, required)
+  council_review_delta:
+    parameters: {thought: CandidateThought, speaker: PlayerRef}
+    returns: Score
+    expression: >
+      match(thought, Notice() => 0, Candidate() => 0, Evil() => 0, Claimed() => 0,
+      Advice() => 0, QuestOutcome() => 0,
+      AdviceReview(r) => (1 if r.aligned else -2) if r.speaker == speaker else 0)
+  council_weight:
+    parameters: {view: CandidateFiniteView, speaker: PlayerRef}
+    returns: Score
+    # Count propositions once even if they have several proof paths.
+    expression: 1 + sum_by(distinct(map(view.inferences, i => i.proposition)), p => council_review_delta(p, speaker))
+  council_advice_entry:
+    parameters: {thought: CandidateThought, view: CandidateFiniteView, members: Players, epoch: Epoch, observer: PlayerRef}
+    returns: Score
+    expression: >
+      match(thought, Notice() => 0, Candidate() => 0, Evil() => 0, Claimed() => 0,
+      QuestOutcome() => 0, AdviceReview() => 0,
+      Advice(a) => 2 * council_weight(view, a.speaker) * (1 if a.approve else -1)
+      if a.epoch == epoch and a.team == members and a.speaker != observer and
+      a.approve is not None and council_weight(view, a.speaker) > 0 else 0)
+  council_advice:
+    parameters: {view: CandidateFiniteView, members: Players, epoch: Epoch, observer: PlayerRef, required: Count}
+    returns: Score
+    expression: >
+      sum_by(view.beliefs, b => council_advice_entry(b.proposition, view, members, epoch, observer)
+      if b.status == Attitude.supported else 0)
+      if view.complete and view.analysis.status == AnalysisStatus.consistent and
+      council_unsafe(view.analysis.models, members, required) > 0 and
+      council_unsafe(view.analysis.models, members, required) < size(view.analysis.models) else 0
+  council_claim_entry:
+    parameters: {thought: CandidateThought, view: CandidateFiniteView, subject: PlayerRef}
+    returns: Score
+    # A plausible public claim is only a weak preference, not an identity constraint.
+    expression: >
+      match(thought, Notice() => 0, Candidate() => 0, Evil() => 0, Advice() => 0,
+      QuestOutcome() => 0, AdviceReview() => 0,
+      Claimed(c) => 1 if c.speaker == subject and c.role == Role.merlin and
+      council_merlin_mass(view.analysis.models, subject) > 0 else 0)
+  council_claim_signal:
+    parameters: {view: CandidateFiniteView, subject: PlayerRef}
+    returns: Score
+    # Repeating the same claim across rounds does not multiply its influence.
+    expression: >
+      1 if exists(view.beliefs, b => b.status == Attitude.supported and
+      council_claim_entry(b.proposition, view, subject) > 0) else 0
+  council_claims:
+    parameters: {view: CandidateFiniteView, members: Players, observer: PlayerRef, required: Count}
+    returns: Score
+    expression: >
+      sum_by(members, p => council_claim_signal(view, p) if p != observer else 0)
+      if view.complete and view.analysis.status == AnalysisStatus.consistent and
+      council_unsafe(view.analysis.models, members, required) > 0 and
+      council_unsafe(view.analysis.models, members, required) < size(view.analysis.models) else 0
+  council_certainty:
+    parameters: {view: CandidateFiniteView, members: Players, approve: Bool, required: Count}
+    returns: Score
+    expression: >
+      (1000 if approve else -1000) if council_unsafe(view.analysis.models, members, required) == 0 else
+      (-1000 if approve else 1000) if council_unsafe(view.analysis.models, members, required) == size(view.analysis.models) else 0
+  council_speech_priority:
+    parameters: {view: CandidateFiniteView, members: Players, epoch: Epoch, observer: PlayerRef, required: Count}
+    returns: Score
+    # Exceeds ordinary vote scores; urgent fifth-veto stakes can take precedence.
+    expression: >
+      1200 + 10 * council_magnitude(council_margin(view, members, required)) +
+      10 * council_magnitude(council_advice(view, members, epoch, observer, required)) +
+      10 * council_magnitude(council_claims(view, members, observer, required))
+  council_should_advise:
+    parameters: {view: CandidateFiniteView, own: RoleReports, members: Players, epoch: Epoch, opinion: Bool}
+    returns: Bool
+    # Unique private clues or actual mission experience give speech a purpose.
+    expression: >
+      exists(own, r => r.role == Role.merlin or r.role == Role.percival) or
+      (exists(view.beliefs, b => b.status == Attitude.supported and
+      match(b.proposition, Notice() => False, Candidate() => False, Evil() => False,
+      Claimed() => False, Advice() => False, AdviceReview() => False, QuestOutcome() => True)) and
+      not exists(view.beliefs, b => b.status == Attitude.supported and
+      match(b.proposition, Notice() => False, Candidate() => False, Evil() => False,
+      Claimed() => False, AdviceReview() => False, QuestOutcome() => False,
+      Advice(a) => a.epoch == epoch and a.team == members and a.approve == opinion)))
+  council_rejection_pressure:
+    parameters: {view: CandidateFiniteView, members: Players, epoch: Epoch, observer: PlayerRef, required: Count, rejections: Count}
+    returns: Score
+    # Uncertainty should not demand impossible certainty; known risks remain decisive
+    # until the fifth veto would end the game immediately.
+    expression: >
+      2 * council_speech_priority(view, members, epoch, observer, required) if rejections >= 4 else
+      10 * rejections * (size(view.analysis.models) + 1)
+      if council_certainty(view, members, True, required) == 0 else 0
+  council_has_public_claim:
+    parameters: {view: CandidateFiniteView, speaker: PlayerRef}
+    returns: Bool
+    expression: >
+      exists(view.beliefs, b => b.status == Attitude.supported and
+      match(b.proposition, Notice() => False, Candidate() => False, Evil() => False,
+      Advice() => False, QuestOutcome() => False, AdviceReview() => False,
+      Claimed(c) => c.speaker == speaker and c.role == Role.merlin))
+  council_merlin_mass:
+    parameters: {models: IdentityModels, subject: PlayerRef}
+    returns: Score
+    expression: sum_by(models, m => sum_by(m.identities, i => 1 if i.player == subject and i.role == Role.merlin else 0))
+strategies:
+  ReasonedChoice:
+    actor: {person: PlayerRef}
+    views: {mind: {cognition: CandidateFiniteView}, identity: {reports: RoleReports}}
+    candidates:
+      - definition: ProposeTeam
+        score:
+          行动基准: '1000 + 30 * size(cognition(mind).analysis.models)'
+          阵营任务目标: >
+            -20 * council_alignment(reports(identity)) *
+            council_unsafe(cognition(mind).analysis.models, members, council_required(mission, size(players), population))
+            if cognition(mind).complete and cognition(mind).analysis.status == AnalysisStatus.consistent else 0
+          队伍暴露: >
+            -council_evil_mass(cognition(mind).analysis.models, members)
+            if cognition(mind).complete and cognition(mind).analysis.status == AnalysisStatus.consistent else 0
+          本人参与: '1 if person in members else 0'
+      - definition: ApproveTeam
+        score:
+          行动基准: '50'
+          身份线索: >
+            10 * council_alignment(reports(identity)) *
+            council_margin(cognition(mind), team, council_required(mission, size(players), population)) *
+            (1 if approve else -1)
+            if cognition(mind).complete and cognition(mind).analysis.status == AnalysisStatus.consistent else 0
+          发言参考: >
+            10 * council_alignment(reports(identity)) *
+            council_advice(cognition(mind), team, epoch, person, council_required(mission, size(players), population)) *
+            (1 if approve else -1)
+          身份发言: >
+            10 * council_alignment(reports(identity)) *
+            council_claims(cognition(mind), team, person, council_required(mission, size(players), population)) *
+            (1 if approve else -1)
+          确定结论: >
+            council_alignment(reports(identity)) *
+            council_certainty(cognition(mind), team, approve, council_required(mission, size(players), population))
+            if cognition(mind).complete and cognition(mind).analysis.status == AnalysisStatus.consistent else 0
+          否决风险: >
+            council_alignment(reports(identity)) * (1 if approve else -1) *
+            council_rejection_pressure(cognition(mind), team, epoch, person,
+            council_required(mission, size(players), population), rejections)
+      - definition: AdviseTeam
+        inputs: {rationale: TeamArgument.Judgment()}
+        score:
+          发言时机: >
+            council_speech_priority(cognition(mind), team, epoch, person, council_required(mission, size(players), population))
+            if council_should_advise(cognition(mind), reports(identity), team, epoch, support_team) and
+            support_team == council_prefer_team(cognition(mind), team, epoch, person, reports(identity), council_required(mission, size(players), population)) else 0
+          角色表达: >
+            20 if council_should_advise(cognition(mind), reports(identity), team, epoch, support_team) and
+            support_team == council_prefer_team(cognition(mind), team, epoch, person, reports(identity), council_required(mission, size(players), population)) else 0
+      - definition: ClaimIdentity
+        score:
+          发言时机: >
+            council_speech_priority(cognition(mind), team, epoch, person, council_required(mission, size(players), population))
+            if claimed_role == Role.merlin and exists(reports(identity), r => r.role == Role.morgana) and
+            not council_has_public_claim(cognition(mind), person) else 0
+          角色表达: >
+            30 if claimed_role == Role.merlin and exists(reports(identity), r => r.role == Role.morgana) and
+            not council_has_public_claim(cognition(mind), person) else 0
+      - definition: PassSpeech
+        score: {让过发言: '2'}
+      - definition: MissionCard
+        score:
+          行动基准: '20'
+          阵营任务目标: '30 if sabotage and council_alignment(reports(identity)) == -1 else 0'
+      - definition: Assassinate
+        score:
+          行动基准: '50'
+          身份线索: >
+            10 * council_merlin_mass(cognition(mind).analysis.models, target)
+            if cognition(mind).complete and cognition(mind).analysis.status == AnalysisStatus.consistent else 0
+          身份发言: >
+            10 * council_claim_signal(cognition(mind), target)
+            if cognition(mind).complete and cognition(mind).analysis.status == AnalysisStatus.consistent else 0
+    minimum: '1'
+    tie: canonical
+    wait: no_candidate
+control:
+  council: {kind: Player, definition: ReasonedChoice, views: {mind: council, identity: own_role}}

@@ -1,0 +1,16 @@
+schema: nomos.tabletop.presentation
+title: 项目预算试验
+description: 分配六点预算，可保留余额。
+components:
+  Budget:
+    kind: allocation
+    fields: {rows: expenses, target: project, quantity: amount, reserve: saved}
+panels:
+  - {title: 最近预算, zone: board, source: {context: workshop.last_budget}}
+actions:
+  allocate_budget:
+    title: 分配预算
+    inputs:
+      budget:
+        label: 项目预算
+        allocation: {targets: projects, key: code, label: title, capacity: ceiling, total: total, minimum: '0'}

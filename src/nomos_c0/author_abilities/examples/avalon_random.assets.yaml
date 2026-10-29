@@ -1,0 +1,28 @@
+# Each Start gets a private seed. Use an integer instead of fresh for replay.
+# Role fields are supplied exclusively by Source.opening.identities.
+schema: nomos.author.assets
+random: {seed: fresh}
+actors:
+  a: {approval_epoch: 0, approve: false, quest_round: 0, sabotage: false, speech_epoch: null}
+  b: {approval_epoch: 0, approve: false, quest_round: 0, sabotage: false, speech_epoch: null}
+  c: {approval_epoch: 0, approve: false, quest_round: 0, sabotage: false, speech_epoch: null}
+  d: {approval_epoch: 0, approve: false, quest_round: 0, sabotage: false, speech_epoch: null}
+  e: {approval_epoch: 0, approve: false, quest_round: 0, sabotage: false, speech_epoch: null}
+objects: {}
+contexts:
+  match:
+    phase: proposal
+    discussion_kind: none
+    speech_serial: 0
+    mission: 1
+    leader_index: 0
+    epoch: 0
+    team: []
+    rejections: 0
+    successes: 0
+    failures: 0
+    assassin: []
+    winner: null
+    approval_history: []
+    quest_history: []
+    accusation: []

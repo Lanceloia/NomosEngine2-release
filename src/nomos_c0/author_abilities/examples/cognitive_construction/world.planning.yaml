@@ -1,0 +1,34 @@
+# The planner predicts only publication; actual outcome arrives after the real Action.
+schema: nomos.author.scenario_planning
+name: NonCanonConstruction
+actor: {person: PersonRef}
+goal: Unit
+local:
+  type: Local
+  views: {observations: {reports: Observations, channel: observe.report}}
+  value: Local(pool=person.pool, required=person.required, done=person.done)
+state: Bool
+observation: Unit
+hypotheses: [{probability: [1, 1], value: local.done}]
+consistent: 'True'
+terminal: state
+assumptions:
+  scope: Numeric task components; existing observations order members, not complete combinations.
+  reward: Subject appraisal supplies utility; this model does not predict world success.
+guidance:
+  recall: [observations]
+  exploration: 3
+  actions:
+    choose:
+      inputs:
+        members:
+          member: candidate
+          priority: >
+            sum_by(reports(observations), report =>
+              (1 if report.works else -1) if report.member == candidate else 0)
+actions:
+  choose:
+    inputs:
+      members: {type: Numbers, choose: {subset: local.pool, min: local.required, max: local.required}}
+    where: not state
+    predict: {state: 'True', observation: None, utility: '0'}

@@ -1,0 +1,5 @@
+# Reuse the actual dialogue world; no custom publishing or listener simulation.
+schema: nomos.author.source
+imports: [avalon_reasoning.source.yaml]
+use:
+  speech_window: {definition: SpeechWindow, context: match}

@@ -1,0 +1,29 @@
+[
+  {
+    "variant": "allow",
+    "save_choices": [
+      false,
+      true
+    ],
+    "rejected_save": null,
+    "rejection_snapshot_unchanged": null,
+    "legal_save": true,
+    "alive_after_dawn": true,
+    "antidote_after_dawn": false,
+    "poison_after_dawn": true,
+    "occurrences": 8
+  },
+  {
+    "variant": "forbid",
+    "save_choices": [
+      false
+    ],
+    "rejected_save": "InvalidChoice",
+    "rejection_snapshot_unchanged": true,
+    "legal_save": false,
+    "alive_after_dawn": false,
+    "antidote_after_dawn": true,
+    "poison_after_dawn": true,
+    "occurrences": 8
+  }
+]

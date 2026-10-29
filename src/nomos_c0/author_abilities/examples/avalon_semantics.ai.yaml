@@ -1,0 +1,19 @@
+# Explicit port experiment: the trusted caller ranks frames; not the default table AI.
+schema: nomos.author.ai
+imports: [avalon_action_meanings.ai.yaml]
+strategies:
+  SemanticChoice:
+    actor: {person: PlayerRef}
+    candidates:
+      - {definition: ProposeTeam}
+      - {definition: ApproveTeam}
+      - {definition: ClaimIdentity}
+      - {definition: AdviseTeam}
+      - {definition: PassSpeech}
+      - {definition: MissionCard}
+      - {definition: Assassinate}
+    semantics: AvalonActions
+    tie: wait
+    wait: no_candidate
+control:
+  table: {kind: Player, definition: SemanticChoice}

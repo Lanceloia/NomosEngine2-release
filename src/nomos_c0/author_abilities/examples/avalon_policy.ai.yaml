@@ -1,0 +1,258 @@
+# Shared policy; temperament values are independently bound by the selected AI entry.
+schema: nomos.author.ai
+imports: [avalon_role_goals.ai.yaml]
+queries:
+  local_required:
+    parameters: {mission: Mission, count: Count, population: SetupTable}
+    returns: Count
+    expression: setup(count, population).fourth_fail_threshold if mission == 4 else 1
+  local_alignment:
+    parameters: {own: RoleReports}
+    returns: Score
+    expression: -1 if exists(own, r => evil_role(r.role)) else 1
+  team_experience:
+    parameters: {view: LocalCouncilView, members: Players}
+    returns: Score
+    # Aggregate hundredths before converting to weighted decision points.
+    expression: 3 * sum_by(view.appraisals, a => match(a.key, Person() => 0, Team(t) => related_experience(a.score, t.members, members))) // 100
+  related_experience:
+    parameters: {score: Score, previous: Players, members: Players}
+    returns: Score
+    # Retain partial overlap for both successful and failed teams, without certifying identities.
+    expression: 100 * score * size(shared_members(previous, members)) // size(union(previous, members)) if exists(previous, p => p in members) else 0
+  speaker_review:
+    parameters: {thought: CandidateThought, speaker: PlayerRef}
+    returns: Score
+    expression: >
+      match(thought, Notice() => 0, Candidate() => 0, Evil() => 0, Claimed() => 0,
+      Advice() => 0, QuestOutcome() => 0,
+      AdviceReview(r) => (1 if r.aligned else -2) if r.speaker == speaker else 0)
+  speaker_weight:
+    parameters: {view: LocalCouncilView, speaker: PlayerRef}
+    returns: Score
+    expression: bounded_reputation(1 + sum_by(distinct(map(view.inferences, i => i.proposition)), p => speaker_review(p, speaker)))
+  bounded_reputation:
+    parameters: {score: Score}
+    returns: Score
+    expression: 0 if score < 0 else 3 if score > 3 else score
+  known_failed_overlap:
+    parameters: {thought: CandidateThought, epoch: Epoch, members: Players}
+    returns: Bool
+    expression: >
+      match(thought, Notice() => False, Candidate() => False, Evil() => False, Claimed() => False,
+      Advice() => False, AdviceReview() => False,
+      QuestOutcome(q) => q.epoch == epoch and q.failed and exists(q.team, p => p in members))
+  argument_influence:
+    parameters: {argument: TeamArgument, view: LocalCouncilView, members: Players, approve: Opinion}
+    returns: Score
+    # Referenced facts strengthen a concern, not an identity assertion; echoes add no new evidence.
+    expression: >
+      match(argument, Judgment() => 1, TestTeam() => 1, SuccessCore() => 1, TrustSpeaker() => 0, EvilExhausted() => 0, ClaimAssessment() => 0, ClaimConflict() => 0,
+      FailureOverlap(r) => 3 if approve == False and exists(view.beliefs, b => b.status == Attitude.supported and
+      known_failed_overlap(b.proposition, r.epoch, members)) else 0)
+  bounded_advice:
+    parameters: {score: Score}
+    returns: Score
+    expression: -4 if score < -4 else 4 if score > 4 else score
+  argument_priority:
+    parameters: {argument: TeamArgument, view: LocalCouncilView, observer: PlayerRef}
+    returns: Score
+    expression: >
+      match(argument, Judgment() => 0, FailureOverlap(r) => 40 + r.mission, SuccessCore(r) => 20 + r.mission, TestTeam() => 20, EvilExhausted() => 0, ClaimAssessment() => 0, ClaimConflict() => 0,
+      TrustSpeaker(r) => (30 if speaker_weight(view, r.speaker) > 1 else 10)
+      if r.speaker != observer and speaker_weight(view, r.speaker) > 0 else -1)
+  argument_or_judgment:
+    parameters: {selected: MaybeTeamArgument}
+    returns: TeamArgument
+    expression: selected if selected is not None else TeamArgument.Judgment()
+  preferred_argument:
+    parameters: {arguments: TeamArguments, view: LocalCouncilView, observer: PlayerRef, order: PlayerOrder}
+    returns: TeamArgument
+    # Equal credibility uses the declared public order, never the host's Set iteration order.
+    expression: argument_or_judgment(max_by(arguments, a => argument_priority(a, view, observer), a => argument_tie(a, order)))
+  argument_tie:
+    parameters: {argument: TeamArgument, order: PlayerOrder}
+    returns: Score
+    expression: >
+      match(argument, Judgment() => 0, TestTeam() => 0, FailureOverlap(r) => r.epoch, SuccessCore(r) => r.epoch, EvilExhausted(r) => r.epoch, ClaimAssessment(r) => r.claim_epoch, ClaimConflict(r) => r.second.epoch,
+      TrustSpeaker(r) => -index_of(order, r.speaker))
+  heard_advice:
+    parameters: {thought: CandidateThought, view: LocalCouncilView, members: Players, epoch: Epoch, observer: PlayerRef}
+    returns: Score
+    expression: >
+      match(thought, Notice() => 0, Candidate() => 0, Evil() => 0, Claimed() => 0,
+      QuestOutcome() => 0, AdviceReview() => 0,
+      Advice(a) => speaker_weight(view, a.speaker) * argument_influence(a.rationale, view, members, a.approve) * (1 if a.approve else -1)
+      if a.epoch == epoch and a.team == members and a.speaker != observer and
+      a.approve is not None and speaker_weight(view, a.speaker) > 0 else 0)
+  local_advice:
+    parameters: {view: LocalCouncilView, members: Players, epoch: Epoch, observer: PlayerRef}
+    returns: Score
+    expression: bounded_advice(sum_by(view.beliefs, b => heard_advice(b.proposition, view, members, epoch, observer) if b.status == Attitude.supported else 0))
+  claimed_percival:
+    parameters: {thought: CandidateThought, speaker: PlayerRef}
+    returns: Bool
+    expression: >
+      match(thought, Notice() => False, Candidate() => False, Evil() => False, Advice() => False,
+      QuestOutcome() => False, AdviceReview() => False,
+      Claimed(c) => c.speaker == speaker and c.role == Role.percival)
+  percival_claimants:
+    parameters: {view: LocalCouncilView, roster: Players}
+    returns: Players
+    expression: filter(roster, p => exists(view.beliefs, b => b.status == Attitude.supported and claimed_percival(b.proposition, p)))
+  percival_credit:
+    parameters: {own: RoleReports, view: LocalCouncilView, members: Players, roster: Players, cast: Roles, observer: PlayerRef, leader: PlayerRef, required: Count, style: CouncilStyle}
+    returns: Score
+    # A defeasible coordination preference, never an identity assertion or admission override.
+    expression: >
+      24 * (style.trust if style.trust < 100 else 100) // 100 if
+      view.complete and view.local.complete and view.local.status == LocalStatus.complete and
+      local_alignment(own) == 1 and leader != observer and
+      not has_role(own, Role.percival) and size(filter(cast, r => r == Role.percival)) == 1 and
+      percival_claimants(view, roster) == Players([leader]) and
+      local_bounds(view, Players([leader]), roster, LocalCategory.evil_count).minimum == 0 and
+      local_bounds(view, Players([leader]), roster, LocalCategory.merlin_count).minimum == 0 and
+      local_bounds(view, members, roster, LocalCategory.evil_count).minimum < required else 0
+  speech_initiative:
+    parameters: {style: CouncilStyle}
+    returns: Score
+    # This is a choice against PassSpeech, not a universal positive multiplier.
+    expression: style.speech - 80
+  team_risk:
+    parameters: {bounds: LocalInterval, required: Count, style: CouncilStyle}
+    returns: Score
+    # Sabotage-capable members are not guaranteed to submit a sabotage card.
+    expression: >
+      (40 if bounds.maximum < required else 20) - 8 * bounds.maximum * style.risk // 100 -
+      (100 * (bounds.minimum - required + 1) if bounds.minimum >= required else 0)
+  team_judgment:
+    parameters: {view: LocalCouncilView, members: Players, roster: Players, epoch: Epoch, observer: PlayerRef, required: Count, style: CouncilStyle}
+    returns: Score
+    # A lower bound counts sabotage-capable members, not guaranteed future failure.
+    expression: >
+      team_risk(local_bounds(view, members, roster, LocalCategory.evil_count), required, style) +
+      team_experience(view, members) + 3 * local_advice(view, members, epoch, observer) * style.trust // 100
+  candidate_team_goal:
+    parameters: {own: RoleReports, view: LocalCouncilView, members: Players, roster: Players, epoch: Epoch, observer: PlayerRef, required: Count, style: CouncilStyle}
+    returns: Score
+    expression: team_judgment(view, members, roster, epoch, observer, required, style) if local_alignment(own) == 1 else evil_opportunity(local_bounds(view, members, roster, LocalCategory.evil_count), required)
+  proposal_commitment:
+    parameters: {own: RoleReports, view: LocalCouncilView, members: Players, roster: Players, epoch: Epoch, observer: PlayerRef, leader: PlayerRef, required: Count}
+    returns: Score
+    # Support one's own recommendation unless known danger or newly heard opposition warrants revision.
+    expression: >
+      24 if leader == observer and local_alignment(own) == 1 and
+      local_bounds(view, members, roster, LocalCategory.evil_count).minimum < required and
+      local_advice(view, members, epoch, observer) >= 0 else 0
+  vote_preference:
+    parameters: {own: RoleReports, view: LocalCouncilView, members: Players, roster: Players, epoch: Epoch, observer: PlayerRef, leader: PlayerRef, required: Count, rejections: Count, history: QuestHistory, successes: Count, failures: Count, cast: Roles, style: CouncilStyle}
+    returns: Score
+    expression: >
+      local_alignment(own) * 1000 if rejections >= 4 else
+      candidate_team_goal(own, view, members, roster, epoch, observer, required, style) +
+      percival_credit(own, view, members, roster, cast, observer, leader, required, style) +
+      proposal_commitment(own, view, members, roster, epoch, observer, leader, required) +
+      local_alignment(own) * 5 * rejections +
+      early_reputation(own, local_bounds(view, members, roster, LocalCategory.evil_count), required, history) +
+      merlin_discretion(own, local_bounds(view, members, roster, LocalCategory.evil_count), required, history, members, successes, failures) * style.concealment // 100
+  has_task_experience:
+    parameters: {view: LocalCouncilView}
+    returns: Bool
+    expression: exists(view.beliefs, b => match(b.proposition, Notice() => False, Candidate() => False, Evil() => False, Claimed() => False, Advice() => False, AdviceReview() => False, QuestOutcome() => True))
+strategies:
+  LocalChoice:
+    actor: {person: PlayerRef}
+    parameters: {style: CouncilStyle}
+    views: {mind: {cognition: LocalCouncilView}, identity: {reports: RoleReports}}
+    explain:
+      information:
+        本人身份通知: {type: RoleReports, value: 'reports(identity)'}
+      motive:
+        行事风格: {type: CouncilStyle, value: style}
+    candidates:
+      - definition: ProposeTeam
+        # A leader must advance the table. Soft judgments choose the team within this tier.
+        priority: '1'
+        score:
+          队伍判断: candidate_team_goal(reports(identity), cognition(mind), members, players, epoch + 1, person, local_required(mission, size(players), population), style)
+          同伴暴露: excess_exposure(local_bounds(cognition(mind), members, players, LocalCategory.evil_count), local_required(mission, size(players), population), critical_task(successes, failures)) * style.concealment // 100 if local_alignment(reports(identity)) == -1 else 0
+          公开经历: team_experience(cognition(mind), members) if local_alignment(reports(identity)) == -1 else 0
+          本人参与: '1 if person in members else 0'
+        explain:
+          information:
+            队中邪恶人数范围: {type: LocalInterval, value: 'local_bounds(cognition(mind), members, players, LocalCategory.evil_count)', when: 'cognition(mind).complete and cognition(mind).local.complete'}
+          judgment:
+            相近队伍经验: {type: Score, value: 'team_experience(cognition(mind), members)'}
+      - definition: ApproveTeam
+        # On the last permitted rejection, the side-aligned vote outranks ordinary preference.
+        priority: '1 if rejections >= 4 and local_alignment(reports(identity)) * (1 if approve else -1) > 0 else 0'
+        score:
+          行动基准: '50'
+          带队承诺: proposal_commitment(reports(identity), cognition(mind), team, players, epoch, person, at(order, leader_index), local_required(mission, size(players), population)) * (1 if approve else -1) if rejections < 4 else 0
+          队伍判断: candidate_team_goal(reports(identity), cognition(mind), team, players, epoch, person, local_required(mission, size(players), population), style) * (1 if approve else -1) if rejections < 4 else 0
+          帕西瓦尔协作: percival_credit(reports(identity), cognition(mind), team, players, public_cast, person, at(order, leader_index), local_required(mission, size(players), population), style) * (1 if approve else -1) if rejections < 4 else 0
+          建立信誉: early_reputation(reports(identity), local_bounds(cognition(mind), team, players, LocalCategory.evil_count), local_required(mission, size(players), population), quest_history) * (1 if approve else -1) if rejections < 4 else 0
+          梅林隐蔽: merlin_discretion(reports(identity), local_bounds(cognition(mind), team, players, LocalCategory.evil_count), local_required(mission, size(players), population), quest_history, team, successes, failures) * style.concealment // 100 * (1 if approve else -1) if rejections < 4 else 0
+          否决风险: local_alignment(reports(identity)) * 5 * rejections * (1 if approve else -1) if rejections < 4 else 0
+        explain:
+          information:
+            队中邪恶人数范围: {type: LocalInterval, value: 'local_bounds(cognition(mind), team, players, LocalCategory.evil_count)', when: 'cognition(mind).complete and cognition(mind).local.complete'}
+            连续否决次数: {type: Count, value: rejections}
+          judgment:
+            延续本人提议: {type: Score, value: 'proposal_commitment(reports(identity), cognition(mind), team, players, epoch, person, at(order, leader_index), local_required(mission, size(players), population))'}
+            相近队伍经验: {type: Score, value: 'team_experience(cognition(mind), team)'}
+            当前听见的建议: {type: Score, value: 'local_advice(cognition(mind), team, epoch, person)'}
+      - definition: AdviseTeam
+        inputs:
+          rationale: preferred_argument(speech_arguments(quest_history, team, reports(heard), epoch, person, support_team), cognition(mind), person, order)
+        score:
+          发言时机: >
+            speech_initiative(style) if cognition(mind).complete and should_speak(reports(identity), quest_history, team, rejections) and
+            (exists(reports(identity), r => r.role == Role.merlin or r.role == Role.percival) or has_task_experience(cognition(mind))) and
+            support_team == (vote_preference(reports(identity), cognition(mind), team, players, epoch, person, at(order, leader_index), local_required(mission, size(players), population), rejections, quest_history, successes, failures, public_cast, style) > 0) else 0
+        explain:
+          information:
+            队中邪恶人数范围: {type: LocalInterval, value: 'local_bounds(cognition(mind), team, players, LocalCategory.evil_count)', when: 'cognition(mind).complete and cognition(mind).local.complete'}
+          judgment:
+            选择的发言理由: {type: TeamArgument, value: rationale}
+            当前表决倾向: {type: Score, value: 'vote_preference(reports(identity), cognition(mind), team, players, epoch, person, at(order, leader_index), local_required(mission, size(players), population), rejections, quest_history, successes, failures, public_cast, style)'}
+      - definition: ClaimIdentity
+        score:
+          公开帕西瓦尔: >
+            80 + speech_initiative(style) if claimed_role == Role.percival and
+            has_role(reports(identity), Role.percival) and
+            size(filter(public_cast, r => r == Role.percival)) == 1 and
+            not exists(cognition(mind).beliefs, b => claimed_percival(b.proposition, person)) else 0
+      - definition: PassSpeech
+        score: {让过发言: '2'}
+      - definition: MissionCard
+        # A certain decisive sabotage is a process priority, not a giant personality score.
+        priority: >
+          1 if local_alignment(reports(identity)) == -1 and sabotage and critical_task(successes, failures) and
+          local_bounds(cognition(mind), team, players, LocalCategory.evil_count).minimum >=
+          local_required(mission, size(players), population) else 0
+        score:
+          行动基准: '20'
+          破坏收益: sabotage_payoff(local_bounds(cognition(mind), team, players, LocalCategory.evil_count), local_required(mission, size(players), population), sabotage) if local_alignment(reports(identity)) == -1 else 0
+          暴露成本: sabotage_exposure(local_bounds(cognition(mind), team, players, LocalCategory.evil_count), local_required(mission, size(players), population), sabotage, critical_task(successes, failures)) * style.concealment // 100 if local_alignment(reports(identity)) == -1 else 0
+          莫甘娜伪装: morgana_cover(reports(identity), local_bounds(cognition(mind), team, players, LocalCategory.evil_count), local_required(mission, size(players), population), sabotage, critical_task(successes, failures)) * style.concealment // 100
+        explain:
+          information:
+            任务失败所需坏票: {type: Count, value: 'local_required(mission, size(players), population)'}
+          judgment:
+            任务临近胜负: {type: Bool, value: 'critical_task(successes, failures)'}
+      - definition: Assassinate
+        # A known non-Merlin is excluded; a certain Merlin candidate gets a higher tier.
+        guard: 'local_bounds(cognition(mind), Players([target]), players, LocalCategory.merlin_count).maximum > 0'
+        priority: '1 if local_bounds(cognition(mind), Players([target]), players, LocalCategory.merlin_count).minimum > 0 else 0'
+        score:
+          行动基准: '50'
+          公开判断表现: public_information_signal(target, known_evil_members(cognition(mind), players), approval_history, size(players), population)
+        explain:
+          information:
+            目标为梅林的人数范围: {type: LocalInterval, value: 'local_bounds(cognition(mind), Players([target]), players, LocalCategory.merlin_count)', when: 'cognition(mind).complete and cognition(mind).local.complete'}
+          judgment:
+            公开判断表现: {type: Score, value: 'public_information_signal(target, known_evil_members(cognition(mind), players), approval_history, size(players), population)'}
+    minimum: '1'
+    tie: canonical
+    wait: no_candidate

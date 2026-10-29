@@ -1,0 +1,56 @@
+# Non-canon mechanism lesson: learn from personally approving an observed quest.
+# Shared inclusion features permit transfer to a newly constructed team of another size.
+schema: nomos.author.ai
+semantics:
+  SubjectTeamExperience:
+    features: [team_choice, self_present, self_absent]
+    outcomes: [progress, effort]
+    feedback:
+      ReviewApproval:
+        definition: ApproveTeam
+        receipts:
+          outcome:
+            channel: reveal_quest.result
+            match: {epoch: outcome.epoch, team: outcome.team}
+        outcomes: {progress: '8 if outcome.fails == 0 else -8'}
+      ReviewProposal:
+        definition: ProposeTeam
+        receipts:
+          outcome:
+            channel: reveal_quest.result
+            match: {epoch: outcome.epoch, team: outcome.team}
+        outcomes: {progress: '8 if outcome.fails == 0 else -8'}
+    meanings:
+      ProposeTeam:
+        features:
+          team_choice: '1'
+          self_present: '100 if person in members else 0'
+          self_absent: '0 if person in members else 100'
+        prior: {progress: '1 if person in members else 0', effort: '-1'}
+        known: {effort: 'True'}
+        correlate:
+          epoch: {type: Epoch, value: epoch + 1}
+          team: {type: Players, value: members}
+      ApproveTeam:
+        features:
+          team_choice: '1'
+          self_present: '100 if person in team else 0'
+          self_absent: '0 if person in team else 100'
+        prior: {progress: '1 if approve else -10', effort: '-1'}
+        known: {effort: 'True'}
+        correlate:
+          epoch: {type: Epoch, value: epoch}
+          team: {type: Players, value: team}
+      MissionCard:
+        features: {team_choice: '1'}
+        prior: {progress: '0', effort: '-1'}
+        known: {progress: 'True', effort: 'True'}
+strategies:
+  SubjectTeamChoice:
+    actor: {person: PlayerRef}
+    candidates: [{definition: ProposeTeam}, {definition: ApproveTeam}, {definition: MissionCard}]
+    semantics: SubjectTeamExperience
+    tie: canonical
+    wait: no_candidate
+control:
+  table: {kind: Player, definition: SubjectTeamChoice}

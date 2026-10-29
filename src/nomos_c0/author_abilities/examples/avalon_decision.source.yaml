@@ -1,0 +1,5 @@
+# Random opening plus the already-public discussion projection used for construction.
+schema: nomos.author.source
+imports: [avalon_random.source.yaml]
+use:
+  speech_window: {definition: SpeechWindow, context: match}

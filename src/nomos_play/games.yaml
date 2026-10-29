@@ -1,0 +1,22 @@
+schema: nomos.play.catalog
+games:
+- id: avalon
+  title: 阿瓦隆
+  description: 入座后随机发身份，组建远征队，秘密表决与提交任务牌，寻找藏在人群中的邪恶阵营。
+  world: ../../build/python-codegen/avalon-learned.py
+  assets: ../nomos_c0/author_abilities/examples/avalon_random.assets.yaml
+- id: werewolf
+  title: 狼人杀
+  description: 首夜开始，狼人协商并锁定袭击目标，天亮投票放逐，与电脑席位完成一局。
+  world: ../../build/python-codegen/werewolf.py
+  assets: ../nomos_c0/author_abilities/examples/werewolf.assets.yaml
+- id: splendor
+  title: 璀璨宝石
+  description: 收集宝石，购买发展牌，积累永久折扣与声望，争取贵族的支持。
+  world: ../../build/python-codegen/splendor.py
+  assets: ../nomos_c0/author_abilities/examples/splendor/world.assets.yaml
+- id: puerto-rico
+  title: 波多黎各 · 经济阶段
+  description: 选择角色、建造设施、安排人员、生产和交易，发展岛屿经济。
+  world: ../../build/python-codegen/puerto_rico.py
+  assets: ../nomos_c0/author_abilities/examples/puerto_rico/economy.assets.yaml

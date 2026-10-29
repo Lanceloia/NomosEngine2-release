@@ -1,0 +1,23 @@
+schema: nomos.author.ai
+queries:
+  ai_before:
+    parameters: {sites: AllocationTargets, key: ComponentKey}
+    returns: Count
+    expression: sum_by(filter(sites, s => s.key < key), s => s.capacity)
+  ai_layout:
+    parameters: {sites: AllocationTargets, total: Count}
+    returns: Allocation
+    expression: >
+      Allocation(rows=map(sites, s => AllocationRow(target=s.key,
+        count=0 if total <= ai_before(sites, s.key) else minimum(s.capacity, total - ai_before(sites, s.key)))),
+        reserve=0 if total <= allocation_capacity(sites) else total - allocation_capacity(sites))
+strategies:
+  Allocator:
+    actor: {self: PlayerRef}
+    candidates:
+      - {definition: AssignWorkers, inputs: {layout: 'ai_layout(sites, total)'}, score: '1'}
+    minimum: '0'
+    tie: canonical
+    wait: no_candidate
+control:
+  allocators: {kind: Player, definition: Allocator}

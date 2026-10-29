@@ -1,0 +1,68 @@
+# Real Avalon opening notices; this model adds no world rules or identity pairing.
+schema: nomos.author.lib
+imports: [avalon.lib.yaml]
+values:
+  Strength: {int: [0, null]}
+  Score: {int: [null, null]}
+  StyleLabel: {text: {max_chars: 48}}
+  StyleWeight: {int: [0, 200]}
+  CouncilStyle:
+    record: {label: StyleLabel, risk: StyleWeight, concealment: StyleWeight, speech: StyleWeight, trust: StyleWeight}
+  Attitude: {enum: [unknown, supported, opposed, conflict]}
+  Polarity: {enum: [support, opposition]}
+  RelationName: {text: {max_chars: 128}}
+  ArgumentKey: {text: {max_chars: 64}}
+  CandidateGroups: {sequence: CandidateGroup}
+  CandidateThought:
+    variant:
+      Notice: {pair: CandidateGroup}
+      Candidate: {person: PlayerRef}
+      Evil: {person: PlayerRef}
+      Claimed: {speaker: PlayerRef, role: ClaimedRole}
+      Advice: {speaker: PlayerRef, epoch: Epoch, team: Players, approve: Opinion, rationale: TeamArgument}
+      QuestOutcome: {epoch: Epoch, team: Players, failed: Bool}
+      AdviceReview: {speaker: PlayerRef, epoch: Epoch, aligned: Bool}
+  SpeechSlot: {record: {speaker: PlayerRef, epoch: Epoch}}
+  CandidateBelief:
+    record: {proposition: CandidateThought, support: Strength, opposition: Strength, status: Attitude}
+  CandidateBeliefs: {sequence: CandidateBelief}
+  CandidateRating: {record: {key: PlayerRef, score: Score}}
+  CandidateRatings: {sequence: CandidateRating}
+  CandidateInference:
+    record: {proposition: CandidateThought, polarity: Polarity, relation: RelationName, argument: ArgumentKey, conditional: Bool}
+  CandidateInferences: {sequence: CandidateInference}
+  CandidatePrior:
+    record: {beliefs: CandidateBeliefs, appraisals: CandidateRatings, complete: Bool}
+  CandidateView:
+    record: {beliefs: CandidateBeliefs, appraisals: CandidateRatings, inferences: CandidateInferences, complete: Bool}
+  CastReports: {sequence: Roles}
+  IdentityModel: {record: {identities: FinalIdentities}}
+  IdentityModels: {sequence: IdentityModel}
+  AnalysisStatus: {enum: [consistent, inconsistent, pending]}
+  IdentityAnswer: {record: {key: CandidateThought, entailed: Bool, possible: Bool, refuted: Bool}}
+  IdentityAnswers: {sequence: IdentityAnswer}
+  IdentityAnalysis: {record: {status: AnalysisStatus, complete: Bool, models: IdentityModels, answers: IdentityAnswers}}
+  CandidateFiniteView:
+    record: {beliefs: CandidateBeliefs, appraisals: CandidateRatings, inferences: CandidateInferences, complete: Bool, analysis: IdentityAnalysis}
+  LocalCategory: {enum: [evil_count, merlin_count]}
+  LocalCount: {int: [0, null]}
+  LocalStatus: {enum: [complete, conflict, pending]}
+  LocalBound:
+    record: {members: Players, category: LocalCategory, minimum: LocalCount, maximum: LocalCount}
+  LocalBounds: {sequence: LocalBound}
+  IndividualBounds: {set: LocalBound}
+  MaybeLocalBound: {optional: LocalBound}
+  LocalInterval: {record: {minimum: Score, maximum: Score}}
+  LocalView:
+    record: {status: LocalStatus, complete: Bool, bounds: LocalBounds}
+  AssessmentTarget:
+    variant:
+      Person: {person: PlayerRef}
+      Team: {members: Players}
+  Assessment:
+    record: {key: AssessmentTarget, score: Score}
+  Assessments: {sequence: Assessment}
+  LocalPrior:
+    record: {beliefs: CandidateBeliefs, appraisals: Assessments, complete: Bool}
+  LocalCouncilView:
+    record: {beliefs: CandidateBeliefs, appraisals: Assessments, inferences: CandidateInferences, complete: Bool, local: LocalView}

@@ -1,0 +1,15 @@
+schema: nomos.author.source
+name: reading
+actors: {alice: Reader, bob: Reader}
+objects: [Book]
+time:
+  mechanism: event_jump
+  due_order: [reading]
+use:
+  begin: {definition: BeginReading}
+  sleep: {definition: Sleep}
+  reading:
+    definition: FinishReading
+    after: begin
+    with: {duration: 3}
+  recognize: {definition: RecognizeReading, after: reading}

@@ -1,0 +1,5 @@
+# Seven-seat opening with the same public construction projection.
+schema: nomos.author.source
+imports: [avalon_seven.source.yaml]
+use:
+  speech_window: {definition: SpeechWindow, context: match}

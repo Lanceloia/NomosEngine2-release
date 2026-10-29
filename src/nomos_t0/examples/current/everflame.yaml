@@ -1,0 +1,13 @@
+# Explicit native opportunity; the witness does not secretly run other Actors.
+schema: nomos.witness
+budget: 2
+steps:
+- {next: {status: ready, actor: adventurer}}
+- actor: adventurer
+  action: cross_ice
+  inputs: {route: {pick: {key: entrance_to_chandelier}}}
+  expect_result: {tag: Arrived}
+expect:
+- {actor: {name: adventurer, fields: {position: ballroom_chandelier_reach}}}
+- {published: {source: author.m1_core.cross_ice.action, count: 1}}
+- {ending: {actor: adventurer, status: active}}

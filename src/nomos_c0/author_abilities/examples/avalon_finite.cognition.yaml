@@ -1,0 +1,88 @@
+# Only actual own acquisitions enter this finite identity model.
+schema: nomos.author.cognition
+models:
+  IdentityReasoning:
+    actor: {player: PlayerRef}
+    propositions: CandidateThought
+    appraisal_keys: PlayerRef
+    slots: CandidateGroup
+    view: CandidateFiniteView
+    prior_view: CandidatePrior
+    evidence:
+      population_reports: {reports: PopulationReports}
+      own: {reports: RoleReports}
+      pair: {reports: CandidateGroups}
+      quests: {reports: QuestHistory}
+      allies: {reports: PlayerReports}
+      suspects: {reports: PlayerReports}
+    rules: {}
+    finite:
+      assumptions:
+        FixedIdentity: 本局身份在开局与各次任务之间保持不变；推理将这些采样置于同一个身份配置中。
+        RoleInterpretation: 身份配置中的人物及角色字段表示收到的身份保证所描述的对应关系。
+      inputs:
+        population:
+          on: population_reports
+          constraint: RolePopulation
+          history: opening
+          expose:
+            roster: {as: rosters, type: PlayerReports}
+            cast: {as: casts, type: CastReports}
+          bind: {identities: identities}
+        own:
+          on: own
+          fact: TrueRole
+          history: opening
+          interpret: exists(identities, i => i.player == identity.subject and i.role == identity.role)
+        pair:
+          on: pair
+          constraint: CandidatePair
+          history: opening
+          required: false
+          bind: {identities: identities}
+        allies:
+          on: allies
+          fact: EvilMembership
+          history: opening
+          required: false
+          interpret: forall(members, p => exists(identities, i => i.player == p and evil_role(i.role)))
+        suspects:
+          on: suspects
+          fact: EvilMembership
+          history: opening
+          required: false
+          interpret: forall(members, p => exists(identities, i => i.player == p and evil_role(i.role)))
+        quests:
+          on: quests
+          constraint: QuestEligibility
+          history: all
+          required: false
+          bind: {identities: identities}
+      variables:
+        identities:
+          type: FinalIdentities
+          each: {subject: 'at(rosters, 0)'}
+          choices: {role: 'at(casts, 0)'}
+          allocation: without_replacement
+          value: FinalIdentity(player=subject, role=role)
+      model: IdentityModel(identities=identities)
+      queries:
+        merlin:
+          each: {subject: 'at(rosters, 0)'}
+          key: CandidateThought.Candidate(person=subject)
+          holds: exists(identities, i => i.player == subject and i.role == Role.merlin)
+        evil:
+          each: {subject: 'at(rosters, 0)'}
+          key: CandidateThought.Evil(person=subject)
+          holds: exists(identities, i => i.player == subject and evil_role(i.role))
+bindings:
+  percival:
+    actor: b
+    definition: IdentityReasoning
+    views:
+      population_reports: population
+      own: own_role
+      pair: percival_candidates
+      quests: reveal_quest.result
+      allies: evil_peers
+      suspects: merlin_suspects

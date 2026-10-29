@@ -1,0 +1,83 @@
+# Non-canon memory experiment. Coordination means advice accuracy, not faction victory.
+# All six action families remain in the candidate scope; exact ties still wait.
+schema: nomos.author.ai
+semantics:
+  RememberedAdvice:
+    features: [proposal, approval, statement, advice, mission, assassination, support, opposition, self_in_team, yield_floor]
+    outcomes: [coordination, concealment, effort]
+    feedback:
+      ReviewAdvice:
+        definition: AdviseTeam
+        receipts:
+          outcome:
+            channel: reveal_quest.result
+            match: {epoch: outcome.epoch, team: outcome.team}
+        # Strong subjective feedback on the same fixed scale as the priors below.
+        outcomes: {coordination: '8 if support_team != outcome.failed else -8'}
+      ReviewApproval:
+        definition: ApproveTeam
+        receipts:
+          outcome:
+            channel: reveal_quest.result
+            match: {epoch: outcome.epoch, team: outcome.team}
+        outcomes: {coordination: '8 if approve != outcome.failed else -8'}
+    meanings:
+      ProposeTeam:
+        features: {proposal: '1', self_in_team: '1 if person in members else 0'}
+        prior: {coordination: 'size(members)', concealment: '0', effort: '-1'}
+        known: {effort: 'True'}
+        target: {type: Players, value: members}
+      ApproveTeam:
+        features: {approval: '1', support: '1 if approve else 0', opposition: '0 if approve else 1'}
+        prior: {coordination: '2 if approve else 0', concealment: '0', effort: '-1'}
+        known: {effort: 'True'}
+        target: {type: Players, value: team}
+        correlate:
+          epoch: {type: Epoch, value: epoch}
+          team: {type: Players, value: team}
+      ClaimIdentity:
+        features: {statement: '1'}
+        prior: {coordination: '-16', concealment: '-1', effort: '-1'}
+        known: {effort: 'True'}
+        target: {type: ClaimedRole, value: claimed_role}
+      AdviseTeam:
+        features: {advice: '1', support: '1 if support_team else 0', opposition: '0 if support_team else 1'}
+        prior:
+          coordination: 'match(rationale, Judgment() => (3 if support_team else 1), TestTeam() => 2, FailureOverlap() => 0, SuccessCore() => 0, TrustSpeaker() => -1, EvilExhausted() => 0, ClaimAssessment() => 0, ClaimConflict() => 0)'
+          concealment: '0'
+          effort: '-1'
+        known: {effort: 'True'}
+        target: {type: Players, value: team}
+        correlate:
+          epoch: {type: Epoch, value: epoch}
+          team: {type: Players, value: team}
+      PassSpeech:
+        features: {yield_floor: '1'}
+        prior: {coordination: '0', concealment: '0', effort: '0'}
+        known: {coordination: 'True', concealment: 'True', effort: 'True'}
+      MissionCard:
+        features: {mission: '1', support: '0 if sabotage else 1', opposition: '1 if sabotage else 0'}
+        prior: {coordination: '-1 if sabotage else 1', concealment: '0 if sabotage else 1', effort: '-1'}
+        known: {effort: 'True'}
+        target: {type: Players, value: team}
+      Assassinate:
+        features: {assassination: '1'}
+        prior: {coordination: '0', concealment: '0', effort: '-1'}
+        known: {effort: 'True'}
+        target: {type: PlayerRef, value: target}
+strategies:
+  ExperientialChoice:
+    actor: {person: PlayerRef}
+    candidates:
+      - {definition: ProposeTeam}
+      - {definition: ApproveTeam}
+      - {definition: ClaimIdentity}
+      - {definition: AdviseTeam}
+      - {definition: PassSpeech}
+      - {definition: MissionCard}
+      - {definition: Assassinate}
+    semantics: RememberedAdvice
+    tie: wait
+    wait: no_candidate
+control:
+  table: {kind: Player, definition: ExperientialChoice}

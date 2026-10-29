@@ -1,0 +1,74 @@
+schema: nomos.author.lib
+imports: [component_types.lib.yaml]
+values:
+  PlayerRef: {ref: Player}
+  Players: {set: PlayerRef}
+  PlayerOrder: {sequence: PlayerRef}
+  RoleKinds: {set: Role}
+  RoleKeys: {set: ComponentKey}
+  BuildingKinds: {set: BuildingKind}
+  Phase: {enum: [setup, choose_role, role, extra_good, advance, end_phase, between, round_end, finished]}
+  RoleSlot: {record: {key: ComponentKey, kind: Role, reward: Count}}
+  RoleSlots: {sequence: RoleSlot}
+  Land: {record: {key: ComponentKey, crop: MaybeGood, workers: Count}}
+  Lands: {sequence: Land}
+  Building: {record: {key: ComponentKey, kind: BuildingKind, workers: Count}}
+  City: {sequence: Building}
+  MoveKind: {enum: [settle, assign, build, produce, trade, decline, bonus]}
+  MoveRecord: {record: {player: PlayerRef, round: Count, role: Role, kind: MoveKind}}
+  MoveHistory: {sequence: MoveRecord}
+  PublicBoard: {record: {player: PlayerRef, money: Count, colonists: Count, reserve: Count, island: Lands, city: City, stock: Goods}}
+  PublicBoards: {sequence: PublicBoard}
+  Stage: {record: {round: Count, governor: PlayerRef, chooser: PlayerRef, selector: PlayerRef, acting: PlayerRef, role: MaybeRole}}
+  MaybeRole: {optional: Role}
+  Flags: {set: Bool}
+contexts:
+  Catalog:
+    parameters: {players: Players, buildings: BuildingCatalog, setups: Setups, goods: GoodCatalog, roles: RoleCards, quarry_tiles: Count, plantations: TileCards}
+    state:
+      fields:
+        order: PlayerOrder
+        phase: Phase
+        round: Count
+        governor_index: Count
+        chooser_index: Count
+        selector_index: Count
+        current_index: Count
+        acted: Count
+        active: RoleSlot
+        chosen_roles: RoleKeys
+        role_cards: RoleSlots
+        colonist_supply: Count
+        colonist_ship: Count
+        supply: Goods
+        trading: GoodOrder
+        plantation_deck: TileCards
+        plantation_row: TileCards
+        plantation_discard: TileCards
+        quarries: Count
+        next_key: ComponentKey
+        produced_kinds: GoodKinds
+        end_triggered: Bool
+        history: MoveHistory
+      public: [order, phase, round, governor_index, chooser_index, selector_index, current_index, acted, active, chosen_roles, role_cards, colonist_supply, colonist_ship, supply, trading, plantation_row, quarries, next_key, produced_kinds, end_triggered, history]
+    require_opening: >
+      valid_building_catalog(buildings) and valid_setup_catalog(setups) and valid_good_catalog(goods) and
+      valid_role_catalog(roles) and valid_plantations(plantations,goods) and quarry_tiles==8 and
+      size(players)>=3 and size(players)<=5 and size(order)==size(players) and distinct(order)==players and
+      phase==Phase.setup and round==1 and governor_index==0 and chooser_index==0 and selector_index==0 and current_index==0 and
+      acted==0 and size(chosen_roles)==0 and size(role_cards)==0 and colonist_supply==0 and colonist_ship==0 and
+      supply==Goods(corn=0,indigo=0,sugar=0,tobacco=0,coffee=0) and size(trading)==0 and
+      size(plantation_deck)==0 and size(plantation_row)==0 and size(plantation_discard)==0 and quarries==0 and next_key==100 and
+      not end_triggered and size(history)==0 and size(produced_kinds)==0 and
+      forall(players,p=>p.money==0 and p.colonists==0 and p.reserve==0 and p.vp==0 and size(p.city)==0 and
+        p.stock==Goods(corn=0,indigo=0,sugar=0,tobacco=0,coffee=0) and size(p.island)==1 and at(p.island,0).workers==0 and
+        at(p.island,0).crop==at(setup_for(setups,size(players)).opening_crops,index_of(order,p)) and
+        exactly_one(plantations,t=>t.key==at(p.island,0).key and t.crop==at(p.island,0).crop)) and
+      forall(players,p=>exactly_one(players,q=>at(q.island,0).key==at(p.island,0).key))
+entities:
+  Player:
+    kind: person
+    reference: public
+    fields: {money: Count, colonists: Count, reserve: Count, island: Lands, city: City, stock: Goods, vp: Count}
+    view: [money, colonists, reserve, island, city, stock, vp]
+    public: [money, colonists, reserve, island, city, stock]

@@ -1,0 +1,9 @@
+# Start deals the selected public cast before delivering opening information.
+schema: nomos.author.source
+random: {mechanism: replayable_seed}
+opening:
+  identities:
+    context: match
+    deal: public_cast
+    to: order
+    field: role

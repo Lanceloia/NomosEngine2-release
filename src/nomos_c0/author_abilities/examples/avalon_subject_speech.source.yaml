@@ -1,0 +1,3 @@
+# Fixed roles make the short experience comparison reproducible.
+schema: nomos.author.source
+imports: [avalon_speech_planning.source.yaml]

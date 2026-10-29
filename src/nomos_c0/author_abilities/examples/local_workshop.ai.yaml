@@ -1,0 +1,16 @@
+schema: nomos.author.ai
+strategies:
+  ToolWorker:
+    actor: {worker: WorkerRef}
+    parameters: {use_weight: Score}
+    candidates:
+      - definition: Use
+        score: use_weight if item.ready else 0
+      - definition: Forge
+        score: '10'
+    minimum: '0'
+    tie: canonical
+    wait: no_candidate
+control:
+  alice: {actor: alice, definition: ToolWorker, with: {use_weight: 20}}
+  bob: {actor: bob, definition: ToolWorker, with: {use_weight: 20}}

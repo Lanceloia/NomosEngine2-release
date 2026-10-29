@@ -1,0 +1,66 @@
+# Non-canon capability probe: numeric members stand for interchangeable task components.
+schema: nomos.author.lib
+values:
+  Number: {int: [0, null]}
+  Numbers: {set: Number}
+  PersonRef: {ref: Person}
+  People: {set: PersonRef}
+  Observation: {record: {member: Number, works: Bool}}
+  Observations: {sequence: Observation}
+  Outcome: {record: {success: Bool}}
+  Local: {record: {pool: Numbers, required: Number, done: Bool}}
+entities:
+  Person:
+    kind: person
+    reference: public
+    fields: {pool: Numbers, universe: Numbers, required: Number, chosen: Numbers, done: Bool}
+    view: [pool, universe, required, chosen, done]
+    public: [pool]
+disclosures:
+  ObservationResult:
+    parameters: {who: PersonRef, member: Number}
+    sample: before
+    to: People([who])
+    returns: Observation
+    value: Observation(member=member, works=member == 5)
+    access: acquired
+  SelectionResult:
+    parameters: {who: PersonRef, members: Numbers}
+    sample: before
+    to: People([who])
+    returns: Outcome
+    value: Outcome(success=5 in members)
+    access: acquired
+abilities:
+  Observe:
+    actor: {person: PersonRef}
+    inputs:
+      recipient: {type: PersonRef, choose: known(Person)}
+      member: {type: Number, choose: person.universe}
+    where: not person.done
+    results: Unit
+    resolve:
+      result: None
+      deliver: {report: 'ObservationResult(recipient, member)'}
+  Choose:
+    actor: {person: PersonRef}
+    inputs:
+      members:
+        type: Numbers
+        choose: {subset: person.pool, min: person.required, max: person.required}
+    where: not person.done
+    results: Unit
+    resolve:
+      result: None
+      effects: ['set(person.chosen, members)', 'set(person.done, True)']
+      deliver: {result: 'SelectionResult(person, members)'}
+  Withdraw:
+    actor: {person: PersonRef}
+    inputs:
+      target: {type: PersonRef, choose: known(Person)}
+      member: {type: Number, choose: target.pool}
+    where: target != person
+    results: Unit
+    resolve:
+      result: None
+      effects: ['set(target.pool, filter(target.pool, n => n != member))']

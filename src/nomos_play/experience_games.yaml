@@ -1,0 +1,7 @@
+schema: nomos.play.catalog
+games:
+  - id: avalon-experience
+    title: 阿瓦隆 · 经验玩家
+    description: 和几位熟悉这款游戏的伙伴同桌。每局重新发身份，伙伴会带着之前的经历再次入座。
+    world: ../../build/python-codegen/avalon-planning-five.py
+    assets: ../nomos_c0/author_abilities/examples/avalon_random.assets.yaml

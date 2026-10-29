@@ -1,0 +1,17 @@
+# Non-canon one-action constructor for the official Werewolf ChoosePotions Action.
+schema: nomos.author.opportunity_planning
+name: WitchPoisonChoice
+actor: {person: PlayerRef}
+local:
+  type: Players
+  views:
+    roster: {projection: Players, channel: roster}
+  value: difference(projected(roster), Players([person]))
+actions:
+  potions:
+    inputs:
+      save: {type: Bool, choose: 'Flags([False])'}
+      poison_target:
+        type: Players
+        choose: {subset: local, min: 0, max: 1}
+    where: 'True'

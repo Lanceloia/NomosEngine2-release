@@ -1,0 +1,35 @@
+# Non-canon: paid checks, normal failure and an automatic success consequence.
+schema: nomos.author.lib
+values:
+  Count: {int: [0, 100]}
+  DieRoll: {int: [1, 20]}
+  WorkerRef: {ref: Worker}
+  Trial: {record: {roll: DieRoll, success: Bool}}
+entities:
+  Worker:
+    kind: person
+    reference: public
+    fields: {energy: Count, last_roll: Count, successes: Count}
+    view: [id, energy, last_roll, successes]
+    public: [id]
+abilities:
+  Check:
+    actor: {worker: WorkerRef}
+    parameters: {threshold: DieRoll}
+    where: worker.energy > 0
+    cost: ['consume(worker.energy, 1)']
+    results: Trial
+    resolve:
+      draw:
+        rolled: {type: DieRoll, sides: '20'}
+      then:
+        effects: ['set(worker.last_roll, rolled)']
+        result: 'Trial(roll=rolled, success=rolled >= threshold)'
+reactions:
+  RecordSuccess:
+    on: {definition: Check, bind: {worker: worker, trial: result}}
+    when: trial.success
+    results: Bool
+    resolve:
+      effects: ['set(worker.successes, worker.successes + 1)']
+      result: 'True'

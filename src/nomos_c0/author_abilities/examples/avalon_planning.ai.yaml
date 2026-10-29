@@ -1,0 +1,96 @@
+# Voluntary public coordination, evaluated anew from the person's acquired view.
+schema: nomos.author.ai
+queries:
+  speaker_discussion:
+    parameters: {heard: DiscussionStatements, speaker: PlayerRef}
+    returns: DiscussionStatements
+    # Admitted topics belong to their speaker; withdrawals can only revise one's own topic.
+    expression: current_discussion(filter(heard, s => s.key.speaker == speaker))
+  leader_affinity:
+    parameters: {leader: PlayerRef, perspective: DiscussionPerspective}
+    returns: ExperienceScore
+    # A person's weak affinity is not the failure capacity of a one-person mission.
+    expression: team_preference(Players([leader]), perspective.person, perspective.own, perspective.peers, perspective.suspects, perspective.pair, perspective.history, perspective.mind)
+  leader_distance:
+    parameters: {order: PlayerOrder, current: PlayerRef, target: PlayerRef}
+    returns: Count
+    expression: (index_of(order, target) - index_of(order, current) + size(order)) % size(order)
+  plan_prospect:
+    parameters: {plan: LeaderPlan, perspective: DiscussionPerspective, situation: DiscussionContext}
+    returns: ExperienceScore
+    expression: >
+      -200 if situation.rejections + leader_distance(perspective.order, situation.leader, plan.leader) > plan.rejection_limit else
+      (200 if evil_role(current_role(perspective.own)) else -200) if situation.rejections >= 4 or
+      situation.rejections + leader_distance(perspective.order, situation.leader, plan.leader) >= 5 else
+      -1 - leader_distance(perspective.order, situation.leader, plan.leader) if discussion_preference(situation.members, perspective) > 0 else
+      (leader_affinity(plan.leader, perspective) - leader_affinity(situation.leader, perspective)) // 10 -
+      leader_distance(perspective.order, situation.leader, plan.leader)
+  plan_key_prospect:
+    parameters: {heard: DiscussionStatements, target: StatementKey, perspective: DiscussionPerspective, situation: DiscussionContext}
+    returns: ExperienceScore
+    expression: >
+      match(at(filter(heard, s => s.key == target), 0).content, Plan(p) => plan_prospect(p.plan, perspective, situation),
+      Compare() => 0, Conditional() => 0, Respond() => 0, Redirect() => 0, Participate() => 0, Opinion() => 0, Question() => 0, Answer() => 0, Retract() => 0)
+      if exists(heard, s => s.key == target) else 0
+  plan_content:
+    parameters: {leader: PlayerRef, rejection_limit: Count}
+    returns: DiscussionContent
+    expression: DiscussionContent.Plan(plan=LeaderPlan(leader=leader, rejection_limit=rejection_limit))
+  participation_content:
+    parameters: {target: StatementKey, choice: PlanParticipation}
+    returns: DiscussionContent
+    expression: DiscussionContent.Participate(decision=PlanDecision(target=target, choice=choice))
+  plan_supporters:
+    parameters: {heard: DiscussionStatements, target: StatementKey, mission: Mission}
+    returns: Players
+    expression: >
+      distinct(map(filter(current_discussion(heard), s => s.mission == mission and match(s.content,
+      Participate(p) => p.decision.target == target and p.decision.choice == PlanParticipation.join,
+      Compare() => False, Conditional() => False, Respond() => False, Redirect() => False, Plan() => False, Opinion() => False, Question() => False, Answer() => False, Retract() => False)), s => s.key.speaker))
+  participation_preference:
+    parameters: {value: ExperienceScore, participation: PlanParticipation}
+    returns: ExperienceScore
+    expression: >
+      value if participation == PlanParticipation.join else -value if participation == PlanParticipation.decline or participation == PlanParticipation.leave else
+      2 if value >= -2 and value <= 2 else 0
+  plan_participation_value:
+    parameters: {heard: DiscussionStatements, target: StatementKey, participation: PlanParticipation, perspective: DiscussionPerspective, situation: DiscussionContext}
+    returns: ExperienceScore
+    expression: >
+      participation_preference(plan_key_prospect(heard, target, perspective, situation) +
+      bounded_cooperation(size(difference(plan_supporters(heard, target, situation.mission), Players([perspective.person])))), participation)
+      if plan_status(heard, target, situation) == PlanStatus.active else
+      4 if participation == PlanParticipation.leave else 0
+  joined_worthwhile_plan:
+    parameters: {thought: PlayerThought, heard: DiscussionStatements, perspective: DiscussionPerspective, situation: DiscussionContext}
+    returns: Bool
+    expression: >
+      match(thought, Deliberation(s) => s.statement.key.speaker == perspective.person and
+      match(s.statement.content, Participate(p) => p.decision.choice == PlanParticipation.join and
+      plan_status(heard, p.decision.target, situation) == PlanStatus.active and plan_key_prospect(heard, p.decision.target, perspective, situation) > 0,
+      Compare() => False, Conditional() => False, Respond() => False, Redirect() => False, Plan() => False, Opinion() => False, Question() => False, Answer() => False, Retract() => False),
+      Identity() => False, Advice() => False, IdentityOpinion() => False, Forecast() => False,
+      Alternative() => False, Task() => False, SafeTeam() => False, Ballot() => False)
+  plan_vote_pressure:
+    parameters: {mind: PlayerJudgment, heard: DiscussionStatements, perspective: DiscussionPerspective, situation: DiscussionContext}
+    returns: ExperienceScore
+    # A past voluntary join remains a record; waiting must still serve the person's current goal.
+    expression: 40 if situation.rejections < 4 and exists(mind.beliefs, b => joined_worthwhile_plan(b.proposition, heard, perspective, situation)) else 0
+  withdrawal_value:
+    parameters: {statement: MaybeDiscussionStatement, heard: DiscussionStatements, perspective: DiscussionPerspective, situation: DiscussionContext, width: Count}
+    returns: ExperienceScore
+    expression: >
+      match(statement.content,
+      Plan() => 4 if plan_status(heard, statement.key, situation) != PlanStatus.active else -plan_key_prospect(heard, statement.key, perspective, situation),
+      Participate(p) => plan_participation_value(heard, p.decision.target, PlanParticipation.leave, perspective, situation)
+      if p.decision.choice == PlanParticipation.join else -1,
+      Compare() => -local_content_preference(statement.content, perspective, width) // 10,
+      Conditional() => -local_content_preference(statement.content, perspective, width) // 10,
+      Respond() => 0, Redirect() => 0, Opinion() => 0, Question() => 0, Answer() => 0, Retract() => -1) if statement is not None else 0
+  withdrawal_targets:
+    parameters: {heard: DiscussionStatements, perspective: DiscussionPerspective, situation: DiscussionContext, width: Count}
+    returns: StatementKeys
+    expression: >
+      distinct(map(filter(speaker_discussion(heard, perspective.person), s => discussion_reference_allowed(s, situation.mission, situation.kind) and
+      not is_retraction(s.content) and
+      withdrawal_value(s, heard, perspective, situation, width) > 0), s => s.key))

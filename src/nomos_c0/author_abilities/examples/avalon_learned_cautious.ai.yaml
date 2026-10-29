@@ -1,0 +1,9 @@
+schema: nomos.author.ai
+imports: [avalon_red_ranking.ai.yaml]
+control:
+  council:
+    kind: Player
+    definition: LocalChoice
+    views: {mind: council, identity: own_role}
+    with: {style: {label: 谨慎派, risk: 180, concealment: 150, speech: 30, trust: 60}}
+    rankings: {Assassinate: red_assassination}

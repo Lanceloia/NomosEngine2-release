@@ -1,0 +1,91 @@
+# Perceived effects of public votes use the listener's current evidence and goals.
+schema: nomos.author.ai
+queries:
+  task_failure_threshold:
+    parameters: {mission: Mission, count: Count, configuration: SetupTable}
+    returns: Count
+    expression: setup(count, configuration).fourth_fail_threshold if mission == 4 else 1
+  task_capacity_basis:
+    parameters: {bounds: EvilInterval, required: Count}
+    returns: BallotGoalBasis
+    expression: BallotGoalBasis.safe if bounds.maximum < required else BallotGoalBasis.risk if bounds.minimum >= required else BallotGoalBasis.unknown
+  task_capacity_evidence:
+    parameters: {bounds: EvilInterval, required: Count, evil: Bool}
+    returns: ExperienceScore
+    # Capacity is checked against the authored task threshold, not merely an evil presence.
+    expression: (160 if task_capacity_basis(bounds, required) == BallotGoalBasis.safe else -160 if task_capacity_basis(bounds, required) == BallotGoalBasis.risk else 0) if not evil else 0
+  ballot_goal_context:
+    parameters: {perspective: DiscussionPerspective, ballots: ApprovalHistory, census: PopulationReports, configuration: SetupTable}
+    returns: BallotGoalContext
+    expression: BallotGoalContext(perspective=perspective, ballots=ballots, census=census, configuration=configuration)
+  ballot_goal_ready:
+    parameters: {context: BallotGoalContext}
+    returns: Bool
+    expression: context.perspective.mind.complete and context.perspective.mind.local.complete and context.perspective.mind.local.status == JudgmentAnalysisStatus.complete and size(context.perspective.own) > 0 and size(context.census) > 0
+  earlier_ballot_rejections:
+    parameters: {context: BallotGoalContext, epoch: Epoch, mission: Mission}
+    returns: Count
+    expression: size(filter(context.ballots, b => b.mission == mission and b.epoch < epoch and not b.passed))
+  ballot_goal_interval:
+    parameters: {context: BallotGoalContext, members: Players}
+    returns: EvilInterval
+    expression: team_evil_interval(members, context.perspective.person, context.perspective.own, context.perspective.peers, context.perspective.suspects, context.perspective.pair, context.perspective.history, context.census)
+  ballot_goal_required:
+    parameters: {context: BallotGoalContext, mission: Mission}
+    returns: Count
+    expression: task_failure_threshold(mission, size(context.perspective.order), context.configuration)
+  ballot_goal_basis:
+    parameters: {context: BallotGoalContext, bounds: EvilInterval, required: Count, rejections: Count}
+    returns: BallotGoalBasis
+    expression: BallotGoalBasis.pending if not ballot_goal_ready(context) else BallotGoalBasis.final_rejection if rejections >= 4 else task_capacity_basis(bounds, required)
+  ballot_approval_value:
+    parameters: {context: BallotGoalContext, basis: BallotGoalBasis}
+    returns: GoalDirection
+    # Sabotage capacity is an opportunity/risk, not a prediction that a secret card was played.
+    expression: (-1 if evil_role(current_role(context.perspective.own)) else 1) if basis == BallotGoalBasis.safe or basis == BallotGoalBasis.final_rejection else (1 if evil_role(current_role(context.perspective.own)) else -1) if basis == BallotGoalBasis.risk else 0
+  ballot_review_value:
+    parameters: {context: BallotGoalContext, record: ApprovalRecord, person: PlayerRef, bounds: EvilInterval, required: Count, rejections: Count, basis: BallotGoalBasis}
+    returns: BallotGoalReview
+    expression: >
+      BallotGoalReview(record=record, person=person,
+      same_vote=(person in record.approve) == (context.perspective.person in record.approve),
+      bounds=bounds, required=required, rejections=rejections, basis=basis,
+      approval_value=ballot_approval_value(context, basis),
+      alignment=ballot_approval_value(context, basis) * (1 if person in record.approve else -1), complete=ballot_goal_ready(context))
+  ballot_review_case:
+    parameters: {context: BallotGoalContext, record: ApprovalRecord, person: PlayerRef, bounds: EvilInterval, required: Count, rejections: Count}
+    returns: BallotGoalReview
+    expression: ballot_review_value(context, record, person, bounds, required, rejections, ballot_goal_basis(context, bounds, required, rejections))
+  ballot_goal_review:
+    parameters: {context: BallotGoalContext, record: ApprovalRecord, person: PlayerRef}
+    returns: BallotGoalReview
+    expression: ballot_review_case(context, record, person, ballot_goal_interval(context, record.team), ballot_goal_required(context, record.mission), earlier_ballot_rejections(context, record.epoch, record.mission))
+  person_goal_assessment:
+    parameters: {person: PlayerRef, observed: PersonJudgment, records: BallotGoalReviews, complete: Bool}
+    returns: PersonGoalReview
+    expression: PersonGoalReview(person=person, observed=observed, alignment=bounded_cooperation(sum_by(records, r => r.alignment)) if complete else 0, records=records, complete=complete)
+  person_goal_review:
+    parameters: {context: BallotGoalContext, person: PlayerRef}
+    returns: PersonGoalReview
+    # Reassess received ballots with current evidence; retain the original records alongside it.
+    expression: person_goal_assessment(person, judged_person(context.perspective.mind, person), map(filter(context.ballots, b => person != context.perspective.person and person in union(b.approve, b.reject) and context.perspective.person in union(b.approve, b.reject)), b => ballot_goal_review(context, b, person)), ballot_goal_ready(context))
+  candidate_goal_value:
+    parameters: {context: BallotGoalContext, members: Players, epoch: Epoch, mission: Mission}
+    returns: GoalDirection
+    expression: ballot_approval_value(context, ballot_goal_basis(context, ballot_goal_interval(context, members), ballot_goal_required(context, mission), earlier_ballot_rejections(context, epoch, mission)))
+  recommends_team:
+    parameters: {thought: PlayerThought, speaker: PlayerRef, members: Players, epoch: Epoch}
+    returns: Bool
+    expression: match(thought, Alternative(c) => c.statement.speaker == speaker and c.statement.members == members and c.statement.epoch == epoch, Identity() => False, Advice() => False, Task() => False, SafeTeam() => False, Ballot() => False, Forecast() => False, IdentityOpinion() => False, Deliberation() => False)
+  recommendation_goal_reviews:
+    parameters: {context: BallotGoalContext, members: Players, epoch: Epoch}
+    returns: PersonGoalReviews
+    expression: map(filter(context.perspective.order, p => p != context.perspective.person and exists(context.perspective.mind.beliefs, b => recommends_team(b.proposition, p, members, epoch))), p => person_goal_review(context, p))
+  has_team_recommendation:
+    parameters: {context: BallotGoalContext, members: Players, epoch: Epoch}
+    returns: Bool
+    expression: exists(context.perspective.order, p => p != context.perspective.person and exists(context.perspective.mind.beliefs, b => recommends_team(b.proposition, p, members, epoch)))
+  recommendation_coordination:
+    parameters: {context: BallotGoalContext, members: Players, epoch: Epoch, mission: Mission}
+    returns: ExperienceScore
+    expression: bounded_cooperation(sum_by(recommendation_goal_reviews(context, members, epoch), r => r.alignment)) if has_team_recommendation(context, members, epoch) and candidate_goal_value(context, members, epoch + 1, mission) > 0 else 0

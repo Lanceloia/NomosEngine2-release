@@ -1,0 +1,85 @@
+# Role objectives use acquired information and public history, never other players' private cards.
+schema: nomos.author.ai
+imports: [avalon_local_bounds.ai.yaml]
+queries:
+  shared_members:
+    parameters: {left: Players, right: Players}
+    returns: Players
+    expression: filter(left, p => p in right)
+  has_role:
+    parameters: {own: RoleReports, role: Role}
+    returns: Bool
+    expression: exists(own, r => r.role == role)
+  critical_task:
+    parameters: {successes: Count, failures: Count}
+    returns: Bool
+    expression: successes >= 2 or failures >= 2
+  evil_opportunity:
+    parameters: {bounds: LocalInterval, required: Count}
+    returns: Score
+    expression: 100 if bounds.minimum >= required else -60 * (required - bounds.minimum)
+  excess_exposure:
+    parameters: {bounds: LocalInterval, required: Count, critical: Bool}
+    returns: Score
+    expression: -45 * (bounds.minimum - required) if not critical and bounds.minimum > required else 0
+  early_reputation:
+    parameters: {own: RoleReports, bounds: LocalInterval, required: Count, history: QuestHistory}
+    returns: Score
+    # An early safe expedition can earn credibility, rather than every evil vote being inverted.
+    expression: 75 if local_alignment(own) == -1 and bounds.maximum < required and size(history) == 0 else 0
+  relevant_failures:
+    parameters: {history: QuestHistory, members: Players}
+    returns: Bool
+    expression: exists(history, q => q.fails > 0 and exists(q.team, p => p in members))
+  merlin_discretion:
+    parameters: {own: RoleReports, bounds: LocalInterval, required: Count, history: QuestHistory, members: Players, successes: Count, failures: Count}
+    returns: Score
+    # Permit a plausible early vote; do not spend the last task or ignore public danger to hide.
+    expression: >
+      110 if has_role(own, Role.merlin) and bounds.minimum == required and
+      not critical_task(successes, failures) and failures == 0 and
+      not relevant_failures(history, members) else 0
+  sabotage_payoff:
+    parameters: {bounds: LocalInterval, required: Count, sabotage: Bool}
+    returns: Score
+    expression: (80 if bounds.minimum >= required else 15 if bounds.maximum >= required else -50) if sabotage else 0
+  sabotage_exposure:
+    parameters: {bounds: LocalInterval, required: Count, sabotage: Bool, critical: Bool}
+    returns: Score
+    expression: -25 * (bounds.minimum - required) if sabotage and not critical and bounds.minimum > required else 0
+  morgana_cover:
+    parameters: {own: RoleReports, bounds: LocalInterval, required: Count, sabotage: Bool, critical: Bool}
+    returns: Score
+    # This role wants Percival's trust. It does not know whether the other evil player will sabotage.
+    expression: 100 if not sabotage and has_role(own, Role.morgana) and not critical and bounds.minimum > required else 0
+  known_evil_members:
+    parameters: {view: LocalCouncilView, roster: Players}
+    returns: Players
+    # Only explicit all-evil groups are needed here; a partial set is not treated as exhaustive.
+    expression: >
+      filter(roster, p => exists(view.local.bounds, b => b.category == LocalCategory.evil_count and
+      b.minimum == size(b.members) and p in b.members))
+      if view.complete and view.local.complete and view.local.status == LocalStatus.complete else Players([])
+  vote_information_signal:
+    parameters: {target: PlayerRef, record: ApprovalRecord, enemies: Players, count: Count, population: SetupTable}
+    returns: Score
+    expression: >
+      (6 if target in record.reject else -3) if
+      size(shared_members(record.team, enemies)) >= local_required(record.mission, count, population) else
+      (3 if target in record.approve else -1)
+  leader_information_signal:
+    parameters: {target: PlayerRef, record: ApprovalRecord, enemies: Players}
+    returns: Score
+    expression: (4 if not exists(record.team, p => p in enemies) else -2) if record.leader == target else 0
+  public_information_signal:
+    parameters: {target: PlayerRef, enemies: Players, history: ApprovalHistory, count: Count, population: SetupTable}
+    returns: Score
+    # Only with a complete known evil set can its complement be judged safe in this fixed-role game.
+    expression: >
+      sum_by(history, h => vote_information_signal(target, h, enemies, count, population) +
+      leader_information_signal(target, h, enemies)) if size(enemies) == setup(count, population).evil else 0
+  should_speak:
+    parameters: {own: RoleReports, history: QuestHistory, members: Players, rejections: Count}
+    returns: Bool
+    # Merlin waits for a public reason or a decisive vote; other roles may influence the discussion.
+    expression: not has_role(own, Role.merlin) or rejections >= 4 or relevant_failures(history, members)

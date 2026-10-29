@@ -1,0 +1,48 @@
+# Source data is checked independently of the future game phases.
+schema: nomos.author.lib
+queries:
+  valid_building_catalog:
+    parameters: {buildings: BuildingCatalog}
+    returns: Bool
+    expression: >
+      size(buildings) == 23 and
+      forall(buildings, b => exactly_one(buildings, other => other.kind == b.kind) and
+        b.cost > 0 and b.workers > 0 and b.stock > 0 and b.spaces > 0 and b.spaces <= 2 and
+        b.points > 0 and b.quarry_limit > 0) and
+      sum_by(buildings, b => b.stock) == 49 and
+      sum_by(filter(buildings, b => b.production is not None), b => b.stock) == 20
+  valid_setup_catalog:
+    parameters: {setups: Setups}
+    returns: Bool
+    expression: >
+      size(setups) == 3 and
+      forall(setups, s => exactly_one(setups, other => other.players == s.players) and
+        s.colonist_ship == s.players and s.prospectors + 6 == s.players + 3 and
+        size(s.ships) == 3 and forall(s.ships, c => c > 0 and exactly_one(s.ships, other => other == c)) and
+        size(s.opening_crops) == s.players)
+  valid_good_catalog:
+    parameters: {goods: GoodCatalog}
+    returns: Bool
+    expression: >
+      size(goods) == 5 and forall(goods, g => exactly_one(goods, other => other.kind == g.kind)) and
+      sum_by(goods, g => g.barrels) == 50 and sum_by(goods, g => g.plantations) == 50
+  valid_role_catalog:
+    parameters: {roles: RoleCards}
+    returns: Bool
+    expression: >
+      size(roles) == 8 and
+      forall(roles, r => exactly_one(roles, other => other.key == r.key) and
+        exactly_one(roles, other => other.kind == r.kind and other.copy == r.copy) and
+        (r.copy == 1 or (r.kind == Role.prospector and r.copy == 2))) and
+      size(filter(roles, r => r.kind == Role.prospector)) == 2
+  role_cards_for:
+    parameters: {roles: RoleCards, population: Population}
+    returns: RoleCards
+    expression: filter(roles, r => r.kind != Role.prospector or r.copy <= population - 3)
+  valid_plantations:
+    parameters: {plantations: TileCards, goods: GoodCatalog}
+    returns: Bool
+    expression: >
+      size(plantations) == 50 and
+      forall(plantations, t => t.crop is not None and exactly_one(plantations, other => other.key == t.key)) and
+      forall(goods, g => size(filter(plantations, t => t.crop == g.kind)) == g.plantations)

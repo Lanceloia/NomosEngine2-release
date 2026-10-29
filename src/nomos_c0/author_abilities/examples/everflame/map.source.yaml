@@ -1,0 +1,85 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+schema: nomos.author.source
+contexts:
+  palace:
+    definition: Palace
+    with:
+      player: {actor: adventurer}
+      ritual_site: ritual_ring
+      audible_sites: [ritual_ring, ritual_threshold, ritual_passage_entry]
+      ritual_goal: 4
+      breath_damage: 1
+      breath_threshold: 10
+      breath_zones: !table
+        columns: [origin, aim, affected_sites]
+        rows:
+          - [ritual_ring, ritual_threshold, [ritual_threshold]]
+          - [ritual_threshold, ritual_ring, [ritual_ring]]
+      stairs: !table
+        columns: [start, end, base_move_cost]
+        rows:
+          - [halls_bridge_door, bridge_palace_landing, 10000]
+          - [bridge_palace_landing, halls_bridge_door, 10000]
+      paths: !table
+        columns: [start, end, base_move_cost]
+        rows:
+          - [ritual_passage_entry, ritual_threshold, 10000]
+          - [ritual_threshold, ritual_passage_entry, 10000]
+          - [ritual_threshold, ritual_ring, 10000]
+          - [ritual_ring, ritual_threshold, 10000]
+          - [ballroom_entrance, halls_ballroom_door, 10000]
+          - [halls_ballroom_door, halls_bridge_door, 10000]
+          - [halls_bridge_door, bridge_palace_landing, 10000]
+          - [halls_ballroom_door, ballroom_entrance, 10000]
+          - [halls_bridge_door, halls_ballroom_door, 10000]
+          - [bridge_palace_landing, halls_bridge_door, 10000]
+      crossings: !table
+        columns: [key, start, intended, collision, floor_key, base_move_cost, difficulty, die_sides, success_followup, failure_followup]
+        rows:
+          - [ritual_threshold_to_ring, ritual_threshold, ritual_ring, ritual_collision_wall, ritual, 10000, 10, 20, ritual_ring_to_threshold, recover_ritual_room_wall]
+          - [ritual_ring_to_threshold, ritual_ring, ritual_threshold, ritual_collision_wall, ritual, 10000, 10, 20, ritual_threshold_to_ring, recover_ritual_room_wall]
+          - [recover_ritual_room_wall, ritual_collision_wall, ritual_threshold, ritual_collision_wall, ritual, 10000, 10, 20, ritual_threshold_to_ring, recover_ritual_room_wall]
+          - [entrance_to_ritual, ballroom_entrance, ritual_passage_entry, ballroom_opposite_wall, ballroom, 10000, 10, 20, ritual_to_entrance, recover_opposite_wall]
+          - [entrance_to_chandelier, ballroom_entrance, ballroom_chandelier_reach, ballroom_chandelier_far_wall, ballroom, 10000, 10, 20, chandelier_to_entrance, recover_chandelier_wall]
+          - [chandelier_to_entrance, ballroom_chandelier_reach, ballroom_entrance, ballroom_bar_side_wall, ballroom, 10000, 10, 20, null, recover_bar_side_wall]
+          - [recover_opposite_wall, ballroom_opposite_wall, ballroom_entrance, ballroom_bar_side_wall, ballroom, 10000, 10, 20, null, recover_bar_side_wall]
+          - [recover_chandelier_wall, ballroom_chandelier_far_wall, ballroom_entrance, ballroom_bar_side_wall, ballroom, 10000, 10, 20, null, recover_bar_side_wall]
+          - [recover_bar_side_wall, ballroom_bar_side_wall, ballroom_entrance, ballroom_bar_side_wall, ballroom, 10000, 10, 20, null, recover_bar_side_wall]
+          - [ritual_to_entrance, ritual_passage_entry, ballroom_entrance, ritual_side_wall, ballroom, 10000, 10, 20, null, recover_ritual_side_wall]
+          - [recover_ritual_side_wall, ritual_side_wall, ritual_passage_entry, ritual_side_wall, ballroom, 10000, 10, 20, ritual_to_entrance, recover_ritual_side_wall]
+          - [halls_to_bridge_door, halls_ballroom_door, halls_bridge_door, halls_collision_wall, halls, 10000, 10, 20, halls_to_ballroom_door, recover_halls_wall]
+          - [halls_to_ballroom_door, halls_bridge_door, halls_ballroom_door, halls_collision_wall, halls, 10000, 10, 20, halls_to_bridge_door, recover_halls_wall]
+          - [recover_halls_wall, halls_collision_wall, halls_ballroom_door, halls_collision_wall, halls, 10000, 10, 20, halls_to_bridge_door, recover_halls_wall]
+      bridges: !table
+        columns: [start, end, base_move_cost]
+        rows:
+          - [bridge_palace_landing, bridge_midspan, 20000]
+          - [bridge_midspan, palace_exit, 20000]
+          - [bridge_midspan, bridge_palace_landing, 20000]
+          - [palace_exit, bridge_midspan, 20000]
+      floor_areas: !table
+        columns: [key, sites]
+        rows:
+          - [bridge, [bridge_palace_landing, bridge_midspan]]
+          - [ballroom, [ballroom_entrance, ritual_passage_entry, ballroom_chandelier_reach, ballroom_opposite_wall, ballroom_chandelier_far_wall, ballroom_bar_side_wall, ritual_side_wall]]
+          - [ritual, [ritual_threshold, ritual_ring, ritual_collision_wall]]
+          - [halls, [halls_ballroom_door, halls_bridge_door, halls_collision_wall]]
+      coverage: !table
+        columns: [origin, near_sites, mid_sites, far_sites]
+        rows:
+          - [ballroom_entrance, [ballroom_entrance], [ballroom_entrance], [ballroom_entrance]]
+          - [palace_exit, [palace_exit], [palace_exit], [palace_exit]]
+          - [ballroom_opposite_wall, [ballroom_opposite_wall], [ballroom_opposite_wall], [ballroom_opposite_wall]]
+          - [ballroom_chandelier_reach, [ballroom_chandelier_reach], [ballroom_chandelier_reach], [ballroom_chandelier_reach]]
+          - [ballroom_chandelier_far_wall, [ballroom_chandelier_far_wall], [ballroom_chandelier_far_wall], [ballroom_chandelier_far_wall]]
+          - [ballroom_bar_side_wall, [ballroom_bar_side_wall], [ballroom_bar_side_wall], [ballroom_bar_side_wall]]
+          - [ritual_passage_entry, [ritual_passage_entry], [ritual_passage_entry], [ritual_passage_entry]]
+          - [ritual_threshold, [ritual_threshold], [ritual_threshold], [ritual_threshold]]
+          - [ritual_ring, [ritual_ring], [ritual_ring], [ritual_ring]]
+          - [ritual_side_wall, [ritual_side_wall], [ritual_side_wall], [ritual_side_wall]]
+          - [ritual_collision_wall, [ritual_collision_wall], [ritual_collision_wall], [ritual_collision_wall]]
+          - [halls_ballroom_door, [halls_ballroom_door], [halls_ballroom_door], [halls_ballroom_door]]
+          - [halls_bridge_door, [halls_bridge_door], [halls_bridge_door], [halls_bridge_door]]
+          - [halls_collision_wall, [halls_collision_wall], [halls_collision_wall], [halls_collision_wall]]
+          - [bridge_palace_landing, [bridge_palace_landing], [bridge_palace_landing], [bridge_palace_landing]]
+          - [bridge_midspan, [bridge_midspan], [bridge_midspan], [bridge_midspan]]

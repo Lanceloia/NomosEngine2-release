@@ -1,0 +1,64 @@
+# Conservative set bounds over acquired information, not a hidden-role assignment solver.
+schema: nomos.author.ai
+queries:
+  lower_contribution:
+    parameters: {bound: LocalBound, members: Players}
+    returns: Score
+    expression: bound.minimum - size(difference(bound.members, members)) if bound.minimum > size(difference(bound.members, members)) else 0
+  upper_contribution:
+    parameters: {bound: LocalBound, members: Players}
+    returns: Score
+    expression: bound.maximum + size(difference(members, bound.members)) if bound.maximum + size(difference(members, bound.members)) < size(members) else size(members)
+  lower_pick:
+    parameters: {bounds: LocalBounds, members: Players}
+    returns: MaybeLocalBound
+    expression: max_by(bounds, b => lower_contribution(b, members))
+  upper_pick:
+    parameters: {bounds: LocalBounds, members: Players}
+    returns: MaybeLocalBound
+    expression: min_by(bounds, b => upper_contribution(b, members))
+  read_lower:
+    parameters: {selected: MaybeLocalBound, members: Players}
+    returns: Score
+    expression: lower_contribution(selected, members) if selected is not None else 0
+  read_upper:
+    parameters: {selected: MaybeLocalBound, members: Players}
+    returns: Score
+    expression: upper_contribution(selected, members) if selected is not None else size(members)
+  basic_interval:
+    parameters: {bounds: LocalBounds, members: Players}
+    returns: LocalInterval
+    expression: LocalInterval(minimum=read_lower(lower_pick(bounds, members), members), maximum=read_upper(upper_pick(bounds, members), members))
+  individual_bound:
+    parameters: {bounds: LocalBounds, person: PlayerRef, category: LocalCategory}
+    returns: LocalBound
+    expression: LocalBound(members=Players([person]), category=category, minimum=read_lower(lower_pick(bounds, Players([person])), Players([person])), maximum=read_upper(upper_pick(bounds, Players([person])), Players([person])))
+  merge_individuals:
+    parameters: {base: LocalInterval, lower: Score, upper: Score}
+    returns: LocalInterval
+    # Only mutually disjoint individuals are added; overlapping groups remain separate bounds.
+    expression: LocalInterval(minimum=lower if lower > base.minimum else base.minimum, maximum=upper if upper < base.maximum else base.maximum)
+  aggregate_interval:
+    parameters: {bounds: LocalBounds, individuals: IndividualBounds, members: Players}
+    returns: LocalInterval
+    expression: merge_individuals(basic_interval(bounds, members), sum_by(individuals, b => b.minimum if exists(b.members, p => p in members) else 0), sum_by(individuals, b => b.maximum if exists(b.members, p => p in members) else 0))
+  complement_interval:
+    parameters: {target: LocalInterval, total: LocalInterval, remaining: LocalInterval}
+    returns: LocalInterval
+    expression: LocalInterval(minimum=total.minimum - remaining.maximum if total.minimum - remaining.maximum > target.minimum else target.minimum, maximum=total.maximum - remaining.minimum if total.maximum - remaining.minimum < target.maximum else target.maximum)
+  project_partition:
+    parameters: {bounds: LocalBounds, individuals: IndividualBounds, members: Players, roster: Players}
+    returns: LocalInterval
+    expression: complement_interval(aggregate_interval(bounds, individuals, members), aggregate_interval(bounds, individuals, roster), aggregate_interval(bounds, individuals, difference(roster, members)))
+  project_known:
+    parameters: {bounds: LocalBounds, members: Players, roster: Players, category: LocalCategory}
+    returns: LocalInterval
+    # Compute each individual's interval once for this candidate, then reuse it for both sides.
+    expression: project_partition(bounds, map(roster, p => individual_bound(bounds, p, category)), members, roster)
+  local_bounds:
+    parameters: {view: LocalCouncilView, members: Players, roster: Players, category: LocalCategory}
+    returns: LocalInterval
+    expression: >
+      project_known(filter(view.local.bounds, b => b.category == category), members, roster, category)
+      if view.complete and view.local.complete and view.local.status == LocalStatus.complete else
+      LocalInterval(minimum=0, maximum=size(members))

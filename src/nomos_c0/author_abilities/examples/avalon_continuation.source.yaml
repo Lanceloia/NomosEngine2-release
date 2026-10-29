@@ -1,0 +1,5 @@
+# Reuse the original discussion, explicit passing and secret ballot capabilities.
+schema: nomos.author.source
+imports: [avalon_reasoning.source.yaml]
+use:
+  planning_round: {definition: PlanningRoundView, context: match}

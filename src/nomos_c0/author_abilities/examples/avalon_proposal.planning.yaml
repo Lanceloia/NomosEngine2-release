@@ -1,0 +1,54 @@
+# This is a one-proposal subjective heuristic, not a prediction of mission victory.
+schema: nomos.author.scenario_planning
+name: ConstructProposal
+actor: {person: PlayerRef}
+goal: Unit
+local:
+  type: ProposalLocal
+  views:
+    roster_view: {projection: Players, channel: roster}
+    leader_view: {projection: PlayerRef, channel: leader}
+    board_view: {projection: QuestSteps, channel: quest_board}
+    window_view: {projection: ProposalWindow, channel: planning_window}
+    suspect_reports: {reports: PlayerReports, channel: merlin_suspects}
+    past_quests: {reports: QuestHistory, channel: reveal_quest.result}
+  value: >
+    ProposalLocal(self=person, players=projected(roster_view),
+      required=at(filter(projected(board_view), s => s.status == QuestStatus.current), 0).members
+        if exists(projected(board_view), s => s.status == QuestStatus.current) else 0,
+      ready=projected(window_view).phase == Phase.proposal and projected(leader_view) == person,
+      finished=projected(window_view).phase != Phase.proposal,
+      suspects=filter(projected(roster_view), p => exists(reports(suspect_reports), group => p in group)))
+state: Bool
+observation: Unit
+hypotheses:
+  - {probability: [1, 1], value: local.finished}
+consistent: 'True'
+terminal: state
+assumptions:
+  window: 本轮只构造并提交一次提队，不预测其他玩家的投票或任务结果。
+  knowledge: 仅使用本人收到的梅林嫌疑集合；没有报告就保持未知，不从角色字段取真值。
+  value: 包含自己加10；每位已知嫌疑减100。这是显式主观启发式，不保证队伍全好。
+  recall: 已收到的任务结果只影响先考虑哪些成员；成功不证明全好，失败不证明某个成员是坏人。
+guidance:
+  recall: [past_quests]
+  exploration: 3
+  actions:
+    propose:
+      inputs:
+        members:
+          member: candidate
+          priority: >
+            sum_by(reports(past_quests), q =>
+              (1 if q.fails == 0 else -1) if candidate in q.team else 0)
+actions:
+  propose:
+    inputs:
+      members:
+        type: Players
+        choose: {subset: local.players, min: local.required, max: local.required}
+    where: local.ready and not state
+    predict:
+      state: 'True'
+      observation: None
+      utility: '(10 if local.self in members else 0) - 100 * size(filter(members, p => p in local.suspects))'

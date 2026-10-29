@@ -1,0 +1,10 @@
+schema: nomos.author.ai
+strategies:
+  SpiritChoice:
+    actor: {self: CreatureRef}
+    candidates: [{definition: Act, score: self.energy}]
+    minimum: '0'
+    tie: wait
+    wait: no_candidate
+control:
+  spirits: {kind: Spirit, definition: SpiritChoice}

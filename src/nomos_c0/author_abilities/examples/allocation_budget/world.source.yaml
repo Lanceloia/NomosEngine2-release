@@ -1,0 +1,20 @@
+schema: nomos.author.source
+name: BudgetAllocationProbe
+actors: {a: Player, b: Player}
+objects: []
+play: {mechanism: tabletop, seats: {kind: Player}, others: local_strategy}
+contexts:
+  workshop:
+    definition: Workshop
+    with:
+      players: {opening_domain: Player}
+      total: 6
+      projects: !table
+        columns: [code, title, ceiling]
+        rows:
+          - [research, 研究, 4]
+          - [equipment, 设备, 3]
+          - [training, 培训, 2]
+use:
+  allocate_budget: {definition: AllocateBudget, context: workshop}
+  finished: {definition: AllAssigned, context: workshop}

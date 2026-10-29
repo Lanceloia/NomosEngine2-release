@@ -1,0 +1,195 @@
+# Finite local expression policy and soft interpretation, separate from world truth.
+schema: nomos.author.ai
+queries:
+  content_opinion:
+    parameters: {content: DiscussionContent}
+    returns: MaybePublicOpinion
+    expression: >
+      match(content, Opinion(o) => o.opinion,
+      Answer(a) => match(a.answer.reply, Explanation(e) => e.opinion, Reserve() => None, Unknown() => None, Decline() => None),
+      Question() => None, Compare() => None, Conditional() => None, Respond() => None,
+      Redirect() => None, Plan() => None, Participate() => None, Retract() => None)
+  side_interval:
+    parameters: {members: Players, side: Side, perspective: DiscussionPerspective}
+    returns: EvilInterval
+    expression: side_count_interval(team_evil_interval(members, perspective.person, perspective.own, perspective.peers, perspective.suspects, perspective.pair, perspective.history, perspective.goals.census), side, size(members))
+  side_count_interval:
+    parameters: {evil: EvilInterval, side: Side, count: Count}
+    returns: EvilInterval
+    expression: evil if side == Side.evil else EvilInterval(minimum=count - evil.maximum, maximum=count - evil.minimum)
+  count_assertion_verdict:
+    parameters: {actual: EvilInterval, minimum: Count, maximum: Count}
+    returns: IdentityVerdict
+    expression: IdentityVerdict.excluded if actual.maximum < minimum or actual.minimum > maximum else IdentityVerdict.established if actual.minimum >= minimum and actual.maximum <= maximum else IdentityVerdict.possible
+  public_assertion_verdict:
+    parameters: {assertion: PublicAssertion, perspective: DiscussionPerspective}
+    returns: IdentityVerdict
+    expression: >
+      match(assertion, RoleOf(r) => identity_verdict(perspective.mind, identity_bound(perspective.mind, r.subject, r.role)),
+      SideOf(r) => count_assertion_verdict(side_interval(Players([r.subject]), r.side, perspective), 1, 1),
+      GroupCount(r) => count_assertion_verdict(side_interval(r.members, r.side, perspective), r.minimum, r.maximum),
+      PercivalPair(r) => pair_clue_verdict(r.observer, r.members, perspective))
+      if discussion_ready(perspective) else IdentityVerdict.pending
+  pair_clue_verdict:
+    parameters: {observer: PlayerRef, members: Players, perspective: DiscussionPerspective}
+    returns: IdentityVerdict
+    # Compare the claimed content locally; this never authenticates its alleged source.
+    expression: >
+      IdentityVerdict.excluded if identity_verdict(perspective.mind, identity_bound(perspective.mind, observer, Role.percival)) == IdentityVerdict.excluded else
+      (IdentityVerdict.established if exists(perspective.pair, p => p.subjects == members) else IdentityVerdict.excluded)
+      if size(perspective.pair) > 0 else
+      IdentityVerdict.excluded if exists(members, p =>
+      identity_verdict(perspective.mind, identity_bound(perspective.mind, p, Role.merlin)) == IdentityVerdict.excluded and
+      identity_verdict(perspective.mind, identity_bound(perspective.mind, p, Role.morgana)) == IdentityVerdict.excluded) or
+      count_assertion_verdict(side_interval(members, Side.evil, perspective), 1, 1) == IdentityVerdict.excluded else IdentityVerdict.possible
+  public_opinion_verdict:
+    parameters: {opinion: MaybePublicOpinion, perspective: DiscussionPerspective}
+    returns: IdentityVerdict
+    expression: public_assertion_verdict(opinion.assertion, perspective) if opinion is not None else IdentityVerdict.pending
+  public_opinion_reviews:
+    parameters: {heard: DiscussionStatements, perspective: DiscussionPerspective}
+    returns: PublicOpinionReviews
+    expression: >
+      map(filter(current_discussion(heard), s => s.mission == perspective.goals.mission and content_opinion(s.content) is not None),
+      s => PublicOpinionReview(key=s.key, mission=s.mission, opinion=content_opinion(s.content),
+      verdict=public_opinion_verdict(content_opinion(s.content), perspective)))
+  opinion_compatible:
+    parameters: {opinion: PublicOpinion, verdict: IdentityVerdict}
+    returns: Bool
+    expression: verdict == IdentityVerdict.possible or verdict == IdentityVerdict.established and opinion.stance != Stance.oppose or verdict == IdentityVerdict.excluded and opinion.stance != Stance.support
+  assertion_team_hint:
+    parameters: {assertion: PublicAssertion, stance: Stance, members: Players}
+    returns: ExperienceScore
+    # Denying one role does not establish the opposing side; groups stay groups.
+    expression: >
+      match(assertion, SideOf(r) => (2 if r.side == Side.good else -2) * stance_direction(stance) if r.subject in members else 0,
+      RoleOf(r) => (-2 if evil_role(r.role) else 2) if stance == Stance.support and r.subject in members else 0,
+      GroupCount(r) => group_interval_team_hint(r.members,
+      side_count_interval(EvilInterval(minimum=r.minimum, maximum=r.maximum), r.side, size(r.members)), members),
+      PercivalPair(r) => group_interval_team_hint(r.members, EvilInterval(minimum=1, maximum=1), members))
+      if stance == Stance.support or match(assertion, SideOf() => True, RoleOf() => False, GroupCount() => False, PercivalPair() => False) else 0
+  group_interval_team_hint:
+    parameters: {group: Players, evil: EvilInterval, members: Players}
+    returns: ExperienceScore
+    expression: -2 if evil.minimum > 0 and forall(group, p => p in members) else 2 if evil.maximum == 0 and forall(members, p => p in group) else 0
+  opinion_team_hint:
+    parameters: {opinion: MaybePublicOpinion, members: Players, perspective: DiscussionPerspective}
+    returns: ExperienceScore
+    expression: assertion_team_hint(opinion.assertion, opinion.stance, members) if opinion is not None and opinion_compatible(opinion, public_assertion_verdict(opinion.assertion, perspective)) else 0
+  public_thought_team_hint:
+    parameters: {thought: PlayerThought, members: Players, perspective: DiscussionPerspective}
+    returns: ExperienceScore
+    expression: >
+      match(thought, Deliberation(s) => opinion_team_hint(content_opinion(s.statement.content), members, perspective)
+      if s.statement.mission == perspective.goals.mission and s.statement.key.speaker != perspective.person else 0,
+      Identity() => 0, Advice() => 0, Task() => 0, Alternative() => 0, SafeTeam() => 0, Ballot() => 0, Forecast() => 0, IdentityOpinion() => 0)
+  public_team_signal:
+    parameters: {members: Players, perspective: DiscussionPerspective}
+    returns: ExperienceScore
+    # A chorus of repeated claims is not a count of independent evidence.
+    expression: >
+      public_hint_balance(map(perspective.mind.beliefs, b => public_thought_team_hint(b.proposition, members, perspective)))
+      if discussion_ready(perspective) else 0
+  public_hint_balance:
+    parameters: {hints: ExperienceScores}
+    returns: ExperienceScore
+    expression: >
+      stronger_evidence(0, evidence_peak(max_by(hints, n => n))) -
+      stronger_evidence(0, -evidence_peak(min_by(hints, n => n)))
+  opinion_role_hint:
+    parameters: {opinion: MaybePublicOpinion, person: PlayerRef, role: Role}
+    returns: ExperienceScore
+    expression: match(opinion.assertion, RoleOf(r) => stance_direction(opinion.stance) if r.subject == person and r.role == role else 0, SideOf() => 0, GroupCount() => 0, PercivalPair() => 0) if opinion is not None else 0
+  public_thought_role_hint:
+    parameters: {thought: PlayerThought, person: PlayerRef, role: Role, mission: Mission, self: PlayerRef}
+    returns: ExperienceScore
+    expression: >
+      match(thought, Deliberation(s) => opinion_role_hint(content_opinion(s.statement.content), person, role)
+      if s.statement.mission == mission and s.statement.key.speaker != self and s.statement.key.speaker != person else 0,
+      Identity() => 0, Advice() => 0, Task() => 0, Alternative() => 0, SafeTeam() => 0, Ballot() => 0, Forecast() => 0, IdentityOpinion() => 0)
+  public_role_signal:
+    parameters: {mind: PlayerJudgment, person: PlayerRef, role: Role, mission: Mission, self: PlayerRef}
+    returns: ExperienceScore
+    expression: >
+      public_hint_balance(map(mind.beliefs, b => public_thought_role_hint(b.proposition, person, role, mission, self)))
+      if mind.complete and mind.local.complete and
+      (identity_verdict(mind, identity_bound(mind, person, role)) == IdentityVerdict.possible or
+      identity_verdict(mind, identity_bound(mind, person, role)) == IdentityVerdict.established) else 0
+  candidate_public_assertions:
+    parameters: {order: PlayerOrder, current: Players, cast: Roles, self: PlayerRef, pair: CandidateGroups, results: QuestHistory}
+    returns: PublicAssertions
+    expression: >
+      union(distinct(map(filter(results, r => r.fails > 0), r => PublicAssertion.GroupCount(members=r.team, side=Side.evil, minimum=r.fails, maximum=size(r.team)))),
+      union(candidate_clue_claims(order, cast, self, pair), union(distinct(map(order, p => PublicAssertion.SideOf(subject=p, side=Side.evil))),
+      union(distinct(map(order, p => PublicAssertion.RoleOf(subject=p, role=Role.merlin))) if Role.merlin in distinct(cast) else PublicAssertions([]),
+      PublicAssertions([PublicAssertion.GroupCount(members=current, side=Side.evil, minimum=1, maximum=size(current))]) if size(current) > 0 else PublicAssertions([])))))
+  candidate_clue_claims:
+    parameters: {order: PlayerOrder, cast: Roles, self: PlayerRef, pair: CandidateGroups}
+    returns: PublicAssertions
+    # Actual acquired candidates plus public cyclic decoys; no other Actor's private state.
+    expression: >
+      union(distinct(map(pair, p => PublicAssertion.PercivalPair(observer=self, members=p.subjects))),
+      distinct(map(filter(order, p => p != self), p => PublicAssertion.PercivalPair(observer=self,
+      members=distinct(take(rotate_members(filter(order, q => q != self), p), 2))))))
+      if Role.percival in distinct(cast) and Role.merlin in distinct(cast) and Role.morgana in distinct(cast) else PublicAssertions([])
+  candidate_question_subjects:
+    parameters: {recipient: PlayerRef, purpose: QuestionPurpose, claims: IdentitySpeeches, advice: TeamSpeeches, alternatives: TeamSuggestions, expressions: DiscussionStatements, ballots: ApprovalHistory, epoch: Epoch, mission: Mission, kind: DiscussionKind}
+    returns: QuestionSubjects
+    expression: >
+      union(distinct(map(filter(claims, c => c.speaker == recipient and c.epoch == epoch), c => QuestionSubject.Citation(citation=PublicCitation.IdentityClaim(statement=c)))),
+      distinct(map(filter(current_discussion(expressions), s => s.key.speaker == recipient and discussion_reference_allowed(s, mission, kind) and content_opinion(s.content) is not None), s => QuestionSubject.Citation(citation=PublicCitation.Discussion(key=s.key)))))
+      if purpose == QuestionPurpose.explain_basis else
+      union(union(distinct(map(filter(advice, c => c.speaker == recipient and c.epoch == epoch), c => QuestionSubject.Citation(citation=PublicCitation.TeamAdvice(statement=c)))),
+      distinct(map(filter(alternatives, c => c.speaker == recipient and c.epoch == epoch), c => QuestionSubject.Citation(citation=PublicCitation.Alternative(statement=c))))),
+      distinct(map(filter(ballots, b => b.epoch == (epoch if kind == DiscussionKind.review or kind == DiscussionKind.final else epoch - 1) and recipient in union(b.approve, b.reject)), b => QuestionSubject.Citation(citation=PublicCitation.Ballot(epoch=b.epoch, voter=recipient)))))
+      if purpose == QuestionPurpose.explain_choice else
+      QuestionSubjects([QuestionSubject.Proposition(assertion=PublicAssertion.SideOf(subject=recipient, side=Side.evil))])
+      if purpose == QuestionPurpose.clarify else QuestionSubjects([])
+  citation_assertion:
+    parameters: {citation: PublicCitation, heard: DiscussionStatements, ballots: ApprovalHistory}
+    returns: MaybePublicAssertion
+    expression: >
+      match(citation, IdentityClaim(c) => PublicAssertion.RoleOf(subject=c.statement.speaker, role=c.statement.role),
+      TeamAdvice(c) => PublicAssertion.GroupCount(members=c.statement.team, side=Side.evil, minimum=0 if c.statement.approve else 1, maximum=0 if c.statement.approve else size(c.statement.team)),
+      Alternative(c) => PublicAssertion.GroupCount(members=c.statement.members, side=Side.evil, minimum=0, maximum=0),
+      Discussion(c) => quoted_opinion_assertion(quoted_statement(heard, c.key)), Ballot(c) => ballot_assertion(ballots, c.epoch, c.voter))
+  ballot_assertion:
+    parameters: {ballots: ApprovalHistory, epoch: Epoch, voter: PlayerRef}
+    returns: MaybePublicAssertion
+    expression: ballot_team_assertion(at(filter(ballots, b => b.epoch == epoch), 0), voter) if exists(ballots, b => b.epoch == epoch and voter in union(b.approve, b.reject)) else None
+  ballot_team_assertion:
+    parameters: {ballot: ApprovalRecord, voter: PlayerRef}
+    returns: PublicAssertion
+    expression: PublicAssertion.GroupCount(members=ballot.team, side=Side.evil, minimum=0 if voter in ballot.approve else 1, maximum=0 if voter in ballot.approve else size(ballot.team))
+  quoted_opinion_assertion:
+    parameters: {statement: MaybeDiscussionStatement}
+    returns: MaybePublicAssertion
+    expression: opinion_assertion(content_opinion(statement.content)) if statement is not None else None
+  opinion_assertion:
+    parameters: {opinion: MaybePublicOpinion}
+    returns: MaybePublicAssertion
+    expression: opinion.assertion if opinion is not None else None
+  question_assertion:
+    parameters: {statement: MaybeDiscussionStatement, heard: DiscussionStatements, ballots: ApprovalHistory}
+    returns: MaybePublicAssertion
+    expression: >
+      match(statement.content, Question(q) => match(q.question.subject,
+      Proposition(p) => p.assertion, Citation(c) => citation_assertion(c.citation, heard, ballots)),
+      Opinion() => None, Answer() => None, Compare() => None, Conditional() => None, Respond() => None,
+      Redirect() => None, Plan() => None, Participate() => None, Retract() => None) if statement is not None else None
+  candidate_public_answers:
+    parameters: {assertion: MaybePublicAssertion}
+    returns: PublicAnswers
+    expression: >
+      union(PublicAnswers([PublicAnswer.Reserve(), PublicAnswer.Unknown(), PublicAnswer.Decline()]),
+      PublicAnswers([
+      PublicAnswer.Explanation(opinion=PublicOpinion(assertion=assertion, stance=Stance.support), grounds=PublicCitations([])),
+      PublicAnswer.Explanation(opinion=PublicOpinion(assertion=assertion, stance=Stance.oppose), grounds=PublicCitations([])),
+      PublicAnswer.Explanation(opinion=PublicOpinion(assertion=assertion, stance=Stance.undecided), grounds=PublicCitations([]))]) if assertion is not None else PublicAnswers([]))
+  answer_local_value:
+    parameters: {reply: PublicAnswer, perspective: DiscussionPerspective}
+    returns: ExperienceScore
+    expression: >
+      match(reply, Reserve() => 1, Unknown() => 1, Decline() => 1,
+      Explanation(e) => (3 if opinion_compatible(e.opinion, public_assertion_verdict(e.opinion.assertion, perspective)) else 0)
+      if e.opinion is not None else 1)

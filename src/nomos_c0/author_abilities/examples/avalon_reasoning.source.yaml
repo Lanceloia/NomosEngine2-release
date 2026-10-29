@@ -1,0 +1,3 @@
+# Two optional speech rounds precede the secret ballot. Passing yields the floor.
+schema: nomos.author.source
+imports: [avalon.source.yaml, avalon_discussion.source.yaml]

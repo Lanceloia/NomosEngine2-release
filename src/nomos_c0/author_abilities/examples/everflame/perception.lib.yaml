@@ -1,0 +1,114 @@
+# Current presence gives identities; observation publishes detailed acquired findings.
+schema: nomos.author.lib
+projections:
+  LocalPeople:
+    viewer: {viewer: BeingRef}
+    context: Palace
+    audience: viewer.alive and viewer.awake and not viewer.frozen
+    returns: Presences
+    value: map(filter(population, p => p != viewer and p.position == viewer.position), p => Presence(subject=p, site=p.position))
+  LocalFlames:
+    viewer: {viewer: BeingRef}
+    context: Palace
+    audience: viewer.alive and viewer.awake and not viewer.frozen
+    returns: Flames
+    value: filter(flames, lamp => custody.position(lamp) == viewer.position)
+  LocalChandeliers:
+    viewer: {viewer: BeingRef}
+    context: Palace
+    audience: viewer.alive and viewer.awake and not viewer.frozen
+    returns: Chandeliers
+    value: filter(chandeliers, c => c.position == viewer.position)
+  CarriedFlames:
+    viewer: {viewer: BeingRef}
+    context: Palace
+    audience: viewer.alive and viewer.awake and not viewer.frozen
+    returns: FlameStatuses
+    value: map(filter(flames, lamp => custody.held_by(lamp, viewer)), lamp => FlameStatus(flame=lamp, charge=lamp.charges))
+  CarriedReservoirs:
+    viewer: {viewer: BeingRef}
+    context: Palace
+    audience: viewer.alive and viewer.awake and not viewer.frozen
+    returns: ReservoirStatuses
+    value: map(filter(reservoirs, r => not r.mounted and custody.held_by(r, viewer)), r => ReservoirStatus(reservoir=r, charge=r.charges))
+  CurrentProtection:
+    viewer: {viewer: BeingRef}
+    context: Palace
+    audience: viewer.alive and viewer.awake and not viewer.frozen
+    returns: Bool
+    value: protected_at(viewer.position, flames, coverage)
+disclosures:
+  ArrivalSeen:
+    parameters: {observers: Beings, subject: BeingRef, movement: Movement}
+    sample: after
+    to: filter(observers, p => p != subject and p.alive and p.awake and not p.frozen and p.position == motion_end(movement))
+    returns: MotionSighting
+    value: MotionSighting(subject=subject, last_seen=motion_end(movement), arrived=True)
+    access: acquired
+  DepartureSeen:
+    parameters: {observers: Beings, subject: BeingRef, movement: Movement}
+    sample: after
+    to: filter(observers, p => p != subject and p.alive and p.awake and not p.frozen and p.position == motion_start(movement))
+    returns: MotionSighting
+    value: MotionSighting(subject=subject, last_seen=motion_start(movement), arrived=False)
+    access: acquired
+  PersonObserved:
+    parameters: {observer: BeingRef, subject: BeingRef}
+    sample: after
+    to: Beings([observer])
+    returns: PersonFinding
+    value: PersonFinding(subject=subject, site=subject.position, alive=subject.alive, frozen=subject.frozen)
+    access: acquired
+  ChandelierObserved:
+    parameters: {observer: BeingRef, chandelier: ChandelierRef}
+    sample: before
+    to: Beings([observer])
+    returns: ChandelierFindings
+    value: >
+      map(filter(known(Reservoir), r => r.mount == chandelier), r =>
+        ChandelierFinding(chandelier=chandelier, reservoir=r, site=chandelier.position,
+        mounted=r.mounted, pulse=r.mounted and r.pulse_visible and r.charges > 0))
+    access: acquired
+abilities:
+  ObservePerson:
+    actor: {person: BeingRef}
+    views: {nearby: {projection: Presences}}
+    inputs:
+      subject: {type: BeingRef, choose: 'map(projected(nearby), p => p.subject)'}
+    where: mobile(person)
+    time_cost: '10000'
+    results: Bool
+    resolve: {result: 'True', deliver: {sighting: 'PersonObserved(person, subject)'}}
+  ObserveChandelier:
+    actor: {person: BeingRef}
+    views: {mounts: {projection: Chandeliers}}
+    inputs:
+      chandelier: {type: ChandelierRef, choose: projected(mounts)}
+    where: mobile(person)
+    time_cost: '10000'
+    results: Bool
+    resolve: {result: 'True', deliver: {sighting: 'ChandelierObserved(person, chandelier)'}}
+  ObserveGround:
+    actor: {person: BeingRef}
+    context: Palace
+    inputs:
+      footprint: {type: FloorArea, choose: 'filter(floor_areas, f => person.position in f.sites)'}
+    where: mobile(person)
+    time_cost: '10000'
+    results: GroundFinding
+    resolve:
+      effects: ['set(person.ground_sighting, GroundFinding(floor=footprint.key, site=person.position, frozen=footprint.key in frozen_floors))']
+      result: GroundFinding(floor=footprint.key, site=person.position, frozen=footprint.key in frozen_floors)
+reactions:
+  NoticeMovement:
+    context: Palace
+    on:
+      definition: [TryDirectPassage, CrossIce, CrossBridgeSlowly, ElementalAdvance]
+      bind: {subject: person, movement: result}
+    when: motion_start(movement) != motion_end(movement)
+    results: Bool
+    resolve:
+      result: 'True'
+      deliver:
+        arrival: ArrivalSeen(population, subject, movement)
+        departure: DepartureSeen(population, subject, movement)

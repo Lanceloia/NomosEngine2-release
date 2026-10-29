@@ -1,0 +1,111 @@
+# Base-game rules. Policies and opening data are independent inputs.
+schema: nomos.author.lib
+imports: [types.lib.yaml, resources.lib.yaml, turns.lib.yaml]
+abilities:
+  PrepareTable:
+    context: Match
+    actor: {player: PlayerRef}
+    where: phase == Phase.setup and player == at(order, 0)
+    results: Unit
+    resolve:
+      draw:
+        low_cards: {type: CardOrder, shuffle: 'filter(catalog, c => c.tier == 1)'}
+        middle_cards: {type: CardOrder, shuffle: 'filter(catalog, c => c.tier == 2)'}
+        high_cards: {type: CardOrder, shuffle: 'filter(catalog, c => c.tier == 3)'}
+        guests: {type: NobleOrder, shuffle: noble_catalog}
+      then:
+        result: None
+        effects:
+          - set(decks, Decks(low=drop(low_cards, 4), middle=drop(middle_cards, 4), high=drop(high_cards, 4)))
+          - set(market, union(union(distinct(take(low_cards, 4)), distinct(take(middle_cards, 4))), distinct(take(high_cards, 4))))
+          - set(visitors, distinct(take(guests, size(players) + 1)))
+          - set(bank, opening_bank(size(players)))
+          - set(phase, Phase.play)
+  TakeDifferent:
+    context: Match
+    actor: {player: PlayerRef}
+    inputs:
+      colors:
+        type: Colors
+        choose:
+          subset: 'filter(gem_colors, c => amount(bank, c) > 0)'
+          min: '3 if size(filter(gem_colors, c => amount(bank, c) > 0)) >= 3 else 1'
+          max: '3'
+    where: phase == Phase.play and player == at(order, turn_index) and size(filter(gem_colors, c => amount(bank, c) > 0)) > 0
+    results: Change
+    resolve:
+      result: Change(kind=Move.take_different, tier=1, refill=False)
+      effects: ['set(player.tokens, add(player.tokens, pieces(colors, 1)))', 'set(bank, subtract(bank, pieces(colors, 1)))', 'set(phase, Phase.cleanup)']
+  TakePair:
+    context: Match
+    actor: {player: PlayerRef}
+    inputs: {color: {type: Color, choose: 'filter(gem_colors, c => amount(bank, c) >= 4)'}}
+    where: phase == Phase.play and player == at(order, turn_index) and exists(gem_colors, c => amount(bank, c) >= 4)
+    results: Change
+    resolve:
+      result: Change(kind=Move.take_pair, tier=1, refill=False)
+      effects: ['set(player.tokens, add(player.tokens, pieces(Colors([color]), 2)))', 'set(bank, subtract(bank, pieces(Colors([color]), 2)))', 'set(phase, Phase.cleanup)']
+  ReserveFaceup:
+    context: Match
+    actor: {player: PlayerRef}
+    inputs: {card: {type: Card, choose: market}}
+    where: phase == Phase.play and player == at(order, turn_index) and size(player.reserved) < reserve_limit and size(market) > 0
+    results: Change
+    resolve:
+      result: Change(kind=Move.reserve_faceup, tier=card.tier, refill=True)
+      effects:
+        - set(player.reserved, union(player.reserved, Cards([card])))
+        - set(market, difference(market, Cards([card])))
+        - set(player.tokens, add(player.tokens, gold_piece(bank)))
+        - set(bank, subtract(bank, gold_piece(bank)))
+        - set(phase, Phase.cleanup)
+  ReserveBlind:
+    context: Match
+    actor: {player: PlayerRef}
+    views: {sizes: {projection: DeckCounts}}
+    inputs: {tier: {type: Tier, choose: 'filter(tiers, t => tier_count(projected(sizes), t) > 0)'}}
+    where: phase == Phase.play and player == at(order, turn_index) and size(player.reserved) < reserve_limit and exists(tiers, t => tier_count(projected(sizes), t) > 0)
+    results: Change
+    resolve:
+      result: Change(kind=Move.reserve_blind, tier=tier, refill=False)
+      effects:
+        - set(player.reserved, union(player.reserved, Cards([at(deck(decks, tier), 0)])))
+        - set(decks, replace_deck(decks, tier, drop(deck(decks, tier), 1)))
+        - set(player.tokens, add(player.tokens, gold_piece(bank)))
+        - set(bank, subtract(bank, gold_piece(bank)))
+        - set(phase, Phase.cleanup)
+  Purchase:
+    context: Match
+    actor: {player: PlayerRef}
+    inputs:
+      card: {type: Card, choose: 'filter(union(market, player.reserved), c => affordable(player, c))'}
+      payment: {type: Gems, enter: typed, constraint: 'valid_payment(player.tokens, discounted(card.cost, bonuses(player)), payment)'}
+    where: phase == Phase.play and player == at(order, turn_index) and exists(union(market, player.reserved), c => affordable(player, c))
+    results: Change
+    resolve:
+      result: Change(kind=Move.purchase, tier=card.tier, refill=card in market)
+      effects:
+        - set(player.tokens, subtract(player.tokens, payment))
+        - set(bank, add(bank, payment))
+        - set(player.purchased, union(player.purchased, Cards([card])))
+        - set(player.reserved, difference(player.reserved, Cards([card])))
+        - set(market, difference(market, Cards([card])))
+        - set(phase, Phase.cleanup)
+  ReturnExcess:
+    context: Match
+    actor: {player: PlayerRef}
+    inputs: {returned: {type: Gems, enter: typed, constraint: 'within(returned, player.tokens) and total(returned) == total(player.tokens) - token_limit'}}
+    where: phase == Phase.cleanup and player == at(order, turn_index) and total(player.tokens) > token_limit
+    results: Change
+    resolve:
+      result: Change(kind=Move.return_excess, tier=1, refill=False)
+      effects: ['set(player.tokens, subtract(player.tokens, returned))', 'set(bank, add(bank, returned))']
+  ChooseNoble:
+    context: Match
+    actor: {player: PlayerRef}
+    inputs: {noble: {type: Noble, choose: 'eligible_nobles(player, visitors)'}}
+    where: phase == Phase.nobles and player == at(order, turn_index)
+    results: Unit
+    resolve:
+      result: None
+      effects: ['set(player.nobles, union(player.nobles, Nobles([noble])))', 'set(visitors, difference(visitors, Nobles([noble])))', 'set(phase, Phase.end_turn)']

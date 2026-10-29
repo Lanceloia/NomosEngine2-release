@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nomos-engine2"
+version = "0.1.0"
+description = "Compile declarative world rules into checked playable sessions"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pyyaml>=6.0",
+    "pyrsistent>=0.20",
+]
+license-files = ["RIGHTS.md", "src/nomos_c0/author_abilities/examples/everflame/ATTRIBUTION.md", "src/nomos_play/static/OFL-NotoSansSC.txt"]
+
+[project.optional-dependencies]
+neural = ["numpy>=2.0", "torch>=2.6"]
+learning = [
+    "numpy>=2.0",
+    "scipy>=1.14",
+]
+dev = [
+    "pytest>=8",
+    "pytest-cov>=4.0",
+    "ruff>=0.9",
+    "mypy>=1.0",
+    "build>=1",
+]
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.packages.find]
+where = [
+    "src",
+]
+namespaces = false
+
+[tool.setuptools.package-data]
+nomos_cognition = ["README.md"]
+nomos_runtime = ["README.md"]
+nomos_c0 = ["README.md", "python_codegen/README.md", "author_abilities/examples/*.yaml", "author_abilities/examples/everflame/*.yaml", "author_abilities/examples/everflame/*.md", "author_abilities/examples/splendor/*.yaml", "author_abilities/examples/splendor/*.md", "author_abilities/examples/puerto_rico/*.yaml", "author_abilities/examples/puerto_rico/*.md", "author_abilities/README.md"]
+nomos_t0 = ["examples/current/*.yaml", "README.md"]
+nomos_play = ["static/*.html", "static/*.js", "static/*.css", "static/*.woff", "static/*.txt", "README.md", "games.yaml", "avalon_styles.yaml", "experience_games.yaml"]
+
+[tool.pytest.ini_options]
+markers = ["slow_replay: full-world tests excluded by default; opt in with --run-slow-replays or ::nodeid"]
+# This local showcase candidate carries an explicit, bounded T0 gate.
+# Every pytest invocation must name a concrete test module or nodeid.
+testpaths = ["tests/nomos_t0", "tests/showcase"]
+python_files = ["test_*.py"]
+pythonpath = [
+    "src",
+    "tests",
+]
+
+[tool.ruff]
+exclude = ["archive"]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["E402"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["src/"]

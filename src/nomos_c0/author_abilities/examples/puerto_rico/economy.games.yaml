@@ -1,0 +1,3 @@
+schema: nomos.play.catalog
+games:
+  - {id: puerto-rico-economy, title: 波多黎各 · 经济阶段, description: 建造、配员、生产、交易和全体角色轮转, prefix: economy}

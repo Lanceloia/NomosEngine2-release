@@ -1,0 +1,17 @@
+schema: nomos.play.catalog
+games:
+- id: balanced
+  title: 阿瓦隆 · 均衡派
+  description: 入座后随机发身份。标准风险、隐蔽、发言与采信权重。
+  world: ../../build/python-codegen/avalon-learned.py
+  assets: ../nomos_c0/author_abilities/examples/avalon_random.assets.yaml
+- id: cautious
+  title: 阿瓦隆 · 谨慎派
+  description: 入座后随机发身份。更顾虑风险与暴露，少发言，对说法更审慎。
+  world: ../../build/python-codegen/avalon-learned-cautious.py
+  assets: ../nomos_c0/author_abilities/examples/avalon_random.assets.yaml
+- id: forthright
+  title: 阿瓦隆 · 直率派
+  description: 入座后随机发身份。更愿意尝试与表达，较少掩饰，也更容易受建议影响。
+  world: ../../build/python-codegen/avalon-learned-forthright.py
+  assets: ../nomos_c0/author_abilities/examples/avalon_random.assets.yaml

@@ -1,0 +1,12 @@
+schema: nomos.author.assets
+time: {at: 0}
+actors:
+  alice: {energy: 5, awake: true, finished: false, badge: false}
+  bob: {energy: 5, awake: true, finished: false, badge: false}
+objects:
+  first:
+    type: Book
+    state: {accessible: true, content: 'First private text'}
+  second:
+    type: Book
+    state: {accessible: true, content: 'Second private text'}

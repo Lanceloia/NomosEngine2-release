@@ -1,0 +1,20 @@
+schema: nomos.author.ai
+strategies:
+  TableChoice:
+    actor: {person: PlayerRef}
+    candidates:
+    - {definition: DayVote, score: '10 if target != person else 1'}
+    - definition: WolfVote
+      score: >
+        30 if target not in person.wolf_target and exists(projected(plans), p => p.voter != person and target in p.target) else
+        ((10 if not exists(reports(allies), group => target in group) else 1)
+        if exists(projected(plans), p => p.voter == person and size(p.target) == 0) else 0)
+    - {definition: LockWolfVote, score: '20 if forall(projected(plans), p => size(p.target) == 1) else 0'}
+    - {definition: Inspect, score: '15'}
+    - {definition: SkipInspection, score: '5'}
+    - {definition: ChoosePotions, score: '(20 if save else 10) - size(poison_target)'}
+    minimum: '0'
+    tie: canonical
+    wait: no_candidate
+control:
+  table: {kind: Player, definition: TableChoice}

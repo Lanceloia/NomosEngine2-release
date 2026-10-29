@@ -1,0 +1,66 @@
+# Non-canon transfer probe: terminal outcomes share an assassination scope;
+# target features come only from acquired public ballots and quest results.
+schema: nomos.author.ai
+queries:
+  rejected_success:
+    parameters: {person: PlayerRef, mission: Mission, votes: ApprovalHistory, results: QuestHistory}
+    returns: Bool
+    expression: >
+      exists(votes, b => b.mission == mission and person in b.reject and
+      exists(results, q => q.epoch == b.epoch and q.team == b.team and not q.failed))
+  observed_support:
+    parameters: {person: PlayerRef, votes: ApprovalHistory, results: QuestHistory}
+    returns: Bool
+    expression: >
+      exists(votes, b => person in b.approve and
+      exists(results, q => q.epoch == b.epoch and q.team == b.team and not q.failed))
+  support_only:
+    parameters: {person: PlayerRef, votes: ApprovalHistory, results: QuestHistory}
+    returns: Bool
+    expression: >
+      observed_support(person, votes, results) and
+      not rejected_success(person, 1, votes, results) and
+      not rejected_success(person, 3, votes, results)
+semantics:
+  VisibleBehavior:
+    features: [assassination, early_rejection, late_rejection, support_only, unobserved, fixed_vote]
+    outcomes: [victory]
+    applicability: {victory: [assassination]}
+    feedback:
+      ReviewEnding:
+        definition: Assassinate
+        receipts: {ending: {terminal: finish}}
+        outcomes: {victory: '8 if ending.winner == Side.evil else -8'}
+    meanings:
+      ApproveTeam:
+        features: {fixed_vote: '1'}
+        prior: {victory: '0'}
+        known: {victory: 'True'}
+      Assassinate:
+        features:
+          assassination: '1'
+          early_rejection: '1 if rejected_success(target, 1, reports(votes), reports(results)) else 0'
+          late_rejection: '1 if rejected_success(target, 3, reports(votes), reports(results)) else 0'
+          support_only: '1 if support_only(target, reports(votes), reports(results)) else 0'
+          unobserved: >
+            1 if not observed_support(target, reports(votes), reports(results)) and
+            not rejected_success(target, 1, reports(votes), reports(results)) and
+            not rejected_success(target, 3, reports(votes), reports(results)) else 0
+        prior: {victory: '0'}
+strategies:
+  ContextChoice:
+    actor: {person: PlayerRef}
+    parameters: {habit_prior: Count, alternative_penalty: Count}
+    views: {votes: {reports: ApprovalHistory}, results: {reports: QuestHistory}}
+    candidates:
+      - {definition: ApproveTeam, inputs: {approve: 'True'}}
+      - {definition: Assassinate}
+    semantics: VisibleBehavior
+    tie: canonical
+    wait: no_candidate
+control:
+  table:
+    kind: Player
+    definition: ContextChoice
+    with: {habit_prior: 0, alternative_penalty: 0}
+    views: {votes: reveal_approval.result, results: reveal_quest.result}

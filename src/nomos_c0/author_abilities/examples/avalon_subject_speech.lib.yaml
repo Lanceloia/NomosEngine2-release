@@ -1,0 +1,3 @@
+# Local planning support only. All speech, delivery and feedback rules are reused.
+schema: nomos.author.lib
+imports: [avalon_experience.lib.yaml, avalon_speech_support.lib.yaml]

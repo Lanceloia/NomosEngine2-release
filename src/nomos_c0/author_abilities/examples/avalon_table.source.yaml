@@ -1,0 +1,20 @@
+# Shared bindings; player identities and match configuration belong to each table.
+schema: nomos.author.source
+objects: []
+play: {mechanism: tabletop, seats: {kind: Player}, others: local_strategy}
+use:
+  own_role: {definition: OwnRole, context: match}
+  population: {definition: PublicPopulation, context: match}
+  evil_peers: {definition: EvilPeers, context: match}
+  merlin_suspects: {definition: MerlinSuspects, context: match}
+  percival_candidates: {definition: PercivalCandidates, context: match}
+  roster: {definition: Roster, context: match}
+  leader: {definition: CurrentLeader, context: match}
+  quest_board: {definition: QuestBoard, context: match}
+  propose: {definition: ProposeTeam, context: match}
+  approve: {definition: ApproveTeam, context: match}
+  quest: {definition: MissionCard, context: match, views: {role: own_role}}
+  assassinate: {definition: Assassinate, context: match, views: {allies: evil_peers}}
+  reveal_approval: {definition: RevealApproval, context: match, after: approve}
+  reveal_quest: {definition: RevealQuest, context: match, after: quest}
+  finish: {definition: GameFinished, context: match}

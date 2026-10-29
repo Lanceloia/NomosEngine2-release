@@ -1,0 +1,10 @@
+schema: nomos.author.assets
+actors:
+  a:
+    pool:
+      - {identity: 1, kind: signal}
+      - {identity: 2, kind: ordinary}
+    required: 2
+    chosen: []
+    done: false
+objects: {}

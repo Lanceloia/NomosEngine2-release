@@ -1,0 +1,96 @@
+# Non-canon language calibration: independently started readings share one rule.
+schema: nomos.author.lib
+values:
+  Energy: {int: [0, 10]}
+  Duration: {int: [1, 100]}
+  Text: {text: {max_chars: 128}}
+  ReaderRef: {ref: Reader}
+  BookRef: {ref: Book}
+  Readers: {set: ReaderRef}
+  ReadingOutcome:
+    variant:
+      Completed: {text: Text}
+      Blocked: {}
+      Cancelled: {}
+entities:
+  Reader:
+    kind: person
+    reference: public
+    fields: {energy: Energy, awake: Bool, finished: Bool, badge: Bool}
+    view: [id, energy, awake, finished, badge]
+    public: [id, awake]
+  Book:
+    kind: object
+    reference: public
+    fields: {accessible: Bool, content: Text}
+    view: [id, accessible]
+abilities:
+  BeginReading:
+    actor: {reader: ReaderRef}
+    inputs:
+      item: {type: BookRef, choose: known(Book)}
+    where: reader.awake and item.accessible and not reader.finished
+    cost: ['consume(reader.energy, 1)']
+    results: Bool
+    resolve: {result: 'True'}
+  Sleep:
+    actor: {reader: ReaderRef}
+    where: reader.awake
+    results: Bool
+    resolve:
+      effects: ['set(reader.awake, False)']
+      result: 'True'
+disclosures:
+  TextRead:
+    parameters: {reader: ReaderRef, item: BookRef}
+    sample: after
+    to: Readers([reader])
+    returns: Text
+    value: item.content
+    access: acquired
+  ReadingStopped:
+    parameters: {reader: ReaderRef}
+    sample: after
+    to: Readers([reader])
+    returns: Text
+    value: '"Reading cancelled"'
+    access: acquired
+  ReadingBlocked:
+    parameters: {reader: ReaderRef}
+    sample: after
+    to: Readers([reader])
+    returns: Text
+    value: '"Reading blocked"'
+    access: acquired
+activities:
+  FinishReading:
+    # The actor must be captured from the real starting Action controller.
+    actor: reader
+    on: {definition: BeginReading, bind: {reader: reader, item: item, started: result}}
+    parameters: {duration: Duration}
+    duration: duration
+    results: ReadingOutcome
+    resolve:
+      when: reader.awake and item.accessible
+      then:
+        effects: ['set(reader.finished, True)']
+        result: ReadingOutcome.Completed(text=item.content)
+        deliver: {text: 'TextRead(reader, item)'}
+      else:
+        result: ReadingOutcome.Blocked()
+        deliver: {notice: 'ReadingBlocked(reader)'}
+    cancel:
+      where: reader.awake
+      cost: ['consume(reader.energy, 1)']
+      results: ReadingOutcome
+      resolve:
+        result: ReadingOutcome.Cancelled()
+        deliver: {notice: 'ReadingStopped(reader)'}
+reactions:
+  RecognizeReading:
+    on: {definition: FinishReading, bind: {reader: reader}}
+    when: reader.finished
+    results: Bool
+    resolve:
+      effects: ['set(reader.badge, True)']
+      result: 'True'

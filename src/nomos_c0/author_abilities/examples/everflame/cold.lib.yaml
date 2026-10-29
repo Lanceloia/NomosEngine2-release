@@ -1,0 +1,59 @@
+# Adapted from Thawed Through the Everflame (CC BY-SA 4.0).
+schema: nomos.author.lib
+values:
+  ColdInterval: {int: [1, 1000000]}
+  ColdStream: {text: {max_chars: 64}}
+  ColdOutcome:
+    variant: {Skipped: {}, Resisted: {roll: DieRoll}, Slowed: {roll: DieRoll, speed: Speed, frozen: Bool}}
+  ColdFinding:
+    record: {subject: BeingRef, site: Site, roll: DieRoll, failed: Bool, speed: Speed, frozen: Bool}
+queries:
+  cold_exposed:
+    parameters: {person: BeingRef, lamps: Flames, coverage: Coverages}
+    returns: Bool
+    expression: >
+      person.alive and not person.frozen and person.speed > 0 and
+      not person.cold_immune and person.position != Site.palace_exit and
+      not protected_at(person.position, lamps, coverage)
+  speed_after_cold:
+    parameters: {person: BeingRef, loss: MaximumSpeed}
+    returns: Speed
+    expression: 0 if person.speed <= loss else person.speed - loss
+disclosures:
+  ColdFeedback:
+    parameters: {person: BeingRef, rolled: DieRoll, failed: Bool}
+    sample: after
+    to: Beings([person])
+    returns: ColdFinding
+    value: >
+      ColdFinding(subject=person, site=person.position, roll=rolled,
+        failed=failed, speed=person.speed, frozen=person.frozen)
+    access: acquired
+periodic:
+  ColdPulse:
+    parameters:
+      person: BeingRef
+      stream: ColdStream
+      interval: ColdInterval
+      difficulty: DieRoll
+      save_bonus: Bonus
+      loss: MaximumSpeed
+    context: Palace
+    interval: interval
+    results: ColdOutcome
+    resolve:
+      when: cold_exposed(person, flames, coverage)
+      then:
+        draw: {rolled: {type: DieRoll, sides: '20', stream: stream}}
+        then:
+          when: rolled + save_bonus < difficulty
+          then:
+            effects:
+            - set(person.speed, speed_after_cold(person, loss))
+            - set(person.frozen, person.speed <= loss)
+            result: 'ColdOutcome.Slowed(roll=rolled, speed=speed_after_cold(person, loss), frozen=person.speed <= loss)'
+            deliver: {cold: 'ColdFeedback(person, rolled, True)'}
+          else:
+            result: 'ColdOutcome.Resisted(roll=rolled)'
+            deliver: {cold: 'ColdFeedback(person, rolled, False)'}
+      else: {result: 'ColdOutcome.Skipped()'}

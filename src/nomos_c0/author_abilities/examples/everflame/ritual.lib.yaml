@@ -1,0 +1,195 @@
+# Progress belongs to actual contributors; hearing and newborn identity are separate.
+schema: nomos.author.lib
+values:
+  RitualGoal: {int: [1, 1000]}
+  RitualStatus: {enum: [active, interrupted, completed]}
+  RitualCue: {enum: [preparing, gathering, critical, erupted, disrupted]}
+  RitualCueReports: {sequence: RitualCue}
+queries:
+  cue_for:
+    parameters: {status: RitualStatus, progress: Count, goal: RitualGoal}
+    returns: RitualCue
+    expression: >
+      RitualCue.disrupted if status == RitualStatus.interrupted else
+      RitualCue.erupted if status == RitualStatus.completed else
+      RitualCue.preparing if progress == 0 else
+      RitualCue.critical if progress == goal - 1 else RitualCue.gathering
+information:
+  PreparedSacrifice:
+    viewer: {viewer: BokoldRef}
+    context: Palace
+    trigger: opening
+    audience: can_speak(viewer) and viewer.position == ritual_site and ritual_target.position == ritual_site
+    returns: PersonFinding
+    value: PersonFinding(subject=ritual_target, site=ritual_target.position, alive=ritual_target.alive, frozen=ritual_target.frozen)
+    access: acquired
+  OpeningChant:
+    viewer: {viewer: BeingRef}
+    context: Palace
+    trigger: opening
+    audience: can_speak(viewer) and viewer.position in audible_sites
+    returns: RitualCue
+    value: cue_for(ritual_status, ritual_progress, ritual_goal)
+    access: acquired
+disclosures:
+  ChantHeard:
+    parameters: {listeners: Beings, sites: Sites, cue: RitualCue}
+    sample: after
+    to: filter(listeners, p => can_speak(p) and p.position in sites)
+    returns: RitualCue
+    value: cue
+    access: acquired
+abilities:
+  CarryFromRitual:
+    actor: {person: BeingRef}
+    context: Palace
+    views: {findings: {reports: PersonReports}}
+    inputs:
+      victim:
+        type: BeingRef
+        choose: 'filter(known(Being), v => v != person and exists(reports(findings), f => f.subject == v and f.site == person.position and f.alive and f.frozen))'
+      route:
+        type: Path
+        choose: 'filter(paths, p => p.start == person.position and p.end != ritual_site and exists(person.known_paths, k => k.start == p.start and k.end == p.end))'
+    where: mobile(person) and person.position == ritual_site
+    time_cost: '2 * movement_cost(person, route.base_move_cost)'
+    results: Movement
+    resolve:
+      when: >
+        ritual_status == RitualStatus.active and victim == ritual_target and
+        victim.position == person.position and victim.frozen and victim.alive and
+        ordinary_passable(route.start, route.end, floor_areas, frozen_floors, stairs)
+      then:
+        effects:
+        - set(person.position, route.end)
+        - set(victim.position, route.end)
+        - set(person.known_sites, union(person.known_sites, Sites([route.end])))
+        result: 'Movement.Arrived(start=route.start, site=route.end)'
+        deliver: {patient: 'PersonObserved(person, victim)'}
+      else: {result: 'Movement.Blocked(start=person.position, site=person.position)'}
+  RitualAdvance:
+    actor: {person: BokoldRef}
+    context: Palace
+    views: {prepared: {reports: PersonReports}, chants: {reports: RitualCueReports}}
+    inputs:
+      victim:
+        type: BeingRef
+        choose: 'filter(known(Being), v => exists(reports(prepared), f => f.subject == v and f.alive and f.frozen and f.site == person.position))'
+    where: >
+      mobile(person) and person.position == ritual_site and
+      not exists(reports(chants), c => c == RitualCue.disrupted or c == RitualCue.erupted)
+    time_cost: '10000'
+    results: Bool
+    resolve:
+      when: >
+        ritual_status == RitualStatus.active and ritual_progress < ritual_goal and
+        victim == ritual_target and victim.position == ritual_site and victim.alive and victim.frozen
+      then:
+        effects:
+        - set(ritual_progress, ritual_progress + 1)
+        - set(ritual_status, RitualStatus.completed if ritual_progress + 1 == ritual_goal else RitualStatus.active)
+        result: 'True'
+      else: {result: 'False'}
+  ElementalAdvance:
+    actor: {person: IceElementalRef}
+    context: Palace
+    where: >
+      mobile(person) and person.position != person.known_destination
+    time_cost: 'movement_cost(person, 10000)'
+    results: Movement
+    resolve:
+      when: >
+        exactly_one(paths, p => p.start == person.position and p.end == person.known_destination) and
+        ordinary_passable(person.position, person.known_destination, floor_areas, frozen_floors, stairs)
+      then:
+        effects:
+        - set(person.position, person.known_destination)
+        - set(person.known_destination, person.position)
+        - set(person.known_sites, union(person.known_sites, Sites([person.known_destination])))
+        result: 'Movement.Arrived(start=person.position, site=person.known_destination)'
+      else: {result: 'Movement.Blocked(start=person.position, site=person.position)'}
+reactions:
+  InterruptRitual:
+    context: Palace
+    on: {definition: [ThawPerson, TryDirectPassage, CrossIce, CrossBridgeSlowly, CarryFromRitual], bind: {}}
+    when: >
+      ritual_status == RitualStatus.active and
+      (not ritual_target.frozen or not ritual_target.alive or ritual_target.position != ritual_site)
+    results: Bool
+    resolve: {effects: ['set(ritual_status, RitualStatus.interrupted)'], result: 'True'}
+  HearRitualChange:
+    context: Palace
+    on: {definition: [RitualAdvance, InterruptRitual], bind: {}}
+    when: 'True'
+    results: Bool
+    resolve:
+      result: 'True'
+      deliver: {chant: 'ChantHeard(population, audible_sites, cue_for(ritual_status, ritual_progress, ritual_goal))'}
+  HearRitualOnArrival:
+    context: Palace
+    on: {definition: [TryDirectPassage, CrossIce, CrossBridgeSlowly, ElementalAdvance, CarryFromRitual], bind: {observer: person, movement: result}}
+    when: >
+      motion_start(movement) != motion_end(movement) and
+      (ritual_status != RitualStatus.active or
+        (ritual_target.alive and ritual_target.frozen and ritual_target.position == ritual_site))
+    results: Bool
+    resolve:
+      result: 'True'
+      deliver: {chant: 'ChantHeard(Beings([observer]), audible_sites, cue_for(ritual_status, ritual_progress, ritual_goal))'}
+  NoticeCarriedMovement:
+    context: Palace
+    on: {definition: CarryFromRitual, bind: {carrier: person, victim: victim, movement: result}}
+    when: motion_start(movement) != motion_end(movement)
+    results: Bool
+    resolve:
+      result: 'True'
+      deliver:
+        carrier_arrived: ArrivalSeen(population, carrier, movement)
+        carrier_departed: DepartureSeen(population, carrier, movement)
+        victim_arrived: ArrivalSeen(population, victim, movement)
+        victim_departed: DepartureSeen(population, victim, movement)
+  RitualSacrifice:
+    context: Palace
+    on: {definition: RitualAdvance, bind: {}}
+    when: ritual_status == RitualStatus.completed and ritual_target.alive and ritual_target.frozen and ritual_target.position == ritual_site
+    results: Bool
+    resolve:
+      effects: ['set(ritual_target.alive, False)', 'set(ritual_target.awake, False)', 'set(ritual_target.endurance, 0)']
+      result: 'True'
+  FormIceElemental:
+    context: Palace
+    on: {definition: RitualAdvance, bind: {}}
+    when: ritual_status == RitualStatus.completed and not elemental_born
+    results: Bool
+    resolve:
+      effects: ['set(elemental_born, True)']
+      form:
+      - type: IceElemental
+        fields:
+          position: ritual_site
+          alive: 'True'
+          awake: 'True'
+          frozen: 'False'
+          ground_sighting: 'None'
+          invitation_epoch: '0'
+          answered_invitations: 'Invitations([])'
+          endurance: '4'
+          speed: '5'
+          max_speed: '5'
+          balance_bonus: '0'
+          cold_immune: 'True'
+          last_damage: 'None'
+          target_sighting: 'None'
+          observed_origin: 'None'
+          known_sites: 'Sites([ritual_site, Site.ritual_threshold])'
+          known_paths: 'KnownRoutes([KnownRoute(start=ritual_site, end=Site.ritual_threshold)])'
+          known_crossings: 'RouteKeys([])'
+          known_bridges: 'KnownRoutes([])'
+          known_destination: Site.ritual_threshold
+      result: 'True'
+  RegisterBornPeople:
+    context: Palace
+    on: {definition: FormIceElemental, bind: {born: {formed: Being}}}
+    when: 'True'
+    results: Bool
+    resolve: {effects: ['set(population, union(population, born))'], result: 'True'}

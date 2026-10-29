@@ -1,0 +1,8 @@
+schema: nomos.author.ai
+imports: [avalon_policy.ai.yaml]
+control:
+  council:
+    kind: Player
+    definition: LocalChoice
+    views: {mind: council, identity: own_role}
+    with: {style: {label: 直率派, risk: 60, concealment: 40, speech: 150, trust: 140}}

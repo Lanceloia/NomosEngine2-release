@@ -1,0 +1,5 @@
+schema: nomos.author.assets
+actors:
+  a: {pool: [1, 2, 3, 4, 5], universe: [1, 2, 3, 4, 5, 6], required: 2, chosen: [], done: false}
+  b: {pool: [], universe: [1, 2, 3, 4, 5, 6], required: 0, chosen: [], done: false}
+objects: {}

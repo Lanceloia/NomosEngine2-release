@@ -1,0 +1,112 @@
+schema: nomos.author.lib
+queries:
+  zero:
+    parameters: {}
+    returns: Gems
+    expression: >
+      Gems(white=0, blue=0, green=0, red=0, black=0, gold=0)
+  total:
+    parameters: {"bundle":"Gems"}
+    returns: Count
+    expression: >
+      bundle.white + bundle.blue + bundle.green + bundle.red + bundle.black + bundle.gold
+  amount:
+    parameters: {"bundle":"Gems","color":"Color"}
+    returns: Count
+    expression: >
+      bundle.white if color == Color.white else bundle.blue if color == Color.blue else bundle.green if color == Color.green else bundle.red if color == Color.red else bundle.black
+  add:
+    parameters: {"left":"Gems","right":"Gems"}
+    returns: Gems
+    expression: >
+      Gems(white=left.white + right.white, blue=left.blue + right.blue, green=left.green + right.green, red=left.red + right.red, black=left.black + right.black, gold=left.gold + right.gold)
+  subtract:
+    parameters: {"left":"Gems","right":"Gems"}
+    returns: Gems
+    expression: >
+      Gems(white=left.white - right.white, blue=left.blue - right.blue, green=left.green - right.green, red=left.red - right.red, black=left.black - right.black, gold=left.gold - right.gold)
+  within:
+    parameters: {"small":"Gems","large":"Gems"}
+    returns: Bool
+    expression: >
+      small.white <= large.white and small.blue <= large.blue and small.green <= large.green and small.red <= large.red and small.black <= large.black and small.gold <= large.gold
+  pieces:
+    parameters: {"colors":"Colors","count":"Count"}
+    returns: Gems
+    expression: >
+      Gems(white=count if Color.white in colors else 0, blue=count if Color.blue in colors else 0, green=count if Color.green in colors else 0, red=count if Color.red in colors else 0, black=count if Color.black in colors else 0, gold=0)
+  gold_piece:
+    parameters: {"bank":"Gems"}
+    returns: Gems
+    expression: >
+      Gems(white=0, blue=0, green=0, red=0, black=0, gold=1 if bank.gold > 0 else 0)
+  opening_bank:
+    parameters: {"count":"Count"}
+    returns: Gems
+    expression: >
+      Gems(white=4 if count == 2 else 5 if count == 3 else 7, blue=4 if count == 2 else 5 if count == 3 else 7, green=4 if count == 2 else 5 if count == 3 else 7, red=4 if count == 2 else 5 if count == 3 else 7, black=4 if count == 2 else 5 if count == 3 else 7, gold=5)
+  bonuses:
+    parameters: {"player":"PlayerRef"}
+    returns: Gems
+    expression: >
+      Gems(white=size(filter(player.purchased, card => card.bonus == Color.white)), blue=size(filter(player.purchased, card => card.bonus == Color.blue)), green=size(filter(player.purchased, card => card.bonus == Color.green)), red=size(filter(player.purchased, card => card.bonus == Color.red)), black=size(filter(player.purchased, card => card.bonus == Color.black)), gold=0)
+  discounted:
+    parameters: {"cost":"Gems","bonus":"Gems"}
+    returns: Gems
+    expression: >
+      Gems(white=cost.white - bonus.white if cost.white > bonus.white else 0, blue=cost.blue - bonus.blue if cost.blue > bonus.blue else 0, green=cost.green - bonus.green if cost.green > bonus.green else 0, red=cost.red - bonus.red if cost.red > bonus.red else 0, black=cost.black - bonus.black if cost.black > bonus.black else 0, gold=0)
+  shortfall:
+    parameters: {"tokens":"Gems","cost":"Gems"}
+    returns: Gems
+    expression: >
+      Gems(white=cost.white - tokens.white if cost.white > tokens.white else 0, blue=cost.blue - tokens.blue if cost.blue > tokens.blue else 0, green=cost.green - tokens.green if cost.green > tokens.green else 0, red=cost.red - tokens.red if cost.red > tokens.red else 0, black=cost.black - tokens.black if cost.black > tokens.black else 0, gold=0)
+  affordable:
+    parameters: {"player":"PlayerRef","card":"Card"}
+    returns: Bool
+    expression: >
+      total(shortfall(player.tokens, discounted(card.cost, bonuses(player)))) <= player.tokens.gold
+  valid_payment:
+    parameters: {"tokens":"Gems","cost":"Gems","payment":"Gems"}
+    returns: Bool
+    expression: >
+      within(payment, tokens) and payment.white <= cost.white and payment.blue <= cost.blue and payment.green <= cost.green and payment.red <= cost.red and payment.black <= cost.black and total(payment) == total(cost)
+  canonical_payment:
+    parameters: {"tokens":"Gems","cost":"Gems"}
+    returns: Gems
+    expression: >
+      Gems(white=tokens.white if tokens.white < cost.white else cost.white, blue=tokens.blue if tokens.blue < cost.blue else cost.blue, green=tokens.green if tokens.green < cost.green else cost.green, red=tokens.red if tokens.red < cost.red else cost.red, black=tokens.black if tokens.black < cost.black else cost.black, gold=total(shortfall(tokens, cost)))
+  score:
+    parameters: {"player":"PlayerRef"}
+    returns: Count
+    expression: >
+      sum_by(player.purchased, c => c.points) + sum_by(player.nobles, n => n.points)
+  eligible_nobles:
+    parameters: {"player":"PlayerRef","visitors":"Nobles"}
+    returns: Nobles
+    expression: >
+      filter(visitors, n => within(n.requirement, bonuses(player)))
+  standings:
+    parameters: {"players":"Players"}
+    returns: Standings
+    expression: >
+      map(players, p => Standing(player=p, points=score(p), purchased=size(p.purchased), turns=p.turns))
+  winners:
+    parameters: {"players":"Players"}
+    returns: Players
+    expression: >
+      filter(players, p => forall(players, q => score(p) > score(q) or (score(p) == score(q) and size(p.purchased) <= size(q.purchased))))
+  deck:
+    parameters: {"decks":"Decks","tier":"Tier"}
+    returns: CardOrder
+    expression: >
+      decks.low if tier == 1 else decks.middle if tier == 2 else decks.high
+  replace_deck:
+    parameters: {"decks":"Decks","tier":"Tier","remaining":"CardOrder"}
+    returns: Decks
+    expression: >
+      Decks(low=remaining if tier == 1 else decks.low, middle=remaining if tier == 2 else decks.middle, high=remaining if tier == 3 else decks.high)
+  tier_count:
+    parameters: {"sizes":"DeckCounts","tier":"Tier"}
+    returns: Count
+    expression: >
+      sizes.low if tier == 1 else sizes.middle if tier == 2 else sizes.high

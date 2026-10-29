@@ -1,0 +1,219 @@
+# Read committed personal judgments; no identity oracle.
+schema: nomos.author.ai
+queries:
+  identity_bound:
+    parameters: {mind: PlayerJudgment, person: PlayerRef, role: Role}
+    returns: MaybeJudgmentBound
+    expression: >
+      at(filter(mind.local.bounds, b => b.members == Players([person]) and b.category == role), 0)
+      if mind.complete and mind.local.complete and
+      exists(mind.local.bounds, b => b.members == Players([person]) and b.category == role) else None
+  identity_verdict:
+    parameters: {mind: PlayerJudgment, bound: MaybeJudgmentBound}
+    returns: IdentityVerdict
+    # A complete local fixed point can still leave an individual unresolved.
+    expression: >
+      (IdentityVerdict.excluded if bound.maximum == 0 else
+      IdentityVerdict.established if bound.minimum == 1 else IdentityVerdict.possible)
+      if bound is not None else IdentityVerdict.conflict
+      if mind.local.status == JudgmentAnalysisStatus.conflict else IdentityVerdict.pending
+  identity_impression:
+    parameters: {thought: PlayerThought, person: PlayerRef, role: Role}
+    returns: Bool
+    expression: match(thought, Identity(c) => c.person == person and c.role == role, Advice() => False, Task() => False, Alternative() => False, SafeTeam() => False, Ballot() => False, Forecast() => False, IdentityOpinion() => False, Deliberation() => False)
+  comments_identity:
+    parameters: {argument: TeamArgument, person: PlayerRef, role: Role, epoch: Epoch}
+    returns: Bool
+    expression: match(argument, ClaimAssessment(c) => c.speaker == person and c.claimed_role == role and c.claim_epoch == epoch, Judgment() => False, TestTeam() => False, FailureOverlap() => False, SuccessCore() => False, TrustSpeaker() => False, EvilExhausted() => False, ClaimConflict() => False)
+  comments_person_role:
+    parameters: {argument: TeamArgument, person: PlayerRef, role: Role}
+    returns: Bool
+    expression: match(argument, ClaimAssessment(c) => c.speaker == person and c.claimed_role == role, Judgment() => False, TestTeam() => False, FailureOverlap() => False, SuccessCore() => False, TrustSpeaker() => False, EvilExhausted() => False, ClaimConflict() => False)
+  current_claim_comment:
+    parameters: {thought: PlayerThought, speech: TeamSpeech, person: PlayerRef, role: Role}
+    returns: Bool
+    expression: match(thought, Identity(c) => c.person == person and c.role == role and comments_identity(speech.rationale, person, role, c.epoch), Advice() => False, Task() => False, Alternative() => False, SafeTeam() => False, Ballot() => False, Forecast() => False, IdentityOpinion() => False, Deliberation() => False)
+  applicable_claim_opinion:
+    parameters: {mind: PlayerJudgment, thought: PlayerThought, person: PlayerRef, role: Role}
+    returns: Bool
+    # Exact current quote; the listener's own speech and the claimant's echoes add no evidence.
+    expression: >
+      match(thought, IdentityOpinion(c) => c.statement.speaker != person and c.statement.speaker != c.listener and
+      comments_person_role(c.statement.rationale, person, role) and
+      exists(mind.beliefs, b => current_claim_comment(b.proposition, c.statement, person, role)),
+      Identity() => False, Advice() => False, Task() => False, Alternative() => False, SafeTeam() => False, Ballot() => False, Forecast() => False, Deliberation() => False)
+  opinion_weight:
+    parameters: {mind: PlayerJudgment, thought: PlayerThought}
+    returns: JudgmentStrength
+    expression: match(thought, IdentityOpinion(c) => identity_source_review(mind, c.statement.speaker).weight, Identity() => 0, Advice() => 0, Task() => 0, Alternative() => 0, SafeTeam() => 0, Ballot() => 0, Forecast() => 0, Deliberation() => 0)
+  identity_comment_by:
+    parameters: {thought: PlayerThought, speaker: PlayerRef}
+    returns: Bool
+    expression: >
+      match(thought, IdentityOpinion(c) => c.statement.speaker == speaker and speaker != c.listener and
+      match(c.statement.rationale, ClaimAssessment(r) => r.speaker != speaker,
+      Judgment() => False, TestTeam() => False, FailureOverlap() => False, SuccessCore() => False, TrustSpeaker() => False, EvilExhausted() => False, ClaimConflict() => False),
+      Identity() => False, Advice() => False, Task() => False, Alternative() => False, SafeTeam() => False, Ballot() => False, Forecast() => False, Deliberation() => False)
+  identity_quote_epoch:
+    parameters: {thought: PlayerThought}
+    returns: Epoch
+    expression: >
+      match(thought, IdentityOpinion(c) => match(c.statement.rationale, ClaimAssessment(r) => r.claim_epoch,
+      Judgment() => 0, TestTeam() => 0, FailureOverlap() => 0, SuccessCore() => 0, TrustSpeaker() => 0, EvilExhausted() => 0, ClaimConflict() => 0),
+      Identity() => 0, Advice() => 0, Task() => 0, Alternative() => 0, SafeTeam() => 0, Ballot() => 0, Forecast() => 0, Deliberation() => 0)
+  same_identity_subject:
+    parameters: {first: PlayerThought, second: PlayerThought}
+    returns: Bool
+    expression: >
+      match(first, IdentityOpinion(c) => match(c.statement.rationale,
+      ClaimAssessment(r) => match(second, IdentityOpinion(n) => n.statement.speaker == c.statement.speaker and comments_person_role(n.statement.rationale, r.speaker, r.claimed_role),
+      Identity() => False, Advice() => False, Task() => False, Alternative() => False, SafeTeam() => False, Ballot() => False, Forecast() => False, Deliberation() => False),
+      Judgment() => False, TestTeam() => False, FailureOverlap() => False, SuccessCore() => False, TrustSpeaker() => False, EvilExhausted() => False, ClaimConflict() => False),
+      Identity() => False, Advice() => False, Task() => False, Alternative() => False, SafeTeam() => False, Ballot() => False, Forecast() => False, Deliberation() => False)
+  identity_comment_verdict:
+    parameters: {mind: PlayerJudgment, thought: PlayerThought}
+    returns: IdentityVerdict
+    # Only acquired hard bounds can check an identity comment; soft opinions cannot certify themselves.
+    expression: >
+      match(thought, IdentityOpinion(c) => match(c.statement.rationale,
+      ClaimAssessment(r) => identity_verdict(mind, identity_bound(mind, r.speaker, r.claimed_role)),
+      Judgment() => IdentityVerdict.pending, TestTeam() => IdentityVerdict.pending, FailureOverlap() => IdentityVerdict.pending, SuccessCore() => IdentityVerdict.pending, TrustSpeaker() => IdentityVerdict.pending, EvilExhausted() => IdentityVerdict.pending, ClaimConflict() => IdentityVerdict.pending),
+      Identity() => IdentityVerdict.pending, Advice() => IdentityVerdict.pending, Task() => IdentityVerdict.pending, Alternative() => IdentityVerdict.pending, SafeTeam() => IdentityVerdict.pending, Ballot() => IdentityVerdict.pending, Forecast() => IdentityVerdict.pending, Deliberation() => IdentityVerdict.pending)
+  identity_comment_review:
+    parameters: {thought: PlayerThought, verdict: IdentityVerdict}
+    returns: IdentityCommentReview
+    expression: >
+      IdentityCommentReview(opinion=thought, verdict=verdict, score=
+      match(thought, IdentityOpinion(c) => match(c.statement.rationale,
+      ClaimAssessment(r) => (1 if r.credible else -2) if verdict == IdentityVerdict.established else (-2 if r.credible else 1) if verdict == IdentityVerdict.excluded else 0,
+      Judgment() => 0, TestTeam() => 0, FailureOverlap() => 0, SuccessCore() => 0, TrustSpeaker() => 0, EvilExhausted() => 0, ClaimConflict() => 0),
+      Identity() => 0, Advice() => 0, Task() => 0, Alternative() => 0, SafeTeam() => 0, Ballot() => 0, Forecast() => 0, Deliberation() => 0))
+  identity_comment_reviews:
+    parameters: {mind: PlayerJudgment, speaker: PlayerRef}
+    returns: IdentityCommentReviews
+    expression: latest_identity_reviews(mind, filter(mind.beliefs, b => identity_comment_by(b.proposition, speaker)))
+  latest_identity_reviews:
+    parameters: {mind: PlayerJudgment, comments: PlayerBeliefs}
+    returns: IdentityCommentReviews
+    # Prefer the latest quoted claim; each exact quote already has its actual latest opinion.
+    expression: >
+      map(filter(comments, b => not exists(comments,
+      n => same_identity_subject(b.proposition, n.proposition) and identity_quote_epoch(n.proposition) > identity_quote_epoch(b.proposition))),
+      b => identity_comment_review(b.proposition, identity_comment_verdict(mind, b.proposition)))
+  identity_source_assessment:
+    parameters: {speaker: PlayerRef, evidence: IdentityCommentReviews, complete: Bool}
+    returns: IdentitySourceReview
+    expression: IdentitySourceReview(speaker=speaker, weight=bounded_reliability(1 + sum_by(evidence, r => r.score)) if complete else 0, evidence=evidence, complete=complete)
+  identity_source_review:
+    parameters: {mind: PlayerJudgment, speaker: PlayerRef}
+    returns: IdentitySourceReview
+    expression: identity_source_assessment(speaker, identity_comment_reviews(mind, speaker), mind.complete and mind.local.complete)
+  identity_opinions:
+    parameters: {mind: PlayerJudgment, person: PlayerRef, role: Role}
+    returns: ClaimInfluences
+    expression: map(filter(mind.beliefs, b => b.support > 0 and applicable_claim_opinion(mind, b.proposition, person, role)), b => ClaimInfluence(opinion=b.proposition, weight=opinion_weight(mind, b.proposition)))
+  supports_identity:
+    parameters: {thought: PlayerThought}
+    returns: Bool
+    expression: match(thought, IdentityOpinion(c) => match(c.statement.rationale, ClaimAssessment(r) => r.credible, Judgment() => False, TestTeam() => False, FailureOverlap() => False, SuccessCore() => False, TrustSpeaker() => False, EvilExhausted() => False, ClaimConflict() => False), Identity() => False, Advice() => False, Task() => False, Alternative() => False, SafeTeam() => False, Ballot() => False, Forecast() => False, Deliberation() => False)
+  strength_or_zero:
+    parameters: {strength: MaybeJudgmentStrength}
+    returns: JudgmentStrength
+    expression: strength if strength is not None else 0
+  strongest_opinion:
+    parameters: {opinions: ClaimInfluences, credible: Bool}
+    returns: JudgmentStrength
+    # All comments concern the same quoted claim; repetitions do not multiply its basis.
+    expression: strength_or_zero(max_by(map(filter(opinions, c => supports_identity(c.opinion) == credible), c => c.weight), w => w))
+  opinion_balance:
+    parameters: {opinions: ClaimInfluences}
+    returns: ExperienceScore
+    expression: strongest_opinion(opinions, True) - strongest_opinion(opinions, False)
+  judged_identity:
+    parameters: {mind: PlayerJudgment, person: PlayerRef, role: Role}
+    returns: IdentityJudgment
+    expression: identity_judgment(mind, person, role, identity_opinions(mind, person, role), identity_bound(mind, person, role))
+  identity_judgment:
+    parameters: {mind: PlayerJudgment, person: PlayerRef, role: Role, opinions: ClaimInfluences, bound: MaybeJudgmentBound}
+    returns: IdentityJudgment
+    # Preserve the sourced soft impression even when a later guarantee excludes it.
+    expression: >
+      IdentityJudgment(person=person, role=role,
+      support=sum_by(mind.beliefs, b => b.support if identity_impression(b.proposition, person, role) else 0) + strongest_opinion(opinions, True),
+      opposition=sum_by(mind.beliefs, b => b.opposition if identity_impression(b.proposition, person, role) else 0) + strongest_opinion(opinions, False),
+      opinions=opinions, verdict=identity_verdict(mind, bound), bound=bound)
+  constrained_claim_value:
+    parameters: {judgment: IdentityJudgment, credible: Bool}
+    returns: ExperienceScore
+    expression: (3 if credible else -3) if judgment.verdict == IdentityVerdict.established else (-3 if credible else 3) if judgment.verdict == IdentityVerdict.excluded else opinion_balance(judgment.opinions) * (1 if credible else -1) if judgment.verdict == IdentityVerdict.possible else 0
+  judged_team_risk:
+    parameters: {mind: PlayerJudgment, members: Players, known_good: Players}
+    returns: ExperienceScore
+    # A failed group cannot incriminate known-good members. Keep the original
+    # denominator: removing their share does not certify or blame anyone else.
+    expression: sum_by(mind.appraisals, a => match(a.key, Team(t) => -a.score * overlap_count(t.members, difference(members, known_good) if a.score < 0 else members) // size(t.members)))
+  reviewed_task:
+    parameters: {speech: TeamSpeech, thought: PlayerThought}
+    returns: ExperienceScore
+    # Outcome consistency is a fallible retrospective evaluation of advice, not allegiance.
+    expression: match(thought, Task(q) => (1 if speech.approve != q.record.failed else -2) if q.record.epoch == speech.epoch and q.record.team == speech.team and task_statement(speech.rationale) else 0, Identity() => 0, Advice() => 0, Alternative() => 0, SafeTeam() => 0, Ballot() => 0, Forecast() => 0, IdentityOpinion() => 0, Deliberation() => 0)
+  reviewed_statement:
+    parameters: {mind: PlayerJudgment, speaker: PlayerRef, thought: PlayerThought}
+    returns: ExperienceScore
+    expression: match(thought, Forecast(s) => sum_by(mind.beliefs, b => reviewed_task(s.statement, b.proposition)) if s.statement.speaker == speaker else 0, Identity() => 0, Advice() => 0, Task() => 0, Alternative() => 0, SafeTeam() => 0, Ballot() => 0, IdentityOpinion() => 0, Deliberation() => 0)
+  bounded_reliability:
+    parameters: {score: ExperienceScore}
+    returns: ExperienceScore
+    expression: 0 if score < 0 else 3 if score > 3 else score
+  judged_reliability:
+    parameters: {mind: PlayerJudgment, speaker: PlayerRef}
+    returns: ExperienceScore
+    expression: bounded_reliability(1 + sum_by(mind.beliefs, b => reviewed_statement(mind, speaker, b.proposition)))
+  judged_merlin_claim:
+    parameters: {mind: PlayerJudgment, person: PlayerRef}
+    returns: ExperienceScore
+    expression: merlin_impression(judged_identity(mind, person, Role.merlin)) if mind.complete else 0
+  merlin_impression:
+    parameters: {judgment: IdentityJudgment}
+    returns: ExperienceScore
+    expression: 12 * bounded_reliability(judgment.support - judgment.opposition) if judgment.verdict == IdentityVerdict.possible or judgment.verdict == IdentityVerdict.established else 0
+  shared_ballot:
+    parameters: {thought: PlayerThought, person: PlayerRef}
+    returns: Bool
+    expression: match(thought, Ballot(b) => person != b.listener and person in union(b.record.approve, b.record.reject) and b.listener in union(b.record.approve, b.record.reject), Identity() => False, Advice() => False, Task() => False, Alternative() => False, SafeTeam() => False, Forecast() => False, IdentityOpinion() => False, Deliberation() => False)
+  ballot_alignment:
+    parameters: {thought: PlayerThought, person: PlayerRef}
+    returns: ExperienceScore
+    expression: match(thought, Ballot(b) => (1 if (person in b.record.approve) == (b.listener in b.record.approve) else -1) if shared_ballot(thought, person) else 0, Identity() => 0, Advice() => 0, Task() => 0, Alternative() => 0, SafeTeam() => 0, Forecast() => 0, IdentityOpinion() => 0, Deliberation() => 0)
+  bounded_cooperation:
+    parameters: {score: ExperienceScore}
+    returns: ExperienceScore
+    expression: -2 if score < -2 else 2 if score > 2 else score
+  judged_person:
+    parameters: {mind: PlayerJudgment, person: PlayerRef}
+    returns: PersonJudgment
+    # Descriptive vote coincidence only; goal alignment and advice accuracy are separate.
+    expression: >
+      PersonJudgment(person=person, advice_reliability=judged_reliability(mind, person),
+      cooperation=bounded_cooperation(sum_by(mind.beliefs, b => ballot_alignment(b.proposition, person))),
+      shared_choices=sum_by(mind.beliefs, b => 1 if shared_ballot(b.proposition, person) else 0), complete=mind.complete)
+  judged_opinion:
+    parameters: {mind: PlayerJudgment, thought: PlayerThought, members: Players, epoch: Epoch, self: PlayerRef}
+    returns: ExperienceScore
+    expression: match(thought, Advice(c) => (2 if c.statement.approve else -2) * opinion_source_weight(mind, c.statement.speaker, c.statement.rationale) if c.statement.epoch == epoch and c.statement.team == members and c.statement.speaker != self and opinion_argument(c.statement.rationale) else 0, Identity() => 0, Task() => 0, Alternative() => 0, SafeTeam() => 0, Ballot() => 0, Forecast() => 0, IdentityOpinion() => 0, Deliberation() => 0)
+  opinion_source_weight:
+    parameters: {mind: PlayerJudgment, speaker: PlayerRef, argument: TeamArgument}
+    returns: ExperienceScore
+    expression: >
+      match(argument, ClaimAssessment() => identity_source_review(mind, speaker).weight, ClaimConflict() => 1,
+      Judgment() => judged_reliability(mind, speaker), TestTeam() => judged_reliability(mind, speaker),
+      FailureOverlap() => judged_reliability(mind, speaker), SuccessCore() => judged_reliability(mind, speaker),
+      TrustSpeaker() => judged_reliability(mind, speaker), EvilExhausted() => judged_reliability(mind, speaker))
+  judged_alternative:
+    parameters: {mind: PlayerJudgment, thought: PlayerThought, members: Players, epoch: Epoch, self: PlayerRef, results: QuestHistory, census: PopulationReports, claims: IdentitySpeeches}
+    returns: ExperienceScore
+    expression: match(thought, Alternative(c) => recommendation_value(suggestion_argument_value(c.statement.rationale, members, results, census, claims, mind), opinion_source_weight(mind, c.statement.speaker, c.statement.rationale) if c.statement.rationale is not None else judged_reliability(mind, c.statement.speaker)) if c.statement.epoch == epoch and c.statement.members == members and c.statement.speaker != self else 0, Identity() => 0, Task() => 0, Advice() => 0, SafeTeam() => 0, Ballot() => 0, Forecast() => 0, IdentityOpinion() => 0, Deliberation() => 0)
+  recommendation_value:
+    parameters: {argument: ExperienceScore, source_weight: ExperienceScore}
+    returns: ExperienceScore
+    expression: source_weight * (2 + argument)

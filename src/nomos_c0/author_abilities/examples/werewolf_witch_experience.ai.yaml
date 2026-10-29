@@ -1,0 +1,43 @@
+# Non-canon probe: a witch's sourced terminal outcome guides poison-subset construction.
+schema: nomos.author.ai
+semantics:
+  WitchExperience:
+    features: [poison_count, poison_attacked]
+    outcomes: [victory]
+    applicability:
+      victory: [poison_count, poison_attacked]
+    meanings:
+      ChoosePotions:
+        features:
+          poison_count:
+            offset: 1
+            sum_by:
+              over: poison_target
+              each: target
+              value: '1'
+          poison_attacked:
+            sum_by:
+              over: poison_target
+              each: target
+              value: '1 if exists(reports(witch_notices), notice => target in notice.victim) else 0'
+        prior:
+          victory: >
+            10 * size(poison_target) -
+            10 * sum_by(poison_target, target =>
+              1 if exists(reports(witch_notices), notice => target in notice.victim) else 0)
+    feedback:
+      ReviewEnding:
+        definition: ChoosePotions
+        receipts: {ending: {terminal: finish}}
+        outcomes: {victory: '8 if ending.winner == Side.villagers else -8'}
+strategies:
+  WitchChoice:
+    actor: {person: PlayerRef}
+    views: {witch_notices: {reports: NightNotices}}
+    candidates: [{definition: ChoosePotions}]
+    semantics: WitchExperience
+    tie: canonical
+    wait: no_candidate
+    participation: {personality: {}, goals: {victory: 1}}
+control:
+  witch: {actor: e, definition: WitchChoice, views: {witch_notices: night_ready.notice}}

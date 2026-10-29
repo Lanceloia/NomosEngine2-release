@@ -1,0 +1,7 @@
+schema: nomos.author.assets
+actors:
+  traveler: {position: threshold, energy: 3, awake: true}
+objects:
+  ritual_door:
+    type: Route
+    state: {origin: threshold, destination: ritual_circle, passable: false}

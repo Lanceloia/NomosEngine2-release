@@ -1,0 +1,87 @@
+# Failed physical attempts publish normally; unknown routes are not offered.
+schema: nomos.author.lib
+abilities:
+  ObserveRoutes:
+    actor: {person: BeingRef}
+    context: Palace
+    where: mobile(person)
+    time_cost: '10000'
+    results: Routes
+    resolve:
+      effects:
+        - set(person.known_paths, union(person.known_paths, map(filter(paths, p => p.start == person.position), p => KnownRoute(start=p.start, end=p.end))))
+        - set(person.known_crossings, union(person.known_crossings, map(filter(crossings, c => c.start == person.position), c => c.key)))
+        - set(person.known_bridges, union(person.known_bridges, map(filter(bridges, p => p.start == person.position), p => KnownRoute(start=p.start, end=p.end))))
+      result: >
+        Routes(paths=filter(paths, p => p.start == person.position),
+        crossings=filter(crossings, c => c.start == person.position),
+        bridges=filter(bridges, p => p.start == person.position))
+  TryDirectPassage:
+    actor: {person: BeingRef}
+    views: {invites: {reports: InvitationReports}}
+    context: Palace
+    inputs:
+      route:
+        type: Path
+        choose: 'filter(paths, p => p.start == person.position and exists(person.known_paths, k => k.start == p.start and k.end == p.end))'
+    where: mobile(person) and route in paths and route.start == person.position
+    time_cost: movement_cost(person, route.base_move_cost)
+    results: Movement
+    resolve:
+      when: ordinary_passable(route.start, route.end, floor_areas, frozen_floors, stairs)
+      then:
+        effects:
+          - set(person.position, route.end)
+          - set(person.known_sites, union(person.known_sites, Sites([route.end])))
+        result: Movement.Arrived(start=person.position, site=route.end)
+      else: {result: 'Movement.Blocked(start=person.position, site=person.position)'}
+  CrossIce:
+    actor: {person: BeingRef}
+    views: {invites: {reports: InvitationReports}}
+    context: Palace
+    inputs:
+      route: {type: Crossing, choose: 'filter(crossings, c => c.start == person.position and c.key in person.known_crossings)'}
+    where: mobile(person) and route in crossings and route.start == person.position
+    time_cost: movement_cost(person, route.base_move_cost)
+    results: Movement
+    resolve:
+      when: route.floor_key in frozen_floors
+      then:
+        draw:
+          roll: {type: DieRoll, sides: route.die_sides}
+        then:
+          when: roll + person.balance_bonus >= route.difficulty
+          then:
+            effects:
+              - set(person.position, route.intended)
+              - set(person.known_sites, union(person.known_sites, Sites([route.intended])))
+              - set(person.known_crossings, union(person.known_crossings, map(filter(crossings, c => c.key == route.success_followup), c => c.key)))
+            result: Movement.Arrived(start=person.position, site=route.intended)
+          else:
+            effects:
+              - set(person.position, route.collision)
+              - set(person.known_sites, union(person.known_sites, Sites([route.collision])))
+              - set(person.known_crossings, union(person.known_crossings, map(filter(crossings, c => c.key == route.failure_followup), c => c.key)))
+            result: Movement.Collision(start=person.position, site=route.collision, roll=roll)
+      else:
+        effects:
+          - set(person.position, route.intended)
+          - set(person.known_sites, union(person.known_sites, Sites([route.intended])))
+          - set(person.known_crossings, union(person.known_crossings, map(filter(crossings, c => c.key == route.success_followup), c => c.key)))
+        result: Movement.Arrived(start=person.position, site=route.intended)
+  CrossBridgeSlowly:
+    actor: {person: BeingRef}
+    views: {invites: {reports: InvitationReports}}
+    context: Palace
+    inputs:
+      route:
+        type: Path
+        choose: 'filter(bridges, p => p.start == person.position and exists(person.known_bridges, k => k.start == p.start and k.end == p.end))'
+    where: mobile(person) and route in bridges and route.start == person.position
+    time_cost: movement_cost(person, route.base_move_cost)
+    results: Movement
+    resolve:
+      effects:
+        - set(person.position, route.end)
+        - set(person.known_sites, union(person.known_sites, Sites([route.end])))
+      result: Movement.Arrived(start=person.position, site=route.end)

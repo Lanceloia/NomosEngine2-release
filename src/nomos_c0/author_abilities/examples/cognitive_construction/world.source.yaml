@@ -1,0 +1,8 @@
+schema: nomos.author.source
+name: NonCanonCognitiveConstruction
+actors: {a: Person, b: Person}
+objects: []
+use:
+  observe: {definition: Observe}
+  choose: {definition: Choose}
+  withdraw: {definition: Withdraw}

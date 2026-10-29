@@ -1,0 +1,72 @@
+# Public-ship obligations and the optional private wharf are separate queries.
+schema: nomos.author.lib
+queries:
+  goods_count:
+    parameters: {stock: Goods, kind: Good}
+    returns: Count
+    expression: >
+      stock.corn if kind == Good.corn else stock.indigo if kind == Good.indigo else
+      stock.sugar if kind == Good.sugar else stock.tobacco if kind == Good.tobacco else stock.coffee
+  all_good_kinds:
+    parameters: {}
+    returns: GoodKinds
+    expression: GoodKinds([Good.corn, Good.indigo, Good.sugar, Good.tobacco, Good.coffee])
+  valid_fleet:
+    parameters: {ships: Fleet}
+    returns: Bool
+    expression: >
+      forall(ships, s => s.capacity > 0 and s.loaded <= s.capacity and
+        ((s.cargo is None and s.loaded == 0) or (s.cargo is not None and s.loaded > 0)) and
+        exactly_one(ships, other => other.key == s.key) and
+        (s.cargo is None or exactly_one(ships, other => other.cargo == s.cargo)))
+  ship_space:
+    parameters: {ship: Ship}
+    returns: Count
+    expression: ship.capacity - ship.loaded if ship.loaded <= ship.capacity else 0
+  ship_accepts:
+    parameters: {ships: Fleet, ship: Ship, kind: Good}
+    returns: Bool
+    expression: >
+      ship_space(ship) > 0 and
+      ((ship.cargo == kind) or (ship.cargo is None and not exists(ships, s => s.cargo == kind)))
+  shipping_amount:
+    parameters: {stock: Goods, kind: Good, ship: Ship}
+    returns: Count
+    expression: minimum(goods_count(stock, kind), ship_space(ship))
+  legal_ship:
+    parameters: {ships: Fleet, stock: Goods, kind: Good, ship: Ship}
+    returns: Bool
+    expression: >
+      valid_fleet(ships) and exists(ships, s => s == ship) and goods_count(stock, kind) > 0 and
+      ship_accepts(ships, ship, kind) and
+      forall(ships, other => not ship_accepts(ships, other, kind) or
+        shipping_amount(stock, kind, ship) >= shipping_amount(stock, kind, other))
+  legal_ships:
+    parameters: {ships: Fleet, stock: Goods, kind: Good}
+    returns: Fleet
+    expression: filter(ships, s => legal_ship(ships, stock, kind, s))
+  shippable_goods:
+    parameters: {ships: Fleet, stock: Goods}
+    returns: GoodKinds
+    expression: filter(all_good_kinds(), kind => exists(ships, s => legal_ship(ships, stock, kind, s)))
+  may_decline_shipping:
+    parameters: {ships: Fleet, stock: Goods}
+    returns: Bool
+    expression: valid_fleet(ships) and not exists(all_good_kinds(), kind => exists(ships, s => legal_ship(ships, stock, kind, s)))
+  may_use_wharf:
+    parameters: {stock: Goods, kind: Good, occupied: Bool, used: Bool}
+    returns: Bool
+    expression: occupied and not used and goods_count(stock, kind) > 0
+  remaining_goods:
+    parameters: {stock: Goods, kind: Good, loaded: Count}
+    returns: Goods
+    expression: >
+      Goods(corn=stock.corn - loaded if kind == Good.corn else stock.corn,
+        indigo=stock.indigo - loaded if kind == Good.indigo else stock.indigo,
+        sugar=stock.sugar - loaded if kind == Good.sugar else stock.sugar,
+        tobacco=stock.tobacco - loaded if kind == Good.tobacco else stock.tobacco,
+        coffee=stock.coffee - loaded if kind == Good.coffee else stock.coffee)
+  loaded_ship:
+    parameters: {ship: Ship, kind: Good, loaded: Count}
+    returns: Ship
+    expression: Ship(key=ship.key, capacity=ship.capacity, cargo=kind, loaded=ship.loaded + loaded)

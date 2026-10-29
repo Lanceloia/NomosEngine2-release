@@ -1,0 +1,3 @@
+# Choose a seat first; Start deals the declared cast before opening information.
+schema: nomos.author.source
+imports: [avalon_reasoning.source.yaml, avalon_deal.source.yaml]

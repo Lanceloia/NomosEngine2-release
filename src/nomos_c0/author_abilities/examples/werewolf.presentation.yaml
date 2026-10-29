@@ -1,0 +1,131 @@
+schema: nomos.tabletop.presentation
+title: 狼人杀
+result_label: 获胜阵营／平局
+description: 从第一夜开始，天亮后投票放逐。村民消灭所有狼人获胜，狼人消灭所有其他存活者获胜。
+rules:
+  title: 狼人杀 · 本局规则与流程
+  sections:
+    - title: 阵营与胜利
+      text: '本局六人：两名狼人、一名预言家、一名女巫、两名村民。村民阵营消灭全部狼人获胜，狼人消灭全部其他存活者获胜；双方同时无人存活则平局。'
+    - title: 白天投票
+      text: '所有存活者各投一名存活人物，可以投自己。本局使用严格过半票制；没有人获得过半票则无人放逐。结果公布后进入夜间。'
+    - title: 夜间职业行动
+      text: '开局先进行第一夜。狼人提交袭击意向后，同伴立即可见；锁定前可改选。每名狼人各自锁定后才按票制结算，本局必须一致才形成袭击。预言家可查验一名其他存活人物的阵营，也可放弃；结果仅本人取得。所有狼人锁定且预言家完成选择后，女巫收到本夜袭击消息。'
+    - title: 女巫与天亮
+      text: '女巫整局各有一瓶解药与毒药。本局允许自救，也允许同夜使用两瓶药。解药救下本夜受袭者，毒药目标为其他存活人物；用过的药不能再次使用。女巫选择结束后公布死亡者，进入下一天。'
+    - title: 信息与复盘
+      text: '存活狼人可查看本夜同伴的当前意向和锁定状态。所有人知道当前存活人物、公开投票和天亮死亡消息。查验与袭击通知由对应职业本人读取；终局公开全员身份。'
+  sources:
+    - {title: 狼人基础规则书（中文 PDF）, url: 'https://www.gokids.com.tw/tsaiss/gokids/rules/werewolves_rules_cns-1.pdf'}
+labels:
+  wolf: 狼人
+  witch: 女巫
+  seer: 预言家
+  villager: 村民
+  wolves: 狼人阵营
+  villagers: 村民阵营
+  draw: 平局
+  day: 白天投票
+  night: 夜间行动
+  dawn: 天亮
+  round: 轮次
+  votes: 公开投票
+  voter: 投票者
+  target: 目标
+  executed: 放逐者
+  dead: 夜间死亡者
+  subject: 查验对象
+  side: 阵营
+  victim: 今夜受袭者
+  winner: 获胜阵营
+  identities: 身份揭晓
+  player: 玩家
+  role: 身份
+  alive: 存活
+  locked: 已锁定
+components:
+  FinalResult: {kind: record, fields: {winner: {label: 获胜阵营}, identities: {label: 身份揭晓}}}
+  FinalIdentity: {kind: table, columns: {player: 玩家, role: 身份, alive: 存活}}
+  PublicVote: {kind: table, columns: {voter: 投票者, target: 目标}}
+  WolfPlan: {kind: table, columns: {voter: 狼人, target: 当前袭击目标, locked: 已锁定}}
+  Phase:
+    kind: badge
+    items:
+      day: {icon: users, label: 白天投票}
+      night: {icon: moon, label: 夜间行动}
+      witch: {icon: flask, label: 女巫用药}
+      dawn: {icon: eye, label: 天亮结算}
+  PlayerRef: {kind: badge, icon: user}
+  Role:
+    kind: badge
+    items:
+      wolf: {icon: moon, color: '#9b5363', description: '夜里与同伴协商袭击目标，确认后锁定；白天参与放逐表决。'}
+      seer: {icon: eye, color: '#487a9b', description: '夜里可以查验一名其他存活人物的阵营，结果由你本人掌握，也可放弃查验。'}
+      witch: {icon: flask, color: '#94704f', description: '根据本夜袭击消息决定是否救人或使用毒药，每瓶药整局只能使用一次。'}
+      villager: {icon: user, color: '#397862', description: '根据公开投票和天亮消息作出放逐选择，帮助村民阵营消灭全部狼人。'}
+seats:
+  self_badge: {information: own_role}
+  reveal: {source: {ending: identities}, reference: player, badge: role}
+  details:
+  - {source: {projection: wolf_plans}, reference: voter, fields: [target, locked], title: 本夜袭击意向}
+  marks:
+  - {source: {projection: living}, label: 存活, icon: user, tone: positive}
+  - {source: {projection: dead}, label: 已死亡, icon: x, tone: neutral}
+  - {source: {information: wolf_peers}, label: 已知狼人同伴, icon: moon, tone: danger}
+timeline:
+- {source: {context: match.day_history}, title: 白天表决与放逐, mode: append, icon: users}
+- {source: {context: match.night_history}, title: 天亮了, mode: append, icon: eye}
+- {source: {reports: inspect.sighting}, title: 你的查验结果, mode: append, icon: eye}
+- {source: {reports: night_ready.notice}, title: 你收到的夜间消息, mode: append, icon: moon}
+panels:
+- {title: 当前阶段, zone: board, source: {context: match.phase}}
+- {title: 当前轮次, zone: board, source: {context: match.round}}
+- {title: 存活人物, zone: board, source: {projection: living}}
+- {title: 你的身份, zone: private, source: {information: own_role}}
+- {title: 你仍然存活, zone: private, source: {self: alive}}
+- {title: 你的解药, zone: private, source: {self: antidote}, display: {kind: indicator, items: {'true': {label: 剩余一瓶, icon: flask, tone: positive}, 'false': {label: 无剩余, icon: flask, tone: neutral}}}}
+- {title: 你的毒药, zone: private, source: {self: poison}, display: {kind: indicator, items: {'true': {label: 剩余一瓶, icon: flask, tone: danger}, 'false': {label: 无剩余, icon: flask, tone: neutral}}}}
+- {title: 你认识的狼人同伴, zone: private, source: {information: wolf_peers}}
+- {title: 你的查验记录, zone: private, source: {reports: inspect.sighting}}
+- {title: 女巫收到的袭击消息, zone: private, source: {reports: night_ready.notice}}
+- {title: 白天记录, zone: history, source: {context: match.day_history}}
+- {title: 夜晚记录, zone: history, source: {context: match.night_history}}
+actions:
+  vote:
+    surface: seats
+    title: 投票放逐
+    icon: users
+    description: 选择一名存活人物。所有存活者提交后，由本局票制决定放逐结果。
+    inputs: {target: {label: 你的投票对象}}
+  wolf_vote:
+    surface: seats
+    title: 提出或修改袭击目标
+    icon: moon
+    description: 提交后同伴立即看到你的当前意向。锁定前可以再次改选。
+    inputs: {target: {label: 袭击对象}}
+  wolf_lock:
+    surface: inline
+    title: 锁定袭击目标
+    icon: check
+    description: 锁定你的当前意向，本夜不能再修改。所有狼人锁定后按本局票制结算。
+    inputs: {}
+  inspect:
+    surface: seats
+    title: 查验身份
+    icon: eye
+    description: 查验一名其他存活人物，你会收到自己的阵营报告。
+    inputs: {target: {label: 查验对象}}
+  skip:
+    surface: inline
+    title: 放弃本夜查验
+    icon: back
+    description: 完成本夜的选择，不进行查验。
+    inputs: {}
+  potions:
+    surface: inline
+    title: 决定使用药水
+    icon: flask
+    description: 根据你收到的袭击消息选择解药与毒药。本局规则决定可选组合。
+    inputs:
+      save: {label: 是否使用解药, options: {'true': 使用解药, 'false': 保留解药}, icons: {'true': flask, 'false': back}, fixed_label: 本轮无法使用解药}
+      poison_target: {label: 毒药目标；不选则保留毒药, fixed_label: 本轮无法使用毒药}

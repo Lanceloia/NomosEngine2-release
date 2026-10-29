@@ -1,0 +1,272 @@
+# The core uses the accepted finite regions, not continuous room geometry.
+schema: nomos.author.lib
+values:
+  Site:
+    enum: [ballroom_entrance, ballroom_chandelier_reach, ballroom_opposite_wall,
+      ballroom_chandelier_far_wall, ballroom_bar_side_wall, ritual_passage_entry,
+      ritual_threshold, ritual_ring, ritual_side_wall, ritual_collision_wall,
+      halls_ballroom_door, halls_bridge_door, halls_collision_wall,
+      bridge_palace_landing, bridge_midspan, palace_exit]
+  Sites: {set: Site}
+  MaybeSite: {optional: Site}
+  Floor: {enum: [ballroom, ritual, halls, bridge]}
+  Floors: {set: Floor}
+  Count: {int: [0, 1000]}
+  Speed: {int: [0, 10]}
+  MaximumSpeed: {int: [1, 10]}
+  Bonus: {int: [-20, 20]}
+  ActionValue: {int: [1, 1000000]}
+  DieRoll: {int: [1, 20]}
+  DieSides: {int: [2, 20]}
+  RouteKey: {text: {max_chars: 64}}
+  RouteKeys: {set: RouteKey}
+  MaybeRoute: {optional: RouteKey}
+  KnownRoute: {record: {start: Site, end: Site}}
+  KnownRoutes: {set: KnownRoute}
+  Path: {record: {start: Site, end: Site, base_move_cost: ActionValue}}
+  Paths: {set: Path}
+  Crossing:
+    record:
+      key: RouteKey
+      start: Site
+      intended: Site
+      collision: Site
+      floor_key: Floor
+      base_move_cost: ActionValue
+      difficulty: DieRoll
+      die_sides: DieSides
+      success_followup: MaybeRoute
+      failure_followup: MaybeRoute
+  Crossings: {set: Crossing}
+  FloorArea: {record: {key: Floor, sites: Sites}}
+  FloorAreas: {set: FloorArea}
+  Routes: {record: {paths: Paths, crossings: Crossings, bridges: Paths}}
+  Movement: {variant: {Arrived: {start: Site, site: Site}, Blocked: {start: Site, site: Site}, Collision: {start: Site, site: Site, roll: DieRoll}}}
+  BeingRef: {ref: Being}
+  ResidentRef: {ref: Resident}
+  BokoldRef: {ref: Bokold}
+  IceElementalRef: {ref: IceElemental}
+  Beings: {set: BeingRef}
+  Holder: {optional: BeingRef}
+  PortableRef: {ref: Portable}
+  FlameRef: {ref: Flame}
+  Flames: {set: FlameRef}
+  ReservoirRef: {ref: Reservoir}
+  Reservoirs: {set: ReservoirRef}
+  ChandelierRef: {ref: Chandelier}
+  Chandeliers: {set: ChandelierRef}
+  Charge: {int: [0, 5]}
+  Coverage: {record: {origin: Site, near_sites: Sites, mid_sites: Sites, far_sites: Sites}}
+  Coverages: {set: Coverage}
+  FlameStatus: {record: {flame: FlameRef, charge: Charge}}
+  FlameStatuses: {set: FlameStatus}
+  ReservoirStatus: {record: {reservoir: ReservoirRef, charge: Count}}
+  ReservoirStatuses: {set: ReservoirStatus}
+  Presence: {record: {subject: BeingRef, site: Site}}
+  Presences: {set: Presence}
+  PersonFinding: {record: {subject: BeingRef, site: Site, alive: Bool, frozen: Bool}}
+  PersonReports: {sequence: PersonFinding}
+  BreathZone: {record: {origin: Site, aim: Site, affected_sites: Sites}}
+  BreathZones: {set: BreathZone}
+  TargetFinding: {record: {subject: BeingRef, origin: Site, site: Site}}
+  TargetMemory: {optional: TargetFinding}
+  TargetFindings: {set: TargetFinding}
+  TargetReports: {sequence: TargetFindings}
+  DamageFinding: {record: {site: Site, roll: DieRoll, endurance: Count, alive: Bool}}
+  DamageMemory: {optional: DamageFinding}
+  GroundFinding: {record: {floor: Floor, site: Site, frozen: Bool}}
+  GroundMemory: {optional: GroundFinding}
+  ChandelierFinding:
+    record: {chandelier: ChandelierRef, reservoir: ReservoirRef, site: Site, mounted: Bool, pulse: Bool}
+  ChandelierFindings: {set: ChandelierFinding}
+  ChandelierReports: {sequence: ChandelierFindings}
+  TransferOffer: {record: {flame: FlameRef, giver: BeingRef, recipient: BeingRef}}
+  TransferOffers: {sequence: TransferOffer}
+  MotionSighting: {record: {subject: BeingRef, last_seen: Site, arrived: Bool}}
+  Epoch: {int: [0, 9223372036854775807]}
+  Score: {int: [-100, 100]}
+  Invitation: {record: {speaker: BeingRef, destination: Site, epoch: Epoch}}
+  Invitations: {set: Invitation}
+  InvitationReports: {sequence: Invitation}
+  Readiness: {enum: [ready_now, not_ready_now, unable_now]}
+  ReadinessChoices: {set: Readiness}
+  EscortReply: {record: {speaker: BeingRef, invitation: Invitation, site: Site, readiness: Readiness}}
+entities:
+  Being:
+    kind: person
+    reference: projected
+    fields:
+      position: Site
+      alive: Bool
+      awake: Bool
+      frozen: Bool
+      ground_sighting: GroundMemory
+      invitation_epoch: Epoch
+      answered_invitations: Invitations
+      endurance: Count
+      speed: Speed
+      max_speed: MaximumSpeed
+      balance_bonus: Bonus
+      cold_immune: Bool
+      last_damage: DamageMemory
+      known_sites: Sites
+      known_paths: KnownRoutes
+      known_crossings: RouteKeys
+      known_bridges: KnownRoutes
+    view: [id, position, alive, awake, frozen, ground_sighting, invitation_epoch, answered_invitations, endurance, speed, max_speed, balance_bonus,
+      cold_immune, last_damage, known_sites, known_paths, known_crossings, known_bridges]
+    public: []
+  Adventurer:
+    kind: person
+    extends: Being
+    reference: projected
+    fields: {}
+    view: [id, position, alive, awake, frozen, ground_sighting, invitation_epoch, answered_invitations, endurance, speed, max_speed, balance_bonus,
+      cold_immune, last_damage, known_sites, known_paths, known_crossings, known_bridges]
+    public: []
+  Resident:
+    kind: person
+    extends: Being
+    reference: projected
+    fields: {escape_drive: Score, exit_steps: KnownRoutes}
+    view: [id, position, alive, awake, frozen, ground_sighting, invitation_epoch, answered_invitations, endurance, speed, max_speed, balance_bonus,
+      cold_immune, last_damage, known_sites, known_paths, known_crossings, known_bridges, escape_drive, exit_steps]
+    public: []
+  Bokold:
+    kind: person
+    extends: Being
+    reference: projected
+    fields: {ritual_drive: Score}
+    view: [id, position, alive, awake, frozen, ground_sighting, invitation_epoch, answered_invitations, endurance, speed, max_speed, balance_bonus,
+      cold_immune, last_damage, known_sites, known_paths, known_crossings, known_bridges, ritual_drive]
+    public: []
+  IceElemental:
+    kind: person
+    extends: Being
+    reference: projected
+    fields: {known_destination: Site, target_sighting: TargetMemory, observed_origin: MaybeSite}
+    view: [id, position, alive, awake, frozen, ground_sighting, invitation_epoch, answered_invitations, endurance, speed, max_speed, balance_bonus,
+      cold_immune, last_damage, known_sites, known_paths, known_crossings, known_bridges, known_destination, target_sighting, observed_origin]
+    public: []
+  Portable:
+    kind: object
+    reference: projected
+    fields: {ground_site: Site, holder: Holder}
+    view: [id]
+  Flame:
+    kind: object
+    extends: Portable
+    reference: projected
+    fields: {charges: Charge}
+    view: [id]
+  Reservoir:
+    kind: object
+    extends: Portable
+    reference: projected
+    fields: {charges: Count, mount: ChandelierRef, site: Site, mounted: Bool, pulse_visible: Bool}
+    view: [id]
+  Chandelier:
+    kind: object
+    reference: projected
+    fields: {position: Site}
+    view: [id]
+relations:
+  custody:
+    kind: carrying
+    item: Portable
+    person: Being
+    holder: holder
+    ground: ground_site
+    position: position
+queries:
+  can_speak:
+    parameters: {person: BeingRef}
+    returns: Bool
+    expression: person.alive and person.awake and not person.frozen and person.endurance > 0
+  mobile:
+    parameters: {person: BeingRef}
+    returns: Bool
+    expression: person.alive and person.awake and not person.frozen and person.endurance > 0 and person.speed > 0
+  ice_at:
+    parameters: {site: Site, floors: FloorAreas, frozen: Floors}
+    returns: Bool
+    expression: exists(floors, f => f.key in frozen and site in f.sites)
+  ordinary_passable:
+    parameters: {start: Site, end: Site, floors: FloorAreas, frozen: Floors, stairs: Paths}
+    returns: Bool
+    expression: >
+      not exists(floors, f => f.key in frozen and
+        ((start in f.sites and end in f.sites) or
+          (exists(stairs, stair => stair.start == start and stair.end == end) and
+            (start in f.sites or end in f.sites))))
+  movement_cost:
+    parameters: {person: BeingRef, base: ActionValue}
+    returns: ActionValue
+    expression: (base * person.max_speed + person.speed - 1) // person.speed
+  protected_at:
+    parameters: {site: Site, lamps: Flames, coverage: Coverages}
+    returns: Bool
+    expression: >
+      exists(lamps, light => light.charges > 0 and exists(coverage, area =>
+        area.origin == custody.position(light) and
+        site in (area.near_sites if light.charges <= 2 else
+          area.mid_sites if light.charges <= 4 else area.far_sites)))
+  motion_start:
+    parameters: {motion: Movement}
+    returns: Site
+    expression: match(motion, Arrived(m) => m.start, Blocked(m) => m.start, Collision(m) => m.start)
+  motion_end:
+    parameters: {motion: Movement}
+    returns: Site
+    expression: match(motion, Arrived(m) => m.site, Blocked(m) => m.site, Collision(m) => m.site)
+contexts:
+  Palace:
+    world_parameters: {player: BeingRef}
+    parameters:
+      paths: Paths
+      crossings: Crossings
+      bridges: Paths
+      stairs: Paths
+      floor_areas: FloorAreas
+      coverage: Coverages
+      ritual_site: Site
+      audible_sites: Sites
+      ritual_goal: RitualGoal
+      breath_zones: BreathZones
+      breath_damage: Count
+      breath_threshold: DieRoll
+    state:
+      fields:
+        frozen_floors: Floors
+        population: Beings
+        flames: Flames
+        reservoirs: Reservoirs
+        chandeliers: Chandeliers
+        ritual_target: BeingRef
+        threat_target: BeingRef
+        ritual_progress: Count
+        ritual_status: RitualStatus
+        elemental_born: Bool
+      public: []
+    require_opening: >
+      population == known(Being) and flames == known(Flame) and
+      reservoirs == known(Reservoir) and chandeliers == known(Chandelier) and
+      ritual_target in population and threat_target in population and player in population and ritual_progress == 0 and
+      ritual_status == RitualStatus.active and not elemental_born and
+      size(flames) == 1 and size(reservoirs) == 1 and size(chandeliers) == 1 and
+      forall(coverage, area => exactly_one(coverage, other => other.origin == area.origin)) and
+      forall(reservoirs, r => r.mounted and r.holder is None and r.site == r.mount.position and r.ground_site == r.site) and
+      forall(crossings, c => c.die_sides == 20 and
+        exactly_one(crossings, other => other.key == c.key) and
+        (c.success_followup is None or exactly_one(crossings, other => other.key == c.success_followup)) and
+        (c.failure_followup is None or exactly_one(crossings, other => other.key == c.failure_followup))) and
+      forall(paths, p => exactly_one(paths, other => other.start == p.start and other.end == p.end)) and
+      forall(bridges, p => exactly_one(bridges, other => other.start == p.start and other.end == p.end)) and
+      forall(breath_zones, z => exactly_one(breath_zones, other => other.origin == z.origin and other.aim == z.aim))
+schedules:
+  ByTempo:
+    actor: {person: BeingRef}
+    # Movement speed affects the declared cost, not a second scheduler multiplier.
+    speed: '100'
+    eligible: can_speak(person)
+    initial: '10000'

@@ -1,0 +1,7 @@
+schema: nomos.author.assets
+actors:
+  alice: {energy: 10}
+  bob: {energy: 10}
+objects:
+  initial_tool: {type: Tool, state: {charge: 2, ready: true}}
+random: {seed: 42}

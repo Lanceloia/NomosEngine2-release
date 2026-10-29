@@ -1,0 +1,16 @@
+schema: nomos.author.ai
+queries:
+  ai_budget:
+    parameters: {projects: Projects, total: Amount}
+    returns: Budget
+    expression: Budget(expenses=map(projects, p => Expense(project=p.code, amount=0)), saved=total)
+strategies:
+  Allocator:
+    actor: {self: PlayerRef}
+    candidates:
+      - {definition: AllocateBudget, inputs: {budget: 'ai_budget(projects, total)'}, score: '1'}
+    minimum: '0'
+    tie: canonical
+    wait: no_candidate
+control:
+  allocators: {kind: Player, definition: Allocator}

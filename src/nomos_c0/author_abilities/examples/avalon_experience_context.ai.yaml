@@ -1,0 +1,78 @@
+# Acquired history describes a decision; it neither certifies motives nor changes rewards.
+schema: nomos.author.ai
+queries:
+  experience_ballot_key:
+    parameters: {epoch: Epoch, members: Players}
+    returns: ExperienceBallotKey
+    expression: ExperienceBallotKey(epoch=epoch, team=members)
+  comparable_advice:
+    parameters: {heard: TeamSpeeches, ballots: ExperienceBallotKeys}
+    returns: TeamSpeeches
+    # Set membership joins the two acquired channels before grouping by speaker.
+    expression: filter(heard, s => task_advice(s.rationale) and experience_ballot_key(s.epoch, s.team) in ballots)
+  direct_experience:
+    parameters: {person: PlayerRef, versions: TeamSpeeches, ballot: MaybeExperienceBallot}
+    returns: DirectExperience
+    expression: >
+      DirectExperience(person=person,
+      alignment=(DirectAlignment.aligned if at(versions, size(versions) - 1).approve == (person in ballot.approve) else DirectAlignment.divergent)
+      if size(versions) > 0 and ballot is not None else DirectAlignment.unobserved,
+      versions=versions, ballot=ballot)
+  person_direct_experience:
+    parameters: {person: PlayerRef, latest: TeamSpeeches, ballots: ApprovalHistory}
+    returns: DirectExperience
+    # Equal-epoch revisions remain ordered; the final task advice is compared.
+    expression: direct_experience(person, latest, max_by(filter(ballots, b => size(latest) > 0 and b.epoch == at(latest, 0).epoch and b.team == at(latest, 0).team), b => b.epoch))
+  direct_experiences:
+    parameters: {order: PlayerOrder, latest: TeamSpeeches, ballots: ApprovalHistory}
+    returns: DirectExperiences
+    expression: map(order, p => person_direct_experience(p, filter(latest, s => s.speaker == p), ballots))
+  observer_experience:
+    parameters: {person: PlayerRef, order: PlayerOrder, own: RoleReports, mind: PlayerJudgment, tasks: QuestHistory, heard: TeamSpeeches, ballots: ApprovalHistory}
+    returns: ObserverExperienceContext
+    expression: >
+      ObserverExperienceContext(person=person, good=known_good_members(distinct(order), person, own, mind),
+      failures=filter(tasks, q => q.fails > 0), zero_fails=filter(tasks, q => q.fails == 0),
+      direct=direct_experiences(order,
+      latest_by(comparable_advice(heard, distinct(map(ballots, b => experience_ballot_key(b.epoch, b.team)))), s => s.speaker, s => s.epoch), ballots))
+  experience_overlap_rank:
+    parameters: {members: Players, original: Players}
+    returns: ExperienceScore
+    expression: 4 if overlap_count(members, original) == size(original) else 3 if 2 * overlap_count(members, original) >= size(original) else 2 if overlap_count(members, original) > 0 else 1
+  experience_overlap_bucket:
+    parameters: {rank: MaybeEvidenceCount}
+    returns: ExperienceOverlap
+    expression: >
+      (ExperienceOverlap.full if rank == 4 else ExperienceOverlap.at_least_half if rank == 3 else
+      ExperienceOverlap.less_than_half if rank == 2 else ExperienceOverlap.none) if rank is not None else ExperienceOverlap.unobserved
+  failure_experience_overlap:
+    parameters: {members: Players, observer: ObserverExperienceContext}
+    returns: ExperienceOverlap
+    expression: >
+      ExperienceOverlap.conflict if exists(observer.failures, q => size(difference(q.team, observer.good)) == 0) else
+      experience_overlap_bucket(max_by(map(observer.failures, q => experience_overlap_rank(difference(members, observer.good), difference(q.team, observer.good))), r => r))
+  zero_fail_experience_overlap:
+    parameters: {members: Players, history: QuestHistory}
+    returns: ExperienceOverlap
+    expression: experience_overlap_bucket(max_by(map(history, q => experience_overlap_rank(members, q.team)), r => r))
+  team_direct_experience:
+    parameters: {direct: DirectExperiences}
+    returns: DirectAlignment
+    expression: >
+      (DirectAlignment.mixed if exists(direct, d => d.alignment == DirectAlignment.divergent) else DirectAlignment.aligned)
+      if exists(direct, d => d.alignment == DirectAlignment.aligned) else
+      DirectAlignment.divergent if exists(direct, d => d.alignment == DirectAlignment.divergent) else DirectAlignment.unobserved
+  leader_direct_experience:
+    parameters: {leader: PlayerRef, observer: ObserverExperienceContext}
+    returns: DirectAlignment
+    expression: DirectAlignment.self if leader == observer.person else team_direct_experience(filter(observer.direct, d => d.person == leader))
+  team_experience:
+    parameters: {members: Players, leader: PlayerRef, observer: ObserverExperienceContext}
+    returns: TeamExperienceContext
+    expression: >
+      TeamExperienceContext(failure_overlap=failure_experience_overlap(members, observer),
+      zero_fail_retention=zero_fail_experience_overlap(members, observer.zero_fails),
+      team_direct_alignment=team_direct_experience(filter(observer.direct, d => d.person in members and d.person != observer.person)),
+      leader_direct_alignment=leader_direct_experience(leader, observer),
+      good=observer.good, failure_epochs=map(observer.failures, q => q.epoch), zero_fail_epochs=map(observer.zero_fails, q => q.epoch),
+      direct=filter(observer.direct, d => d.person != observer.person and (d.person in members or d.person == leader)))

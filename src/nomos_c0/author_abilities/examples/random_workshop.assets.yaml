@@ -1,0 +1,6 @@
+schema: nomos.author.assets
+actors:
+  alice: {energy: 5, last_roll: 0, successes: 0}
+  bob: {energy: 5, last_roll: 0, successes: 0}
+objects: {}
+random: {seed: 42}

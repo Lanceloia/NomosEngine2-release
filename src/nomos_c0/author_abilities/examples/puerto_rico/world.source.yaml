@@ -1,0 +1,10 @@
+schema: nomos.author.source
+imports: [catalog.source.yaml]
+name: PuertoRico
+actors: {a: Player, b: Player, c: Player}
+objects: []
+use:
+  buildings: {definition: BuildingReference, context: catalog}
+  population: {definition: SetupReference, context: catalog}
+  goods: {definition: GoodReference, context: catalog}
+  roles: {definition: RoleReference, context: catalog}

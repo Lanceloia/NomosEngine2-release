@@ -1,0 +1,131 @@
+schema: nomos.author.lib
+queries:
+  land_label:
+    parameters: {crop: MaybeGood}
+    returns: Label
+    expression: "'采石场' if crop is None else '玉米田' if crop==Good.corn else '靛蓝田' if crop==Good.indigo else '糖田' if crop==Good.sugar else '烟草田' if crop==Good.tobacco else '咖啡田'"
+  setup_for:
+    parameters: {setups: Setups, population: Count}
+    returns: Setup
+    expression: at(filter(setups, s => s.players == population), 0)
+  building_spec:
+    parameters: {buildings: BuildingCatalog, kind: BuildingKind}
+    returns: BuildingSpec
+    expression: at(filter(buildings, b => b.kind == kind), 0)
+  goods_add:
+    parameters: {a: Goods, b: Goods}
+    returns: Goods
+    expression: Goods(corn=a.corn+b.corn, indigo=a.indigo+b.indigo, sugar=a.sugar+b.sugar, tobacco=a.tobacco+b.tobacco, coffee=a.coffee+b.coffee)
+  goods_subtract:
+    parameters: {a: Goods, b: Goods}
+    returns: Goods
+    expression: Goods(corn=a.corn-b.corn, indigo=a.indigo-b.indigo, sugar=a.sugar-b.sugar, tobacco=a.tobacco-b.tobacco, coffee=a.coffee-b.coffee)
+  one_good:
+    parameters: {kind: Good}
+    returns: Goods
+    expression: Goods(corn=1 if kind==Good.corn else 0, indigo=1 if kind==Good.indigo else 0, sugar=1 if kind==Good.sugar else 0, tobacco=1 if kind==Good.tobacco else 0, coffee=1 if kind==Good.coffee else 0)
+  starting_supply:
+    parameters: {goods: GoodCatalog}
+    returns: Goods
+    expression: Goods(corn=at(filter(goods,g=>g.kind==Good.corn),0).barrels, indigo=at(filter(goods,g=>g.kind==Good.indigo),0).barrels, sugar=at(filter(goods,g=>g.kind==Good.sugar),0).barrels, tobacco=at(filter(goods,g=>g.kind==Good.tobacco),0).barrels, coffee=at(filter(goods,g=>g.kind==Good.coffee),0).barrels)
+  city_size:
+    parameters: {person: PlayerRef, buildings: BuildingCatalog}
+    returns: Count
+    expression: sum_by(person.city,b=>building_spec(buildings,b.kind).spaces)
+  build_price:
+    parameters: {person: PlayerRef, building: BuildingSpec, privilege: Bool}
+    returns: Count
+    expression: >
+      0 if building.cost <= minimum(size(filter(person.island,t=>t.crop is None and t.workers>0)),building.quarry_limit) + (1 if privilege else 0)
+      else building.cost - minimum(size(filter(person.island,t=>t.crop is None and t.workers>0)),building.quarry_limit) - (1 if privilege else 0)
+  build_options:
+    parameters: {person: PlayerRef, players: Players, buildings: BuildingCatalog, buildable: BuildingKinds, privilege: Bool}
+    returns: BuildingCatalog
+    expression: >
+      filter(buildings,b=>b.kind in buildable and not exists(person.city,c=>c.kind==b.kind) and
+      sum_by(players,p=>size(filter(p.city,c=>c.kind==b.kind)))<b.stock and
+      city_size(person,buildings)+b.spaces<=12 and person.money>=build_price(person,b,privilege))
+  worker_sites:
+    parameters: {person: PlayerRef, buildings: BuildingCatalog}
+    returns: AllocationTargets
+    expression: >
+      concat(map(person.island,t=>AllocationTarget(key=t.key,label=land_label(t.crop),capacity=1)),
+      map(person.city,b=>AllocationTarget(key=b.key,label=building_spec(buildings,b.kind).label,capacity=building_spec(buildings,b.kind).workers)))
+  current_allocation:
+    parameters: {person: PlayerRef}
+    returns: Allocation
+    expression: >
+      Allocation(rows=concat(map(person.island,t=>AllocationRow(target=t.key,count=t.workers)),
+      map(person.city,b=>AllocationRow(target=b.key,count=b.workers))),reserve=person.reserve)
+  land_capacity:
+    parameters: {person: PlayerRef, kind: Good}
+    returns: Count
+    expression: sum_by(filter(person.island,t=>t.crop==kind),t=>t.workers)
+  production_capacity:
+    parameters: {person: PlayerRef, buildings: BuildingCatalog, kind: Good}
+    returns: Count
+    expression: >
+      land_capacity(person,kind) if kind==Good.corn else
+      minimum(land_capacity(person,kind),sum_by(filter(person.city,b=>building_spec(buildings,b.kind).production==kind),b=>b.workers))
+  production:
+    parameters: {person: PlayerRef, buildings: BuildingCatalog, supply: Goods}
+    returns: Goods
+    expression: >
+      Goods(corn=minimum(production_capacity(person,buildings,Good.corn),supply.corn),
+      indigo=minimum(production_capacity(person,buildings,Good.indigo),supply.indigo),
+      sugar=minimum(production_capacity(person,buildings,Good.sugar),supply.sugar),
+      tobacco=minimum(production_capacity(person,buildings,Good.tobacco),supply.tobacco),
+      coffee=minimum(production_capacity(person,buildings,Good.coffee),supply.coffee))
+  production_after_allocation:
+    parameters: {person: PlayerRef, buildings: BuildingCatalog, layout: Allocation, supply: Goods}
+    returns: Goods
+    expression: >
+      Goods(corn=minimum(allocated_capacity(person,buildings,layout,Good.corn),supply.corn),
+      indigo=minimum(allocated_capacity(person,buildings,layout,Good.indigo),supply.indigo),
+      sugar=minimum(allocated_capacity(person,buildings,layout,Good.sugar),supply.sugar),
+      tobacco=minimum(allocated_capacity(person,buildings,layout,Good.tobacco),supply.tobacco),
+      coffee=minimum(allocated_capacity(person,buildings,layout,Good.coffee),supply.coffee))
+  allocated_capacity:
+    parameters: {person: PlayerRef, buildings: BuildingCatalog, layout: Allocation, kind: Good}
+    returns: Count
+    expression: >
+      sum_by(filter(person.island,t=>t.crop==kind),t=>allocation_at(layout,t.key)) if kind==Good.corn else
+      minimum(sum_by(filter(person.island,t=>t.crop==kind),t=>allocation_at(layout,t.key)),
+      sum_by(filter(person.city,b=>building_spec(buildings,b.kind).production==kind),b=>allocation_at(layout,b.key)))
+  has_production:
+    parameters: {person: PlayerRef, buildings: BuildingCatalog, supply: Goods}
+    returns: Bool
+    expression: exists(all_good_kinds(),g=>goods_count(supply,g)>0 and production_capacity(person,buildings,g)>0)
+  sale_price:
+    parameters: {goods: GoodCatalog, kind: Good, privilege: Bool}
+    returns: Count
+    expression: at(filter(goods,g=>g.kind==kind),0).price + (1 if privilege else 0)
+  sale_options:
+    parameters: {person: PlayerRef, trading: GoodOrder}
+    returns: GoodKinds
+    expression: filter(all_good_kinds(),g=>goods_count(person.stock,g)>0 and size(trading)<4 and not exists(trading,t=>t==g))
+  received_colonists:
+    parameters: {order: PlayerOrder, person: PlayerRef, selector: Count, ship: Count}
+    returns: Count
+    expression: ship // size(order) + (1 if (index_of(order,person)+size(order)-selector)%size(order)<ship%size(order) else 0)
+  empty_building_slots:
+    parameters: {players: Players, buildings: BuildingCatalog}
+    returns: Count
+    expression: sum_by(players,p=>sum_by(p.city,b=>building_spec(buildings,b.kind).workers-b.workers))
+  trading_goods:
+    parameters: {trading: GoodOrder}
+    returns: Goods
+    expression: Goods(corn=size(filter(trading,g=>g==Good.corn)),indigo=size(filter(trading,g=>g==Good.indigo)),sugar=size(filter(trading,g=>g==Good.sugar)),tobacco=size(filter(trading,g=>g==Good.tobacco)),coffee=size(filter(trading,g=>g==Good.coffee)))
+projections:
+  PublicBoards:
+    context: Catalog
+    viewer: {viewer: PlayerRef}
+    audience: viewer in players
+    returns: PublicBoards
+    value: map(order,p=>PublicBoard(player=p,money=p.money,colonists=p.colonists,reserve=p.reserve,island=p.island,city=p.city,stock=p.stock))
+  CurrentStage:
+    context: Catalog
+    viewer: {viewer: PlayerRef}
+    audience: viewer in players
+    returns: Stage
+    value: Stage(round=round,governor=at(order,governor_index),chooser=at(order,chooser_index),selector=at(order,selector_index),acting=at(order,current_index),role=None if phase==Phase.setup or phase==Phase.choose_role else active.kind)

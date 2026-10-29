@@ -1,0 +1,88 @@
+# The same acquired guarantees feed local count bounds and independent soft judgments.
+schema: nomos.author.cognition
+models:
+  LocalCouncil:
+    actor: {player: PlayerRef}
+    propositions: CandidateThought
+    appraisal_keys: AssessmentTarget
+    slots: SpeechSlot
+    view: LocalCouncilView
+    prior_view: LocalPrior
+    evidence:
+      population_reports: {reports: PopulationReports}
+      own: {reports: RoleReports}
+      pair: {reports: CandidateGroups}
+      quests: {reports: QuestHistory}
+      allies: {reports: PlayerReports}
+      suspects: {reports: PlayerReports}
+      claims: {reports: IdentitySpeeches}
+      advice: {reports: TeamSpeeches}
+    rules:
+      HeardClaim:
+        on: claims
+        item: message
+        policy: latest
+        # The latest claim replaces the speaker's claim, rather than accumulating across rounds.
+        slot: SpeechSlot(speaker=message.speaker, epoch=0)
+        believe:
+          proposition: CandidateThought.Claimed(speaker=message.speaker, role=message.role)
+          support: '1'
+          opposition: '0'
+      HeardAdvice:
+        on: advice
+        item: message
+        policy: latest
+        slot: SpeechSlot(speaker=message.speaker, epoch=message.epoch)
+        believe:
+          proposition: CandidateThought.Advice(speaker=message.speaker, epoch=message.epoch, team=message.team, approve=message.approve, rationale=message.rationale)
+          support: '1'
+          opposition: '0'
+      ExperiencedTask:
+        on: quests
+        item: notice
+        policy: latest
+        slot: SpeechSlot(speaker=player, epoch=notice.epoch)
+        believe:
+          proposition: CandidateThought.QuestOutcome(epoch=notice.epoch, team=notice.team, failed=notice.failed)
+          support: '1'
+          opposition: '0'
+        appraise:
+          key: AssessmentTarget.Team(members=notice.team)
+          # A successful task gives only weak reassurance; failure gives stronger concern.
+          score: '-3 if notice.fails > 0 else 1'
+    derive:
+      ReviewAdvice:
+        variables: {speaker: PlayerRef, epoch: Epoch, team: Players, approve: Opinion, rationale: TeamArgument, failed: Bool}
+        premises:
+          - supports(base, CandidateThought.Advice(speaker=speaker, epoch=epoch, team=team, approve=approve, rationale=rationale))
+          - supports(base, CandidateThought.QuestOutcome(epoch=epoch, team=team, failed=failed))
+        where: approve is not None
+        conclude: support(CandidateThought.AdviceReview(speaker=speaker, epoch=epoch, aligned=approve != failed))
+    local:
+      period: fixed_roles
+      assumptions:
+        FixedIdentity: 本局各人的角色在这些通知和任务之间保持不变。
+      universe: population
+      inputs:
+        population: {on: population_reports, constraint: RolePopulation, history: opening}
+        own: {on: own, constraint: KnownIdentity, history: opening}
+        pair: {on: pair, constraint: CandidatePair, history: opening, required: false}
+        allies: {on: allies, constraint: KnownEvilMembers, history: opening, required: false}
+        suspects: {on: suspects, constraint: KnownEvilMembers, history: opening, required: false}
+        tasks: {on: quests, constraint: QuestEligibility, history: all, required: false}
+      categories:
+        evil: {key: LocalCategory.evil_count, matching: 'evil_roles()'}
+        merlin: {key: LocalCategory.merlin_count, matching: 'Roles([Role.merlin])'}
+bindings:
+  council:
+    kind: Player
+    definition: LocalCouncil
+    views:
+      population_reports: population
+      own: own_role
+      pair: percival_candidates
+      quests: reveal_quest.result
+      allies: evil_peers
+      suspects: merlin_suspects
+      claims: claim_identity.said
+      advice: advise_team.said

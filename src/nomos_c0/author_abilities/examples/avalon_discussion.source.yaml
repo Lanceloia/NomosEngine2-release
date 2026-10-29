@@ -1,0 +1,22 @@
+# Both discussion rounds use the same rules at every selected table size.
+schema: nomos.author.source
+use:
+  speak: {definition: Speak, context: match, views: {quoted_claims: claim_identity.said, quoted_advice: advise_team.said, quoted_alternatives: suggest_team.said, quoted_expressions: publish_discussion.said, quoted_ballots: reveal_approval.result}}
+  claim_identity: {definition: ClaimIdentity, context: match, views: {own_statements: claim_identity.said}}
+  advise_team: {definition: AdviseTeam, context: match, views: {heard: advise_team.said, identity_statements: claim_identity.said}}
+  suggest_team: {definition: SuggestTeam, context: match, views: {heard: advise_team.said, identity_statements: claim_identity.said}}
+  pass_speech: {definition: PassSpeech, context: match}
+  compare_teams: {definition: CompareTeams, context: match, views: {heard: advise_team.said}}
+  state_condition: {definition: StateCondition, context: match}
+  respond_statement: {definition: RespondStatement, context: match, views: {received: publish_discussion.said, heard: advise_team.said}}
+  redirect_discussion: {definition: RedirectDiscussion, context: match, views: {ballots: reveal_approval.result, identity_statements: claim_identity.said}}
+  propose_plan: {definition: ProposePlan, context: match}
+  decide_plan: {definition: DecidePlan, context: match, views: {received: publish_discussion.said}}
+  retract_statement: {definition: RetractStatement, context: match, views: {received: publish_discussion.said}}
+  state_opinion: {definition: StateOpinion, context: match}
+  ask_question: {definition: AskQuestion, context: match, views: {quoted_claims: claim_identity.said, quoted_advice: advise_team.said, quoted_alternatives: suggest_team.said, quoted_expressions: publish_discussion.said, quoted_ballots: reveal_approval.result}}
+  answer_question: {definition: AnswerQuestion, context: match, views: {quoted_claims: claim_identity.said, quoted_advice: advise_team.said, quoted_alternatives: suggest_team.said, quoted_expressions: publish_discussion.said, quoted_ballots: reveal_approval.result}}
+  publish_discussion: {definition: PublishDiscussion, context: match, after: [compare_teams, state_condition, respond_statement, redirect_discussion, propose_plan, decide_plan, retract_statement, state_opinion, ask_question, answer_question, speak]}
+  begin_discussion: {definition: BeginDiscussion, context: match, after: propose}
+  begin_review: {definition: BeginReview, context: match, after: reveal_quest}
+  advance_discussion: {definition: AdvanceDiscussion, context: match, after: [claim_identity, advise_team, suggest_team, pass_speech, compare_teams, state_condition, respond_statement, redirect_discussion, propose_plan, decide_plan, retract_statement, state_opinion, ask_question, answer_question, speak]}

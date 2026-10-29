@@ -1,0 +1,77 @@
+# Non-canon: a paid check creates a real tool; only the maker learns its identity.
+schema: nomos.author.lib
+values:
+  Count: {int: [0, 100]}
+  DieRoll: {int: [1, 20]}
+  WorkerRef: {ref: Worker}
+  Workers: {set: WorkerRef}
+  ToolRef: {ref: Tool}
+  Tools: {set: ToolRef}
+entities:
+  Worker:
+    kind: person
+    reference: public
+    fields: {energy: Count}
+    view: [id, energy]
+    public: [id]
+  Tool:
+    kind: object
+    reference: projected
+    fields: {charge: Count, ready: Bool}
+    view: [id, charge, ready]
+contexts:
+  Catalog:
+    parameters: {recipient: WorkerRef, tools: Tools}
+information:
+  InitialTools:
+    viewer: {worker: WorkerRef}
+    context: Catalog
+    trigger: opening
+    audience: worker == recipient
+    returns: Tools
+    value: tools
+    access: acquired
+disclosures:
+  MadeTools:
+    parameters: {recipient: WorkerRef, items: Tools}
+    sample: after
+    to: Workers([recipient])
+    returns: Tools
+    value: items
+    access: acquired
+abilities:
+  Forge:
+    actor: {maker: WorkerRef}
+    parameters: {threshold: DieRoll}
+    where: maker.energy > 0
+    cost: ['consume(maker.energy, 1)']
+    results: Bool
+    resolve:
+      draw:
+        rolled: {type: DieRoll, sides: '20'}
+      then:
+        when: rolled >= threshold
+        then:
+          form:
+            - type: Tool
+              fields: {charge: '2', ready: 'True'}
+          result: 'True'
+        else: {result: 'False'}
+  Use:
+    actor: {worker: WorkerRef}
+    inputs:
+      item: {type: ToolRef, choose: known(Tool)}
+    where: worker.energy > 0 and item.ready and item.charge > 0
+    cost: ['consume(worker.energy, 1)']
+    results: Count
+    resolve:
+      effects: ['set(item.charge, item.charge - 1)']
+      result: item.charge - 1
+reactions:
+  DiscoverProducts:
+    on: {definition: Forge, bind: {maker: maker, made: {formed: Tool}}}
+    when: 'True'
+    results: Bool
+    resolve:
+      result: size(made) > 0
+      deliver: {items: 'MadeTools(maker, made)'}

@@ -1,0 +1,6 @@
+schema: nomos.author.assets
+time: {at: 0}
+actors:
+  alice: {awake: true, count: 0, recognized: false}
+  bob: {awake: true, count: 10, recognized: false}
+objects: {}

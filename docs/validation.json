@@ -1,0 +1,73 @@
+{
+  "date": "2026-10-29",
+  "source_head": "8d6ce77f5cc5785cee7baee63421985054f78474",
+  "focused_tests": {
+    "command": "python -m pytest -q tests/showcase/test_self_save_demo.py",
+    "passed": 2,
+    "seconds": 9.78
+  },
+  "installed_wheel": {
+    "filename": "nomos_engine2-0.1.0-py3-none-any.whl",
+    "sha256": "9e018ae33ccab28852ec1407f507313979dc8c71e59688e2b44ed9046b6a20ca",
+    "python": "3.14.4 (main, Aug 20 2026, 10:41:58) [GCC 15.2.0]",
+    "dependencies": {
+      "nomos-engine2": "0.1.0",
+      "PyYAML": "6.0.3",
+      "pyrsistent": "0.20.0"
+    },
+    "isolated_python": true,
+    "loaded_engine_modules": 154,
+    "all_engine_modules_in_environment": true,
+    "pip_check": "No broken requirements found.",
+    "installation": "Wheel and declared dependency wheels installed into a fresh venv with --no-index after online PyPI TLS failed.",
+    "runtime_payload_matches_snapshot": true,
+    "matched_runtime_payload_files": 458
+  },
+  "runtime_demo": {
+    "command": "build/installed/bin/python -I showcase.py --output build/installed-demo",
+    "passed": true,
+    "cases": {
+      "allow": {
+        "stop_reason": "witness_completed",
+        "goal_status": "met",
+        "steps_completed": 6,
+        "witch": {
+          "alive": true,
+          "antidote": false,
+          "poison": true
+        },
+        "rejected_without_change": null
+      },
+      "deny": {
+        "stop_reason": "control_rejected",
+        "goal_status": "not_met_within_bound",
+        "steps_completed": 5,
+        "witch": {
+          "alive": true,
+          "antidote": true,
+          "poison": true
+        },
+        "rejected_without_change": true
+      },
+      "decline": {
+        "stop_reason": "witness_completed",
+        "goal_status": "met",
+        "steps_completed": 6,
+        "witch": {
+          "alive": false,
+          "antidote": true,
+          "poison": true
+        },
+        "rejected_without_change": null
+      }
+    },
+    "timing": {
+      "action_samples": 18,
+      "median_action_seconds": 0.0009837030083872378,
+      "max_action_seconds": 0.0020050450693815947,
+      "checks_seconds_excluding_imports": 3.5993237079819664
+    }
+  },
+  "verification": "Main-thread self-test; fixed self-save routes on Linux/WSL.",
+  "documentation_after_runtime_check": "README references to research-only documents retained as plain source paths."
+}

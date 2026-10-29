@@ -1,0 +1,274 @@
+# Interpret shared expressions in the listener's own view, not as role guarantees.
+schema: nomos.author.ai
+queries:
+  discussion_goals:
+    parameters: {mission: Mission, rejections: Count, required: Count, census: PopulationReports}
+    returns: DiscussionGoals
+    expression: DiscussionGoals(mission=mission, rejections=rejections, required=required, census=census)
+  discussion_perspective:
+    parameters: {person: PlayerRef, own: RoleReports, peers: PlayerReports, suspects: PlayerReports, pair: CandidateGroups, history: QuestHistory, mind: PlayerJudgment, order: PlayerOrder, goals: DiscussionGoals}
+    returns: DiscussionPerspective
+    expression: DiscussionPerspective(person=person, own=own, peers=peers, suspects=suspects, pair=pair, history=history, mind=mind, order=order, goals=goals)
+  stance_direction:
+    parameters: {stance: Stance}
+    returns: ExperienceScore
+    expression: 1 if stance == Stance.support else -1 if stance == Stance.oppose else 0
+  response_direction:
+    parameters: {attitude: ResponseAttitude}
+    returns: ExperienceScore
+    expression: 1 if attitude == ResponseAttitude.endorse else -1 if attitude == ResponseAttitude.challenge else 0
+  expression_fresh:
+    parameters: {content: DiscussionContent, heard: DiscussionStatements, speaker: PlayerRef, mission: Mission}
+    returns: Bool
+    expression: >
+      not exists(current_discussion(heard), s => s.mission == mission and s.key.speaker == speaker and
+      s.content == content and not is_retraction(s.content))
+  reply_influence:
+    parameters: {thought: PlayerThought, self: PlayerRef}
+    returns: ReplyInfluence
+    expression: >
+      match(thought, Deliberation(c) => match(c.statement.content,
+      Respond(r) => ReplyInfluence(target=r.response.target, value=response_direction(r.response.attitude))
+      if c.statement.key.speaker != self and c.statement.key.speaker != r.response.target.speaker else ReplyInfluence(target=None, value=0),
+      Compare() => ReplyInfluence(target=None, value=0), Conditional() => ReplyInfluence(target=None, value=0), Redirect() => ReplyInfluence(target=None, value=0), Plan() => ReplyInfluence(target=None, value=0), Participate() => ReplyInfluence(target=None, value=0), Opinion() => ReplyInfluence(target=None, value=0), Question() => ReplyInfluence(target=None, value=0), Answer() => ReplyInfluence(target=None, value=0), Retract() => ReplyInfluence(target=None, value=0)),
+      Identity() => ReplyInfluence(target=None, value=0), Advice() => ReplyInfluence(target=None, value=0), Task() => ReplyInfluence(target=None, value=0), Alternative() => ReplyInfluence(target=None, value=0), SafeTeam() => ReplyInfluence(target=None, value=0), Ballot() => ReplyInfluence(target=None, value=0), Forecast() => ReplyInfluence(target=None, value=0), IdentityOpinion() => ReplyInfluence(target=None, value=0))
+  current_reply_influences:
+    parameters: {mind: PlayerJudgment, self: PlayerRef}
+    returns: ReplyInfluences
+    expression: filter(map(mind.beliefs, b => reply_influence(b.proposition, self)), r => r.target is not None and r.value != 0)
+  target_reply_influence:
+    parameters: {replies: ReplyInfluences, target: StatementKey}
+    returns: ExperienceScore
+    expression: sum_by(replies, r => r.value if r.target == target else 0)
+  expression_weight:
+    parameters: {statement: DiscussionStatement, replies: ReplyInfluences}
+    returns: ExperienceScore
+    # Unverified preferences have unit influence; their grounds are checked separately.
+    expression: bounded_reliability(1 + target_reply_influence(replies, statement.key))
+  comparison_direction:
+    parameters: {comparison: TeamComparison, members: Players}
+    returns: ExperienceScore
+    expression: 1 if comparison.preferred.members == members else -1 if comparison.alternative.members == members else 0
+  content_direction:
+    parameters: {content: DiscussionContent, option: TeamOption}
+    returns: ExperienceScore
+    expression: >
+      match(content, Compare(c) => comparison_direction(c.comparison, option.members)
+      if c.comparison.preferred.mission == option.mission else 0,
+      Conditional(c) => stance_direction(position_stance(c.position, option)), Respond() => 0, Redirect() => 0, Plan() => 0, Participate() => 0, Opinion() => 0, Question() => 0, Answer() => 0, Retract() => 0)
+  expresses_position:
+    parameters: {content: DiscussionContent}
+    returns: Bool
+    expression: match(content, Compare() => True, Conditional() => True, Respond() => False, Redirect() => False, Plan() => False, Participate() => False, Opinion() => False, Question() => False, Answer() => False, Retract() => False)
+  deliberation_belief_signal:
+    parameters: {thought: PlayerThought, option: TeamOption, replies: ReplyInfluences, self: PlayerRef, results: QuestHistory, census: PopulationReports}
+    returns: SpeakerInfluence
+    expression: >
+      match(thought, Deliberation(c) => SpeakerInfluence(speaker=c.statement.key.speaker,
+      value=expression_strength(c.statement.content, results, census) * expression_weight(c.statement, replies) * content_direction(c.statement.content, option)
+      if c.statement.mission == option.mission and c.statement.key.speaker != self and expresses_position(c.statement.content) else 0),
+      Identity() => SpeakerInfluence(speaker=self, value=0), Advice() => SpeakerInfluence(speaker=self, value=0), Task() => SpeakerInfluence(speaker=self, value=0), Alternative() => SpeakerInfluence(speaker=self, value=0), SafeTeam() => SpeakerInfluence(speaker=self, value=0), Ballot() => SpeakerInfluence(speaker=self, value=0), Forecast() => SpeakerInfluence(speaker=self, value=0), IdentityOpinion() => SpeakerInfluence(speaker=self, value=0))
+  speaker_position_balance:
+    parameters: {signals: SpeakerInfluences, speaker: PlayerRef}
+    returns: ExperienceScore
+    # One speaker contributes its strongest current argument in each direction.
+    expression: evidence_peak(max_by(map(signals, s => s.value if s.speaker == speaker and s.value > 0 else 0), v => v)) + evidence_peak(min_by(map(signals, s => s.value if s.speaker == speaker and s.value < 0 else 0), v => v))
+  balanced_positions:
+    parameters: {signals: SpeakerInfluences}
+    returns: ExperienceScore
+    expression: sum_by(distinct(map(signals, s => s.speaker)), p => speaker_position_balance(signals, p))
+  weighted_positions:
+    parameters: {mind: PlayerJudgment, option: TeamOption, replies: ReplyInfluences, self: PlayerRef, results: QuestHistory, census: PopulationReports}
+    returns: ExperienceScore
+    expression: balanced_positions(filter(map(mind.beliefs, b => deliberation_belief_signal(b.proposition, option, replies, self, results, census)), s => s.value != 0))
+  deliberation_signal:
+    parameters: {mind: PlayerJudgment, members: Players, mission: Mission, self: PlayerRef, results: QuestHistory, census: PopulationReports}
+    returns: ExperienceScore
+    expression: weighted_positions(mind, TeamOption(mission=mission, members=members), current_reply_influences(mind, self), self, results, census)
+  expression_strength:
+    parameters: {content: DiscussionContent, results: QuestHistory, census: PopulationReports}
+    returns: ExperienceScore
+    expression: match(content, Compare(c) => bounded_reliability(2 + comparison_argument_value(c.comparison.grounds, c.comparison.preferred.members, results, census)), Conditional() => 2, Respond() => 0, Redirect() => 0, Plan() => 0, Participate() => 0, Opinion() => 0, Question() => 0, Answer() => 0, Retract() => 0)
+  comparison_content:
+    parameters: {preferred: Players, alternative: Players, grounds: TeamArguments, mission: Mission}
+    returns: DiscussionContent
+    expression: DiscussionContent.Compare(comparison=TeamComparison(preferred=TeamOption(mission=mission, members=preferred), alternative=TeamOption(mission=mission, members=alternative), grounds=grounds))
+  condition_content:
+    parameters: {conditions: TeamConditions, satisfied: Stance, otherwise: Stance, mission: Mission}
+    returns: DiscussionContent
+    expression: DiscussionContent.Conditional(position=ConditionalPosition(mission=mission, require_all=conditions, satisfied=satisfied, otherwise=otherwise))
+  member_conditions:
+    parameters: {retained: Players, excluded: Players}
+    returns: TeamConditions
+    expression: TeamConditions([TeamCondition.Contains(members=retained), TeamCondition.Excludes(members=excluded)])
+  comparison_ground_sets:
+    parameters: {history: QuestHistory, members: Players, heard: TeamSpeeches, epoch: Epoch, speaker: PlayerRef}
+    returns: ArgumentSets
+    expression: distinct(map(speech_arguments(history, members, heard, epoch, speaker, True), a => TeamArguments([a])))
+  heard_team_options:
+    parameters: {heard: TeamSuggestions, epoch: Epoch, width: Count}
+    returns: PlayerSets
+    expression: distinct(map(filter(heard, s => s.epoch == epoch and size(s.members) == width), s => s.members))
+  noncurrent_heard_options:
+    parameters: {current: Players, heard: TeamSuggestions, epoch: Epoch}
+    returns: PlayerSets
+    expression: filter(heard_team_options(heard, epoch, size(current)), group => group != current)
+  retained_options:
+    parameters: {history: QuestHistory, members: Players, self: PlayerRef}
+    returns: PlayerSets
+    expression: >
+      filter(union(PlayerSets([difference(members, Players([self]))]), distinct(map(filter(history, q => q.fails == 0), q => q.team))),
+      group => size(group) > 0 and self not in group and size(group) <= size(members))
+  condition_pair_options:
+    parameters: {current: Players, heard: TeamSuggestions, epoch: Epoch}
+    returns: PlayerSets
+    expression: filter(union(PlayerSets([current]), heard_team_options(heard, epoch, size(current))), group => size(group) == 2)
+  condition_excluded_options:
+    parameters: {current: Players, order: PlayerOrder, heard: TeamSuggestions, epoch: Epoch}
+    returns: PlayerSets
+    expression: >
+      union(PlayerSets([Players([])]), union(distinct(map(order, p => Players([p]))), condition_pair_options(current, heard, epoch)))
+  candidate_conditions:
+    parameters: {history: QuestHistory, current: Players, self: PlayerRef, order: PlayerOrder, heard: TeamSuggestions, epoch: Epoch}
+    returns: ConditionSets
+    # Public groups and linear-size samples, rather than all subsets of the roster.
+    expression: >
+      union(union(distinct(map(union(union(retained_options(history, current, self), PlayerSets([Players([self])])),
+      condition_pair_options(current, heard, epoch)), group => member_conditions(group, Players([])))),
+      distinct(map(retained_options(history, current, self), group => member_conditions(group, Players([self]))))),
+      union(distinct(map(filter(condition_excluded_options(current, order, heard, epoch), group => size(group) > 0),
+      group => member_conditions(Players([]), group))),
+      distinct(map(condition_pair_options(current, heard, epoch), group =>
+      TeamConditions([TeamCondition.CountRange(members=group, minimum=1, maximum=1)])))))
+  condition_otherwise_options:
+    parameters: {conditions: TeamConditions, order: PlayerOrder, self: PlayerRef}
+    returns: Stances
+    expression: >
+      Stances([Stance.oppose]) if exists(conditions, c => match(c, CountRange() => True, Contains() => False, Excludes() => False)) else
+      Stances([Stance.undecided]) if size(condition_members(conditions, order, True)) > 0 and
+      condition_members(conditions, order, False) == Players([self]) else
+      Stances([Stance.support, Stance.oppose]) if size(condition_members(conditions, order, True)) == 0 or
+      size(condition_members(conditions, order, True)) == 2 else Stances([Stance.oppose])
+  reply_ground_sets:
+    parameters: {attitude: ResponseAttitude, history: QuestHistory, members: Players, heard: TeamSpeeches, epoch: Epoch, speaker: PlayerRef, census: PopulationReports}
+    returns: ArgumentSets
+    # Grounds remain contextual citations; they do not certify the quoted opinion.
+    expression: >
+      union(ArgumentSets([TeamArguments([])]), distinct(map(filter(speech_arguments(history, members, heard, epoch, speaker, True),
+      a => match(a, SuccessCore() => True,
+      EvilExhausted() => argument_verdict(a, members, True, history, census) == ArgumentVerdict.verified,
+      Judgment() => False, TestTeam() => False, FailureOverlap() => False, TrustSpeaker() => False,
+      ClaimAssessment() => False, ClaimConflict() => False)), a => TeamArguments([a]))))
+      if attitude != ResponseAttitude.undecided
+      else ArgumentSets([TeamArguments([])])
+  grounded_reply_targets:
+    parameters: {heard: DiscussionStatements, mission: Mission, self: PlayerRef, grounds: TeamArguments, attitude: ResponseAttitude, members: Players, kind: DiscussionKind}
+    returns: StatementKeys
+    expression: >
+      distinct(map(filter(current_discussion(heard), s => discussion_reference_allowed(s, mission, kind) and s.key.speaker != self and
+      match(s.content, Compare() => True, Conditional() => True, Redirect() => True, Opinion() => True,
+      Respond() => False, Plan() => False, Participate() => False, Question() => False, Answer() => False, Retract() => False) and
+      (size(grounds) == 0 or reply_ground_relevant(s, attitude, TeamOption(mission=mission, members=members)))), s => s.key))
+  reply_ground_relevant:
+    parameters: {statement: MaybeDiscussionStatement, attitude: ResponseAttitude, option: TeamOption}
+    returns: Bool
+    expression: content_direction(statement.content, option) * response_direction(attitude) > 0 if statement is not None else False
+  reply_targets:
+    parameters: {heard: DiscussionStatements, mission: Mission, self: PlayerRef}
+    returns: StatementKeys
+    expression: >
+      distinct(map(filter(current_discussion(heard), s => s.mission == mission and s.key.speaker != self and
+      match(s.content, Compare() => True, Conditional() => True, Respond() => False, Redirect() => True,
+      Plan() => False, Participate() => False, Opinion() => False, Question() => False, Answer() => False, Retract() => False)), s => s.key))
+  discussion_preference:
+    parameters: {members: Players, perspective: DiscussionPerspective}
+    returns: ExperienceScore
+    expression: >
+      ((-200 if evil_role(current_role(perspective.own)) else 200) if perspective.goals.rejections >= 4 else
+      resolved_team_preference(discussion_capacity(members, perspective), members, perspective)) if discussion_ready(perspective) else 0
+  discussion_ready:
+    parameters: {perspective: DiscussionPerspective}
+    returns: Bool
+    expression: perspective.mind.complete and perspective.mind.local.complete and perspective.mind.local.status == JudgmentAnalysisStatus.complete and size(perspective.own) > 0 and size(perspective.goals.census) > 0
+  discussion_capacity:
+    parameters: {members: Players, perspective: DiscussionPerspective}
+    returns: BallotGoalBasis
+    expression: task_capacity_basis(team_evil_interval(members, perspective.person, perspective.own, perspective.peers, perspective.suspects, perspective.pair, perspective.history, perspective.goals.census), perspective.goals.required) if discussion_ready(perspective) else BallotGoalBasis.pending
+  resolved_team_preference:
+    parameters: {basis: BallotGoalBasis, members: Players, perspective: DiscussionPerspective}
+    returns: ExperienceScore
+    # Determined task capacity overrides weak identity impressions, not world legality.
+    expression: >
+      (-10 if evil_role(current_role(perspective.own)) else 35 + (3 if perspective.person in members else 0)) if basis == BallotGoalBasis.safe else
+      (50 if evil_role(current_role(perspective.own)) else -65 + (3 if perspective.person in members else 0)) if basis == BallotGoalBasis.risk else
+      team_preference(members, perspective.person, perspective.own, perspective.peers, perspective.suspects, perspective.pair, perspective.history, perspective.mind) + public_team_signal(members, perspective)
+      if basis == BallotGoalBasis.unknown else 0
+  rotate_members:
+    parameters: {members: PlayerOrder, first: PlayerRef}
+    returns: PlayerOrder
+    expression: concat(drop(members, index_of(members, first)), take(members, index_of(members, first)))
+  filled_condition_examples:
+    parameters: {retained: Players, fillers: PlayerOrder, width: Count}
+    returns: PlayerSets
+    # At most one cyclic completion per remaining person; not an exhaustive planner.
+    expression: >
+      (distinct(map(fillers, p => union(retained, distinct(take(rotate_members(fillers, p), width - size(retained))))))
+      if size(retained) < width else PlayerSets([retained]))
+      if size(retained) <= width and size(retained) + size(fillers) >= width else PlayerSets([])
+  condition_examples:
+    parameters: {retained: Players, excluded: Players, order: PlayerOrder, width: Count}
+    returns: PlayerSets
+    expression: >
+      filled_condition_examples(retained, filter(order, p => p not in retained and p not in excluded), width)
+      if not exists(retained, p => p in excluded) and forall(retained, p => p in distinct(order)) else PlayerSets([])
+  condition_value:
+    parameters: {examples: PlayerSets, satisfied: Stance, perspective: DiscussionPerspective}
+    returns: ExperienceScore
+    expression: stance_direction(satisfied) * (sum_by(examples, group => discussion_preference(group, perspective)) // size(examples)) if size(examples) > 0 else 0
+  condition_policy_value:
+    parameters: {conditions: TeamConditions, satisfied: Stance, otherwise: Stance, perspective: DiscussionPerspective, width: Count}
+    returns: ExperienceScore
+    expression: >
+      condition_value(position_examples(conditions, perspective.order, width, True), satisfied, perspective) +
+      condition_value(position_examples(conditions, perspective.order, width, False), otherwise, perspective)
+  position_examples:
+    parameters: {conditions: TeamConditions, order: PlayerOrder, width: Count, holds: Bool}
+    returns: PlayerSets
+    # A finite policy sample; an empty sample is not proof that a clause is impossible.
+    expression: >
+      filter(condition_examples(condition_members(conditions, order, True) if holds else Players([]),
+      condition_members(conditions, order, False) if holds else Players([]), order, width),
+      group => (condition_result(conditions, TeamOption(mission=1, members=group)) == ConditionResult.holds) == holds)
+  condition_members:
+    parameters: {conditions: TeamConditions, order: PlayerOrder, included: Bool}
+    returns: Players
+    expression: distinct(filter(order, p => exists(conditions, c => match(c, Contains(r) => included and p in r.members, Excludes(r) => not included and p in r.members, CountRange() => False))))
+  local_content_preference:
+    parameters: {content: DiscussionContent, perspective: DiscussionPerspective, width: Count}
+    returns: ExperienceScore
+    expression: >
+      match(content,
+      Compare(c) => (discussion_preference(c.comparison.preferred.members, perspective) - discussion_preference(c.comparison.alternative.members, perspective)) if c.comparison.preferred.mission == perspective.goals.mission else 0,
+      Conditional(c) => condition_policy_value(c.position.require_all, c.position.satisfied, c.position.otherwise, perspective, width) if c.position.mission == perspective.goals.mission else 0,
+      Respond() => 0, Redirect() => 0, Plan() => 0, Participate() => 0, Opinion() => 0, Question() => 0, Answer() => 0, Retract() => 0)
+  reply_value_local:
+    parameters: {statement: MaybeDiscussionStatement, attitude: ResponseAttitude, perspective: DiscussionPerspective, width: Count}
+    returns: ExperienceScore
+    expression: >
+      reply_preference_value(local_content_preference(statement.content, perspective, width), attitude) if statement is not None else 0
+  reply_preference_value:
+    parameters: {preference: ExperienceScore, attitude: ResponseAttitude}
+    returns: ExperienceScore
+    expression: >
+      (3 if attitude == ResponseAttitude.undecided else 0) if preference == 0 else
+      4 if response_direction(attitude) == goal_direction(preference) else
+      -4 if attitude != ResponseAttitude.undecided else 1
+  redirect_value:
+    parameters: {topic: AttentionTopic, own: RoleReports, risk: Bool}
+    returns: ExperienceScore
+    expression: (4 if current_role(own) == Role.merlin and risk else 0) + match(topic, CurrentProcess() => 0, IdentityClaim() => 1, PublicBallot() => 1)
+  comparison_argument_value:
+    parameters: {grounds: TeamArguments, members: Players, results: QuestHistory, census: PopulationReports}
+    returns: ExperienceScore
+    # Repeated grounds are a Set; an opinion adds no independent identity guarantee.
+    expression: sum_by(grounds, a => argument_value(a, members, True, results, census))

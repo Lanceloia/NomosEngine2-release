@@ -1,0 +1,20 @@
+# Non-canon probe: construct one atomic potion Action through its dependent inputs.
+schema: nomos.author.opportunity_planning
+name: WitchConditionalPotions
+actor: {person: PlayerRef}
+local:
+  type: Players
+  views:
+    roster: {projection: Players, channel: roster}
+  value: difference(projected(roster), Players([person]))
+actions:
+  potions:
+    inputs:
+      save: {type: Bool, choose: 'Flags([False, True])'}
+      poison_target:
+        type: Players
+        choose:
+          subset: local
+          min: 0
+          max: '0 if save else 1'
+    where: 'True'

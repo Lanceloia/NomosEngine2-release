@@ -1,0 +1,101 @@
+schema: nomos.author.lib
+values:
+  Count: {int: [0, null]}
+  Identifier: {int: [1, 1000]}
+  Tier: {int: [1, 3]}
+  Tiers: {set: Tier}
+  Color: {enum: [white, blue, green, red, black]}
+  Colors: {set: Color}
+  Phase: {enum: [setup, play, cleanup, nobles, end_turn, finished]}
+  Move: {enum: [take_different, take_pair, reserve_faceup, reserve_blind, purchase, return_excess]}
+  Gems: {record: {white: Count, blue: Count, green: Count, red: Count, black: Count, gold: Count}}
+  Card: {record: {id: Identifier, tier: Tier, bonus: Color, points: Count, cost: Gems}}
+  MaybeCard: {optional: Card}
+  Cards: {set: Card}
+  CardOrder: {sequence: Card}
+  Noble: {record: {id: Identifier, points: Count, requirement: Gems}}
+  Nobles: {set: Noble}
+  NobleOrder: {sequence: Noble}
+  Decks: {record: {low: CardOrder, middle: CardOrder, high: CardOrder}}
+  DeckCounts: {record: {low: Count, middle: Count, high: Count}}
+  Change: {record: {kind: Move, tier: Tier, refill: Bool}}
+  PlayerRef: {ref: Player}
+  Players: {set: PlayerRef}
+  PlayerOrder: {sequence: PlayerRef}
+  Standing: {record: {player: PlayerRef, points: Count, purchased: Count, turns: Count}}
+  Standings: {set: Standing}
+  ReserveCount: {record: {player: PlayerRef, count: Count}}
+  ReserveCountsView: {set: ReserveCount}
+  PublicPlayerBoard: {record: {player: PlayerRef, points: Count, tokens: Gems, discounts: Gems, reserved: Count}}
+  PublicPlayerBoards: {set: PublicPlayerBoard}
+  Summary: {record: {winners: Players, standings: Standings}}
+  Turn: {record: {player: PlayerRef, number: Count, kind: Move, points: Count}}
+  TurnHistory: {sequence: Turn}
+entities:
+  Player:
+    kind: person
+    reference: public
+    fields: {tokens: Gems, purchased: Cards, reserved: Cards, nobles: Nobles, turns: Count}
+    view: [tokens, purchased, reserved, nobles, turns]
+    public: [tokens, purchased, nobles, turns]
+contexts:
+  Match:
+    parameters: {players: Players, order: PlayerOrder, gem_colors: Colors, tiers: Tiers, catalog: CardOrder, noble_catalog: NobleOrder, token_limit: Count, reserve_limit: Count, target_score: Count}
+    state:
+      fields: {phase: Phase, turn_index: Count, bank: Gems, decks: Decks, market: Cards, visitors: Nobles, final_round: Bool, last_move: Move, history: TurnHistory}
+      public: [phase, turn_index, bank, market, visitors, final_round, history]
+    require_opening: >
+      size(players) >= 2 and size(players) <= 4 and size(order) == size(players) and
+      forall(players, p => sum_by(order, q => 1 if q == p else 0) == 1) and
+      size(gem_colors) == 5 and size(tiers) == 3 and token_limit > 0 and reserve_limit > 0 and target_score > 0 and
+      forall(catalog, c => c.cost.gold == 0 and sum_by(catalog, q => 1 if q.id == c.id else 0) == 1) and
+      forall(tiers, t => size(filter(catalog, c => c.tier == t)) >= 4) and
+      size(noble_catalog) >= size(players) + 1 and
+      forall(noble_catalog, n => n.points == 3 and n.requirement.gold == 0 and sum_by(noble_catalog, q => 1 if q.id == n.id else 0) == 1) and
+      phase == Phase.setup and turn_index == 0 and not final_round and total(bank) == 0 and
+      size(market) == 0 and size(visitors) == 0 and size(history) == 0 and
+      size(decks.low) == 0 and size(decks.middle) == 0 and size(decks.high) == 0 and
+      forall(players, p => total(p.tokens) == 0 and size(p.purchased) == 0 and size(p.reserved) == 0 and size(p.nobles) == 0 and p.turns == 0)
+projections:
+  PublicResources:
+    context: Match
+    viewer: {player: PlayerRef}
+    audience: player in players
+    returns: PublicPlayerBoards
+    value: map(players, p => PublicPlayerBoard(player=p, points=score(p), tokens=p.tokens, discounts=bonuses(p), reserved=size(p.reserved)))
+  OwnBonuses:
+    context: Match
+    viewer: {player: PlayerRef}
+    audience: player in players
+    returns: Gems
+    value: bonuses(player)
+  CurrentPlayer:
+    context: Match
+    viewer: {player: PlayerRef}
+    audience: player in players
+    returns: PlayerRef
+    value: at(order, turn_index)
+  TargetScore:
+    context: Match
+    viewer: {player: PlayerRef}
+    audience: player in players
+    returns: Count
+    value: target_score
+  DeckSizes:
+    context: Match
+    viewer: {player: PlayerRef}
+    audience: player in players
+    returns: DeckCounts
+    value: DeckCounts(low=size(decks.low), middle=size(decks.middle), high=size(decks.high))
+  PublicStandings:
+    context: Match
+    viewer: {player: PlayerRef}
+    audience: player in players
+    returns: Standings
+    value: standings(players)
+  ReserveCounts:
+    context: Match
+    viewer: {player: PlayerRef}
+    audience: player in players
+    returns: ReserveCountsView
+    value: map(players, p => ReserveCount(player=p, count=size(p.reserved)))

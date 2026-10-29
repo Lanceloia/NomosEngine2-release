@@ -1,0 +1,60 @@
+# Non-canon scheduling calibration: speeds, resources and time costs are independent.
+schema: nomos.author.lib
+values:
+  Count: {int: [0, 100]}
+  Energy: {int: [0, 10]}
+  Speed: {int: [0, 5]}
+  ActionValue: {int: [1, 1000]}
+  WorkerRef: {ref: Worker}
+  Workers: {set: WorkerRef}
+entities:
+  Worker:
+    kind: person
+    reference: public
+    fields: {awake: Bool, speed: Speed, energy: Energy, finished: Count}
+    view: [id, awake, speed, energy, finished]
+    public: [id]
+schedules:
+  BySpeed:
+    actor: {worker: WorkerRef}
+    parameters: {initial: ActionValue}
+    speed: worker.speed
+    eligible: worker.awake
+    initial: initial
+contexts:
+  Workshop:
+    parameters: {people: Workers}
+abilities:
+  Work:
+    actor: {worker: WorkerRef}
+    parameters: {effort: ActionValue}
+    where: worker.awake and worker.energy > 0
+    time_cost: effort
+    cost: ['consume(worker.energy, 1)']
+    results: Count
+    resolve:
+      effects: ['set(worker.finished, worker.finished + 1)']
+      result: worker.finished + 1
+  Rest:
+    actor: {worker: WorkerRef}
+    where: worker.awake and worker.energy < 10
+    time_cost: '2'
+    results: Bool
+    resolve: {effects: ['set(worker.energy, worker.energy + 1)'], result: 'True'}
+  Sleep:
+    actor: {worker: WorkerRef}
+    where: worker.awake
+    time_cost: '6'
+    results: Bool
+    resolve: {effects: ['set(worker.awake, False)', 'set(worker.speed, 0)'], result: 'True'}
+periodic:
+  WorkshopPulse:
+    context: Workshop
+    interval: '3'
+    results: Bool
+    resolve:
+      effects:
+        - for: worker
+          in: 'filter(people, p => p.awake and p.speed < 5)'
+          effects: ['set(worker.speed, worker.speed + 1)']
+      result: 'True'

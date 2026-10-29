@@ -1,0 +1,5 @@
+schema: nomos.author.assets
+actors: {a: {}, b: {}, c: {}}
+objects: {}
+contexts:
+  workshop: {completed: [], last_layout: {rows: [], reserve: 0}}

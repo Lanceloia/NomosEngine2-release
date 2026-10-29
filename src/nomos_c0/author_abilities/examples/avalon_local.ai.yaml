@@ -1,0 +1,10 @@
+# Temperament is independent of the secret role allocation and world opening.
+schema: nomos.author.ai
+imports: [avalon_policy.ai.yaml]
+control:
+  council:
+    kind: Player
+    definition: LocalChoice
+    views: {mind: council, identity: own_role}
+    tunable: [style]
+    with: {style: {label: 均衡派, risk: 100, concealment: 100, speech: 100, trust: 100}}

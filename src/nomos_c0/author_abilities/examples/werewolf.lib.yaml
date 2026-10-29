@@ -1,0 +1,308 @@
+# Nomos Werewolf core v1: every choice is an actual Actor Action.
+schema: nomos.author.lib
+values:
+  Role: {enum: [wolf, seer, witch, villager]}
+  Roles: {sequence: Role}
+  RoleReports: {sequence: Role}
+  Side: {enum: [villagers, wolves, draw]}
+  Phase: {enum: [day, night, witch, dawn]}
+  Round: {int: [0, null]}
+  DayPolicy: {enum: [strict_majority, unique_plurality]}
+  WolfPolicy: {enum: [unanimous, strict_majority]}
+  PlayerRef: {ref: Player}
+  Players: {set: PlayerRef}
+  PlayerReports: {sequence: Players}
+  Flags: {set: Bool}
+  Inspection: {record: {round: Round, subject: PlayerRef, side: Side}}
+  Inspections: {sequence: Inspection}
+  NightNotice: {record: {round: Round, victim: Players}}
+  NightNotices: {sequence: NightNotice}
+  PublicVote: {record: {voter: PlayerRef, target: Players}}
+  PublicVotes: {set: PublicVote}
+  WolfPlan: {record: {voter: PlayerRef, target: Players, locked: Bool}}
+  WolfPlans: {set: WolfPlan}
+  DayResult: {record: {round: Round, votes: PublicVotes, executed: Players}}
+  DayHistory: {sequence: DayResult}
+  NightResult: {record: {round: Round, dead: Players}}
+  NightHistory: {sequence: NightResult}
+  FinalIdentity: {record: {player: PlayerRef, role: Role, alive: Bool}}
+  FinalIdentities: {set: FinalIdentity}
+  FinalResult: {record: {winner: Side, identities: FinalIdentities}}
+entities:
+  Player:
+    kind: person
+    reference: public
+    fields:
+      role: Role
+      alive: Bool
+      day_round: Round
+      day_target: Players
+      wolf_round: Round
+      wolf_choice_round: Round
+      wolf_target: Players
+      seer_round: Round
+      witch_round: Round
+      antidote: Bool
+      poison: Bool
+    view: [alive, day_round, day_target, wolf_round, wolf_choice_round, wolf_target, seer_round, witch_round, antidote, poison]
+    public: [alive]
+queries:
+  living:
+    parameters: {players: Players}
+    returns: Players
+    expression: filter(players, p => p.alive)
+  wolves:
+    parameters: {players: Players}
+    returns: Players
+    expression: filter(players, p => p.alive and p.role == Role.wolf)
+  cast_consistent:
+    parameters: {players: Players, cast: Roles}
+    returns: Bool
+    expression: >
+      size(players) >= 3 and size(players) <= 10 and size(players) == size(cast) and
+      forall(players, p => size(filter(players, q => q.role == p.role)) == sum_by(cast, r => 1 if r == p.role else 0)) and
+      exists(cast, r => r == Role.wolf) and exists(cast, r => r != Role.wolf) and
+      sum_by(cast, r => 1 if r == Role.seer else 0) <= 1 and
+      sum_by(cast, r => 1 if r == Role.witch else 0) <= 1
+  votes_for:
+    parameters: {players: Players, target: PlayerRef}
+    returns: Round
+    expression: sum_by(living(players), p => 1 if target in p.day_target else 0)
+  condemned:
+    parameters: {players: Players, policy: DayPolicy}
+    returns: Players
+    expression: >
+      filter(living(players), target =>
+      votes_for(players, target) * 2 > size(living(players)) if policy == DayPolicy.strict_majority else
+      forall(living(players), other => target == other or votes_for(players, target) > votes_for(players, other)))
+  wolf_choice:
+    parameters: {players: Players, policy: WolfPolicy}
+    returns: Players
+    expression: >
+      filter(living(players), target =>
+      size(wolves(players)) > 0 and
+      (forall(wolves(players), w => target in w.wolf_target) if policy == WolfPolicy.unanimous else
+      sum_by(wolves(players), w => 1 if target in w.wolf_target else 0) * 2 > size(wolves(players))))
+  night_complete:
+    parameters: {players: Players, round: Round}
+    returns: Bool
+    expression: >
+      forall(wolves(players), p => p.wolf_round == round) and
+      forall(living(players), p => p.role != Role.seer or p.seer_round == round)
+  doomed:
+    parameters: {players: Players, attacked: Players, poisoned: Players, saved: Bool}
+    returns: Players
+    expression: filter(living(players), p => (p in attacked and not saved) or p in poisoned)
+  can_save:
+    parameters: {player: PlayerRef, notices: NightNotices, round: Round, self_save: Bool}
+    returns: Bool
+    expression: >
+      player.antidote and exists(notices, n => n.round == round and size(n.victim) > 0 and (self_save or player not in n.victim))
+contexts:
+  Match:
+    parameters: {players: Players, public_cast: Roles, day_policy: DayPolicy, wolf_policy: WolfPolicy, allow_self_save: Bool, allow_two_potions: Bool}
+    state:
+      fields: {phase: Phase, round: Round, attacked: Players, poisoned: Players, saved: Bool, day_history: DayHistory, night_history: NightHistory}
+      public: [phase, round, day_history, night_history]
+    require_opening: >
+      cast_consistent(players, public_cast) and phase == Phase.night and round == 1 and
+      size(attacked) == 0 and size(poisoned) == 0 and not saved and size(day_history) == 0 and size(night_history) == 0 and
+      forall(players, p => p.alive and p.day_round == 0 and p.wolf_round == 0 and p.wolf_choice_round == 0 and p.seer_round == 0 and p.witch_round == 0 and
+      size(p.day_target) == 0 and size(p.wolf_target) == 0 and (p.antidote and p.poison if p.role == Role.witch else not p.antidote and not p.poison))
+information:
+  OwnRole:
+    context: Match
+    viewer: {player: PlayerRef}
+    trigger: opening
+    audience: player in players
+    returns: Role
+    value: player.role
+    access: acquired
+  WolfPeers:
+    context: Match
+    viewer: {player: PlayerRef}
+    trigger: opening
+    audience: player in players and player.role == Role.wolf
+    returns: Players
+    value: filter(players, p => p != player and p.role == Role.wolf)
+    access: acquired
+projections:
+  Roster:
+    context: Match
+    viewer: {player: PlayerRef}
+    audience: player in players
+    returns: Players
+    value: players
+  LivingPlayers:
+    context: Match
+    viewer: {player: PlayerRef}
+    audience: player in players
+    returns: Players
+    value: filter(players, p => p.alive)
+  DeadPlayers:
+    context: Match
+    viewer: {player: PlayerRef}
+    audience: player in players
+    returns: Players
+    value: filter(players, p => not p.alive)
+  CurrentWolfPlans:
+    context: Match
+    viewer: {player: PlayerRef}
+    audience: player in players and player.alive and player.role == Role.wolf and phase == Phase.night
+    returns: WolfPlans
+    value: >
+      map(wolves(players), p => WolfPlan(voter=p,
+      target=p.wolf_target if p.wolf_choice_round == round else Players([]),
+      locked=p.wolf_round == round))
+disclosures:
+  InspectionResult:
+    parameters: {recipient: PlayerRef, subject: PlayerRef, round: Round}
+    sample: before
+    to: Players([recipient])
+    returns: Inspection
+    value: Inspection(round=round, subject=subject, side=Side.wolves if subject.role == Role.wolf else Side.villagers)
+    access: acquired
+  NotifyWitch:
+    parameters: {players: Players, round: Round, policy: WolfPolicy}
+    sample: after
+    to: filter(players, p => p.alive and p.role == Role.witch)
+    returns: NightNotice
+    value: NightNotice(round=round, victim=wolf_choice(players, policy))
+    access: acquired
+abilities:
+  DayVote:
+    context: Match
+    epoch: round
+    actor: {player: PlayerRef}
+    inputs: {target: {type: PlayerRef, choose: 'filter(players, p => p.alive)'}}
+    where: phase == Phase.day and player.alive and player.day_round != round
+    results: Unit
+    resolve:
+      result: None
+      effects: ['set(player.day_target, Players([target]))', 'set(player.day_round, round)']
+  WolfVote:
+    context: Match
+    epoch: round
+    actor: {player: PlayerRef}
+    views: {identity: {reports: RoleReports}, allies: {reports: PlayerReports}, plans: {projection: WolfPlans}}
+    inputs: {target: {type: PlayerRef, choose: 'filter(players, p => p.alive and p != player)'}}
+    where: phase == Phase.night and player.alive and player.wolf_round != round and exists(reports(identity), role => role == Role.wolf)
+    results: Unit
+    resolve:
+      result: None
+      effects: ['set(player.wolf_target, Players([target]))', 'set(player.wolf_choice_round, round)']
+  LockWolfVote:
+    context: Match
+    epoch: round
+    actor: {player: PlayerRef}
+    views: {identity: {reports: RoleReports}, plans: {projection: WolfPlans}}
+    where: >
+      phase == Phase.night and player.alive and player.wolf_round != round and
+      player.wolf_choice_round == round and size(player.wolf_target) == 1 and
+      exists(reports(identity), role => role == Role.wolf)
+    results: Unit
+    resolve:
+      result: None
+      effects: ['set(player.wolf_round, round)']
+  Inspect:
+    context: Match
+    epoch: round
+    actor: {player: PlayerRef}
+    views: {identity: {reports: RoleReports}}
+    inputs: {target: {type: PlayerRef, choose: 'filter(players, p => p.alive and p != player)'}}
+    where: phase == Phase.night and player.alive and player.seer_round != round and exists(reports(identity), role => role == Role.seer)
+    results: Unit
+    resolve:
+      result: None
+      effects: ['set(player.seer_round, round)']
+      deliver: {sighting: 'InspectionResult(player, target, round)'}
+  SkipInspection:
+    context: Match
+    epoch: round
+    actor: {player: PlayerRef}
+    views: {identity: {reports: RoleReports}}
+    where: phase == Phase.night and player.alive and player.seer_round != round and exists(reports(identity), role => role == Role.seer)
+    results: Unit
+    resolve:
+      result: None
+      effects: ['set(player.seer_round, round)']
+  ChoosePotions:
+    context: Match
+    epoch: round
+    actor: {player: PlayerRef}
+    views: {identity: {reports: RoleReports}, notices: {reports: NightNotices}}
+    inputs:
+      save: {type: Bool, choose: 'Flags([True, False]) if can_save(player, reports(notices), round, allow_self_save) else Flags([False])'}
+      poison_target:
+        type: Players
+        choose:
+          subset: filter(players, p => p.alive and p != player)
+          min: 0
+          max: 1 if player.poison and (allow_two_potions or not save) else 0
+    where: phase == Phase.witch and player.alive and player.witch_round != round and exists(reports(identity), role => role == Role.witch) and exists(reports(notices), n => n.round == round)
+    results: Unit
+    resolve:
+      result: None
+      effects:
+        - set(player.witch_round, round)
+        - set(player.antidote, player.antidote and not save)
+        - set(player.poison, player.poison and size(poison_target) == 0)
+        - set(saved, save)
+        - set(poisoned, poison_target)
+reactions:
+  CloseDay:
+    context: Match
+    on: {definition: DayVote, bind: {}}
+    when: phase == Phase.day and forall(living(players), p => p.day_round == round)
+    results: Unit
+    resolve:
+      result: None
+      effects:
+        - for: victim
+          in: condemned(players, day_policy)
+          effects: ['set(victim.alive, False)']
+        - set(day_history, append(day_history, DayResult(round=round, votes=map(living(players), p => PublicVote(voter=p, target=p.day_target)), executed=condemned(players, day_policy))))
+        - set(attacked, Players([]))
+        - set(poisoned, Players([]))
+        - set(saved, False)
+        - set(round, round + 1)
+        - set(phase, Phase.night)
+  NightReady:
+    context: Match
+    on: {definition: [CloseDay, LockWolfVote, Inspect, SkipInspection], bind: {}}
+    when: phase == Phase.night and size(wolves(players)) > 0 and exists(living(players), p => p.role != Role.wolf) and night_complete(players, round)
+    results: Unit
+    resolve:
+      when: exists(living(players), p => p.role == Role.witch)
+      then:
+        result: None
+        effects: ['set(attacked, wolf_choice(players, wolf_policy))', 'set(phase, Phase.witch)']
+        deliver: {notice: 'NotifyWitch(players, round, wolf_policy)'}
+      else:
+        result: None
+        effects: ['set(attacked, wolf_choice(players, wolf_policy))', 'set(phase, Phase.dawn)']
+        deliver: {notice: 'NotifyWitch(players, round, wolf_policy)'}
+  Dawn:
+    context: Match
+    on: {definition: [NightReady, ChoosePotions], bind: {}}
+    when: phase == Phase.dawn or (phase == Phase.witch and forall(living(players), p => p.role != Role.witch or p.witch_round == round))
+    results: Unit
+    resolve:
+      result: None
+      effects:
+        - for: victim
+          in: doomed(players, attacked, poisoned, saved)
+          effects: ['set(victim.alive, False)']
+        - set(night_history, append(night_history, NightResult(round=round, dead=doomed(players, attacked, poisoned, saved))))
+        - set(phase, Phase.day)
+terminals:
+  GameFinished:
+    context: Match
+    when: size(wolves(players)) == 0 or size(filter(living(players), p => p.role != Role.wolf)) == 0
+    stop: {boundary: action, pending: freeze}
+    returns: FinalResult
+    value: >
+      FinalResult(winner=Side.draw if size(living(players)) == 0 else Side.villagers if size(wolves(players)) == 0 else Side.wolves,
+      identities=map(players, p => FinalIdentity(player=p, role=p.role, alive=p.alive)))
+    to: players
+    access: public_status

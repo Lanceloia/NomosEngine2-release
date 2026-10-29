@@ -1,0 +1,11 @@
+schema: nomos.author.assets
+actors:
+  a: {role: seer, alive: true, day_round: 0, day_target: [], wolf_round: 0, wolf_choice_round: 0, wolf_target: [], seer_round: 0, witch_round: 0, antidote: false, poison: false}
+  b: {role: villager, alive: true, day_round: 0, day_target: [], wolf_round: 0, wolf_choice_round: 0, wolf_target: [], seer_round: 0, witch_round: 0, antidote: false, poison: false}
+  c: {role: wolf, alive: true, day_round: 0, day_target: [], wolf_round: 0, wolf_choice_round: 0, wolf_target: [], seer_round: 0, witch_round: 0, antidote: false, poison: false}
+  d: {role: wolf, alive: true, day_round: 0, day_target: [], wolf_round: 0, wolf_choice_round: 0, wolf_target: [], seer_round: 0, witch_round: 0, antidote: false, poison: false}
+  e: {role: witch, alive: true, day_round: 0, day_target: [], wolf_round: 0, wolf_choice_round: 0, wolf_target: [], seer_round: 0, witch_round: 0, antidote: true, poison: true}
+  f: {role: villager, alive: true, day_round: 0, day_target: [], wolf_round: 0, wolf_choice_round: 0, wolf_target: [], seer_round: 0, witch_round: 0, antidote: false, poison: false}
+objects: {}
+contexts:
+  match: {phase: night, round: 1, attacked: [], poisoned: [], saved: false, day_history: [], night_history: []}

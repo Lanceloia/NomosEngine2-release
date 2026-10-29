@@ -1,0 +1,5 @@
+schema: nomos.author.assets
+actors:
+  alice: {awake: true, energy: 10, done: 0}
+  bob: {awake: true, energy: 10, done: 0}
+objects: {}

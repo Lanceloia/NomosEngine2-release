@@ -1,0 +1,10 @@
+schema: nomos.author.source
+name: actor_workshop
+actors: {alice: Worker, bob: Worker}
+actor_kinds: [Spirit]
+objects: []
+use:
+  summon: {definition: Summon}
+  act: {definition: Act}
+  sleep: {definition: Sleep}
+  notice: {definition: NoticeBirth, after: summon}

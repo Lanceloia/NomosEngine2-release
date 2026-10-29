@@ -1,0 +1,2 @@
+schema: nomos.author.source
+imports: [formation_workshop.source.yaml]

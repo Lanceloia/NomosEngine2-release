@@ -1,0 +1,36 @@
+schema: nomos.author.lib
+reactions:
+  AfterAction:
+    context: Match
+    on: {definition: [TakeDifferent, TakePair, ReserveFaceup, ReserveBlind, Purchase, ReturnExcess], bind: {player: player, change: result}}
+    when: phase == Phase.cleanup
+    results: Unit
+    resolve:
+      result: None
+      effects:
+        - set(market, union(market, Cards([at(deck(decks, change.tier), 0)])) if change.refill and size(deck(decks, change.tier)) > 0 else market)
+        - set(decks, replace_deck(decks, change.tier, drop(deck(decks, change.tier), 1)) if change.refill and size(deck(decks, change.tier)) > 0 else decks)
+        - set(last_move, change.kind if change.kind != Move.return_excess else last_move)
+        - set(phase, Phase.cleanup if total(player.tokens) > token_limit else Phase.nobles if size(eligible_nobles(player, visitors)) > 0 else Phase.end_turn)
+  CompleteTurn:
+    context: Match
+    on: {definition: [AfterAction, ChooseNoble], bind: {}}
+    when: phase == Phase.end_turn
+    results: Unit
+    resolve:
+      result: None
+      effects:
+        - set(at(order, turn_index).turns, at(order, turn_index).turns + 1)
+        - set(history, append(history, Turn(player=at(order, turn_index), number=at(order, turn_index).turns + 1, kind=last_move, points=score(at(order, turn_index)))))
+        - set(final_round, final_round or score(at(order, turn_index)) >= target_score)
+        - set(phase, Phase.finished if (final_round or score(at(order, turn_index)) >= target_score) and turn_index == size(order) - 1 else Phase.play)
+        - set(turn_index, (turn_index + 1) % size(order))
+terminals:
+  GameFinished:
+    context: Match
+    when: phase == Phase.finished
+    stop: {boundary: action, pending: freeze}
+    returns: Summary
+    value: Summary(winners=winners(players), standings=standings(players))
+    to: players
+    access: public_status

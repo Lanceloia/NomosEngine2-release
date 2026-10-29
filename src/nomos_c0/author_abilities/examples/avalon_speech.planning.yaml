@@ -1,0 +1,98 @@
+# Build a comparison and a conditional position, not a list of ready-made sentences.
+schema: nomos.author.scenario_planning
+name: ConstructSpeech
+actor: {person: PlayerRef}
+goal: Unit
+local:
+  type: SpeechLocal
+  views:
+    roster_view: {projection: Players, channel: roster}
+    window_view: {projection: DiscussionContext, channel: speech_window}
+    past_quests: {reports: QuestHistory, channel: reveal_quest.result}
+  value: >
+    SpeechLocal(self=person, players=projected(roster_view), window=projected(window_view),
+      history=reports(past_quests),
+      ready=can_speak(projected(window_view).phase, projected(window_view).serial, person.speech_epoch)
+        and projected(window_view).kind == DiscussionKind.proposal)
+state: Bool
+observation: Unit
+hypotheses:
+  - {probability: [1, 1], value: not local.ready}
+consistent: 'True'
+terminal: state
+assumptions:
+  scope: 在已有提队讨论窗口构造一次复合发言；本片不自动等待或决定他人的回复。
+  memory: 只用本人实际收到的任务结果；成功增加偏好、失败降低偏好，不将偏好当身份真相。
+  composition: 先比较两个队伍，再声明排除一人的条件立场；只是本策略选取的表达子空间。
+actions:
+  speak:
+    inputs:
+      clauses:
+        type: DiscussionContents
+        construct:
+          sequence:
+            min: 2
+            max: 2
+            prefix: earlier
+            item:
+              cases:
+                Compare:
+                  when: size(earlier) == 0
+                  fields:
+                    comparison:
+                      fields:
+                        preferred:
+                          fields:
+                            mission: {value: local.window.mission}
+                            members:
+                              subset: local.players
+                              min: size(local.window.members)
+                              max: size(local.window.members)
+                        alternative:
+                          fields:
+                            mission: {value: local.window.mission}
+                            members: {value: local.window.members}
+                        grounds:
+                          subset: speech_arguments(local.history, preferred.members, TeamSpeeches([]), local.window.serial, local.self, True)
+                          min: 1
+                          max: 1
+                Conditional:
+                  when: size(earlier) == 1
+                  fields:
+                    position:
+                      fields:
+                        mission: {value: local.window.mission}
+                        require_all:
+                          set:
+                            min: 1
+                            max: 1
+                            item:
+                              cases:
+                                Excludes:
+                                  fields:
+                                    members: {subset: local.players, min: 1, max: 1}
+                        satisfied: {value: Stance.support}
+                        otherwise: {value: Stance.oppose}
+        constraint: >
+          forall(clauses, c => match(c, Compare(r) => r.comparison.preferred.members != r.comparison.alternative.members,
+            Conditional() => True, Respond() => False, Redirect() => False, Plan() => False,
+            Participate() => False, Retract() => False, Opinion() => False, Question() => False, Answer() => False))
+    where: local.ready and not state
+    predict:
+      state: 'True'
+      observation: None
+      utility: >
+        sum_by(clauses, c => match(c, Compare(r) =>
+          (10 if local.self in r.comparison.preferred.members else 0) +
+          sum_by(local.history, q => (10 if q.fails == 0 else -10) *
+            size(filter(q.team, p => p in r.comparison.preferred.members))) +
+          sum_by(r.comparison.grounds, g => match(g, SuccessCore() => 5,
+            Judgment() => 0, TestTeam() => 0, EvilExhausted() => 0, FailureOverlap() => 0,
+            TrustSpeaker() => 0, ClaimAssessment() => 0, ClaimConflict() => 0)),
+          Conditional(r) => sum_by(r.position.require_all, condition => match(condition,
+            Excludes(x) => -10 * size(filter(x.members, p => p in match(at(clauses, 0), Compare(first) => first.comparison.preferred.members,
+              Conditional() => Players([]), Respond() => Players([]), Redirect() => Players([]), Plan() => Players([]),
+              Participate() => Players([]), Retract() => Players([]), Opinion() => Players([]), Question() => Players([]), Answer() => Players([])))),
+            Contains() => 0, CountRange() => 0)),
+          Respond() => 0, Redirect() => 0, Plan() => 0, Participate() => 0, Retract() => 0,
+          Opinion() => 0, Question() => 0, Answer() => 0))

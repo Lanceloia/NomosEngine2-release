@@ -1,0 +1,134 @@
+schema: nomos.author.ai
+queries:
+  stock_from_history:
+    parameters: {heard: StockReports}
+    returns: StockKnowledge
+    expression: >
+      StockKnowledge.unknown if size(heard) == 0 else
+      StockKnowledge.available if at(heard, size(heard) - 1).available else StockKnowledge.empty
+  seen_stock:
+    parameters: {heard: StockReports, subject: PersonRef}
+    returns: StockKnowledge
+    expression: stock_from_history(filter(heard, observation => observation.subject == subject))
+  own_display_from_history:
+    parameters: {sent: StockDisplays}
+    returns: StockKnowledge
+    expression: >
+      StockKnowledge.unknown if size(sent) == 0 else
+      StockKnowledge.available if at(sent, size(sent) - 1).available else StockKnowledge.empty
+  display_is_new:
+    parameters: {sent: StockDisplays, observer: PersonRef, available: Bool}
+    returns: Bool
+    expression: >
+      own_display_from_history(filter(sent, display => display.observer == observer)) !=
+      (StockKnowledge.available if available else StockKnowledge.empty)
+  supply_need:
+    parameters: {supplies: Count}
+    returns: Count
+    expression: '1 if supplies < 2 else 0'
+  observed_responses:
+    parameters: {notices: Notices, person: PersonRef, helper: PersonRef}
+    returns: Notices
+    # Only actual reports about someone else's interaction supply social evidence.
+    expression: >
+      filter(notices, notice => notice.helper == helper and
+      notice.sender != person and notice.helper != person)
+  latest_response_signal:
+    parameters: {notices: Notices}
+    returns: ImpressionScore
+    expression: >
+      0 if size(notices) == 0 else 1 if at(notices, size(notices) - 1).accepted else -1
+  support_impression:
+    parameters: {notices: Notices, replies: Replies, person: PersonRef, helper: PersonRef}
+    returns: SupportImpression
+    expression: >
+      SupportImpression(observed=size(observed_responses(notices, person, helper)),
+      accepted=size(filter(observed_responses(notices, person, helper), notice => notice.accepted)),
+      refused=size(filter(observed_responses(notices, person, helper), notice => not notice.accepted)),
+      signal=latest_response_signal(observed_responses(notices, person, helper)),
+      personal=exists(replies, reply => reply.helper == helper))
+  observed_support_value:
+    parameters: {impression: SupportImpression}
+    returns: ImpressionScore
+    # First-hand outcomes belong to the existing personal experience estimator.
+    expression: '0 if impression.personal else impression.signal'
+semantics:
+  Cooperation:
+    features: [seek, exchange, forage, answer, give, inform, capacity_known, capacity_ready]
+    outcomes: [provision, fellowship, effort, closure]
+    applicability:
+      provision: [capacity_known, capacity_ready]
+    meanings:
+      RequestSupport:
+        features:
+          seek: '1'
+          exchange: '1 if exchange else 0'
+          capacity_known: '0 if seen_stock(reports(stocks), helper) == StockKnowledge.unknown else 1'
+          capacity_ready: '1 if seen_stock(reports(stocks), helper) == StockKnowledge.available else 0'
+        prior:
+          provision: '0 if seen_stock(reports(stocks), helper) == StockKnowledge.empty else 1 if exchange else 2'
+          fellowship: '1 + observed_support_value(support_impression(reports(activity), reports(replies), person, helper))'
+          effort: '-1'
+          closure: '0'
+        known: {effort: 'True', closure: 'True'}
+        valuation:
+          provision: supply_need(person.supplies)
+          fellowship: supply_need(person.supplies)
+        target: {type: PersonRef, value: helper}
+        correlate: {counterpart: {type: PersonRef, value: helper}, ticket: {type: Count, value: person.ticket}}
+        capture: {seen_capacity: {type: StockKnowledge, value: 'seen_stock(reports(stocks), helper)'}}
+      ShowSupplies:
+        features: {inform: '1'}
+        prior: {provision: '0', fellowship: '1', effort: '-1', closure: '0'}
+        known: {provision: 'True', fellowship: 'True', effort: 'True', closure: 'True'}
+        valuation:
+          fellowship: '1 if display_is_new(reports(sent), observer, person.supplies > 0) else 0'
+      RespondSupport:
+        features: {answer: '1', give: '1 if accepted else 0', exchange: '1 if request.exchange else 0'}
+        prior:
+          provision: '(-1 if request.exchange else -2) if accepted else 0'
+          fellowship: '3 if accepted else 0'
+          effort: '-1'
+          closure: '1'
+        known: {provision: 'True', fellowship: 'True', effort: 'True', closure: 'True'}
+        valuation:
+          provision: '1 if person.supplies <= 2 else 0'
+      Forage:
+        features: {forage: '1'}
+        prior: {provision: '3', fellowship: '0', effort: '-2', closure: '0'}
+        known: {provision: 'True', fellowship: 'True', effort: 'True', closure: 'True'}
+        valuation: {provision: supply_need(person.supplies)}
+    feedback:
+      ReviewSupport:
+        definition: RequestSupport
+        receipts:
+          reply:
+            channel: respond.reply
+            match: {counterpart: reply.helper, ticket: reply.ticket}
+        outcomes: {provision: '2 * reply.received - reply.paid', fellowship: '2 if reply.accepted else -2'}
+        personal: true
+strategies:
+  Camper:
+    actor: {person: PersonRef}
+    views: {stocks: {reports: StockReports}, sent: {reports: StockDisplays}, activity: {reports: Notices}, replies: {reports: Replies}}
+    candidates:
+      - definition: RequestSupport
+        explain:
+          information:
+            stock_history: {type: StockReports, value: 'filter(reports(stocks), observation => observation.subject == helper)'}
+            public_responses: {type: Notices, value: 'observed_responses(reports(activity), person, helper)'}
+            personal_responses: {type: Replies, value: 'filter(reports(replies), reply => reply.helper == helper)'}
+          judgment:
+            last_seen_stock: {type: StockKnowledge, value: 'seen_stock(reports(stocks), helper)'}
+            support_impression: {type: SupportImpression, value: 'support_impression(reports(activity), reports(replies), person, helper)'}
+      - {definition: RespondSupport}
+      - {definition: Forage}
+      - {definition: ShowSupplies}
+    semantics: Cooperation
+    tie: canonical
+    wait: no_candidate
+control:
+  people:
+    kind: Person
+    definition: Camper
+    views: {stocks: show_stock.stock, sent: show_stock.shown, activity: activity.notice, replies: respond.reply}

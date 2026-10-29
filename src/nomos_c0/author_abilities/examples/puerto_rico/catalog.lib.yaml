@@ -1,0 +1,33 @@
+schema: nomos.author.lib
+imports: [catalog_queries.lib.yaml]
+contexts:
+  Catalog:
+    parameters: {players: Players, buildings: BuildingCatalog, setups: Setups, goods: GoodCatalog, roles: RoleCards, quarry_tiles: Count, plantations: TileCards}
+    require_opening: >
+      valid_building_catalog(buildings) and valid_setup_catalog(setups) and valid_good_catalog(goods) and valid_role_catalog(roles) and
+      valid_plantations(plantations, goods) and size(players) >= 3 and size(players) <= 5 and quarry_tiles == 8
+projections:
+  BuildingReference:
+    context: Catalog
+    viewer: {viewer: PlayerRef}
+    audience: viewer in players
+    returns: BuildingCatalog
+    value: buildings
+  SetupReference:
+    context: Catalog
+    viewer: {viewer: PlayerRef}
+    audience: viewer in players
+    returns: Setups
+    value: setups
+  GoodReference:
+    context: Catalog
+    viewer: {viewer: PlayerRef}
+    audience: viewer in players
+    returns: GoodCatalog
+    value: goods
+  RoleReference:
+    context: Catalog
+    viewer: {viewer: PlayerRef}
+    audience: viewer in players
+    returns: RoleCards
+    value: role_cards_for(roles, size(players))

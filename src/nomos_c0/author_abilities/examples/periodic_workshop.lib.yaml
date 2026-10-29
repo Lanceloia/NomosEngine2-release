@@ -1,0 +1,46 @@
+# Non-canon: one periodic definition serves two independent people.
+schema: nomos.author.lib
+values:
+  Count: {int: [0, 100]}
+  Duration: {int: [1, 100]}
+  WorkerRef: {ref: Worker}
+  Workers: {set: WorkerRef}
+entities:
+  Worker:
+    kind: person
+    reference: public
+    fields: {awake: Bool, count: Count, recognized: Bool}
+    view: [id, awake, count, recognized]
+    public: [id]
+abilities:
+  Sleep:
+    actor: {worker: WorkerRef}
+    where: worker.awake
+    results: Bool
+    resolve: {effects: ['set(worker.awake, False)'], result: 'True'}
+disclosures:
+  Progress:
+    parameters: {worker: WorkerRef}
+    sample: after
+    to: Workers([worker])
+    returns: Count
+    value: worker.count
+    access: acquired
+periodic:
+  PracticePulse:
+    parameters: {worker: WorkerRef, interval: Duration}
+    interval: interval
+    results: Bool
+    resolve:
+      when: worker.awake
+      then:
+        effects: ['set(worker.count, worker.count + 1)']
+        result: 'True'
+        deliver: {progress: 'Progress(worker)'}
+      else: {result: 'False'}
+reactions:
+  Recognition:
+    on: {definition: PracticePulse, bind: {worker: worker, performed: result}}
+    when: performed and worker.count >= 2
+    results: Bool
+    resolve: {effects: ['set(worker.recognized, True)'], result: 'True'}

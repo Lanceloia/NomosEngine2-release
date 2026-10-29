@@ -1,0 +1,14 @@
+# Shared local value/projection support; importing worlds supply the base rule types.
+schema: nomos.author.lib
+values:
+  TableDecisionLocal:
+    record: {self: PlayerRef, players: Players, window: DiscussionContext, history: QuestHistory, required: Count, leader: PlayerRef, ready: Bool}
+  SpeechLocal:
+    record: {self: PlayerRef, players: Players, window: DiscussionContext, history: QuestHistory, ready: Bool}
+projections:
+  SpeechWindow:
+    context: Match
+    viewer: {player: PlayerRef}
+    audience: player in players
+    returns: DiscussionContext
+    value: discussion_context(mission, at(order, leader_index), rejections, phase, team, approval_history, discussion_kind, speech_serial)

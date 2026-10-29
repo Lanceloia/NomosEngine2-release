@@ -1,0 +1,82 @@
+# Ordinary finite inputs come from the checked world and policy, not menu expansion.
+# These three capabilities opt into an incremental team/content construction recipe.
+schema: nomos.author.opportunity_planning
+name: TableDecision
+actor: {person: PlayerRef}
+local:
+  type: TableDecisionLocal
+  views:
+    roster_view: {projection: Players, channel: roster}
+    leader_view: {projection: PlayerRef, channel: leader}
+    board_view: {projection: QuestSteps, channel: quest_board}
+    window_view: {projection: DiscussionContext, channel: speech_window}
+    past_quests: {reports: QuestHistory, channel: reveal_quest.result}
+  value: >
+    TableDecisionLocal(self=person, players=projected(roster_view), window=projected(window_view),
+      history=reports(past_quests), leader=projected(leader_view),
+      required=at(filter(projected(board_view), s => s.status == QuestStatus.current), 0).members
+        if exists(projected(board_view), s => s.status == QuestStatus.current) else 0,
+      ready=can_speak(projected(window_view).phase, projected(window_view).serial, person.speech_epoch)
+        and projected(window_view).kind == DiscussionKind.proposal)
+guidance:
+  recall: [past_quests]
+  exploration: 3
+  actions:
+    propose:
+      inputs:
+        members:
+          member: candidate
+          priority: >
+            sum_by(reports(past_quests), q =>
+              (1 if q.fails == 0 else -1) if candidate in q.team else 0)
+    compare_teams:
+      inputs:
+        preferred:
+          member: candidate
+          priority: >
+            sum_by(reports(past_quests), q =>
+              (1 if q.fails == 0 else -1) if candidate in q.team else 0)
+actions:
+  propose:
+    inputs:
+      members:
+        type: Players
+        choose: {subset: local.players, min: local.required, max: local.required}
+    where: local.window.phase == Phase.proposal and local.self == local.leader
+  compare_teams:
+    inputs:
+      preferred:
+        type: Players
+        choose: {subset: local.players, min: local.required, max: local.required}
+      alternative:
+        type: Players
+        choose: {subset: local.window.members, min: local.required, max: local.required}
+        constraint: preferred != alternative
+      grounds:
+        type: TeamArguments
+        choose:
+          subset: speech_arguments(local.history, preferred, TeamSpeeches([]), local.window.serial, local.self, True)
+          min: 1
+          max: 1
+    where: local.ready
+  state_condition:
+    inputs:
+      conditions:
+        type: TeamConditions
+        construct:
+          set:
+            min: 1
+            max: 1
+            item:
+              cases:
+                Contains:
+                  fields:
+                    members: {subset: local.players, min: 1, max: 1}
+                Excludes:
+                  fields:
+                    members: {subset: local.players, min: 1, max: 1}
+      satisfied: {type: Stance, choose: 'Stances([Stance.support, Stance.oppose])'}
+      otherwise:
+        type: Stance
+        choose: 'filter(Stances([Stance.support, Stance.oppose, Stance.undecided]), s => s != satisfied)'
+    where: local.ready

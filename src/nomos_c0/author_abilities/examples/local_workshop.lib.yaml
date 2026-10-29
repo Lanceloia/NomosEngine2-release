@@ -1,0 +1,5 @@
+# Non-canon: local ranking chooses actual requests against the same world rules.
+schema: nomos.author.lib
+imports: [formation_workshop.lib.yaml]
+values:
+  Score: {int: [-1000, 1000]}

@@ -1,0 +1,32 @@
+schema: nomos.author.assets
+random: {seed: 41}
+actors:
+  a: {money: 0, colonists: 0, reserve: 0, island: [{key: 1, crop: indigo, workers: 0}], city: [], stock: {corn: 0, indigo: 0, sugar: 0, tobacco: 0, coffee: 0}, vp: 0}
+  b: {money: 0, colonists: 0, reserve: 0, island: [{key: 2, crop: indigo, workers: 0}], city: [], stock: {corn: 0, indigo: 0, sugar: 0, tobacco: 0, coffee: 0}, vp: 0}
+  c: {money: 0, colonists: 0, reserve: 0, island: [{key: 41, crop: corn, workers: 0}], city: [], stock: {corn: 0, indigo: 0, sugar: 0, tobacco: 0, coffee: 0}, vp: 0}
+objects: {}
+contexts:
+  catalog:
+    order: [{actor: a}, {actor: b}, {actor: c}]
+    phase: setup
+    round: 1
+    governor_index: 0
+    chooser_index: 0
+    selector_index: 0
+    current_index: 0
+    acted: 0
+    active: {key: 1, kind: settler, reward: 0}
+    chosen_roles: []
+    role_cards: []
+    colonist_supply: 0
+    colonist_ship: 0
+    supply: {corn: 0, indigo: 0, sugar: 0, tobacco: 0, coffee: 0}
+    trading: []
+    plantation_deck: []
+    plantation_row: []
+    plantation_discard: []
+    quarries: 0
+    next_key: 100
+    produced_kinds: []
+    end_triggered: false
+    history: []

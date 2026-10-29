@@ -1,0 +1,26 @@
+# These are world facts. Local role knowledge is separately issued by information rules.
+schema: nomos.author.assets
+actors:
+  a: {role: merlin, approval_epoch: 0, approve: false, quest_round: 0, sabotage: false, speech_epoch: null}
+  b: {role: percival, approval_epoch: 0, approve: false, quest_round: 0, sabotage: false, speech_epoch: null}
+  c: {role: servant, approval_epoch: 0, approve: false, quest_round: 0, sabotage: false, speech_epoch: null}
+  d: {role: morgana, approval_epoch: 0, approve: false, quest_round: 0, sabotage: false, speech_epoch: null}
+  e: {role: assassin, approval_epoch: 0, approve: false, quest_round: 0, sabotage: false, speech_epoch: null}
+objects: {}
+contexts:
+  match:
+    phase: proposal
+    discussion_kind: none
+    speech_serial: 0
+    mission: 1
+    leader_index: 0
+    epoch: 0
+    team: []
+    rejections: 0
+    successes: 0
+    failures: 0
+    assassin: []
+    winner: null
+    approval_history: []
+    quest_history: []
+    accusation: []

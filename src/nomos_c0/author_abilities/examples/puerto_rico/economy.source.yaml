@@ -1,0 +1,35 @@
+# Economic stages are explicit; Captain and violet building effects arrive in P4.
+schema: nomos.author.source
+imports: [catalog.source.yaml]
+name: PuertoRicoEconomy
+actors: {a: Player, b: Player, c: Player}
+objects: []
+random: {mechanism: replayable_seed}
+play: {mechanism: tabletop, seats: {kind: Player}, others: local_strategy}
+use:
+  prepare: {definition: PrepareEconomy, context: catalog}
+  choose_role: {definition: ChooseRole, context: catalog, with: {enabled: [settler, mayor, builder, craftsman, trader, prospector]}}
+  settle: {definition: Settle, context: catalog}
+  assign_workers: {definition: AssignWorkers, context: catalog}
+  build:
+    definition: Build
+    context: catalog
+    with: {buildable: [small_indigo_plant, small_sugar_mill, indigo_plant, sugar_mill, tobacco_storage, coffee_roaster]}
+  produce: {definition: Produce, context: catalog}
+  sell: {definition: Sell, context: catalog}
+  decline: {definition: DeclinePhase, context: catalog}
+  extra_good: {definition: ExtraGood, context: catalog}
+  decline_extra: {definition: DeclineExtra, context: catalog}
+  public_boards: {definition: PublicBoards, context: catalog}
+  current_stage: {definition: CurrentStage, context: catalog}
+  distribute: {definition: DistributeColonists, context: catalog, after: choose_role}
+  after_step: {definition: AfterStep, context: catalog, after: [settle, assign_workers, build, produce, sell, decline]}
+  refill_plantations: {definition: RefillFromDeck, context: catalog, after: after_step}
+  recycle_plantations: {definition: RecyclePlantations, context: catalog, after: after_step}
+  refill_colonists: {definition: RefillColonistShip, context: catalog, after: after_step}
+  clear_trading: {definition: EmptyTradingHouse, context: catalog, after: after_step}
+  finish_ordinary: {definition: FinishOrdinary, context: catalog, after: after_step}
+  after_extra: {definition: AfterExtra, context: catalog, after: [extra_good, decline_extra]}
+  next_role: {definition: NextRole, context: catalog, after: [refill_plantations, recycle_plantations, refill_colonists, clear_trading, finish_ordinary, after_extra, choose_role]}
+  end_round: {definition: EndRound, context: catalog, after: next_role}
+  checkpoint: {definition: EconomyCheckpoint, context: catalog}

@@ -1,0 +1,49 @@
+# Subject appraisal supplies utility; this model only constructs a current proposal.
+schema: nomos.author.scenario_planning
+name: SubjectProposal
+actor: {person: PlayerRef}
+goal: Unit
+local:
+  type: ProposalLocal
+  views:
+    roster_view: {projection: Players, channel: roster}
+    leader_view: {projection: PlayerRef, channel: leader}
+    board_view: {projection: QuestSteps, channel: quest_board}
+    window_view: {projection: ProposalWindow, channel: planning_window}
+    suspect_reports: {reports: PlayerReports, channel: merlin_suspects}
+    past_quests: {reports: QuestHistory, channel: reveal_quest.result}
+  value: >
+    ProposalLocal(self=person, players=projected(roster_view),
+      required=at(filter(projected(board_view), s => s.status == QuestStatus.current), 0).members
+        if exists(projected(board_view), s => s.status == QuestStatus.current) else 0,
+      ready=projected(window_view).phase == Phase.proposal and projected(leader_view) == person,
+      finished=projected(window_view).phase != Phase.proposal,
+      suspects=filter(projected(roster_view), p => exists(reports(suspect_reports), group => p in group)))
+state: Bool
+observation: Unit
+hypotheses: [{probability: [1, 1], value: local.finished}]
+consistent: 'True'
+terminal: state
+assumptions:
+  scope: 只为当前提队机会构造一个完整队伍，不预测后续投票与胜负。
+  utility: 估值由正式 Subject 的既有行动含义、实际反馈、人格和目标给出，模型收益固定为零。
+  recall: 正式记忆中的任务报告影响成员考虑次序，任务成功不认证任何身份。
+guidance:
+  recall: [past_quests]
+  exploration: 3
+  actions:
+    propose:
+      inputs:
+        members:
+          member: candidate
+          priority: >
+            sum_by(reports(past_quests), q =>
+              (1 if q.fails == 0 else -1) if candidate in q.team else 0)
+actions:
+  propose:
+    inputs:
+      members:
+        type: Players
+        choose: {subset: local.players, min: local.required, max: local.required}
+    where: local.ready and not state
+    predict: {state: 'True', observation: None, utility: '0'}

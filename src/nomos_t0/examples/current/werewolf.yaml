@@ -1,0 +1,20 @@
+# The opening night locks a shared target; a potion saves it before the first day.
+schema: nomos.witness
+budget: 12
+steps:
+- {actor: c, action: wolf_vote, inputs: {target: {actor: b}}}
+- {actor: d, action: wolf_vote, inputs: {target: {actor: b}}}
+- {actor: c, action: wolf_lock}
+- {actor: d, action: wolf_lock}
+- {actor: a, action: skip}
+- {actor: e, action: potions, inputs: {save: true, poison_target: []}}
+- {actor: a, action: vote, inputs: {target: {actor: a}}}
+- {actor: b, action: vote, inputs: {target: {actor: b}}}
+- {actor: c, action: vote, inputs: {target: {actor: c}}}
+- {actor: d, action: vote, inputs: {target: {actor: d}}}
+- {actor: e, action: vote, inputs: {target: {actor: e}}}
+- {actor: f, action: vote, inputs: {target: {actor: f}}}
+expect:
+- {actor: {name: b, fields: {alive: true}}}
+- {actor: {name: e, fields: {antidote: false, poison: true}}}
+- {published: {source: author.Werewolf.dawn.event, count: 1}}
